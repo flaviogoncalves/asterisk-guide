@@ -17,9 +17,10 @@ mapfile -t CHAPTERS < <(ls "$SRC"/*.md | sort)
 echo "Assembling ${#CHAPTERS[@]} chapters:"
 printf '  %s\n' "${CHAPTERS[@]##*/}"
 
+# commonmark_x is the GFM superset that also supports the {.unnumbered} heading
+# attribute used on the Part divider pages (plain gfm rejects header_attributes).
 # --resource-path lets Pandoc resolve the chapters' ../images/ figure links.
-# +header_attributes enables {.unnumbered} on the Part divider pages.
-COMMON=( --from=gfm+header_attributes
+COMMON=( --from=commonmark_x
          --metadata-file="$META"
          --resource-path="$SRC"
          --toc --toc-depth=2 )
