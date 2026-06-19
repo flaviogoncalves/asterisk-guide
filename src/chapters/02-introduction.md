@@ -300,3 +300,63 @@ The Asterisk architecture has the following main components:
 - APPLICATIONS: Responsible for the Asterisk PBX functionality. Conference, voicemail, and fax are examples of Asterisk applications.
 
 Asterisk can be used in various scenarios, from a small IP PBX to a sophisticated contact center. You can easily find help at www.asterisk.org and docs.asterisk.org.
+
+## Quiz
+
+1. Which company acquired Digium in 2018 and now serves as the primary steward of the Asterisk open-source project?
+   - A. Cisco Systems
+   - B. Sangoma Technologies
+   - C. Nortel Networks
+   - D. Red Hat
+
+2. In Asterisk 22 LTS, which channel driver provides SIP connectivity?
+   - A. `chan_sip`
+   - B. `chan_skinny`
+   - C. `chan_pjsip`
+   - D. `chan_h323`
+
+3. True or False: The `chan_sip` channel driver was removed in Asterisk 21 and is not present in a standard Asterisk 22 build.
+
+4. Which of the following channels/protocols are **no longer** part of a standard Asterisk 22 build? (Choose all that apply.)
+   - A. MGCP (`chan_mgcp`)
+   - B. SCCP / Cisco Skinny (`chan_skinny`)
+   - C. IAX2 (`chan_iax2`)
+   - D. H.323 (`chan_h323`, surviving only as the community `ooh323` add-on)
+
+5. The Zapata project's hardware architecture, originally called Zaptel, was later renamed to ____.
+   - A. DAHDI
+   - B. PJSIP
+   - C. PRI
+   - D. mISDN
+
+6. When Asterisk must convert audio from one codec to another, which internal stream format does it translate through?
+   - A. G.711 ulaw
+   - B. GSM
+   - C. slinear (signed linear)
+   - D. Opus
+
+7. According to the chapter, what is the licensing situation of the G.729 codec module distributed by Sangoma?
+   - A. It is GPL and completely free for any use.
+   - B. The download is free, but lawful use requires purchasing a per-channel license.
+   - C. It cannot be obtained at all without buying Asterisk Business Edition.
+   - D. It only works in pass-through mode and cannot be installed.
+
+8. Which Asterisk application is used to bridge a call from one phone to another?
+   - A. `Background()`
+   - B. `Dial()`
+   - C. `Queue()`
+   - D. `Goto()`
+
+9. What is the `Local` channel in Asterisk?
+   - A. A hardware FXS interface for analog phones.
+   - B. A SIP trunk to a local service provider.
+   - C. A pseudo-channel that loops a call back into the dial plan in a different context.
+   - D. A codec used for on-net calls.
+
+10. In which usage scenario does Asterisk act as a back-to-back user agent (B2BUA), translating between signaling protocols and codecs to replace expensive soft switches?
+    - A. IP-enabling a legacy PBX
+    - B. Toll bypass
+    - C. Media Gateway
+    - D. Contact Center Platform
+
+**Answers:** 1 — B · 2 — C · 3 — True · 4 — A, B, D · 5 — A · 6 — C · 7 — B · 8 — B · 9 — C · 10 — C
