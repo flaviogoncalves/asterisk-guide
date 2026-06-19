@@ -119,7 +119,11 @@ The third LAB uses a virtualized server in the student’s own notebook. The pro
 
 ## Installation Sequence
 
-To help you understand the installation sequence, we outlined the sequence of steps necessary to install and configure Asterisk. 1. Extensions configuration a. SIP extensions (ATA, Soft-phone, IP Phone) b. IAX extensions c. FXS extensions 2. Trunk configuration a. Configuration of a SIP trunk b. Configuration of a FXO trunk 3. Building a basic dial plan a. Dialing between extensions b. Dialing external destinations c. Receiving a call from in the operator extension d. Receiving a call in an auto-attendant
+To help you understand the installation sequence, we outlined the sequence of steps necessary to install and configure Asterisk.
+
+![Reference lab layout: SIP/IAX soft-phones, an IP phone and analog adapters as extensions (1), the Asterisk server with ETH0/FXO/FXS interfaces (3), and the trunks to the PSTN through a VoIP provider or a broadband link (2).](../images/04-first-pbx-fig01.png)
+
+1. Extensions configuration a. SIP extensions (ATA, Soft-phone, IP Phone) b. IAX extensions c. FXS extensions 2. Trunk configuration a. Configuration of a SIP trunk b. Configuration of a FXO trunk 3. Building a basic dial plan a. Dialing between extensions b. Dialing external destinations c. Receiving a call from in the operator extension d. Receiving a call in an auto-attendant
 
 ## Configuration of the extensions
 
@@ -313,7 +317,7 @@ After defining the phones in the Asterisk configuration file, it is time to conf
 
 > **[2nd-ed note]** X-Lite / CounterPath (`www.counterpath.com`) is no longer available — CounterPath was acquired and the free X-Lite client retired. Suggest replacing the screenshot (figure 1) with a current soft-phone. The field mapping below is generic to any SIP client.
 
-![03-building-a-simple-pbx figure 1](../images/03-building-a-simple-pbx-img01.png)
+> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
 
 Display Name: 6000  User Name: 6000  Password: #MySecret1#7  Authorization User Name: 6000  Domain: ip_of_your_server. Confirm that your phone is registered using the console command `pjsip show endpoints` (or `pjsip show endpoint 6000` for detail; `pjsip show contacts` shows the registered AOR contacts). Repeat the configuration for the phone 6001.
 
@@ -321,7 +325,7 @@ Display Name: 6000  User Name: 6000  Password: #MySecret1#7  Authorization User 
 
 In this example, we are going to use the free soft-phone Zoiper, which you can download from www.zoiper.com. 1. Download and install the Zoiper Free. 2. Click with the right button to access options.
 
-![03-building-a-simple-pbx figure 2](../images/03-building-a-simple-pbx-img02.png)
+> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
 
 3. Select new IAX account. 4. Insert the related options for the 6003 phone and optionally for the 6004. 5. Save the configuration and check if the phone is registered using iax2 show peers. Important: Use one account for SIP and another one for IAX. If you want to configure the system to ring both IAX and SIP at the same time, we will show you how to do so in the dial plan section.
 
@@ -329,7 +333,7 @@ In this example, we are going to use the free soft-phone Zoiper, which you can d
 
 To connect to the PSTN, you will need an interface foreign exchange office (FXO) and a telephone line. You can use an existing PBX extension too. You can obtain a telephony interface card with an FXO interface from several manufacturers. In this example, we will show you how to install a DAHDI interface card.
 
-![03-building-a-simple-pbx figure 3](../images/03-building-a-simple-pbx-img03.png)
+![FXS and FXO ports: the FXS port drives an analog phone (supplies dial tone and ring), while the FXO port connects Asterisk to the Telco line.](../images/04-first-pbx-fig02.png)
 
 ### Analog lines using DAHDI
 
@@ -350,8 +354,6 @@ The command above will generate two files /etc/dahdi/system.conf and /etc/asteri
 ```
 #include dahdi-channels.conf
 ```
-
-![03-building-a-simple-pbx figure 4](../images/03-building-a-simple-pbx-img04.png)
 
 Step 4: Edit the file /etc/dahdi/modules and comment for all the unused drivers. Reboot before proceeding and check if the channels are being recognized using:
 
@@ -495,9 +497,9 @@ exten=9000,n,hangup()
 
 Context is the named partition of the dial plan. After the [general] and [globals] sections, the dial plan is a set of contexts in which each context has several extensions, each extension has several priorities, and each priority calls an application with several arguments.
 
-![03-building-a-simple-pbx figure 5](../images/03-building-a-simple-pbx-img05.png)
+![Asterisk call flow: every call arrives on a channel (IAX, SIP, and others) as an incoming call leg; the channel's context — set globally or per-channel in the channel config file — decides which context in extensions.conf processes the call before it leaves on the outgoing leg.](../images/04-first-pbx-fig03.png)
 
-![03-building-a-simple-pbx figure 6](../images/03-building-a-simple-pbx-img06.png)
+![Call processing: the `context=` defined for a channel (in chan_dahdi.conf or pjsip.conf) names the matching context in extensions.conf where the dial plan handles the call.](../images/04-first-pbx-fig04.png)
 
 You can build a simple dial plan to reach other phones and the PSTN. However, Asterisk is much more powerful than that. Our objective is to teach you more details of what is possible in the dial plan.
 
@@ -505,9 +507,7 @@ You can build a simple dial plan to reach other phones and the PSTN. However, As
 
 Unlike the traditional PBX, where extensions are associated with phones, interfaces, menus, and so on, in Asterisk an extension is a list of commands to be processed when a specific extension number or name is triggered. The commands are processed in priority order.
 
-![03-building-a-simple-pbx figure 7](../images/03-building-a-simple-pbx-img07.png)
-
-![03-building-a-simple-pbx figure 8](../images/03-building-a-simple-pbx-img08.png)
+![Extension syntax: `exten => number(name),{priority|label}[(alias)],application`. Extensions can be numeric, alphanumeric, numeric with caller ID, a pattern, or a standard extension like `s`; priorities can be a number, `n` (next), `s` (same), an offset, or a `hint`.](../images/04-first-pbx-fig05.png)
 
 An extension can be literal, standard, or special. A standard extension includes only numbers or names and the characters * and #; 12#89* is a valid literal extension. Names can be used for extension matching as well. Extensions are case sensitive. However, you cannot create two extensions with the same name but different cases. When an extension is dialed, the command with the first priority is executed followed by the command with priority 2 and so on. This happens until the call is disconnected or some command returns the number one, indicating failure. What Asterisk does when the last priority is executed is regulated by the parameter autofallthrough. See the [general] section in this chapter. Example:
 
@@ -525,10 +525,6 @@ exten=>123/100,n,Playback(tt-weasels)
 exten=>123/100,n,Hangup()
 ```
 
-![03-building-a-simple-pbx figure 9](../images/03-building-a-simple-pbx-img09.png)
-
-![03-building-a-simple-pbx figure 10](../images/03-building-a-simple-pbx-img10.png)
-
 This example will trigger extension 123 and execute the following options only if the caller ID is 100. This can also be done by using the pattern described below:
 
 ```
@@ -541,13 +537,13 @@ hint: maps an extension to a channel. It is used to monitor the channel state. I
 
 You can use patterns and literals in the dial plan. Patterns are very useful for reducing the dial plan size. All patterns start with the “_” character. The following characters may be used to define a pattern. The figure identifies the patterns available for use with Asterisk.
 
+![Pattern matching characters: `_` starts a pattern, `.` matches one or more characters, `!` matches zero or more, `[123-7]` matches any listed digit or range, `X` is 0-9, `Z` is 1-9, and `N` is 2-9 — with examples mapping office extension ranges.](../images/04-first-pbx-fig06.png)
+
 ### Special extensions
 
 Asterisk uses some extension names as standard extensions.
 
-![03-building-a-simple-pbx figure 11](../images/03-building-a-simple-pbx-img11.png)
-
-![03-building-a-simple-pbx figure 12](../images/03-building-a-simple-pbx-img12.png)
+![Asterisk special extensions: `i` (invalid), `s` (start), `h` (hangup), `t` (timeout), `T` (absolute timeout), `o` (operator), `a` (pressed `*` in voicemail), `fax` (fax detection), and `Talk` (used with BackgroundDetect).](../images/04-first-pbx-fig07.png)
 
 Description: s: Start. It is used to handle a call when there is no dialed number. It is useful for FXO trunks and in- menu processing. t: Timeout. It is used when calls remain inactive after a prompt has been played. It is also used to hang up an inactive line. T: AbsoluteTimeout. If you establish a call limit using the `TIMEOUT(absolute)` dialplan function, once the call exceeds the limit defined, it will be sent to the T extension. h: Hangup. It is called after the user disconnects the call. i: Invalid. It is triggered when you call an non-existent extension in the context. Using these extensions can affect the content of CDR records—specifically, the dst that does not contain the number dialed. o: Operator. It is used to go to operator when the user presses “0” during the voicemail. The use of these extensions can change the content of the billing records (CDR)—in particular, the field dst will not have the number dialed. To work around this problem, you should use the option g in the dial() application and consider the functions resetcdr(w) and/or nocdr()
 
@@ -558,8 +554,6 @@ In the Asterisk PBX, variables can be global, channel-specific, and environment-
 ```
 ${varname}
 ```
-
-![03-building-a-simple-pbx figure 13](../images/03-building-a-simple-pbx-img13.png)
 
 A variable name can be an alphanumeric string starting with a letter. Global variable names are not case sensitive. However, system variables (Asterisk-defined are channel-defined) are case sensitive. Thus, the variable ${EXTEN} is different from ${exten}.
 
@@ -650,7 +644,11 @@ Some applications use variables for data input and output. You can set variables
 
 ## Expressions
 
-Expressions can be very useful in the dial plan. They are used to manipulate strings and perform math and logical operations. The expression syntax is defined as follows:
+Expressions can be very useful in the dial plan. They are used to manipulate strings and perform math and logical operations.
+
+![Asterisk expressions overview — `$[expression1 operator expression2]` — grouping the math, logical, comparison, regular-expression, and conditional operators available in the dial plan.](../images/04-first-pbx-fig08.png)
+
+The expression syntax is defined as follows:
 
 ```
 $[expression1 operator expression2]
@@ -671,11 +669,6 @@ The following operators can be used to build expressions. It is important to obs
 #### Math Operators
 
 - Addition (+)
-
-![03-building-a-simple-pbx figure 14](../images/03-building-a-simple-pbx-img14.png)
-
-![03-building-a-simple-pbx figure 15](../images/03-building-a-simple-pbx-img15.png)
-
 - Subtraction (-)
 - Multiplication(*)
 - Division (/)
@@ -792,7 +785,11 @@ Alternatively, you can show details of a specific application using the followin
 CLI>core show application dial
 ```
 
-To build a simple dial plan, you need to know a few applications. We will discuss more advanced examples later in the book. We will use these applications (above) to create a simple dial plan for two basic PBXs.
+To build a simple dial plan, you need to know a few applications. We will discuss more advanced examples later in the book.
+
+![The handful of applications needed to build a simple dial plan: Answer (answer a channel), Dial (call another channel), Hangup (hang up a channel), Playback (play an audio file), and Goto (jump to a priority, extension, or context).](../images/04-first-pbx-fig09.png)
+
+We will use these applications (above) to create a simple dial plan for two basic PBXs.
 
 ### Answer()
 

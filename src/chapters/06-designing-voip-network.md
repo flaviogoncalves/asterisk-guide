@@ -38,13 +38,13 @@ Telephony is far older than computing. Telephony PBXs are circuit-switch based, 
 
 Asterisk’s architecture is shown below. Asterisk treats all VoIP protocols as channels. You can use any codec or any protocol. The concept to be learned here is that Asterisk bridges any type of channel to any other. Thus, you can translate signaling protocols such as SIP and IAX to one another and even with different codecs. For example, you can translate a call from a SIP phone in the local area network using the G.711 codec to a SIP trunk to your VoIP provider using the G.729 codec. In the next chapters, we will explain the details of the SIP and IAX architecture. H.323 support (via the chan_ooh323 add-on) is available but increasingly rare; SIP/PJSIP is the standard for modern deployments.
 
+![Asterisk's modular architecture: applications and channels connect to the PBX switch core through APIs, with codec translation and file-format modules loaded dynamically.](../images/06-voip-network-fig01.png)
+
 ## VoIP protocols and the OSI model
 
 As you can see below, VoIP uses a set of different protocols working together. Different OSI layers are present in VoIP communication. The figure below will help you understand the role of each protocol and their relationships.
 
-![06-designing-a-voip-network figure 1](../images/06-designing-a-voip-network-img01.png)
-
-![06-designing-a-voip-network figure 2](../images/06-designing-a-voip-network-img02.png)
+![VoIP protocols mapped onto the OSI model: signaling protocols (H.323, SIP, MGCP, IAX) sit at the session layer, codecs at the presentation layer, and RTP/UDP at the transport layer.](../images/06-voip-network-fig02.png)
 
 The first four layers represent a data network, just like the Internet you have in your business or home. You can use some QoS protocols like “diffserv” or “cbwfq” to prioritize voice packets and enhance voice quality. Most VoIP protocols use real-time protocol (RTP) as the transport protocol of choice. In the session layer, protocols are responsible for setting up and closing the calls. H.323 is one of the oldest and mature protocols in this area. SIP is now pervasive in the VoIP provider market, putting aside H.323. Signaling protocols use TCP or UDP to transport the packets. In the presentation layer, the codecs transform the multimedia stream from one format to another based on different characteristics. For example: SIP: SIP uses UDP or TCP in port 5060 to transport signaling. RTP transports the audio stream using ports 1000 to 2000 in Asterisk (as defined in rtp.conf). For example, a call can be coded in g.711. A soft-phone in the application layer will use the lower layers to communicate. H.323: H.323 uses TCP in ports 1720 and 1719 to transport signaling. RTP usually transports audio in UDP ports 16383 to 32768.
 
@@ -54,13 +54,7 @@ Given the many protocols, how can you choose the best one for your network? In t
 
 ### SIP - Session Initiated Protocol
 
-SIP is an Internet Engineering Task Force (IETF) open standard, largely defined in RFC 3261. Most modern VoIP providers use SIP; indeed, it is becoming the most popular VoIP standard. The strength of SIP is that it is an IETF-based standard. SIP is light when compared to the older H.323. SIP’s main
-
-![06-designing-a-voip-network figure 3](../images/06-designing-a-voip-network-img03.png)
-
-![06-designing-a-voip-network figure 4](../images/06-designing-a-voip-network-img04.png)
-
-weakness is the NAT traversal—a challenge to most SIP VoIP providers. IETF did not create SIP with billing in mind, but for open communications between peers. Billing is usually a concern for VoIP providers.
+SIP is an Internet Engineering Task Force (IETF) open standard, largely defined in RFC 3261. Most modern VoIP providers use SIP; indeed, it is becoming the most popular VoIP standard. The strength of SIP is that it is an IETF-based standard. SIP is light when compared to the older H.323. SIP’s main weakness is the NAT traversal—a challenge to most SIP VoIP providers. IETF did not create SIP with billing in mind, but for open communications between peers. Billing is usually a concern for VoIP providers.
 
 ### IAX – Inter Asterisk eXchange
 
@@ -94,13 +88,15 @@ The following table summarizes the differences among the session protocols.
 
 Three kinds of SIP and IAX clients exist. The first one is “user”. Users can make calls to an Asterisk server, but they cannot connect to receive calls from this server. The second one is a “peer”. You can make calls to a peer, but you will not receive calls from them. Usually a server or a device will require both concepts at the same time. A “friend” is a shortcut to a “user” + “peer”. A phone would probably fall into this category as it is needed to make and receive calls.
 
+![Peer, user, and friend from Asterisk's point of view: a "user" places calls to Asterisk, a "peer" receives calls from Asterisk, and a "friend" does both.](../images/06-voip-network-fig03.png)
+
 > **[2nd-ed note]** The peer/user/friend distinction is a `chan_sip` (`sip.conf`) concept. In PJSIP (`pjsip.conf`), this is replaced by the **endpoint** object, which handles both inbound and outbound calls. The peer/user separation no longer applies in Asterisk 22.
 
 ## Codecs and codec translation
 
 You will use a codec to convert the voice from an analog wave to a digital signal. Codecs differ from one another in aspects such as sound quality, compression rate, bandwidth, and computing requirements. Services, phones, and gateways usually support several of these aspects. The codec G.729 is very popular. Sangoma distributes a `codec_g729` binary module for Asterisk 22; the download is free of charge, but lawful G.729 use still requires a purchased per-channel license. (An open-source alternative, `bcg729`, also exists.)
 
-![06-designing-a-voip-network figure 5](../images/06-designing-a-voip-network-img05.png)
+![Pulse Code Modulation (PCM): a 4000 Hz analog signal is sampled 8000 times per second (Nyquist theorem) and coded into a 64 Kbps digital bitstream.](../images/06-voip-network-fig04.png)
 
 Asterisk 22 supports the following codecs (among others):
 
@@ -143,6 +139,8 @@ The following table compares the most popular codecs. The quality of these codec
 
 Despite the fact that codecs make little use of bandwidth, we have to consider the overhead caused by protocol headers like Ethernet, IP, UDP, and RTP.As such, we could say that bandwidth depends upon the headers used. If we are in an Ethernet network, the bandwidth requirement is higher than in a PPP network because the PPP header is shorter than the Ethernet one. Let’s look through some examples: Ethernet Destination G.729 coded (20) UDP Header (8) Ethernet Type (2) Ethernet Source IP Header (20) RTP Header (12) Voice Payload Checksum (4) Address (6) Address (6) Ethernet Codec g.711 (64 Kbps)
 
+![A single g.729 voice packet on Ethernet: 20 bytes of payload wrapped in 58 bytes of Ethernet, IP, UDP, and RTP headers — a g.729 conversation consumes 31.2 Kbps.](../images/06-voip-network-fig05.png)
+
 - Ethernet (Ethernet+IP+UDP+RTP+G.711) = 95.2 Kbps
 - PPP (PPP+IP+UDP+RTP+G.711) = 82.4 Kbps
 - Frame-Relay (FR+IP+UDP+RTP+G.711) = 82.8 Kbps
@@ -168,15 +166,17 @@ The primary and most widely used simplification is to estimate the number of cal
 - Business PBXs (one simultaneous call for every five extensions)
 - Residential users (one simultaneous call for every sixteen users)
 
-Example #1 The company’s headquarters have 120 extensions and two branches—the first with 30 extensions and the second with 15 extensions. Our objective is to dimension the number of E1 trunks in the headquarters and the bandwidth required for the Frame-Relay network. 1a Number of T1 lines
+Example #1 The company’s headquarters have 120 extensions and two branches—the first with 30 extensions and the second with 15 extensions. Our objective is to dimension the number of E1 trunks in the headquarters and the bandwidth required for the Frame-Relay network.
+
+![Example network topology (same city): headquarters with 120 extensions connects to the PSTN over T1 lines, and to branch #1 (30 extensions) and branch #2 (15 extensions) over a Frame-Relay cloud.](../images/06-voip-network-fig06.png)
+
+1a Number of T1 lines
 
 - Total number of extensions using T1 lines: 120+30+15=165 lines
 - Using one trunk for each five extensions for business use
 - Total number of lines = 33 or approximately 2xT1 lines
 
 1b Bandwidth requirements We choose the g.729 codec because of bandwidth requirements, sound quality, and medium CPU consumption.
-
-![06-designing-a-voip-network figure 6](../images/06-designing-a-voip-network-img06.png)
 
 With one trunk for every five extensions:
 
@@ -187,7 +187,7 @@ With one trunk for every five extensions:
 
 1.a Number of VoIP simultaneous calls Sometimes, simplification is not the best approach. When you have previous data, you can adopt a more scientific approach. We will use the work of Agner Karup Erlang (Copenhagen Telephone Company, 1909), who developed a formula to calculate lines in a trunk group between two cities. Erlang is a traffic measurement unit usually found in telecom. It is used to describe the volume of traffic for one hour. For example: 20 calls occur in an hour, averaging 5 minutes of conversation each. You can calculate the number of Erlangs as shown below: Traffic minutes in the hour: 20 x 5 = 100 minutes Hour of traffic inside one hour: 100/60 = 1.66 Erlangs You can determine these measures from a call logger and use it to design your network to calculate the number of lines required. Once the number of lines is known, it is possible to calculate the bandwidth requirements. Erlang B is the most commonly used method for calculating the number of lines in a trunk group. It assumes that calls arrive randomly (Poisson distribution) while blocked calls are immediately cleared. This method requires that you know the Busy Hour Traffic (BHT), which you can obtain from a call logger or by the following simplification: BHT=17% of the call minutes of one day.
 
-![06-designing-a-voip-network figure 7](../images/06-designing-a-voip-network-img07.png)
+![Erlang B calculator results: 5 Erlangs at 1% blocking requires 11 lines (headquarters to branch #1), and 2.83 Erlangs at 1% blocking requires 8 lines (headquarters to branch #2).](../images/06-voip-network-fig07.png)
 
 Another important variable is Grade of Service (GoS), which defines the probability of blocking calls by line shortage. You can arbitrate this parameter, which is usually 0.05 (5% calls lost) or 0.01 (1% calls lost). Example #1: Using the same example from 5.10.1, we will give you some data about traffic patterns. From the call logger, we discovered these data: Data from call logger (Call minutes and BHT):
 
@@ -206,8 +206,6 @@ Using an Erlang Calculator (www.erlang.com)
 - For the Headquarters to Branch #2, 8 lines are required
 
 1.b Bandwidth Required We are using a WAN where packet loss is rare. We will choose the g729 codec because of its good sound quality and data compression (8 Kbps).
-
-![06-designing-a-voip-network figure 8](../images/06-designing-a-voip-network-img08.png)
 
 Selected codec: g729 Datalink layer: Frame-Relay
 
@@ -228,15 +226,17 @@ In Frame-Relay and PPP networks, you can use RTP header compression. RTP header 
 
 ### IAX2 trunk mode
 
-If you are connecting two Asterisk servers, you can use the IAX2 protocol in the trunk mode. This revolutionary technology does not need any special routers and can be applied to any kind of data link. The IAX2 trunk mode reuses the same headers from the second call and over. Using g729 in a PPP link, the first call will consume 30 Kbps of bandwidth, whereas the second call will use the same header as the first and reduce the necessary bandwidth for the additional call to 9.6 Kbps. We can calculate the required bandwidth in trunk mode as follows: Branch #1 (11 calls) Bandwidth = 31.2 + (11-1)* 9.6 Kbps = 127.2 Kbps Branch #2 (8 calls) Bandwidth = 31.2 + (8-1)* 9.6 Kbps = 98.4 Kbps The first call uses 31.2 Kbps, the next 9.6, and so on.
+If you are connecting two Asterisk servers, you can use the IAX2 protocol in the trunk mode. This revolutionary technology does not need any special routers and can be applied to any kind of data link.
+
+![IAX2 trunk mode on Ethernet: a single g.729 call needs its full header stack (31.2 Kbps), but a second call shares those headers and adds only a small IAX2 miniframe, averaging about 9.6 Kbps of extra bandwidth per additional call.](../images/06-voip-network-fig08.png)
+
+The IAX2 trunk mode reuses the same headers from the second call and over. Using g729 in a PPP link, the first call will consume 30 Kbps of bandwidth, whereas the second call will use the same header as the first and reduce the necessary bandwidth for the additional call to 9.6 Kbps. We can calculate the required bandwidth in trunk mode as follows: Branch #1 (11 calls) Bandwidth = 31.2 + (11-1)* 9.6 Kbps = 127.2 Kbps Branch #2 (8 calls) Bandwidth = 31.2 + (8-1)* 9.6 Kbps = 98.4 Kbps The first call uses 31.2 Kbps, the next 9.6, and so on.
 
 ### Increasing the Voice Payload
 
 This method is very common when using VoIP gateways over the Internet. When using a bigger payload, you will sacrifice latency in favor of reduced bandwidth. You can change the RTP packetization by appending the frame size to the codec in the allow instruction.
 
-![06-designing-a-voip-network figure 9](../images/06-designing-a-voip-network-img09.png)
-
-![06-designing-a-voip-network figure 10](../images/06-designing-a-voip-network-img10.png)
+![Increasing the voice payload: packing 60 bytes of g.729 payload into one packet (instead of 20) amortizes the 58 bytes of headers across more voice, dropping bandwidth to about 16.05 Kbps per call at the cost of added latency.](../images/06-voip-network-fig09.png)
 
 Example:
 
