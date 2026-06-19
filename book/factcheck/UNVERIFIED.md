@@ -63,15 +63,16 @@ formerly-unverified items were closed:
 
 ## Editorial rewrites still flagged (not single-fact items — for the author)
 
-These are *dated sections* rather than wrong claims, so they were left for an editorial pass:
+These are *dated sections* rather than wrong claims:
 
-- **Ch 12 (AMI), "Link / Unlink events"** — removed in Asterisk 12; 22 emits
-  `BridgeCreate`/`BridgeEnter`/`BridgeLeave`/`BridgeDestroy`. Regenerate from
-  `manager show events`.
-- **Ch 12 (AMI), "Events available" list** — legacy AMI-v1 catalog; regenerate from
-  `manager show events`.
+- **Ch 12 (AMI), "Link / Unlink events" + "Events available" list — DONE (removed).** Both
+  were obsolete and irrelevant to Asterisk 22 (Link/Unlink events were removed in A12; the
+  "Events available" list was a garbled legacy AMI-v1 Java-class catalog). Replaced with a
+  short, lab-verified pointer to `manager show events` / `manager show event <name>` and the
+  modern `Bridge*` events.
 - **Ch 12 (AMI), Originate help block** — old `Variables:` format; 22 uses
-  `[Synopsis]/[Syntax]/[Arguments]`. Low priority.
+  `[Synopsis]/[Syntax]/[Arguments]`. Content is accurate and the command is still valid —
+  kept; reformat only if desired. Low priority.
 - **Ch 4 figure** — commission a redrawn TCP/IP-model figure if a visual is wanted (the
   OSI figure was replaced by a table).
 - **Ch 13 (realtime) phpMyAdmin screenshots** — refresh with a current tool or convert

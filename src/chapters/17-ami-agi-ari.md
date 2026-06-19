@@ -285,129 +285,23 @@ Variables: (Names marked with * are required)
 
 ### Event packets
 
-Events are generated in the manager interface based on some Asterisk activities. There are link and unlink events.
+Events are generated on the manager interface whenever something happens in Asterisk —
+a channel is created or changes state, two channels are bridged or unbridged, a
+registration changes, a queue member is added, and so on. Each event is a block of
+`Key: value` lines beginning with an `Event:` header.
 
-#### Link Events:
-
-Link events are triggered when two channels are connected and voice transmission starts. More than one event can be triggered for a single call. Any call that needs transcoding will generate two events: the first one is a fail to establish a native bridge between the channels while the second is the call itself. Example:
-
-```
-   Event: Link
-   Channel1: PJSIP/4001-AAAA
-   Channel2: PJSIP/4000-BBBB
-   Uniqueid1: 1234567890.12
-   Uniqueid2: 1234567890.12
-```
-
-#### Unlink events:
-
-Unlink events are triggered when a link between two channels is disconnected just before the call is completed. Example:
+The exact set of events depends on the loaded modules and the Asterisk version, so rather
+than reproduce a list that quickly goes stale, query the running server for the
+authoritative set:
 
 ```
-   Event: Link
-   Channel1: PJSIP/4001-AAAA
-   Channel2: PJSIP/4000-BBBB
-   Uniqueid1: 1234567890.12
-   Uniqueid2: 1234567890.12
+asterisk*CLI> manager show events             ; list every event this build can emit
+asterisk*CLI> manager show event BridgeEnter  ; describe one event and its fields
 ```
 
-### Events available
-
-Below are some of the events available for Asterisk.
-
-```
-AbstractAgentEvent
-HoldEvent
-PeerStatusEvent
-AbstractParkedCallEv
-JoinEvent
-QueueEntryEvent
-ent
-AbstractQueueMemberE
-LeaveEvent
-QueueEvent
-vent
-```
-
-- LinkageEvent
-
-```
-QueueMemberAddedEvent
-```
-
-- LinkEvent
-
-```
-QueueMemberEvent
-AgentCalledEvent
-LogChannelEvent
-QueueMemberPausedEvent
-AgentCompleteEvent
-ManagerEvent
-QueueMemberRemovedEvent
-AgentConnectEvent
-MeetMeEvent
-QueueMemberStatusEvent
-AgentDumpEvent
-MeetMeJoinEvent
-QueueParamsEvent
-AgentLoginEvent
-MeetMeLeaveEvent
-QueueStatusCompleteEvent
-AgentLogoffEvent
-MeetMeStopTalkingEve
-RegistryEvent
-nt
-AgentsCompleteEvent
-MeetMeTalkingEvent
-ReloadEvent
-AgentsEvent
-MessageWaitingEvent
-RenameEvent
-AlarmClearEvent
-NewCallerIdEvent
-ResponseEvent
-AlarmEvent
-NewChannelEvent
-ShutdownEvent
-CdrEvent
-NewExtenEvent
-StatusCompleteEvent
-ChannelEvent
-NewStateEvent
-StatusEvent
-ConnectEvent
-OriginateEvent
-UnholdEvent
-DBGetResponseEvent
-OriginateFailureEven
-UnlinkEvent
-t
-DialEvent
-OriginateSuccessEven
-UnparkedCallEvent
-t
-DisconnectEvent
-ParkedCallEvent
-UserEvent
-DNDStateEvent
-ParkedCallGiveUpEven
-DahdiShowChannelsComplete
-t
-Event
-ExtensionStatusEvent
-ParkedCallsCompleteE
-DahdiShowChannelsEvent
-vent
-FaxReceivedEvent
-ParkedCallTimeOutEve
-nt
-HangupEvent
-PeerEntryEvent
-HoldedCallEvent
-PeerlistCompleteEven
-t
-```
+For example, call bridging is reported through the `BridgeCreate`, `BridgeEnter`,
+`BridgeLeave`, and `BridgeDestroy` events (`BridgeEnter` is "Raised when a channel enters a
+bridge"). The older `Link`/`Unlink` events were removed in Asterisk 12.
 
 ## Asterisk Gateway Interface
 
