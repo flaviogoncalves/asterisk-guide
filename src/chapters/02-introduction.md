@@ -129,6 +129,8 @@ Asterisk uses the server's CPU to process signaling and media for voice channels
 
 This section will explain how Asterisk’s architecture works. The figure below shows the basic Asterisk architecture. Next, we will explain architecture-related concepts, including channels, codecs, and applications.
 
+![The Asterisk architecture](../images/01-introduction-fig01.png)
+
 ### Channels
 
 A channel is the equivalent of a telephone line, but in a digital format. It usually consists of an analog or digital (TDM) signaling system or a combination of codec and signaling protocol (e.g., SIP-GSM, IAX-uLaw). Initially, all telephony connections were analog and susceptible to echo and noise. Later, most systems were converted to digital systems, with the analogical sound converted into a digital format using pulse code modulation (PCM) in most cases. This format allows voice transmission in 64 kilobits/second without compression.
@@ -148,10 +150,6 @@ The older VoIP channels are no longer part of a standard Asterisk 22 build: `cha
 Miscellaneous channels:
 
 - **Local**: a pseudo-channel (built into the core) that loops back into the dial plan in a different context — useful for recursive routing and for fanning a call out to multiple destinations. Dial string: `Local/extension@context`.
-
-![01-introduction-to-asterisk figure 1](../images/01-introduction-to-asterisk-img01.png)
-
-![01-introduction-to-asterisk figure 2](../images/01-introduction-to-asterisk-img02.png)
 
 ### Codec and codec translation
 
@@ -198,29 +196,25 @@ You can add applications from Asterisk add-ons, third-party providers, or even t
 
 Asterisk is an open-source PBX that acts like a hybrid PBX, integrating technologies such as TDM and IP telephony. Asterisk is ready to implement functionality such as interactive voice response (IVR) and automatic call distribution (ACD); moreover, as previously mentioned, it is open to the development of new applications. This figure shows how Asterisk connects to the PSTN and existing PBXs using analog and digital interfaces as well as supports analog and IP phones. It can act as a soft-switch, media gateway, voicemail, and audio conference and also has built-in music on hold.
 
+![Overview of an Asterisk system](../images/01-introduction-fig02.png)
+
 ## Comparing the old and the new world
 
 In the old soft-switch model, all components were sold separately, meaning you had to purchase each component separately and then integrate to the PBX or soft-switch environment. The costs and risks were high and most of the equipment proprietary.
 
-![01-introduction-to-asterisk figure 3](../images/01-introduction-to-asterisk-img03.png)
-
-![01-introduction-to-asterisk figure 4](../images/01-introduction-to-asterisk-img04.png)
+![The old world: components bought and integrated separately](../images/01-introduction-fig03.png)
 
 ### Telephony using Asterisk
 
 All functions are integrated in the Asterisk platform in the same or in different boxes according to the dimensioning, and all are GPL licensed. Sometimes it is easier to install Asterisk than license some of the mainstream IP-PBXs
 
-![01-introduction-to-asterisk figure 5](../images/01-introduction-to-asterisk-img05.png)
-
-![01-introduction-to-asterisk figure 6](../images/01-introduction-to-asterisk-img06.png)
-
-![01-introduction-to-asterisk figure 7](../images/01-introduction-to-asterisk-img07.png)
-
-![01-introduction-to-asterisk figure 8](../images/01-introduction-to-asterisk-img08.png)
+![Telephony using Asterisk: the functions are integrated](../images/01-introduction-fig04.png)
 
 ## Building a test system
 
 When implementing an Asterisk solution, our first step is generally to build a test machine. The easiest test machine is the 1x1 PBX, including at least one phone and one line. There are several ways to do this.
+
+![A simple Asterisk test system](../images/01-introduction-fig05.png)
 
 ### One FXO, one FXS
 
@@ -234,10 +228,6 @@ This is the VoIP option. In this case, you would sign up with a voice service pr
 
 I started with an inexpensive FXO card. Some inexpensive V.90 fax/modems work with Asterisk as an FXO card. Some of the first Digium cards were created using these cards (e.g., X100P and X101P), which are old modems based on Motorola and Intel chipsets (Motorola 68202-51, Intel 537PU, Intel 537PG, and Intel Ambient MD3200 are known to work). These modems are often incompatible with new motherboards. Recently some manufacturers started to sell these cards as
 
-![01-introduction-to-asterisk figure 9](../images/01-introduction-to-asterisk-img09.png)
-
-![01-introduction-to-asterisk figure 10](../images/01-introduction-to-asterisk-img10.png)
-
 X100P clones. Some of the incompatibilities can be solved using a patch, more information can be found at:
 
 - http://www.voip.school/mediawiki/index.php/Asterisk_patch_for_the_X100P_card
@@ -250,41 +240,37 @@ Asterisk can be used in several different scenarios. We will list some of them a
 
 The most common scenario is the installation of a new or the replacement of an existing PBX. If you compare Asterisk with some other alternatives, you will find it to be cheaper and richer in features than most PBXs currently available on the market. Several companies are now changing their specifications to Asterisk instead of other brand-name PBXs.
 
+![Asterisk as an IP PBX](../images/01-introduction-fig06.png)
+
 ### IP-enabling legacy PBXs
 
 The following image illustrates one of the most commonly used setups. Large companies generally do not want to take significant risk when investing in new technologies and simultaneously wish to preserve their investments in legacy equipment. IP-enabling legacy PBX can be very expensive; thus, connecting an Asterisk PBX using T1/E1 lines can be a good alternative for cost-conscious customers. Another benefit is the possibility of connecting to a VoIP service provider with better telephony rates.
 
-![01-introduction-to-asterisk figure 11](../images/01-introduction-to-asterisk-img11.png)
-
-![01-introduction-to-asterisk figure 12](../images/01-introduction-to-asterisk-img12.png)
+![IP-enabling a legacy PBX](../images/01-introduction-fig07.png)
 
 ### Toll Bypass
 
 A very useful application for VoIP is connecting branch offices over the Internet or a WAN. Using an existing data connection allows you to bypass toll charges incurred in telecommunication connections between headquarters and branch offices.
 
-![01-introduction-to-asterisk figure 13](../images/01-introduction-to-asterisk-img13.png)
-
-![01-introduction-to-asterisk figure 14](../images/01-introduction-to-asterisk-img14.png)
-
-![01-introduction-to-asterisk figure 15](../images/01-introduction-to-asterisk-img15.png)
+![Toll bypass between offices over a WAN](../images/01-introduction-fig08.png)
 
 ### Application Server (IVR, Conference, Voicemail)
 
 Asterisk can be used as an application server for the existing PBX or be directly connected to PSTN. Asterisk offers services such as voicemail, fax reception, call recording, IVR connected to a database, and an audio conferencing server. If you integrate voicemail and fax into an existing e-mail server, you will have a unified messaging system, which is usually an expensive solution. Using Asterisk as an application server provides extreme cost reduction compared to other solutions.
 
+![Asterisk as an application server](../images/01-introduction-fig09.png)
+
 ### Media Gateway
 
 Most voice-over IP service providers use an SIP proxy to host all registration, location, and authentication of SIP users. They still have to send calls to the PSTN directly or route it through a wholesale call termination provider using an SIP or H.323 voice-over IP connection. Asterisk can act as a back-to-back user agent (B2BUA) or media gateway, replacing very expensive soft switches or media gateways. Compare the price of a four E1/T1 gateway from the main market manufacturers with Asterisk. The Asterisk solution can cost several times less than other solutions and is capable of translating signaling protocols (H.323, SIP, IAX…) and codecs (G.711, G.729…).
 
-![01-introduction-to-asterisk figure 16](../images/01-introduction-to-asterisk-img16.png)
+![Asterisk as a media gateway](../images/01-introduction-fig10.png)
 
 ### Contact Center Platform
 
 A contact center is a very complex solution that combines several technologies, such as automatic call distribution (ACD), interactive voice response (IVR), and call supervision. Basically, three types of contact centers are available: inbound, outbound, and blended. Inbound contact centers are very sophisticated and usually require ACD, IVR, CTI, recording, supervision, and reports. Asterisk has a built-in ACD to queue the calls. IVR can be done using Asterisk Gateway Interface (AGI) or internal mechanisms such as the application background(). Computer telephony integration (CTI) is achieved using Asterisk Manager Interface (AMI); recording and reporting are built in to Asterisk. For an outbound contact center, a predictive or power dialer is one of the main components. Although several dialers are available for the open-source Asterisk, it is not hard to build your own for the platform if you so desire. A blended contact center allows simultaneous inbound and outbound operation, saving money by ensuring better use of the agent's time. It is possible to use Asterisk and its ACD mechanism to implement a blended solution.
 
-![01-introduction-to-asterisk figure 17](../images/01-introduction-to-asterisk-img17.png)
-
-![01-introduction-to-asterisk figure 18](../images/01-introduction-to-asterisk-img18.png)
+![An Asterisk contact-center platform](../images/01-introduction-fig11.png)
 
 ## Finding information and help
 
@@ -305,10 +291,6 @@ Mailing lists are quite handy when you have questions. Usually, you will receive
 ## Summary
 
 Asterisk is software licensed according to the GPL that enables an ordinary PC to act as a powerful IP PBX platform. Digium’s Mark Spencer created Asterisk in the late 1990s, and Digium sustained itself by selling Asterisk-related hardware and commercial products. Digium was acquired by Sangoma Technologies in 2018; Sangoma now sponsors Asterisk development. Hardware interface design originated in the Zapata project developed by Jim Dixon, which gave rise to DAHDI.
-
-![01-introduction-to-asterisk figure 19](../images/01-introduction-to-asterisk-img19.png)
-
-![01-introduction-to-asterisk figure 20](../images/01-introduction-to-asterisk-img20.png)
 
 The Asterisk architecture has the following main components:
 
