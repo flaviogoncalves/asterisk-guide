@@ -440,7 +440,7 @@ retry_interval=60
 
 To access this trunk, we will use the channel name `PJSIP/siptrunk` (the legacy `chan_sip` form was `SIP/siptrunk`).
 
-> **[2nd-ed note]** The old `dtmfmode=rfc2833` maps to PJSIP's `dtmf_mode=rfc4733` (RFC 4733 obsoletes RFC 2833; the payload is identical). Verify `match=domain` — `identify`/`match` expects an IP or CIDR; if the provider is reached by hostname, resolve it or list the provider's signalling IP(s). Confirm registration with `pjsip show registrations`. Also verify the codec list (`ilbc`, `g729`) against the book's codec policy chapter.
+> **[2nd-ed note]** The old `dtmfmode=rfc2833` maps to PJSIP's `dtmf_mode=rfc4733` (RFC 4733 obsoletes RFC 2833; the payload is identical). Verify `match=domain` — `identify`/`match` accepts IP addresses, CIDRs, or hostnames, but hostnames are resolved once at config-load time, so for a provider with changing IPs list the signalling IP(s) explicitly. Confirm registration with `pjsip show registrations`. Also verify the codec list (`ilbc`, `g729`) against the book's codec policy chapter.
 
 ## Dial plan introduction
 
@@ -549,7 +549,7 @@ Asterisk uses some extension names as standard extensions.
 
 ![03-building-a-simple-pbx figure 12](../images/03-building-a-simple-pbx-img12.png)
 
-Description: s: Start. It is used to handle a call when there is no dialed number. It is useful for FXO trunks and in- menu processing. t: Timeout. It is used when calls remain inactive after a prompt has been played. It is also used to hang up an inactive line. T: AbsoluteTimeout. If you establish a call limit using the absolutetimeout() function, once the call exceeds the limit defined, it will be sent to the T extension. h: Hangup. It is called after the user disconnects the call. i: Invalid. It is triggered when you call an non-existent extension in the context. Using these extensions can affect the content of CDR records—specifically, the dst that does not contain the number dialed. o: Operator. It is used to go to operator when the user presses “0” during the voicemail. The use of these extensions can change the content of the billing records (CDR)—in particular, the field dst will not have the number dialed. To work around this problem, you should use the option g in the dial() application and consider the functions resetcdr(w) and/or nocdr()
+Description: s: Start. It is used to handle a call when there is no dialed number. It is useful for FXO trunks and in- menu processing. t: Timeout. It is used when calls remain inactive after a prompt has been played. It is also used to hang up an inactive line. T: AbsoluteTimeout. If you establish a call limit using the `TIMEOUT(absolute)` dialplan function, once the call exceeds the limit defined, it will be sent to the T extension. h: Hangup. It is called after the user disconnects the call. i: Invalid. It is triggered when you call an non-existent extension in the context. Using these extensions can affect the content of CDR records—specifically, the dst that does not contain the number dialed. o: Operator. It is used to go to operator when the user presses “0” during the voicemail. The use of these extensions can change the content of the billing records (CDR)—in particular, the field dst will not have the number dialed. To work around this problem, you should use the option g in the dial() application and consider the functions resetcdr(w) and/or nocdr()
 
 ## Variables
 
