@@ -98,7 +98,7 @@ Three kinds of SIP and IAX clients exist. The first one is “user”. Users can
 
 ## Codecs and codec translation
 
-You will use a codec to convert the voice from an analog wave to a digital signal. Codecs differ from one another in aspects such as sound quality, compression rate, bandwidth, and computing requirements. Services, phones, and gateways usually support several of these aspects. The codec G.729 is very popular; it was previously proprietary and required per-channel licensing fees, but Sangoma now distributes `codec_g729` binary modules free of charge for Asterisk 22.
+You will use a codec to convert the voice from an analog wave to a digital signal. Codecs differ from one another in aspects such as sound quality, compression rate, bandwidth, and computing requirements. Services, phones, and gateways usually support several of these aspects. The codec G.729 is very popular. Sangoma distributes a `codec_g729` binary module for Asterisk 22; the download is free of charge, but lawful G.729 use still requires a purchased per-channel license. (An open-source alternative, `bcg729`, also exists.)
 
 ![06-designing-a-voip-network figure 5](../images/06-designing-a-voip-network-img05.png)
 
@@ -110,7 +110,7 @@ Asterisk 22 supports the following codecs (among others):
 - ITU G.722: 64 Kbps — wideband (HD voice), good quality at the same bandwidth as G.711
 - ITU G.723.1: 5.3/6.3 Kbps
 - ITU G.726: 16/24/32/40 Kbps
-- ITU G.729: 8 Kbps — free binary module (`codec_g729`) distributed by Sangoma
+- ITU G.729: 8 Kbps — `codec_g729` binary module from Sangoma (free download; per-channel license required to use)
 - Speex: 2.15 to 44.2 Kbps
 - LPC10: 2.5 Kbps
 - **Opus**: 6–510 Kbps, variable — modern wideband/fullband codec; excellent quality and packet-loss resilience; free binary module (`codec_opus`) distributed by Sangoma; recommended for WebRTC and modern SIP endpoints
@@ -130,12 +130,12 @@ Codec selection depends on several options, such as:
 
 The following table compares the most popular codecs. The quality of these codecs is considered “toll”—in other words, similar to PSTN. Codec g.711 g.729A iLBC GSM 06.10 (20 ms) (30 ms) RTE/LTP Bandwidth 13.33 (Kbps) Costs Free ~ USD10.00 Free Free (per channel) Resistance to No 3% 5% 3% Frame Erasure1 mechanism Complexity ~0.35 ~13 ~18 ~5 MIPS 2 1 Resistance to packet loss refers to the rate when MOS is next to 0.5 worst from peak quality for the specific codec. 2 Complexity refers to quantities in millions of instructions per second spent to code and decode the codec using a reference design in a Texas Instruments DSP (TMS320C54x). A direct relationship exists between processor frequency and MIPS, but it is not possible to draw a precise relationship among such diverse hardware platforms. Use this table just for comparison.
 
-> **[2nd-ed note]** Update this table for the 2nd edition: G.729 is now free (Sangoma `codec_g729`); add Opus (recommended modern wideband codec, free `codec_opus` from Sangoma) and G.722 (wideband at 64 Kbps). G.711 ulaw/alaw remains the baseline for PSTN interop.
+> **[2nd-ed note]** Rebuild this comparison table for the 2nd edition: add Opus (free `codec_opus`) and G.722 (wideband, 64 Kbps); keep G.711 ulaw/alaw as the PSTN baseline. For G.729, note the licensing reality — Sangoma's `codec_g729` is free to download but requires a per-channel license; the open-source `bcg729` is an alternative.
 
 **Codec recommendations for Asterisk 22:**
 
 - **G.711 (ulaw/alaw):** Use for PSTN trunks and maximum interoperability; zero transcoding cost within Asterisk.
-- **G.729:** Recommended for low-bandwidth WAN trunks; now freely available via Sangoma's `codec_g729` binary module.
+- **G.729:** Useful for low-bandwidth WAN trunks; Sangoma's `codec_g729` module is free to download but requires a purchased per-channel license to use.
 - **G.722:** Good choice for wideband (HD voice) on LAN/internal extensions; same bandwidth as G.711 with better quality.
 - **Opus:** Recommended for modern endpoints, WebRTC clients, and any deployment where the endpoint supports it. Adaptive bitrate, excellent packet-loss resilience, freely available via Sangoma's `codec_opus` binary module.
 
@@ -289,6 +289,4 @@ In this chapter, you have learned that Asterisk treats VoIP using channels. It s
     - D. G.711 u-law is common in the US, while a-law is common in Europe and Latin America.
     - E. G.729 is light and uses very few CPU resources to encode/decode.
 
-**Answers:** 1 — Convergence, Computer-Telephony Integration, reduced costs, video (among others) · 2 — A · 3 — A · 4 — A · 5 — D · 6 — B · 7 — B · 8 — A, C · 9 — B · 10 — A, C, D
-
-> **[2nd-ed note]** Quiz question 10-B needs updating: G.729 is now freely available via Sangoma's `codec_g729` binary module — the "requires licensing" statement is no longer accurate. Review answer key for question 10 accordingly.
+**Answers:** 1 — Convergence, Computer-Telephony Integration, reduced costs, video (among others) · 2 — A · 3 — A · 4 — A · 5 — D · 6 — B · 7 — B · 8 — A, C · 9 — B · 10 — A, B, C, D
