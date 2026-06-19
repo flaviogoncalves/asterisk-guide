@@ -33,7 +33,7 @@ The DOS is applied usually thru techniques such as fuzzing and flooding. Floodin
 o
 ```
 
-Protos Test Suite https://www.ee.oulu.fi/research/ouspg/PROTOS_Test-Suite_c07- sip. This tool makes thousands of tests with malformed packets. The objective is to cause a malfunction such as a buffer overflow and stop the software. Voiper – http://voiper.sourceforge.net/. Generates more than 200.000 tests with all SIP
+PROTOS Test Suite (c07-sip), from the University of Oulu OUSPG. This tool makes thousands of tests with malformed packets. The objective is to cause a malfunction such as a buffer overflow and stop the software. Voiper – http://voiper.sourceforge.net/. Generates more than 200.000 tests with all SIP
 
 ```
 o

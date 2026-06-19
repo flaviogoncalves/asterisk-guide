@@ -657,7 +657,7 @@ Fast AGI implements AGI using a TCP port (4573 by default) as the Input/Output c
 exten => 0800400001, 1, Agi(agi://192.168.0.1)
 ```
 
-When the TCP connection is lost or disconnected, the AGI ends and the TCP connection is closed, followed by a call disconnection. This resource is useful to ease the CPU load from your Asterisk server running scripts in an external server. You may obtain more details about FastAGI in the source code directory (please see the file “agi/fastagi-test”). OrderlyCalls has a Java AGI server that implements Fast AGI for Java. For more information, see http://www.orderlycalls.com
+When the TCP connection is lost or disconnected, the AGI ends and the TCP connection is closed, followed by a call disconnection. This resource is useful to ease the CPU load from your Asterisk server running scripts in an external server. You may obtain more details about FastAGI in the source code directory (please see the file “agi/fastagi-test”). The Asterisk-Java library provides a FastAGI server implementation for Java. For more information, see https://github.com/asterisk-java/asterisk-java
 
 ## Asterisk REST Interface (ARI)
 

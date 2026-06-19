@@ -87,9 +87,7 @@ SIP is an Internet Engineering Task Force (IETF) open standard, largely defined 
 
 ### IAX – Inter Asterisk eXchange
 
-IAX is an open protocol originally developed by Digium (now Sangoma). IAX is an all-in-one protocol as it transports signaling and media through the same UDP port (4569). Mark Spencer developed IAX as a binary protocol for reduced bandwidth. The main strength of IAX is its reduced bandwidth usage (it does not use RTP); it is also very easy for NAT and firewall traversal since it uses only one UDP port (4569). If a traditional PBX manufacturer were to have created IAX, it would probably have marketed the protocol as the “best thing since ice cream”; in some situations, IAX in trunk mode can reduce voice bandwidth use by one third. IAX2 (version 2) still ships in Asterisk 22 via the `chan_iax2` module and remains useful for Asterisk-to-Asterisk trunks, though it is considered legacy; SIP/PJSIP is preferred for new deployments.
-
-> **[2nd-ed note]** The original IETF draft URL (www.ietf.org/internet-drafts/drafts-guy-iax00.txt) is expired; verify and update the canonical reference if desired.
+IAX is an open protocol originally developed by Digium (now Sangoma). IAX is an all-in-one protocol as it transports signaling and media through the same UDP port (4569). Mark Spencer developed IAX as a binary protocol for reduced bandwidth. The main strength of IAX is its reduced bandwidth usage (it does not use RTP); it is also very easy for NAT and firewall traversal since it uses only one UDP port (4569). If a traditional PBX manufacturer were to have created IAX, it would probably have marketed the protocol as the “best thing since ice cream”; in some situations, IAX in trunk mode can reduce voice bandwidth use by one third. IAX2 (version 2) still ships in Asterisk 22 via the `chan_iax2` module and remains useful for Asterisk-to-Asterisk trunks, though it is considered legacy; SIP/PJSIP is preferred for new deployments. IAX2 is specified in [RFC 5456](https://www.rfc-editor.org/rfc/rfc5456) (Informational).
 
 ### MGCP – Media Gateway Control Protocol
 

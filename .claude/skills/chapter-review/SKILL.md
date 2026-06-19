@@ -63,6 +63,19 @@ If these are unclear, ask the user briefly, then proceed.
   inlined figure or code fragment — rejoin them.
 - **Figures & assets:** every figure is legible, correctly referenced, and actually
   supports the text. Replace broken/low-quality assets when a better source exists.
+- **Links & references (check every URL — broken links are a review failure):** extract
+  the chapter's URLs and verify each one resolves. For example:
+  `grep -rhoE 'https?://[^][(){}<>"`'"'"' ]+' <chapters> | sed -E 's/[.,);:]+$//' | sort -u`,
+  then for each: `curl -sSL -o /dev/null -w '%{http_code}' --max-time 15 -A 'Mozilla/5.0' <url>`.
+  A `2xx`/`3xx` is fine; a `403` from a known-live site (e.g. asterisk.org, dev.mysql.com)
+  is usually an anti-bot false positive, but `404`/`000`/a dead domain is **broken**. Also
+  ignore obvious placeholders (`http://localhost`, `https://your-host:8089/ws`). For each
+  genuinely broken link: **search for the current authoritative URL and replace it** (verify
+  the replacement resolves before saving); if the resource is truly gone, **remove the URL
+  but keep the reference text**. Watch for two rot patterns: a URL line-wrapped with a space
+  spliced into the middle, and a version-pinned download URL that will 404 over time
+  (generalize it to the downloads page + a `VER=` placeholder). Finally, confirm every local
+  asset path (`![](…)`) actually exists on disk.
 
 ### 4. Consistency with the book
 

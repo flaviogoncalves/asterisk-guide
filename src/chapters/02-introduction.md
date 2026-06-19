@@ -282,11 +282,11 @@ This section will provide some of the main sources of information related to Ast
 - Bug tracking -> <https://github.com/asterisk/asterisk/issues>
 - Wiki (legacy, largely superseded by docs.asterisk.org) -> <https://wiki.asterisk.org>
 
-### Mailing lists
+### Community forum
 
-Mailing lists are quite handy when you have questions. Usually, you will receive answers for your questions. Try to gather as much information as possible before posting to the list. Nobody will help you if you haven't done your homework. In other words, try at least once to solve the problem by yourself.
+The Asterisk community forum has largely replaced the old mailing lists and is the place to ask questions. Try to gather as much information as possible before posting. Nobody will help you if you haven't done your homework — try at least once to solve the problem by yourself.
 
-- <http://www.asterisk.org/support/mailing-lists>
+- <https://community.asterisk.org>
 
 ## Summary
 

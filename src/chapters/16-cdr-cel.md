@@ -145,14 +145,17 @@ Step 4: Download the MySQL ODBC connector from Oracle. Check your operating syst
 
 ```
 cd /usr/src
-wget https://dev.mysql.com/get/Downloads/Connector-ODBC/9.0/mysql-connector-odbc-9.0.0-linux-ubuntu22.04-x86-64bit.tar.gz
-tar -xzvf mysql-connector-odbc-9.0.0-linux-ubuntu22.04-x86-64bit.tar.gz
+# Pick the current Linux (glibc) build for your platform from
+# https://dev.mysql.com/downloads/connector/odbc/ and set VER to its name:
+VER=mysql-connector-odbc-9.0.0-linux-glibc2.28-x86-64bit
+wget https://dev.mysql.com/get/Downloads/Connector-ODBC/9.0/$VER.tar.gz
+tar -xzvf $VER.tar.gz
 ```
 
 Step 5: Install the ODBC driver
 
 ```
-cd /usr/src/mysql-connector-odbc-9.0.0-linux-ubuntu22.04-x86-64bit
+cd /usr/src/$VER
 cp bin/* /usr/local/bin
 cp lib/* /usr/local/lib
 myodbc-installer -a -d -n "MySQL" -t "Driver=/usr/local/lib/libmyodbc9w.so"
