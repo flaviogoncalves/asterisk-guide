@@ -1,6 +1,17 @@
 # Translation plan — Portuguese (pt) & Spanish (es)
 
-Status: **planned** (to wire into CI/CD when ready). Captures the agreed spec.
+Status: **implemented.** `book/translate/translate.py` translates the chapters with Gemini
+(default model `gemini-flash-lite-latest` — cheapest tier; override with `GEMINI_TRANSLATE_MODEL`),
+caching by content hash. `book/build.sh` builds a language with `BOOK_LANG=pt|es`. CI translates
++ builds PT/ES on main/tags when the **`GEMINI_API_KEY`** repo secret is set, and attaches them
+to releases.
+
+```bash
+python3 book/translate/translate.py --lang pt     # -> i18n/pt/chapters/ (cached by hash)
+BOOK_LANG=pt bash book/build.sh clean             # -> build/asterisk-guide-pt.{pdf,epub,tex}
+```
+
+The agreed spec it implements:
 
 ## Decisions (from the author)
 - **Engine:** Google **Gemini** does the translation, using the **same API key** already in
