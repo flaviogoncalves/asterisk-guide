@@ -28,45 +28,39 @@ SIP is a signaling protocol with the following components: User Agent Client, Us
 
 Usually, the proxy, redirect, and location servers are hosted within the same hardware and use the same piece of software, which we call the SIP proxy. The SIP proxy is responsible for location database maintenance, connection establishment, and session termination.
 
+![The main SIP components: user agents (UAC/UAS/UA), the registrar/proxy/redirect server, and a gateway to the PSTN, with the RTP media flowing directly between endpoints](../images/07-sip-and-pjsip-fig01.png)
+
 #### SIP Register process
 
 Before a phone can receive calls, it needs to be registered to a location database. In the location database, the IP address will be bonded to the name. In the following example, extension 8500 will be bound to IP address 200.180.1.1. You do not necessarily need to use phone numbers. In the SIP architecture, the registered extension could be flavio@voip.school as well.
 
-![08-the-sip-protocol figure 1](../images/08-the-sip-protocol-img01.png)
+![SIP registration: the phone sends a REGISTER binding extension 8500 to its IP address, the registrar stores the contact in the location database and replies with 200 OK](../images/07-sip-and-pjsip-fig02.png)
 
 #### Proxy operation
 
 When operating as a SIP proxy, the SIP server stays in the middle of the signaling and is capable of advanced routing and billing. The media flow, based on the real time protocol (RTP) still goes directly between the endpoints.
 
-![08-the-sip-protocol figure 2](../images/08-the-sip-protocol-img02.png)
-
-![08-the-sip-protocol figure 3](../images/08-the-sip-protocol-img03.png)
-
-![08-the-sip-protocol figure 4](../images/08-the-sip-protocol-img04.png)
-
-![08-the-sip-protocol figure 5](../images/08-the-sip-protocol-img05.png)
+![Proxy operation: the SIP proxy stays in the signaling path (INVITE/200 OK) and looks up the callee in the location server, while the RTP media flows directly between the two endpoints](../images/07-sip-and-pjsip-fig03.png)
 
 #### Redirect operation
 
 When redirecting, the SIP server simply sends a message (e.g., 302 moved temporarily) to the user agent and stays out of the path of new messages. It is very light in terms of resource usage, but you have no control at all. Redirection is sometimes used in load balance designs.
 
+![Redirect operation: the redirect server answers the INVITE with a 302 Moved Temporarily carrying the contact, then steps aside while the caller re-sends INVITE/ACK directly to the new location](../images/07-sip-and-pjsip-fig04.png)
+
 #### How Asterisk handles SIP
 
 It is important to understand that Asterisk is neither a SIP proxy nor a SIP redirector. Asterisk can perform the role of the registrar and location server; however, it only connects two UACs to itself. Therefore, Asterisk is considered a back-to-back user agent (B2BUA). In other words, it connects two SIP channels, bridging them together. Asterisk has a re-invite mechanism that can make the SIP channels talk to each other directly instead of passing through Asterisk. This mechanism is controlled by the parameter `directmedia`. When using `directmedia=yes` the RTP flow goes directly from one endpoint to another, freeing server resources. In legacy chan_sip this option lived in `sip.conf`; in Asterisk 22 the same concept is `direct_media=yes` on a PJSIP endpoint in `pjsip.conf`.
 
-![08-the-sip-protocol figure 6](../images/08-the-sip-protocol-img06.png)
-
-![08-the-sip-protocol figure 7](../images/08-the-sip-protocol-img07.png)
-
 #### SIP operation with directmedia=yes
+
+![SIP operation with directmedia=yes: SIP signaling flows through Asterisk while the RTP audio goes directly between the two phones, freeing server resources](../images/07-sip-and-pjsip-fig05.png)
 
 However, if you need to transfer or record the call using Asterisk, you may use the parameter directmedia=no to force the RTP flow through the Asterisk server.
 
-![08-the-sip-protocol figure 8](../images/08-the-sip-protocol-img08.png)
-
-![08-the-sip-protocol figure 9](../images/08-the-sip-protocol-img09.png)
-
 #### SIP operation with directmedia=no
+
+![SIP operation with directmedia=no: both the SIP signaling and the RTP audio are anchored through Asterisk, allowing it to record, transcode, or transfer the call](../images/07-sip-and-pjsip-fig06.png)
 
 #### SIP Messages
 
@@ -156,7 +150,7 @@ Now let’s move on to more advanced configurations. In the following legacy sec
 
 Asterisk is often used to connect to a SIP VoIP provider. VoIP providers usually have better rates for phone calls than traditional providers. Another interesting and attractive point of VoIP providers is the possibility to buy DID numbers in other cities—even in foreign countries. These are good reasons to use VoIP for telecommunications. In this section, you will learn how to connect Asterisk to a VoIP provider. Three steps are required to connect Asterisk to a SIP provider. Tests can be conducted by establishing an account with your favorite provider. Step 1: Registering with a SIP provider in sip.conf To connect to a SIP provider, you will need the following information from the provider:
 
-![08-the-sip-protocol figure 10](../images/08-the-sip-protocol-img10.png)
+![Asterisk connected to a VoIP service provider over the Internet or a private WAN, with local SIP phones registered to the Asterisk server](../images/07-sip-and-pjsip-fig07.png)
 
 - username
 - secret and remotesecret (Use secret to authenticate inbound requests and remotesecret for outbound requests)
@@ -283,9 +277,7 @@ directmedia=no
 [A-out]
 ```
 
-![08-the-sip-protocol figure 11](../images/08-the-sip-protocol-img11.png)
-
-![08-the-sip-protocol figure 12](../images/08-the-sip-protocol-img12.png)
+![Connecting two Asterisk servers using SIP: server A (extensions 4400/4401) and server B (extensions 4500/4501) exchange SIP signaling so users on each PBX can dial the other](../images/07-sip-and-pjsip-fig08.png)
 
 ```
 type=peer
@@ -356,9 +348,7 @@ allowguest=yes
 
 This parameter allows an external invite to be processed without authentication. It processes the call within the context defined in the general section or in the domain statement. Warning: If you define a context in the general section with access to PSTN, an external user can dial the PSTN over your PBX. In this case, you will incur any charges. Allow only your own extensions in the context defined in the general section.
 
-![08-the-sip-protocol figure 13](../images/08-the-sip-protocol-img13.png)
-
-![08-the-sip-protocol figure 14](../images/08-the-sip-protocol-img14.png)
+![Connecting to other SIP servers by domain: youdomain.com and yourpartnerdomain.com exchange SIP signaling, so users such as lee and bruce can call chuck and norris using SIP URIs](../images/07-sip-and-pjsip-fig09.png)
 
 ```
 domain=acme.com,default
@@ -451,9 +441,7 @@ availability
 
 Step 4: Now call extension 2001 and check the status of the phone in the right panel of the soft- phone. Use the console commands core show hints to see the presence status changing in the server and (legacy chan_sip) sip show inuse to show how many calls you have on each line. On Asterisk 22, use `pjsip show endpoints` to inspect endpoint and channel state.
 
-![08-the-sip-protocol figure 15](../images/08-the-sip-protocol-img15.png)
-
-![08-the-sip-protocol figure 16](../images/08-the-sip-protocol-img16.png)
+> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
 
 #### Codec configuration
 
@@ -474,8 +462,6 @@ dtmfmode=inband
 ```
 
 Another approach is to use RFC2833, which allows you to pass DTMF tones as named events in the RTP packets. A table of events corresponding to tones is provided below. Event Codification
-
-![08-the-sip-protocol figure 17](../images/08-the-sip-protocol-img17.png)
 
 0—-9 0—9 * # A—D Flash
 
@@ -521,6 +507,8 @@ Starting from version 1.4, you can specify different codes for signaling (SIP), 
 
 When Asterisk receives a SIP call, it follows the rules described in the following diagram. Three parameters play an important role in SIP authentication:
 
+![Legacy chan_sip authentication decision flow: Asterisk checks the From header against sip.conf, tries the matching type=user/peer section and MD5 credentials, and falls back to insecure=invite or allowguest before allowing or denying the call](../images/07-sip-and-pjsip-fig10.png)
+
 ```
 allowguest=yes/no
 ```
@@ -548,10 +536,6 @@ This parameter configures the secret for authentication use secret for inbound r
 ```
 echo –n “username:realm:secret” |md5sum
 ```
-
-![08-the-sip-protocol figure 18](../images/08-the-sip-protocol-img18.png)
-
-![08-the-sip-protocol figure 19](../images/08-the-sip-protocol-img19.png)
 
 Then use the following statement:
 
@@ -608,6 +592,8 @@ Network Address Translation (NAT) is a feature used by most networks to save Int
 
 The first NAT, full cone, represents a static mapping from an external IP:port pair to an internal IP:port pair. Any external computer can connect to it using the external IP:port pair. This is the case in non-stateful firewalls implemented with the use of filters.
 
+![Full Cone NAT: the internal host (10.0.0.1:8000) is statically mapped to the external pair 200.180.4.168:1234, so any external computer can send packets to that pair and reach the internal host](../images/07-sip-and-pjsip-fig11.png)
+
 #### Restricted Cone
 
 In the restricted cone scenario, the external IP:port pair is opened only when the internal computer sends data to an outside address. However, the restricted cone NAT blocks any incoming packets from a different address. In other words, the internal computer has to send data to an external computer before it can send data back.
@@ -620,9 +606,7 @@ The port restricted cone firewall is almost identical to the restricted cone. Th
 
 The last type of NAT is called symmetric. It is different from the first three in that a specific mapping is done to each external address. Only specific external addresses are allowed to come back by the NAT mapping. It is not possible to predict the external IP:port pair that will be used by the NAT device. The other three types of NAT allow the use of an external server to discover the external IP address for communication. With symmetric NAT, even if you can connect to an external server, the discovered address cannot be used for any other device except for this server.
 
-![08-the-sip-protocol figure 20](../images/08-the-sip-protocol-img20.png)
-
-![08-the-sip-protocol figure 21](../images/08-the-sip-protocol-img21.png)
+![Symmetric NAT: a different external source port is allocated for each destination, so the mapping discovered toward one server cannot be reused by another host, which breaks STUN-based traversal](../images/07-sip-and-pjsip-fig12.png)
 
 #### NAT firewall table
 
@@ -640,9 +624,6 @@ Some of the biggest issues in NAT traversal are that you have to solve two probl
 - Do no special NAT handling other than RFC3581
 - nat = force_rport
 - Pretend there was an rport parameter even if there wasn't
-
-![08-the-sip-protocol figure 22](../images/08-the-sip-protocol-img22.png)
-
 - nat = comedia
 - Send media to the port Asterisk received it from regardless of where
 
@@ -673,7 +654,11 @@ These configurations are appropriate for most cases. However, it is possible to 
 
 #### Asterisk behind NAT
 
-All the previous scenarios assume that the Asterisk server has an external (valid) Internet address. Sometimes the Asterisk server is implemented behind a firewall with NAT. In this case, it is necessary to do some extra configurations. Step 1: Configure the firewall to redirect the UDP port 5060 statically to the Asterisk server. Step 2: Configure the firewall to redirect the UDP ports from 10000 to 20000 statically. If you want to restrict the number of opened ports, you can edit the rtp.conf file to change the RTP port range. Another way is to use an intelligent firewall that supports the SIP protocol to open the RTP ports dynamically.
+All the previous scenarios assume that the Asterisk server has an external (valid) Internet address. Sometimes the Asterisk server is implemented behind a firewall with NAT. In this case, it is necessary to do some extra configurations.
+
+![Asterisk behind NAT: a firewall maps the public address 200.180.4.168 to the internal Asterisk server (192.168.1.100), forwarding SIP on UDP 5060 and the RTP range UDP 10000–20000 defined in rtp.conf](../images/07-sip-and-pjsip-fig13.png)
+
+Step 1: Configure the firewall to redirect the UDP port 5060 statically to the Asterisk server. Step 2: Configure the firewall to redirect the UDP ports from 10000 to 20000 statically. If you want to restrict the number of opened ports, you can edit the rtp.conf file to change the RTP port range. Another way is to use an intelligent firewall that supports the SIP protocol to open the RTP ports dynamically.
 
 ```
 ; RTP Configuration
@@ -697,8 +682,6 @@ nat=force_rport,comedia
 ```
 
 The first parameter externaddr tells Asterisk to include the external IP address inside the SIP headers for external destinations. The second parameter localnet allows Asterisk to differentiate between external and internal addresses. Optionally, you can use externhost if you use a Dynamic DNS with a DHCP address on the server.
-
-![08-the-sip-protocol figure 23](../images/08-the-sip-protocol-img23.png)
 
 ### SIP limitations
 
@@ -878,7 +861,11 @@ permit=209.16.236.1
 
 ### Relationship between entities
 
-The relationship between the configuration objects provides a great flexibility for configuration. However, it seems a bit complex for anyone starting. Identify Endpoint ACL Domain Alias Transport Auth AOR Contact Registration The graphic above means:
+The relationship between the configuration objects provides a great flexibility for configuration. However, it seems a bit complex for anyone starting.
+
+![Relationships between PJSIP configuration objects: the endpoint links to transport, auth, and AOR (which holds contacts); registration ties to transport and auth; identify points at the endpoint, while ACL and domain alias stand alone](../images/07-sip-and-pjsip-fig14.png)
+
+The graphic above means:
 
 #### Relationships:
 
@@ -1172,11 +1159,13 @@ A plain `reload` (or `core reload`) reloads all modules including PJSIP. (Note t
 
 This command shows the endpoints available. In the picture below, we have a screenshot. You can see the address of the xlite softphone and see that is available.
 
+![Output of `pjsip show endpoints` listing the blink, siptrunk, xlite, and zoiper endpoints with their AOR, auth, transport, and availability — the xlite contact is registered (Avail)](../images/07-sip-and-pjsip-fig15.png)
+
 #### pjsip show endpoint <endpoint>
 
 With the command above, you can see each parameter of the endpoint. The list below was cut to less than half of the current parameters.
 
-![09-pjsip-the-new-sip-channel figure 1](../images/09-pjsip-the-new-sip-channel-img01.png)
+![Output of `pjsip show endpoint xlite` showing the full parameter list for a single endpoint, from 100rel and allow=(ulaw) down through callerid and connected_line_method](../images/07-sip-and-pjsip-fig16.png)
 
 #### pjsip show aors
 
@@ -1186,13 +1175,17 @@ This command lists the configured Address of Record objects and their contacts, 
 
 The command below shows the registrations made by our own server.
 
-![09-pjsip-the-new-sip-channel figure 2](../images/09-pjsip-the-new-sip-channel-img02.png)
-
-![09-pjsip-the-new-sip-channel figure 3](../images/09-pjsip-the-new-sip-channel-img03.png)
+![Output of `pjsip show registrations`: the outbound registration siptrunk/sip:1020@sip.api4com.com:5600 is shown with status Registered](../images/07-sip-and-pjsip-fig17.png)
 
 #### pjsip list
 
-The command list is a little friendlier and show less data, but better structured. Listing endpoints. Listing contacts
+The command list is a little friendlier and show less data, but better structured. Listing endpoints:
+
+![Output of `pjsip list endpoints`: a compact one-line-per-endpoint listing (blink, siptrunk, xlite, zoiper) with their state and channel count](../images/07-sip-and-pjsip-fig18.png)
+
+Listing contacts:
+
+![Output of `pjsip list contacts` showing the siptrunk and xlite contact URIs with their hash and qualify status](../images/07-sip-and-pjsip-fig19.png)
 
 #### pjsip set logger on
 
@@ -1207,13 +1200,17 @@ You can also restrict the logging to a single host with `pjsip set logger host <
 
 #### pjsip set history on
 
-A great addition to PJSIP is the concept of history. You can capture and analyse SIP request and replies in real time in an easy way. To start history use the command below. Now you can show history Then to see a specific request or reply show the history item.
+A great addition to PJSIP is the concept of history. You can capture and analyse SIP request and replies in real time in an easy way. To start history use the command below.
 
-![09-pjsip-the-new-sip-channel figure 4](../images/09-pjsip-the-new-sip-channel-img04.png)
+![Running `pjsip set history on` returns "PJSIP History enabled"](../images/07-sip-and-pjsip-fig20.png)
 
-![09-pjsip-the-new-sip-channel figure 5](../images/09-pjsip-the-new-sip-channel-img05.png)
+Now you can show the history:
 
-![09-pjsip-the-new-sip-channel figure 6](../images/09-pjsip-the-new-sip-channel-img06.png)
+![Output of `pjsip show history`: a numbered table of captured SIP messages — REGISTER, 401 Unauthorized, REGISTER, 200 OK — with timestamps, direction, and address](../images/07-sip-and-pjsip-fig21.png)
+
+Then to see a specific request or reply, show the history item:
+
+![Output of `pjsip show history entry 3`: the full text of a single captured message (a 200 OK to a REGISTER) including its Via, Call-ID, From, To, and CSeq headers](../images/07-sip-and-pjsip-fig22.png)
 
 Very easy, isn’t it? You may also clear the history whenever you want using `pjsip set history clear`.
 
@@ -1458,8 +1455,6 @@ qualify_frequency=15
 ```
 
 Full PJSIP configuration is covered in the PJSIP section of this chapter, and the official documentation at docs.asterisk.org has full coverage of the channel. In our companion labs at voip.school, lab 5 lets you practice what you have just learned.
-
-![09-pjsip-the-new-sip-channel figure 7](../images/09-pjsip-the-new-sip-channel-img07.png)
 
 > **[2nd-ed note]** Add a combined end-of-chapter quiz covering SIP fundamentals, PJSIP
 > objects, and sip.conf→pjsip.conf migration (the original ch8/ch9 quizzes were dropped in the merge).
