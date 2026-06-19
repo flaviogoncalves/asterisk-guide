@@ -40,13 +40,42 @@ Asterisk’s architecture is shown below. Asterisk treats all VoIP protocols as 
 
 ![Asterisk's modular architecture: applications and channels connect to the PBX switch core through APIs, with codec translation and file-format modules loaded dynamically.](../images/06-voip-network-fig01.png)
 
-## VoIP protocols and the OSI model
+## VoIP protocols and the network stack
 
-As you can see below, VoIP uses a set of different protocols working together. Different OSI layers are present in VoIP communication. The figure below will help you understand the role of each protocol and their relationships.
+VoIP uses a set of different protocols working together. It is tempting to line them
+up against the seven-layer OSI reference model, and many older diagrams do exactly
+that — placing SIP and H.323 at the "session" layer and the codecs at the
+"presentation" layer. That mapping has always been contentious. The IETF, which
+standardizes SIP, does not use the OSI model; it follows the older four-layer TCP/IP
+(DoD) model, and RFC 3261 defines **SIP as an application-layer protocol**. The media
+follows the same pattern: RTP and the codecs live in the application payload, carried
+over UDP at the transport layer. The table below maps the main VoIP protocols onto the
+TCP/IP model the IETF actually uses, with the rough OSI equivalent shown only for
+reference.
 
-![VoIP protocols mapped onto the OSI model: signaling protocols (H.323, SIP, MGCP, IAX) sit at the session layer, codecs at the presentation layer, and RTP/UDP at the transport layer.](../images/06-voip-network-fig02.png)
+| TCP/IP (IETF) layer | Protocols | Rough OSI equivalent |
+|---|---|---|
+| Application | SIP, H.323, MGCP, IAX2 signaling; RTP/RTCP; codecs (G.711, G.729, Opus…) | Application / Presentation / Session |
+| Transport | UDP, TCP | Transport |
+| Internet | IP (with QoS such as DiffServ) | Network |
+| Link | Ethernet, PPP, Frame Relay… | Data link / Physical |
 
-The first four layers represent a data network, just like the Internet you have in your business or home. You can use some QoS protocols like “diffserv” or “cbwfq” to prioritize voice packets and enhance voice quality. Most VoIP protocols use real-time protocol (RTP) as the transport protocol of choice. In the session layer, protocols are responsible for setting up and closing the calls. H.323 is one of the oldest and mature protocols in this area. SIP is now pervasive in the VoIP provider market, putting aside H.323. Signaling protocols use TCP or UDP to transport the packets. In the presentation layer, the codecs transform the multimedia stream from one format to another based on different characteristics. For example: SIP: SIP uses UDP or TCP in port 5060 to transport signaling. RTP transports the audio stream using a configurable UDP port range in Asterisk (the shipped `rtp.conf` sample uses 10000 to 20000). For example, a call can be coded in g.711. A soft-phone in the application layer will use the lower layers to communicate. H.323: H.323 uses TCP in ports 1720 and 1719 to transport signaling. RTP usually transports audio in UDP ports 16383 to 32768.
+QoS mechanisms such as DiffServ operate at the IP layer to prioritize voice packets and
+improve call quality. A few protocol specifics:
+
+- **SIP** uses UDP or TCP on port 5060 (TLS on 5061) to carry signaling. The audio is
+  carried separately by RTP over a configurable UDP port range (Asterisk's shipped
+  `rtp.conf` sample uses 10000 to 20000), encoded with a codec such as G.711.
+- **H.323** carries call signaling over TCP (H.225 call signaling on port 1720), while
+  the H.225 RAS channel uses UDP on port 1719; RTP transports the audio.
+- **IAX2** is unusual: it multiplexes both signaling and media over a single UDP port
+  (4569), which simplifies NAT and firewall traversal.
+
+> **[2nd-ed note]** The 1st-edition figure here mapped SIP/H.323 onto the OSI *session*
+> layer and the codecs onto the *presentation* layer. That mapping was a long-standing
+> source of controversy — the IETF uses the TCP/IP model, in which SIP is an
+> application-layer protocol — so the figure has been replaced by the table above.
+> Commission a redrawn figure based on the TCP/IP stack if a visual is desired.
 
 ## How to choose a protocol
 
@@ -269,7 +298,7 @@ In this chapter, you have learned that Asterisk treats VoIP using channels. It s
    - B. chan_pjsip
    - C. chan_skinny
    - D. chan_mgcp
-5. In the OSI reference model, the signaling protocols SIP, H.323, and IAX2 operate at the ___ layer.
+5. In the TCP/IP (IETF) model that SIP is actually defined against in RFC 3261, the signaling protocols SIP, H.323, and IAX2 operate at the ___ layer.
    - A. Presentation
    - B. Application
    - C. Physical
@@ -298,4 +327,4 @@ In this chapter, you have learned that Asterisk treats VoIP using channels. It s
     - D. G.711 u-law is common in North America, while a-law is common in Europe and Latin America.
     - E. G.729 is light and uses very few CPU resources to encode and decode compared with G.711.
 
-**Answers:** 1 — A, B, C, D · 2 — B · 3 — B · 4 — B · 5 — D · 6 — B · 7 — C · 8 — A, C, D · 9 — A · 10 — A, B, C, D
+**Answers:** 1 — A, B, C, D · 2 — B · 3 — B · 4 — B · 5 — B (Application — SIP is an application-layer protocol in the TCP/IP model the IETF uses) · 6 — B · 7 — C · 8 — A, C, D · 9 — A · 10 — A, B, C, D
