@@ -55,6 +55,12 @@ If these are unclear, ask the user briefly, then proceed.
   Is there a way for the reader to check they succeeded?
 - **Mechanics:** spelling/grammar, balanced code fences, well-formed tables and lists,
   consistent terminology, working cross-references and links.
+- **Common import artifacts (PDF/DOCX → Markdown):** headings flattened to the wrong
+  level (major sections demoted to H3/H4/H5 so they vanish from the TOC) — restore a
+  clean H2/H3 hierarchy; **quizzes and tables collapsed into one run-on paragraph** —
+  rebuild quizzes as a numbered list with each option on its own line plus a formatted
+  answer key, and rebuild tables as real Markdown tables; sentences split by an
+  inlined figure or code fragment — rejoin them.
 - **Figures & assets:** every figure is legible, correctly referenced, and actually
   supports the text. Replace broken/low-quality assets when a better source exists.
 
