@@ -16,3 +16,6 @@ lab/asterisk/etc/keys/
 
 # DOCX media working cache (regenerate via pandoc --extract-media; final images go in src/images/)
 src/docx-media/
+
+# Trashcan — retired files kept locally, out of the repo
+.trash/
