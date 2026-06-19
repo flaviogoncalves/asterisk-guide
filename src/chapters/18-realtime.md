@@ -29,9 +29,7 @@ In the new Real Time architecture, all database-specific code was moved to chann
 
 - UPDATE: Used to update objects.
 
-The channel database support was not changed. There are peers and users called static (normal) and peers and users called real time (database). For the static, it doesn’t matter if it is loaded from a configuration file or from the database kept in the memory. However, the real-time peers/users are loaded only when a call is made. After the call, the peer or user is deleted. Consequently, there is no support for NAT or message waiting indicator (MWI). You can enable real-time caching using the command rtcachefriends=yes in the sip.conf file or from the static database. By doing so, you will have NAT traversal and MWI; however, if you do any updates to this peer/user, you will have to reload.
-
-> **[2nd-ed note]** The description above (sippeers/sipusers, rtcachefriends) applies to the legacy **chan_sip** driver, which was **removed in Asterisk 21 and does not exist in Asterisk 22**. PJSIP realtime works very differently: it is built on the **Sorcery** object model, which has a built-in caching/persistence layer, so the "peer deleted after the call" and rtcachefriends caveats no longer apply. See the new "PJSIP Realtime (Sorcery)" section below for the modern equivalent.
+On Asterisk 22, SIP endpoints are handled by the **PJSIP** stack (`res_pjsip`), which is built on the **Sorcery** object model. Sorcery has a built-in caching and persistence layer, so realtime PJSIP objects are not thrown away after each call the way the old SIP driver discarded its realtime peers — NAT traversal, qualify, and message waiting indication (MWI) all work normally for realtime endpoints. When you change an object in the database, the change is picked up on the next lookup; you do not need to reload after every edit. (The retired `chan_sip` realtime model, with its `sippeers`/`sipusers` families, is covered only in the *Legacy Channels* chapter.)
 
 ## Configuring Asterisk Real Time
 
@@ -85,10 +83,10 @@ extconfig.conf file format:
 ; the family if the table is not specified
 ;
 ;example => odbc,asterisk,alttable
-;iaxusers => odbc,asterisk
-;iaxpeers => odbc,asterisk
-;sipusers => odbc,asterisk
-;sippeers => odbc,asterisk
+;ps_endpoints => odbc,asterisk
+;ps_aors => odbc,asterisk
+;ps_auths => odbc,asterisk
+;ps_contacts => odbc,asterisk
 ;voicemail => odbc,asterisk
 ;extensions => odbc,asterisk
 ;queues => odbc,asterisk
@@ -108,7 +106,7 @@ pjsip.conf => odbc,asteriskdb,pjsip_conf
 iax.conf => ldap,MyBaseDN,iax
 ```
 
-> **[2nd-ed note]** The original example mapped `sip.conf`, the chan_sip config file removed in Asterisk 21. On Asterisk 22 the SIP config file is `pjsip.conf`; the static-file mechanism itself is unchanged. (Static file mapping is mostly useful for files without a Sorcery/realtime equivalent — for PJSIP, prefer the per-object realtime families described later in this chapter.)
+Static file mapping is most useful for configuration files that have no per-object realtime equivalent. For PJSIP, prefer the per-object realtime families (`ps_endpoints`, `ps_aors`, and so on) described later in this chapter rather than mapping the whole `pjsip.conf` as a static file.
 
 Three examples are described above. In the first one, you bind queues.conf to a table queues in the asteriskdb database. In the second example, you bind pjsip.conf to the table pjsip_conf in the database asteriskdb defined in the odbc configuration. In the last example, you bind iax.conf to an LDAP directory. MyBaseDN is the base DN to be searched. In the previous example, the application app_queue.so is loaded while MySQL driver queries the database and gets the required information.
 
@@ -123,31 +121,29 @@ The real-time configuration (second part of the extconfig.conf file) is where th
 Example:
 
 ```
-sippeers => odbc,asterisk,sip_peers
-sipusers => odbc,asterisk,sip_users
+ps_endpoints => odbc,asterisk,ps_endpoints
+ps_aors => odbc,asterisk,ps_aors
 queues => odbc,asterisk,queue_table
 queue_members => odbc,asterisk,queue_member_table
 voicemail => odbc,asterisk,test
 ```
 
-Here we have five configuration lines. In the first line, you bind the family sippeers to a table sip_peers in the asteriskdb MySQL database. In the last, you bind the voicemail family to the test table in the asteriskdb database. Note that sip_peers and sip_users could point to the same table.
-
-> **[2nd-ed note]** The `sippeers`/`sipusers`/`iaxpeers`/`iaxusers` realtime families belong to **chan_sip**/**chan_iax2**. chan_sip was **removed in Asterisk 21**, so on Asterisk 22 these families no longer load any SIP channel. The modern SIP realtime families are the PJSIP/Sorcery families (`ps_endpoints`, `ps_aors`, `ps_auths`, `ps_contacts`, etc.) shown in the new "PJSIP Realtime (Sorcery)" section below. The `voicemail`, `extensions`, `queues`, and `queue_members` families are still valid in Asterisk 22.
+Here we have five configuration lines. In the first line, you bind the PJSIP/Sorcery family `ps_endpoints` to a table `ps_endpoints` in the asteriskdb database. In the last, you bind the voicemail family to the test table in the asteriskdb database. Each PJSIP object type (endpoint, aor, auth, contact) gets its own family and table; the full set is shown in the "PJSIP Realtime (Sorcery)" section below. The `voicemail`, `extensions`, `queues`, and `queue_members` families are still valid in Asterisk 22.
 
 ## PJSIP Realtime (Sorcery)
 
-On Asterisk 22, SIP endpoints are handled exclusively by the **PJSIP** stack (`res_pjsip`), which is built on the **Sorcery** object abstraction layer. Instead of a single `sippeers`/`sipusers` family, PJSIP splits a SIP account into several object types, each stored in its own realtime table:
+On Asterisk 22, SIP endpoints are handled exclusively by the **PJSIP** stack (`res_pjsip`), which is built on the **Sorcery** object abstraction layer. Rather than a single SIP "peer", PJSIP splits a SIP account into several object types, each stored in its own realtime table:
 
-| Sorcery object type | Realtime table | Replaces (chan_sip) |
-|---------------------|----------------|---------------------|
-| endpoint | ps_endpoints | most `[peer]` settings (context, codecs, etc.) |
-| aor (address of record) | ps_aors | registration / `host=dynamic`, `qualify` |
-| auth | ps_auths | `username` / `secret` |
-| contact | ps_contacts | the dynamically registered location (was usrloc) |
-| domain alias | ps_domain_aliases | — |
-| endpoint identifier by IP | ps_endpoint_id_ips | matching by source IP |
+| Sorcery object type | Realtime table | What it holds |
+|---------------------|----------------|---------------|
+| endpoint | ps_endpoints | per-account settings (context, codecs, DTMF, etc.) |
+| aor (address of record) | ps_aors | registration limits and `qualify` settings |
+| auth | ps_auths | `username` / `password` credentials |
+| contact | ps_contacts | the dynamically registered location |
+| domain alias | ps_domain_aliases | alternate SIP domains for an endpoint |
+| endpoint identifier by IP | ps_endpoint_id_ips | matching an endpoint by source IP |
 
-Realtime for PJSIP is enabled in two places. First, map the Sorcery object types to realtime in `extconfig.conf` (these are the modern equivalents of the `sippeers` line):
+Realtime for PJSIP is enabled in two places. First, map the Sorcery object types to realtime in `extconfig.conf`:
 
 ```
 [settings]
@@ -173,7 +169,7 @@ contact=realtime,ps_contacts
 identify=realtime,ps_endpoint_id_ips
 ```
 
-> **[2nd-ed note]** You can mix static and realtime objects. If you omit a type from `sorcery.conf`, that object type keeps reading from `pjsip.conf`. A common pattern is static transports/global settings in `pjsip.conf` with endpoints/aors/auths/contacts in the database.
+You can mix static and realtime objects. If you omit a type from `sorcery.conf`, that object type keeps reading from `pjsip.conf`. A common pattern is to keep static transports and global settings in `pjsip.conf` while storing endpoints, aors, auths, and contacts in the database.
 
 ### Creating the PJSIP realtime schema with Alembic
 
@@ -208,23 +204,25 @@ asterisk-server*CLI> pjsip show contacts
 
 ## Database configuration
 
-Now that we have configured the extconfig.conf file, let’s create the tables. Generally speaking, the database columns need to have the same fields as the configuration files. For example, for a SIP or an IAX object, such as the one described below,
+Now that we have configured the extconfig.conf file, let’s create the tables. Generally speaking, each database column matches an option name from the corresponding configuration file. The PJSIP `ps_*` tables follow this rule: every `ps_endpoints` column is named after a `pjsip.conf` endpoint option, every `ps_auths` column after an auth option, and so on. For example, the `pjsip.conf` endpoint below,
 
 ```
-[4000]
-host=dynamic
-secret=senha
-context=default
+[4000](endpoint)
+type=endpoint
 context=ramais
+disallow=all
+allow=ulaw
+auth=4000
+aors=4000
 ```
 
-The database table should look like this: name Host secret Context ipaddr port regseconds 4000 Dynamic senha default;ramais 10.1.1.1 4569 1765432 To use this with IAX, the tables need to have at least the following fields: name, port, and regseconds. You may configure other columns to the desired fields. For example, if you want the parameter callerid, create a column named callerid (the same parameter as the text file). A SIP table may look like the one below: name Host secret context Ipaddr port regseconds username 4000 Dynamic senha default 10.1.1.1 5060 1765432 4000 A voicemail table should look like this: Uniqueid mailbox Context Password email fullname 4000 Default 4000 joao@silva.com Joao Silva The uniqueid should be unique to each voicemail user and can be autoincrement. It need not have any relationship to the mailbox or context.
+is stored as one row across three tables. The `ps_endpoints` row holds `id=4000, context=ramais, disallow=all, allow=ulaw, auth=4000, aors=4000`; the `ps_auths` row holds `id=4000, auth_type=userpass, username=4000, password=senha`; and the `ps_aors` row holds `id=4000, max_contacts=1`. You only need to populate the columns you actually use — any column you leave NULL falls back to the option's default. If you want, for example, the `callerid` parameter on an endpoint, fill in the `callerid` column of `ps_endpoints` (the column name is the same as the `pjsip.conf` option name).
+
+A voicemail table follows the same idea: Uniqueid mailbox Context Password email fullname — for instance 4000 / Default / 4000 / joao@silva.com / Joao Silva. The uniqueid should be unique to each voicemail user and can be autoincrement. It need not have any relationship to the mailbox or context.
 
 ### Building a dial plan using Asterisk Real Time
 
-You can also use the real-time system to create the dial plan. ARA uses the statement switch to include the real-time extensions into the normal dial plan contained in the extensions.conf file. The extension table should look like the one below: context Exten priority app Appdata Ramais 4000 dial PJSIP/4000&IAX2/4000 In the dial plan, you have to use the switch command to use the real time.
-
-> **[2nd-ed note]** The `extensions` realtime family is unchanged in Asterisk 22, but the `Appdata` here uses the old `SIP/` technology. On Asterisk 22 (chan_sip removed) dial PJSIP channels instead, e.g. `PJSIP/4000`.
+You can also use the real-time system to create the dial plan. ARA uses the `switch` statement to include the real-time extensions into the normal dial plan contained in the extensions.conf file. The extension table should look like the one below: context Exten priority app Appdata Ramais 4000 dial PJSIP/4000&IAX2/4000. The `extensions` realtime family is unchanged in Asterisk 22; just make sure the `Appdata` column dials PJSIP channels, for example `PJSIP/4000`. In the dial plan, you have to use the `switch` command to use the real time.
 
 ![Building a dial plan with Asterisk Real Time: extensions.conf uses a `switch => realtime` statement to pull extension rows (context, exten, priority, app, data) from a database table instead of from the text file.](../images/18-realtime-fig02.png)
 
@@ -265,7 +263,7 @@ cp config.ini.sample config.ini
 alembic -c config.ini upgrade head
 ```
 
-> **[2nd-ed note]** The original `mysql_config.sql` import created chan_sip's `sippeers`/`sipusers` tables, which are obsolete on Asterisk 22. Use the Alembic `config` migration set so the PJSIP realtime schema matches the running version.
+The Alembic `config` migration set builds the PJSIP `ps_*` tables (along with `voicemail`, `extensions`, and the other realtime schemas) with exactly the columns the running Asterisk version expects, so the schema always matches the build.
 
 Use supersecret as the password. Step 4: Verify the creation of the tables
 
@@ -294,8 +292,6 @@ Below are two screenshots of the utility log in screen and the table screen. Use
 
 > **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
 
-> **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
-
 322 | Capítulo 1 | Introdução ao Asterisk Step 5: Database is already configure for ODBC (since the CDR lab)
 
 ## Lab: Configuring and testing ARA
@@ -318,7 +314,7 @@ voicemail => odbc,cdr,voicemail
 extensions => odbc,cdr,extensions
 ```
 
-> **[2nd-ed note]** On Asterisk 22, replace the chan_sip `sippeers`/`iaxpeers` lines with the PJSIP/Sorcery families shown above, and add the matching `sorcery.conf` mappings (see the "PJSIP Realtime (Sorcery)" section). The `voicemail` and `extensions` families are unchanged.
+Note the `ps_endpoints`, `ps_aors`, `ps_auths`, and `ps_contacts` families above; together with the matching `sorcery.conf` mappings (see the "PJSIP Realtime (Sorcery)" section) they make PJSIP read its accounts from the database. The `voicemail` and `extensions` families round out the example.
 
 Step 2: Real Time extension test. Using phpMyAdmin, create a new 6010 endpoint by inserting one row into each of `ps_auths`, `ps_aors`, and `ps_endpoints`, then try to register this endpoint with a softphone.
 
@@ -333,20 +329,20 @@ id=6010, transport=transport-udp, aors=6010, auth=6010-auth
 
 > **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
 
-The remaining account settings are spread across the PJSIP objects. The legacy chan_sip block (context, host=dynamic, disallow/allow, dtmfmode) maps to the PJSIP fields below:
+The remaining account settings are spread across the PJSIP objects. Context, codecs, DTMF mode, and media handling live on the endpoint; dynamic registration lives on the AOR:
 
 ```
 -- ps_endpoints columns for 6010
 context=from-internal
 disallow=all
 allow=ulaw
-dtmf_mode=rfc4733        ; was dtmfmode=rfc2833
+dtmf_mode=rfc4733
 direct_media=no
--- ps_aors: host=dynamic has no direct field; dynamic registration
---          is implicit, the registered location is stored in ps_contacts
+-- ps_aors: dynamic registration is implicit; the AOR accepts
+--          registrations and the contact is written to ps_contacts
 ```
 
-> **[2nd-ed note]** In PJSIP the `rfc2833` DTMF mode is named `rfc4733` (`dtmf_mode=rfc4733`). There is no `host=dynamic` setting: an AOR accepts dynamic registrations by default and the contact is written to `ps_contacts` on REGISTER.
+In PJSIP the RFC 2833 / RFC 4733 DTMF mode is named `rfc4733` (`dtmf_mode=rfc4733`, the default). There is no separate "dynamic" flag for registration: an AOR accepts dynamic REGISTERs as long as it allows at least one contact (`max_contacts` greater than zero), and each registered location is written to `ps_contacts`.
 
 Step 3: Try to register the new phone Step 4: Include the extensions in the database
 
@@ -389,7 +385,7 @@ In this chapter, you have learned that Asterisk Real Time allows you to put your
    - B. False
 2. A database server's connection parameters are configured in the file:
    - A. extensions.conf
-   - B. sip.conf
+   - B. pjsip.conf
    - C. res_odbc.conf
    - D. extconfig.conf
 3. The `extconfig.conf` file configures the tables used by Realtime. It has two distinct sections (check two):
@@ -400,12 +396,12 @@ In this chapter, you have learned that Asterisk Real Time allows you to put your
 4. In static configuration, once the objects are loaded from the database they are kept in Asterisk's memory and refreshed only on start or reload.
    - A. True
    - B. False
-5. Unlike the old chan_sip realtime, PJSIP realtime (Sorcery) fully supports `qualify` and MWI for realtime endpoints.
+5. PJSIP realtime (Sorcery) fully supports `qualify` and MWI for realtime endpoints, because Sorcery keeps the objects cached rather than discarding them after each call.
    - A. True
    - B. False
 6. In PJSIP realtime, which tables hold the endpoints and their registered contacts?
    - A. `ps_endpoints` and `ps_contacts`
-   - B. `sippeers` and `sipregs`
+   - B. `ps_peers` and `ps_registry`
    - C. `ps_config` and `ps_data`
    - D. `extconfig` and `res_odbc`
 7. You can still use text configuration files even after enabling ARA.

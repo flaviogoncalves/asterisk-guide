@@ -188,7 +188,6 @@ callgroup=1
 pickupgroup=1,2
 ```
 
-> **[2nd-ed note]** `sip.conf` (chan_sip) no longer exists in Asterisk 21+. PJSIP (`pjsip.conf`) is the only SIP channel driver. The `callgroup`/`pickupgroup` parameters are supported in PJSIP endpoint sections.
 
 Step 2: Change the call-pickup feature number (optional).
 

@@ -93,7 +93,6 @@ agent => 301,301
 
 Members are active channels responding to the queue. Members can be direct channels (PJSIP, DAHDI) or agents who log in before receiving calls.
 
-> **[2nd-ed note]** chan_sip (`SIP/`) was removed in Asterisk 21. All member channel references in dial plans and queues.conf must use `PJSIP/` (e.g., `member => PJSIP/1001`). MGCP support is also long deprecated.
 
 ### Strategies
 

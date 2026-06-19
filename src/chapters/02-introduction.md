@@ -177,7 +177,7 @@ The following codecs are supported:
 
 Sending data from one phone to another should be easy provided that the data find a path to the other phone on their own. Unfortunately, it doesn't happen this way, and a signaling protocol is necessary in order to establish connections between phones, discover end devices, and implement telephony signaling. SIP is the dominant signaling protocol in modern deployments and is the only SIP channel available in Asterisk 22 LTS (via chan_pjsip). IAX2 is still available but considered legacy. Asterisk supports the following protocols.
 
-- SIP — via `chan_pjsip` (the old `chan_sip` was removed in Asterisk 21)
+- SIP — via `chan_pjsip`
 - IAX2 — legacy, still ships in Asterisk 22
 - UNISTIM — Nortel/Avaya phones (extended support)
 - H.323, MGCP, and SCCP (Cisco Skinny) — legacy protocols no longer in a standard Asterisk 22 build (H.323 only via the community `ooh323` add-on)
@@ -294,7 +294,7 @@ Asterisk is software licensed according to the GPL that enables an ordinary PC t
 
 The Asterisk architecture has the following main components:
 
-- CHANNELS: Analog, digital, or voice-over IP. In Asterisk 22 LTS, SIP is handled exclusively by chan_pjsip (chan_sip was removed in Asterisk 21).
+- CHANNELS: Analog, digital, or voice-over IP. In Asterisk 22 LTS, SIP is handled exclusively by chan_pjsip.
 - PROTOCOLS: Communication protocols, which are responsible for signaling the calls, including SIP (via PJSIP), H323, MGCP, and IAX2.
 - CODECS: Translate digital formats of voice allowing compressions, packet loss concealment, silence suppression, and comfort noise generation. Asterisk does not support silence suppression.
 - APPLICATIONS: Responsible for the Asterisk PBX functionality. Conference, voicemail, and fax are examples of Asterisk applications.

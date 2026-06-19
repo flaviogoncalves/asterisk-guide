@@ -1,6 +1,6 @@
 # SIP & PJSIP in depth
 
-SIP is the protocol; PJSIP is how Asterisk 22 speaks it. The original SIP channel driver `chan_sip` (configured via `sip.conf`) was deprecated for several releases and finally **removed in Asterisk 21**, so it no longer exists in Asterisk 22 LTS — **PJSIP** (`chan_pjsip`, configured via `pjsip.conf`) is now the only SIP channel driver. This chapter covers the SIP protocol fundamentals (which are protocol-level and remain 100% valid) and the PJSIP object model and configuration that you use every day. If you are maintaining an old `chan_sip`/`sip.conf` deployment and need to convert it, the legacy driver and the full `sip.conf → pjsip.conf` migration guide are covered in the *Legacy channels* chapter.
+SIP is the protocol; PJSIP is how Asterisk 22 speaks it. **PJSIP** (`chan_pjsip`, configured via `pjsip.conf`) is the only SIP channel driver in Asterisk 22 LTS. This chapter covers the SIP protocol fundamentals (which are protocol-level and remain 100% valid) and the PJSIP object model and configuration that you use every day. The retired legacy driver and a migration guide are covered in the *Legacy channels* chapter.
 
 ## SIP protocol fundamentals
 
@@ -210,25 +210,23 @@ Asterisk uses the incoming RTP flow to synchronize the outgoing flow. If the inc
 
 ## PJSIP: the SIP channel
 
-PJSIP is the SIP channel in Asterisk. It was first introduced in Asterisk 12 and, after years of development, became the default and recommended SIP channel. In Asterisk 22 (the current LTS) it is the only SIP channel driver: the old module chan_sip was deprecated for several releases and was finally **removed in Asterisk 21**, so it no longer exists in Asterisk 22. PJSIP is based on Teluu’s project called pjproject. The pjproject stack is employed by many softphones and commercial SIP implementations. It is a versatile and mature SIP stack.
+PJSIP is the SIP channel in Asterisk. It was first introduced in Asterisk 12 and, after years of development, became the default and recommended SIP channel, and in Asterisk 22 (the current LTS) it is the only SIP channel driver. PJSIP is based on Teluu’s project called pjproject. The pjproject stack is employed by many softphones and commercial SIP implementations. It is a versatile and mature SIP stack.
 
 ### Why to use PJSIP
 
-The PJSIP channel driver brought many features and solved several long-standing problems with the old chan_sip. Even though chan_sip is gone, it is useful to understand why PJSIP replaced it.
+PJSIP was a ground-up redesign of how Asterisk speaks SIP, and it is worth understanding the features that made it the standard.
 
 #### Features
 
 The channel supports many features, some deserve mention here
 
 - Multiple registrations:. You may use more than one phone connected to the same Address of Record. In other words, you can connect two phones to the same endpoint.
-- Friendly Application Program Interface (API). The API is friendly and easier to extend compared to the monolithic chan_sip.
-- Multiple transports: You can listen to multiple addresses, ports and transports when using PJSIP. With the old channel you had to use the same address for all peers. PJSIP is more flexible.
+- Friendly Application Program Interface (API). The API is modular and easy to extend, built from many small cooperating modules rather than one large block of code.
+- Multiple transports: You can listen to multiple addresses, ports and transports when using PJSIP. You are not limited to a single bind address for all your devices. PJSIP is very flexible.
 
-#### Problems with chan_sip
+#### A note on configuration
 
-- Monolithic: chan_sip was monolithic and any change in the code was becoming very risky. So the pace of innovation was compromised in the channel.
-- No official support: chan_sip was deprecated and then removed in Asterisk 21. It does not exist at all in Asterisk 22.
-- Adoption note: PJSIP configuration is more verbose than chan_sip was — it requires a little more effort and more lines of configuration. That extra complexity slowed early adoption, but PJSIP is now mature, universal, and the only SIP option, so learning it is no longer optional.
+PJSIP configuration is more verbose: it requires a little more effort and more lines of configuration, since each device is described by several related objects instead of one peer block. That extra structure is what gives PJSIP its flexibility, and the configuration wizard (covered later) keeps day-to-day provisioning short.
 
 ### PJSIP modules
 
@@ -575,7 +573,7 @@ As usual one of the important aspects of a channel is its naming and PJSIP has s
 exten=>6000,1,Dial(PJSIP/6000,20,tT)
 ```
 
-The novelty is the possibility to dial all contacts. This was not possible with the old chan_sip. The function PJSIP_DIAL_CONTACTS will be translated to the list of contacts to dial.
+A useful feature is the possibility to dial all contacts registered to an AOR at once. The function PJSIP_DIAL_CONTACTS will be translated to the list of contacts to dial.
 
 ```
 exten=>6000,dial(${PJSIP_DIAL_CONTACTS(6000)},20,tT)
@@ -619,7 +617,7 @@ inbound_auth/password = supersecret
 
 ### Loading and unloading PJSIP
 
-In Asterisk 22 there is no longer a chan_sip channel to coexist with: chan_sip was removed in Asterisk 21, so PJSIP is the only SIP channel and there is no conflict to manage. PJSIP modules are loaded by default. In rare cases you may still want to control module loading from the modules.conf file — for example, to disable PJSIP on a server that only uses IAX2 or DAHDI.
+PJSIP is the only SIP channel in Asterisk 22, and its modules are loaded by default. In rare cases you may still want to control module loading from the modules.conf file — for example, to disable PJSIP on a server that only uses IAX2 or DAHDI.
 
 #### To disable PJSIP
 

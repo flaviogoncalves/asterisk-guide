@@ -216,7 +216,7 @@ ldconfig
 
 `make menuselect` opens a text-based menu where you choose exactly which applications, codecs, channels, and resources to build. A few notes specific to Asterisk 22:
 
-- **chan_pjsip** (under *Channel Drivers*) is the modern SIP channel and is enabled by default. There is no longer a chan_sip option — it was removed in Asterisk 21.
+- **chan_pjsip** (under *Channel Drivers*) is the modern SIP channel and is enabled by default; it is the only SIP channel in Asterisk 22.
 - **codec_opus** (under *Codec Translators*) is an **external** module (its menuselect entry reads "Download the Opus codec from Digium"); enabling it makes `make` fetch the free, closed-source binary from Sangoma/Digium. Opus pass-through itself needs no extra module. Sangoma's **codec_g729** module is also available — the binary is free to download, but lawful G.729 transcoding requires a purchased per-channel license.
 - Use the **Add Default Sources** option in *Core Sound Packages* / *Music On Hold* if you want the bundled prompts downloaded automatically during `make`.
 

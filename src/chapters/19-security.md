@@ -2,7 +2,7 @@
 
 Since the beginning, the issue of security for Asterisk is critical. SIP, Session Initiation Protocol is the most attacked protocol on the Internet according to the CERT.BR. Any person running a honeypot can confirm. The problem of the Internet Revenue Share Fraud is very serious and can lead to losses superior to hundreds of thousands of dollars. You should never install an Asterisk Server connected to the Internet without proper security. In this chapter, you will learn how to identify the main types of attacks you can receive and how to prevent them using a proper security policy. Last, but not least you will learn how to implement the suggested security policy.
 
-> **[2nd-ed note]** This chapter targets **Asterisk 22 LTS**. A major security-relevant change since the 1st edition: **chan_sip was removed in Asterisk 21 and does not exist in 22** — PJSIP (res_pjsip / chan_pjsip) is now the only SIP channel. All chan_sip-specific advice below is marked legacy and the PJSIP equivalent is provided. PJSIP also changed how security events are logged (see the Fail2Ban section): failed authentications are emitted through the Asterisk **security event framework** and the `security` logger channel, not the old chan_sip log lines.
+This chapter targets **Asterisk 22 LTS**, where PJSIP (`res_pjsip` / `chan_pjsip`) is the only SIP channel. (The old `chan_sip` driver was removed in Asterisk 21 — see the *Legacy Channels* chapter if you are migrating an older system.) One security-relevant consequence: failed authentications are now emitted through the Asterisk **security event framework** and the dedicated `security` logger channel, which changes how Fail2Ban is configured (covered later in this chapter).
 
 ## Objectives
 
@@ -105,8 +105,8 @@ The best way to implement security is to create a security policy. For this trai
 
 Beyond the firewall and Fail2Ban, Asterisk 22's PJSIP stack provides several configuration-level controls that should be part of your security policy. These complement (not replace) the network controls above:
 
-- **Per-endpoint authentication.** Every endpoint should reference a dedicated `type=auth` section with a strong, unique `password` (`auth_type=userpass`). Never reuse credentials across endpoints.
-- **Anonymous handling is built in.** The old chan_sip `alwaysauthreject=yes` behaviour is now effectively the **default** in PJSIP — Asterisk does not reveal whether a username exists. To accept anonymous calls at all you must explicitly create an endpoint named `anonymous` and use `type=identify` sections (matching on source IP) to map known peers to endpoints. If you do not want anonymous calls, simply do not create an `anonymous` endpoint, and unmatched requests are challenged/rejected.
+- **Per-endpoint authentication.** Every endpoint should reference a dedicated `type=auth` section with a strong, unique `password` (`auth_type=digest`). Never reuse credentials across endpoints.
+- **Anonymous handling is built in.** PJSIP does not reveal whether a username exists when authentication fails. To accept anonymous calls at all you must explicitly create an endpoint named `anonymous` and use `type=identify` sections (matching on source IP) to map known peers to endpoints. If you do not want anonymous calls, simply do not create an `anonymous` endpoint, and unmatched requests are challenged/rejected.
 - **ACLs.** Restrict who can reach an endpoint with `/etc/asterisk/acl.conf` named ACLs, referenced from the endpoint with `acl=` (signalling/source ACL) and `contact_acl=` (restricts the contact/registration address). You can also set permit/deny directly on the endpoint.
 - **`qualify`.** Set `qualify_frequency` (and `qualify_timeout`) on the AOR so Asterisk actively monitors reachability of registered contacts and prunes dead ones.
 - **PJSIP transport rate limiting / DoS protection.** On the `type=transport` you can cap concurrent TCP/TLS clients with `max_clients`, and enable kernel-level options through the transport `option` flags. Combine this with the firewall rules to blunt connection-flood attacks.
@@ -129,7 +129,7 @@ The output of the command is shown below.
 
 If you look at the output, you will discover that many ports are open. Do we need them? Not necessarily, 2727 is the MGCP protocol (chan_mgcp), 4569 is the IAX (chan_iax2). If you are not using these protocols, you can simply remove the module in the configuration file modules.conf.
 
-> **[2nd-ed note]** The 1st edition recommended falling back to **chan_sip** to avoid PJSIP's "random DNS port" problem and to keep only port 5060 open. **chan_sip no longer exists in Asterisk 21+ — this is no longer an option in Asterisk 22.** PJSIP is now the only SIP channel and must be used. Regarding the random high port: this comes from the resolver in res_pjsip making outbound DNS queries (the source port is ephemeral, like any client DNS lookup), not from an inbound listener — your firewall only needs to allow **established/related** return traffic for it (the iptables `conntrack ESTABLISHED,RELATED` rule shown below already covers this). You do **not** need to open a wide inbound high-UDP range just for PJSIP DNS. If you want fully deterministic behaviour you can also point Asterisk at a fixed resolver or disable `res_pjsip`'s async resolver; verify the exact module/option name for your build before relying on it.
+You may notice Asterisk binding a high-numbered UDP port. This comes from `res_pjsip`'s resolver making outbound DNS queries (the source port is ephemeral, like any client DNS lookup), not from an inbound listener — your firewall only needs to allow **established/related** return traffic for it (the iptables `conntrack ESTABLISHED,RELATED` rule shown below already covers this). You do **not** need to open a wide inbound high-UDP range just for PJSIP DNS.
 
 To remove the unnecessary ports, disable the modules you don't use. Edit the file modules.conf and add `noload` lines for the channels and protocols you are not using. **Do not** noload `res_pjsip`, `res_pjproject`, or `chan_pjsip` — those are required for SIP in Asterisk 22:
 
@@ -139,7 +139,6 @@ noload => chan_mgcp.so
 noload => chan_iax2.so
 noload => chan_unistim.so
 noload => chan_skinny.so
-; chan_sip.so was removed in Asterisk 21+ and no longer exists in 22
 ```
 
 With the instructions above, I have removed all unnecessary channels keeping only PJSIP. You can choose whatever protocol modules you want, just remove the unused ones. The result is shown in the screenshot below — only the SIP port (5060) bound by your PJSIP transport is now exposed inbound.
@@ -185,7 +184,7 @@ sudo iptables -I INPUT -p tcp -m tcp --dport 5061 -j ACCEPT
 sudo iptables -I INPUT -p udp -m udp --dport 10000:20000 -j ACCEPT
 ```
 
-> **[2nd-ed note]** Port 5061 (SIP over TLS) is **TCP**, not UDP — the 1st edition opened it as UDP, which is wrong. The rules above open 5060 on both UDP and TCP and 5061 on TCP. If you only run TLS, you can drop the plain 5060 rules entirely. Port 5080 was the chan_sip-distinct transport port in the old example and is no longer needed; remove it unless a specific PJSIP transport binds to it.
+Note that port 5061 (SIP over TLS) is **TCP**, not UDP. The rules above open 5060 on both UDP and TCP and 5061 on TCP. If you only run TLS, you can drop the plain 5060 rules entirely. Only open the ports your PJSIP transports actually bind to.
 
 -I means PREPEND Step 6 - The last rule has to be a drop
 
@@ -204,16 +203,20 @@ sudo /etc/init.d/netfilter-persistent restart
 
 Fail2Ban is almost a standard for Asterisk. Most users implement to enhance the security. This utility scans the Asterisk logs for failed attempts and ban IP addresses of the attackers. Below I provide the instructions to install Fail2Ban.
 
-> **[2nd-ed note] PJSIP logs security events differently than chan_sip.** The old chan_sip log lines that early Fail2Ban filters matched (e.g. `Registration from '...' failed for '...' - Wrong password`) are gone with chan_sip in Asterisk 21+. In Asterisk 22, PJSIP reports failed authentications and other security events through the Asterisk **security event framework**, written to the dedicated **`security` logger channel**. To make Fail2Ban work you must:
-> 1. Enable the security channel in `/etc/asterisk/logger.conf`, for example:
-> ```
-> [logfiles]
-> security => security
-> ```
-> then `module reload logger` (or `logger reload`) from the CLI. This produces `/var/log/asterisk/security` with lines such as `SecurityEvent="InvalidPassword"`, `ChallengeFailed`, `InvalidAccountID`, each carrying the `RemoteAddress=` of the offender.
-> 2. Point the `asterisk` jail at that file (`logpath = /var/log/asterisk/security`) and use a filter that parses the security-event format and the `res_pjsip` failed-auth events, not the legacy chan_sip lines.
->
-> Modern Fail2Ban ships an `asterisk` filter, and modern PBX distributions (FreePBX/Sangoma) ship updated filters that already understand the PJSIP/security-event log format. Prefer those over copying an old chan_sip regex.
+In Asterisk 22, PJSIP reports failed authentications and other security events through the Asterisk **security event framework**, written to the dedicated **`security` logger channel**. To make Fail2Ban work you must:
+
+1. Enable the security channel in `/etc/asterisk/logger.conf`, for example:
+
+```
+[logfiles]
+security => security
+```
+
+then run `module reload logger` (or `logger reload`) from the CLI. This produces `/var/log/asterisk/security` with lines such as `SecurityEvent="InvalidPassword"`, `ChallengeFailed`, and `InvalidAccountID`, each carrying the `RemoteAddress=` of the offender.
+
+2. Point the `asterisk` jail at that file (`logpath = /var/log/asterisk/security`) and use a filter that parses the security-event format and the `res_pjsip` failed-auth events.
+
+Modern Fail2Ban ships an `asterisk` filter, and modern PBX distributions (FreePBX/Sangoma) ship updated filters that already understand the PJSIP/security-event log format. Prefer those.
 
 > **[2nd-ed note]** The exact regex / `failregex` for the `asterisk` filter, the precise `logger.conf` syntax, and the exact security-event line format should be verified against the Fail2Ban version and the Asterisk 22 build the author tests on before going to print — these strings have changed across versions.
 
@@ -266,7 +269,7 @@ There are two types of certificates you can use self-signed and commercial. Self
 
 #### Configuring TLS with self signed certificates
 
-Below is a step-by-step guide on how to implement TLS. The chan_sip example that follows is kept for reference but is **legacy** (chan_sip was removed in Asterisk 21+); the PJSIP configuration in the next section is the one to use on Asterisk 22. We will use the SipPulse Softphone, which supports TLS and SRTP natively. (Any TLS/SRTP-capable SIP softphone works the same way.) Step 1. Create a private RSA key using 3DES encryption with length of 4096 bits for our certification authority. The command below present in /usr/src/asterisk-22.x.y/contrib/scripts will create the Certification Authority and The Asterisk Certificate. As usual adapt the instructions if required, versions change, directories change. Please, pay attention on what you are doing. Use your domain or IP address in the –C option. The command ast_tls_cert has three options.
+Below is a step-by-step guide on how to implement TLS. We first generate the certificates, then configure the PJSIP TLS transport (see "Configuring TLS with chan_pjsip"), and finally point the softphone at it. We will use the SipPulse Softphone, which supports TLS and SRTP natively. (Any TLS/SRTP-capable SIP softphone works the same way.) Step 1. Create a private RSA key using 3DES encryption with length of 4096 bits for our certification authority. The command below present in /usr/src/asterisk-22.x.y/contrib/scripts will create the Certification Authority and The Asterisk Certificate. As usual adapt the instructions if required, versions change, directories change. Please, pay attention on what you are doing. Use your domain or IP address in the –C option. The command ast_tls_cert has three options.
 
 - -C host or IP address (I have used 192.168.0.74, the IP address of my VM)
 - -O Organizational name
@@ -311,37 +314,7 @@ Combining key and crt into /etc/asterisk/keys/asterisk.pem
 root@asterisk:/usr/src/asterisk-22.0.0/contrib/scripts#
 ```
 
-I’m not going to generate a client certificate because we are not going to use the certificate to authenticate the client. The client is not required to present its own certificate. Step 2: Let’s configure chan_sip to support our client over TLS. Edit the file sip.conf and configure access using TLS. We are not authenticating using certificates just encrypting the traffic.
-
-> **[2nd-ed note] Legacy — chan_sip only.** The `sip.conf` block below does not apply to Asterisk 22 (chan_sip was removed in 21+). It is retained only to illustrate the concept. On Asterisk 22, configure TLS in `pjsip.conf` as shown in the next section ("Configuring TLS with chan_pjsip"). Note the legacy `tlscipher=ALL` and `tlsclientmethod=tlsv1` are weak/obsolete settings — modern TLS should disable SSLv3/TLS 1.0/1.1.
-
-```
-[general]
-context=dummy
-udpbindaddr=192.168.0.74
-tcpenable=yes
-tcpbindaddr=192.168.0.74
-tlsenable=yes
-tlsbindaddr=192.168.0.74
-tlscertfile=/etc/asterisk/keys/asterisk.pem
-tlscafile=/etc/asterisk/keys/ca.crt
-tlscipher=ALL
-;tlsclientmethod=tlsv1
-disallow=all
-allow=ulaw
-alwaysauthreject=yes
-allowguest=no
-[blink]
-type=peer
-secret=supersecret
-host=dynamic
-context=local
-dtmfmode=rfc2833
-disallow=all
-allow=ulaw
-transport=tls
-context=from-internal
-```
+I’m not going to generate a client certificate because we are not going to use the certificate to authenticate the client. The client is not required to present its own certificate. Step 2: Configure Asterisk to support our client over TLS. This is done in `pjsip.conf` (a TLS transport plus the endpoint settings) — the full configuration is shown in the next section, "Configuring TLS with chan_pjsip." We are not authenticating using certificates, just encrypting the traffic.
 
 Step 3: Install a TLS-capable SIP softphone (the author uses the SipPulse Softphone). Step 4: Copy the certificate authority to the computer running the softphone. After installing it, copy the file /etc/asterisk/keys/ca.crt to the computer running the softphone (use scp, or WinSCP on Windows) if you are using a self-signed certificate. Step 5: Create the account in the softphone. In the account screen add the account normally like any other sip account. Use the right password, the authentication is still based on the password. Step 6: Set TLS as the transport in the account settings. In the SipPulse Softphone account screen (below), choose **TLS** as the transport and use port 5061. Adjust your firewall to open TCP port 5061.
 
@@ -355,7 +328,7 @@ Step 9: After changing the certificate or transport, fully restart the softphone
 
 ### Configuring TLS with chan_pjsip
 
-Now let’s learn how to configure pjsip for TLS. On Asterisk 22 PJSIP is already the only SIP channel, so there is nothing to switch — just make sure `res_pjsip`, `res_pjproject` and `chan_pjsip` are loaded and that you are **not** trying to noload chan_sip (it no longer exists). Step 1: Confirm PJSIP is enabled in /etc/asterisk/modules.conf.
+Now let’s learn how to configure PJSIP for TLS. PJSIP is the only SIP channel in Asterisk 22, so there is nothing to switch — just make sure `res_pjsip`, `res_pjproject` and `chan_pjsip` are loaded. Step 1: Confirm PJSIP is enabled in /etc/asterisk/modules.conf.
 
 ```
 ; res_pjsip / res_pjproject / chan_pjsip must be loaded (do NOT noload them)
@@ -363,12 +336,9 @@ noload => chan_mgcp.so
 noload => chan_iax2.so
 noload => chan_unistim.so
 noload => chan_skinny.so
-; chan_sip.so removed in Asterisk 21+ — no line needed
 ```
 
-> **[2nd-ed note]** The 1st edition step "comment res_pjsip and uncomment chan_sip" no longer applies — chan_sip does not exist in Asterisk 22. PJSIP is mandatory.
-
-Step 2: Configure pjsip to support TLS. Add a section for TLS transport in the file /etc/asterisk/pjsip.conf
+Step 2: Configure PJSIP to support TLS. Add a section for TLS transport in the file /etc/asterisk/pjsip.conf
 
 ```
 [transport-tls]
@@ -380,7 +350,7 @@ priv_key_file=/etc/asterisk/keys/asterisk.key
 method=tlsv1_2
 ```
 
-> **[2nd-ed note]** `method=tlsv1` (TLS 1.0) is obsolete and insecure. On Asterisk 22 use `method=tlsv1_2` (or `tlsv1_3` if your OpenSSL/PJSIP build supports it). Verify the accepted `method` values for the build under test.
+Use `method=tlsv1_2` (or `tlsv1_3` if your OpenSSL/PJSIP build supports it) — TLS 1.0/1.1 are obsolete and insecure and should not be used.
 
 Step 3: Configure the endpoint for blink Edit the pjsip.conf end edit the section for blink. Let pjsip choose automatically the transport.
 
@@ -400,7 +370,7 @@ max_contacts=2
 remove_existing=yes
 [blink]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=blink
 password=supersecret
 ```
@@ -499,9 +469,9 @@ a=sendrecv
 
 #### Configuring SRTP on Asterisk
 
-To configure SRTP on Asterisk is very simple. For PJSIP (Asterisk 22) set `media_encryption=sdes` on the endpoint; you can also require it with `media_encryption_optimistic=no` so that unencrypted media is rejected rather than silently allowed. The chan_sip `encryption=yes` form below is **legacy** and does not apply to Asterisk 22. Step 1: Asterisk configuration
+To configure SRTP on Asterisk is very simple. Set `media_encryption=sdes` on the endpoint; you can also require it with `media_encryption_optimistic=no` so that unencrypted media is rejected rather than silently allowed. Note that SDES requires the signalling to run over TLS so the keys are not sent in the clear. Step 1: Asterisk configuration
 
-PJSIP (Asterisk 22) — set on the `type=endpoint` section:
+Set the following on the `type=endpoint` section in `pjsip.conf`:
 
 ```
 [blink]
@@ -514,22 +484,6 @@ allow=ulaw
 transport=transport-tls
 media_encryption=sdes
 media_encryption_optimistic=no
-```
-
-> **[2nd-ed note] Legacy — chan_sip only.** The `type=peer` / `encryption=yes` block below is retained for reference; it does not work on Asterisk 22 since chan_sip was removed in 21+. Use the PJSIP `media_encryption=sdes` form above. Note SDES requires the signalling to run over TLS so the keys are not sent in the clear.
-
-```
-[blink]
-type=peer
-secret=supersecret
-host=dynamic
-context=local
-dtmfmode=rfc2833
-disallow=all
-allow=ulaw
-transport=tls
-encryption=yes
-context=local
 ```
 
 Step 2: Softphone configuration
@@ -600,7 +554,7 @@ In this chapter you have learned about the risks of having an IP PBX connected t
    - B. `media_encryption=sdes`
    - C. `srtp=mandatory`
    - D. `transport=tls`
-10. In Asterisk 22, Fail2Ban must read PJSIP failed-authentication events from the dedicated ________ logger channel (enabled in `logger.conf`), because the old chan_sip log lines no longer exist.
+10. In Asterisk 22, Fail2Ban must read PJSIP failed-authentication events from the dedicated ________ logger channel (enabled in `logger.conf`).
    - A. `console`
    - B. `messages`
    - C. `security`

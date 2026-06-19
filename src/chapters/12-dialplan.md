@@ -147,8 +147,6 @@ A context can include the contents of another context. In the example above, any
 
 It is very common to receive the message “number not found”. Most people confuse the concept of included contexts because it is really not intuitive. As a rule of thumb, first go to the incoming channel configuration file, such as `pjsip.conf`, `chan_dahdi.conf`, and `iax.conf`, and determine the current context. Then, go to the dial plan in the file extensions.conf and check if the number dialed can be found in that context. If not, something is wrong with your dial plan. The golden rules of contexts are: 1. A channel can only dial numbers within the same context as the channel. 2. The context where the call is processed is defined in the incoming channel configuration file (`chan_dahdi.conf`, `iax.conf`, `pjsip.conf`).
 
-> **[2nd-ed note]** chan_sip (`sip.conf`) was removed in Asterisk 21. All SIP channels are now configured in `pjsip.conf`. References to `sip.conf` throughout this chapter have been updated to `pjsip.conf`.
-
 ## Using the switch statement
 
 You can send the dial plan processing to another server using the switch command. You will need the name and key of the other server. The context is the destination context.
@@ -688,43 +686,64 @@ channel => 1-4
 
 SIP channels (pjsip.conf) We have chosen the dial plan numbering from 2000 to 2099. Two codecs will be used: G.729 and G.711 ulaw. The first one will be used for phones using Asterisk over the Internet or WAN while the second one will be used for phones using the local network. In `pjsip.conf`, we will arbitrate which devices will belong to each class of service (restrict, ld, ldi). To reduce the vulnerability to brute force attacks, we will use the phone’s MAC addresses as device names. I strongly advise that you use strong passwords to avoid brute force attacks!
 
-> **[2nd-ed note]** chan_sip (`sip.conf`) was removed in Asterisk 21. The equivalent PJSIP configuration in `pjsip.conf` uses endpoint/auth/aor sections. The legacy `sip.conf` example below is shown for reference only; the author should replace it with the `pjsip.conf` equivalents for Asterisk 22.
+We define a transport and three reusable templates — an endpoint base with the
+shared codecs, a userpass auth, and a single-contact AOR — then attach each device
+to the templates and override only what differs (its class-of-service context and
+credentials). `host=dynamic` becomes an AOR that the phone registers against, and
+`directmedia` becomes `direct_media`:
 
-```
-; Legacy sip.conf (chan_sip, removed in Asterisk 21 — for historical reference only)
-[general]
+```ini
+; pjsip.conf
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060
+
+[endpoint-base](!)
+type=endpoint
 disallow=all
-allow=gsm
-allow=ulaw
-bindport = 5060
-bindaddr = 0.0.0.0
-context = restrict
-[00001A000002]
-type=friend
-username=20
-secret=#s2cr2t#
-host=dynamic
-mailbox=20
+allow=ulaw,gsm
+direct_media=yes
+
+[auth-userpass](!)
+type=auth
+auth_type=userpass
+
+[aor-single](!)
+type=aor
+max_contacts=1
+
+[00001A000002](endpoint-base)
 context=restrict
-directmedia=yes
-[00001A000003]
-type=friend
-username=20
-secret=#s3cr3t#
-host=dynamic
-mailbox=20
+auth=00001A000002
+aors=00001A000002
+mailboxes=20
+[00001A000002](auth-userpass)
+username=00001A000002
+password=#s2cr2t#
+[00001A000002](aor-single)
+
+[00001A000003](endpoint-base)
 context=ld
-directmedia=yes
-dtmfmode=rfc2833
-[00001A000004]
-type=friend
-username=20
-secret=#s3cr3t#
-host=dynamic
-mailbox=20
+dtmf_mode=rfc4733
+auth=00001A000003
+aors=00001A000003
+mailboxes=20
+[00001A000003](auth-userpass)
+username=00001A000003
+password=#s3cr3t#
+[00001A000003](aor-single)
+
+[00001A000004](endpoint-base)
 context=ldi
-directmedia=yes
-dtmfmode=rfc2833
+dtmf_mode=rfc4733
+auth=00001A000004
+aors=00001A000004
+mailboxes=20
+[00001A000004](auth-userpass)
+username=00001A000004
+password=#s3cr3t#
+[00001A000004](aor-single)
 ```
 
 ### Step 2 – Configure the dial plan

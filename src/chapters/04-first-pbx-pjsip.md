@@ -1,7 +1,5 @@
 # Building your first PBX with PJSIP
 
-> **[2nd-ed note]** This chapter has been updated for Asterisk 22 LTS. The original `chan_sip` (`sip.conf`) examples are preserved for comparison but marked **legacy/removed** — `chan_sip` was removed in Asterisk 21 and does not exist in 22. PJSIP (`pjsip.conf`) equivalents have been added inline. CLI commands have been updated to the `pjsip` family.
-
 In this chapter, you will learn how to perform a basic Asterisk PBX configuration. The main objective here is to see the PBX running for the first time, be able to dial between extensions, dial a message being played, and dial to a single analog or SIP trunk. The idea behind this chapter is to ensure that your Asterisk is up and running as soon as possible. After completing the work in this chapter, you will have sufficient background to prepare for subsequent chapters, where we will delve more deeply into configuration details.
 
 ## Objectives
@@ -38,9 +36,7 @@ Asterisk interprets “=” and “=>” in the same way. Differences in syntax 
 |---------|---------------------------|------------|---------|
 | Simple Group | All in the same line | `extensions.conf` | `exten => 4000,1,Dial(PJSIP/4000)` |
 | Option Inheritance | Options are defined first, the object inherits the options | `chan_dahdi.conf` | `[channels]`<br>`context=default`<br>`signalling=fxs_ks`<br>`group=1`<br>`channel => 1` |
-| Complex Entity | Each entity receives a context | `pjsip.conf`, `iax.conf` (legacy: `sip.conf`) | `[cisco]`<br>`type=endpoint`<br>`auth=cisco-auth`<br>`aors=cisco`<br>`context=trusted` |
-
-> **[2nd-ed note]** The `Dial(SIP/4000)` example was updated to `Dial(PJSIP/4000)`. The Complex Entity example was updated from the legacy `sip.conf` `type=friend`/`secret`/`host` form to the modern `pjsip.conf` `type=endpoint` form. Please verify the rebuilt table matches the original figure layout.
+| Complex Entity | Each entity receives a context | `pjsip.conf`, `iax.conf` | `[cisco]`<br>`type=endpoint`<br>`auth=cisco-auth`<br>`aors=cisco`<br>`context=trusted` |
 
 ### Simple Group
 
@@ -71,7 +67,7 @@ The first two lines configure the value of the options op1 and op2 to “bas” 
 
 ### Complex entity object
 
-This format is used by iax.conf, sip.conf, and other configuration files in which numerous entities with many options exist. Typically, this format does not share a large volume of common configurations. Each entity receives a context. Sometimes reserved contexts exist, like [general] for global configurations. Options are declared in the context declarations. Example:
+This format is used by pjsip.conf, iax.conf, and other configuration files in which numerous entities with many options exist. Typically, this format does not share a large volume of common configurations. Each entity receives a context. Sometimes reserved contexts exist, like [general] for global configurations. Options are declared in the context declarations. Example:
 
 ```
 [entity1]
@@ -127,48 +123,22 @@ To help you understand the installation sequence, we outlined the sequence of st
 
 ## Configuration of the extensions
 
-The extensions are SIP, IAX, or analog phones connected to an FXS port. To configure an extension, you should edit the configuration file related to the channel (sip.conf, iax.conf, chan_dahdi.conf)
+The extensions are SIP, IAX, or analog phones connected to an FXS port. To configure an extension, you should edit the configuration file related to the channel (pjsip.conf, iax.conf, chan_dahdi.conf)
 
 ### SIP extensions
 
-On Asterisk 22, `chan_sip` no longer exists — it was deprecated through the Asterisk 16/18 era and **removed entirely in Asterisk 21**. PJSIP (the `res_pjsip` stack, configured in `/etc/asterisk/pjsip.conf`) is now the only SIP channel driver. PJSIP is a little more complex than the old `chan_sip` but is more capable, supports multiple transports per endpoint, and is actively maintained.
-
-> **[2nd-ed note]** In the 1st edition the author kept `chan_sip` and added a separate PJSIP chapter so readers could migrate gradually. That gradual-migration framing no longer applies — `chan_sip` is gone. The original `sip.conf` examples below are **preserved for comparison only** and marked legacy; the PJSIP equivalent immediately follows each one and is the configuration you should actually use.
+On Asterisk 22, PJSIP (the `res_pjsip` stack, configured in `/etc/asterisk/pjsip.conf`) is the SIP channel driver. It supports multiple transports per endpoint, is actively maintained, and is the only SIP driver shipped with the platform. (The original `chan_sip` driver was removed in Asterisk 21 — see the *Legacy channels* chapter if you need to migrate an old configuration.)
 
 The idea here is to configure a simple PBX. (Subsequent chapters provide an entire SIP/PJSIP session with all the details.) PJSIP is configured in `/etc/asterisk/pjsip.conf` and holds all the parameters related to SIP phones and VoIP providers. SIP clients have to be configured before you can make and receive calls.
 
-#### Legacy `chan_sip` (`sip.conf`) — REMOVED in Asterisk 21+
+#### The transport
 
-The following describes the old `chan_sip` model. It is kept for reference because you will still encounter it in older systems and documentation. **Do not use it on Asterisk 21 or later — the module does not exist.** The `[general]` section includes some parameters; it was the first section configured. The main options were:
+In PJSIP, the listener configuration (bind address, port, protocol) lives in a `transport` object. Asterisk has built-in protection against username guessing — it always returns an identical authentication challenge for unknown and known users, and repeated unidentified requests from one IP are rate-limited via the `[global]` options `unidentified_request_count`/`unidentified_request_period`. The main options of a transport are:
 
-- allow/disallow: Defines which codecs are going to be used.
-- bindaddr: Address to be bound to the Asterisk SIP listener. If you set it up as 0.0.0.0 (default), it will bind to all interfaces.
-- context: Sets the default context for all clients unless it is changed in the client section. We used dummy for security reasons. Unauthenticated users get into this context when the option allowguest is set to yes.
-- bindport: SIP UDP port to listen.
-- maxexpirey: Maximum time to register (seconds).
-- defaultexpirey: Default time to register (seconds).
-- register: Registers Asterisk to another host.
-- allowguest: Usually set to no to avoid non-authenticated users in the context of the [general] section.
-- alwaysauthreject: When an incoming INVITE or REGISTER is received, always reject with an identical response (valid username, invalid password). This avoids username guessing.
+- protocol: The transport protocol — `udp`, `tcp`, `tls`, `ws`, or `wss`.
+- bind: Address and port the listener binds to. If you set the address to `0.0.0.0`, it binds to all interfaces; the SIP port defaults to 5060 for UDP/TCP.
 
-Example (legacy `sip.conf` — REMOVED in Asterisk 21+):
-
-```
-[general]
-bindport = 5060
-bindaddr = 10.1.30.45
-context = dummy
-disallow = all
-allow = ulaw
-maxexpirey = 120
-defaultexpirey = 80
-allowguest=no
-alwaysauthreject=yes
-```
-
-#### Modern PJSIP (`pjsip.conf`) — the transport
-
-In PJSIP, the listener configuration that `chan_sip`'s `[general]` section used to hold (bind address, port, protocol) lives in a `transport` object. PJSIP has no `alwaysauthreject` option; the equivalent protection against username guessing is built in — PJSIP always returns an identical authentication challenge for unknown and known users, and repeated unidentified requests from one IP are rate-limited via the `[global]` options `unidentified_request_count`/`unidentified_request_period`. A minimal UDP transport equivalent to the example above:
+A minimal UDP transport:
 
 ```
 [global]
@@ -180,40 +150,21 @@ protocol=udp
 bind=10.1.30.45:5060
 ```
 
-> **[2nd-ed note]** In PJSIP there is no `allowguest`; anonymous/guest calls are handled by an `endpoint` named `anonymous`. Codec selection (`disallow`/`allow`) and the default `context` move onto each `endpoint` (shown below), not the transport. The old `maxexpirey`/`defaultexpirey` registration timers are controlled per-AOR via `maximum_expiration`/`default_expiration`.
+Codec selection (`disallow`/`allow`) and the default `context` are configured on each `endpoint` (shown below), not on the transport. Anonymous/guest calls are handled by an `endpoint` named `anonymous`. Registration timers are controlled per-AOR via `maximum_expiration`/`default_expiration`.
 
 #### SIP clients
 
 After completing the transport section, it is time to set up the SIP clients. I would once again like to remind the reader that we will have an entire SIP/PJSIP chapter later in the book. For now, let’s concentrate on the basics and leave the details for later.
 
-- [name]: When a SIP device connects to Asterisk, it uses the username part of the SIP URI to find the peer/user.
-- type: Configures the connection class. Options are peer, user, and friend. o peer: Asterisk sends calls to a peer. o user: Asterisk receives calls from a user. o friend: Both occur at the same time.
-- host: IP address or host name. The most common option is “dynamic”, which is used when the host registers to Asterisk.
-- secret: Password to authenticate peers and users.
+In PJSIP a SIP client is built from a set of related objects, tied together by name reference:
+
+- `endpoint`: The call behaviour — codecs (`allow`/`disallow`), the dialplan `context`, and which `auth` and `aors` it uses.
+- `auth`: The credentials. `username` is the SIP authentication user and `password` is the secret used to authenticate the device.
+- `aor`: The "address of record" — where the endpoint can be reached. Either a static `contact=` (for a device at a fixed IP) or `max_contacts=` to allow the device to register dynamically.
 
 Warning: Use strong passwords, with at least 8 characters, alphanumeric and numeric characters, and at least one symbol. Reports of hacked servers have appeared in the mailing lists, and brute force password crackers for SIP are easily available for script kiddies. Toll fraud costs thousands of dollars for consumers and providers.
 
-Example (legacy `sip.conf` — REMOVED in Asterisk 21+):
-
-```
-[6000]
-type=friend
-secret=#MySecret1#7
-host=10.1.30.50
-context=from-internal
-[6001]
-type=friend
-secret=Mys3cr3t#
-host=dynamic
-context=from-internal
-defaultip=10.1.30.17
-```
-
-#### The same two clients in modern PJSIP (`pjsip.conf`)
-
-In PJSIP a single `chan_sip` peer becomes a set of related objects: an `endpoint` (the call behaviour, codecs, and context), an `auth` (the credentials), and an `aor` (the registration/contact location — the "address of record"). The objects are tied together by name reference. The `friend` type no longer exists; an endpoint can both place and receive calls by default.
-
-Endpoint 6000 had a static host (`host=10.1.30.50`), so its AOR carries a static `contact` instead of allowing registration. Endpoint 6001 used `host=dynamic`, so its AOR allows the device to register (`max_contacts=1`):
+Endpoint 6000 is a device at a fixed IP, so its AOR carries a static `contact` instead of allowing registration. Endpoint 6001 is a device that registers, so its AOR allows it to register (`max_contacts=1`):
 
 ```
 [6000]
@@ -253,13 +204,13 @@ type=aor
 max_contacts=1
 ```
 
-> **[2nd-ed note]** PJSIP allows the `endpoint`, `auth`, and `aor` sections to share the same section name (e.g. three `[6001]` blocks distinguished by their `type=`); many admins instead suffix them (`[6001]`, `[6001-auth]`, `[6001]` aor) for readability. The 1st edition's `defaultip` on 6001 has no direct PJSIP equivalent — for a device that registers, the contact is learned dynamically. Verify the codec choice (`ulaw`) against the book's codec policy.
+PJSIP allows the `endpoint`, `auth`, and `aor` sections to share the same section name (e.g. the two `[6001]` blocks above, distinguished by their `type=`); many admins instead suffix them (`[6001]`, `[6001-auth]`, `[6001]` aor) for readability. For a device that registers, the contact is learned dynamically when the phone registers, so the AOR needs no static `contact`.
 
 ## IAX Extensions
 
-> **[2nd-ed note]** `chan_iax2` still ships in Asterisk 22 but is now legacy; SIP/PJSIP is the preferred protocol for new deployments. The IAX configuration below is unchanged and still valid.
+`chan_iax2` still ships in Asterisk 22 but is now legacy; SIP/PJSIP is the preferred protocol for new deployments.
 
-You may also create IAX extensions. This protocol is native to the Asterisk, and we will have an entire section devoted to it later in this book. For now, let’s create a few extensions using the protocol. The file is very similar to sip.conf. As the first section to be configured, the section [general] has certain parameters to be configured. The main options are:
+You may also create IAX extensions. This protocol is native to the Asterisk, and we will have an entire section devoted to it later in this book. For now, let’s create a few extensions using the protocol. As the first section to be configured, the section [general] has certain parameters to be configured. The main options are:
 
 - allow/disallow: Defines which codecs are going to be used.
 - bindaddr: Address to be bound to Asterisk SIP listener. If you set it up as 0.0.0.0 (default), it will bind to all interfaces.
@@ -374,30 +325,7 @@ Two parameters should be determined by you.
 - Extension to receive calls—in this case: 9999
 - context: from-sip
 
-Legacy `sip.conf` configuration (REMOVED in Asterisk 21+):
-
-```
- [general]
-srvlookup=yes
-register => login:secret@domain:port/9999
-[siptrunk]
-username=login
-type=peer
-secret=secret
-port=5060
-insecure=invite
-host=dominio
-fromuser=login
-fromdomain=domain
-dtmfmode=rfc2833
-context=from-sip
-disallow=all
-allow=ilbc
-allow=alaw
-allow=g729
-```
-
-In modern PJSIP, a registering SIP trunk is built from the same object family used for an endpoint, plus explicit `registration` and `identify` objects. The `registration` object replaces the old `register =>` line, the `identify` object matches inbound traffic from the provider's IP to the endpoint (PJSIP authenticates inbound INVITEs by source IP rather than the old `insecure=invite`), and `outbound_auth` supplies the credentials for outbound calls and registration:
+In PJSIP, a registering SIP trunk is built from the same object family used for an endpoint, plus explicit `registration` and `identify` objects. The `registration` object tells Asterisk to register to the provider, the `identify` object matches inbound traffic from the provider's IP to the endpoint (PJSIP authenticates inbound INVITEs by source IP), and `outbound_auth` supplies the credentials for outbound calls and registration:
 
 ```
 [siptrunk]
@@ -438,9 +366,7 @@ contact_user=9999
 retry_interval=60
 ```
 
-To access this trunk, we will use the channel name `PJSIP/siptrunk` (the legacy `chan_sip` form was `SIP/siptrunk`).
-
-> **[2nd-ed note]** The old `dtmfmode=rfc2833` maps to PJSIP's `dtmf_mode=rfc4733` (RFC 4733 obsoletes RFC 2833; the payload is identical). Verify `match=domain` — `identify`/`match` accepts IP addresses, CIDRs, or hostnames, but hostnames are resolved once at config-load time, so for a provider with changing IPs list the signalling IP(s) explicitly. Confirm registration with `pjsip show registrations`. Also verify the codec list (`ilbc`, `g729`) against the book's codec policy chapter.
+To access this trunk, we will use the channel name `PJSIP/siptrunk`. The `dtmf_mode=rfc4733` setting carries DTMF out of band (RFC 4733 obsoletes the older RFC 2833; the payload is identical). The `identify`/`match` option accepts IP addresses, CIDRs, or hostnames, but hostnames are resolved once at config-load time, so for a provider with changing IPs list the signalling IP(s) explicitly. Confirm registration with `pjsip show registrations`.
 
 ## Dial plan introduction
 
@@ -585,26 +511,36 @@ exten=9001,n,hangup()
 Dumpchan output:
 
 ```
-Dumping Info For Channel: SIP/4400-08191828:
-========================================================================
+Dumping Info For Channel: PJSIP/4400-00000001:
+================================================================================
 Info:
-Name=               SIP/4400-08191828
-Type=               SIP
-UniqueID=           1161186526.0
-CallerID=           4400
+Name=               PJSIP/4400-00000001
+Type=               PJSIP
+UniqueID=           1161186526.1
+LinkedID=           1161186526.0
+CallerIDNum=        4400
 CallerIDName=       laptop
+ConnectedLineIDNum= (N/A)
+ConnectedLineIDName=(N/A)
 DNIDDigits=         9001
 RDNIS=              (N/A)
+Parkinglot=
+Language=           en
 State=              Ring (4)
 Rings=              0
-NativeFormat=       0x4 (ulaw)
-WriteFormat=        0x4 (ulaw)
-ReadFormat=         0x4 (ulaw)
+NativeFormat=       (ulaw)
+WriteFormat=        ulaw
+ReadFormat=         ulaw
+RawWriteFormat=     ulaw
+RawReadFormat=      ulaw
+WriteTranscode=     No
+ReadTranscode=      No
 1stFileDescriptor=  16
 Framesin=           0
 Framesout=          0
--TimetoHangup=       0
+TimetoHangup=       0
 ElapsedTime=        0h0m0s
+BridgeID=           (Not bridged)
 Context=            default
 Extension=          9001
 Priority=           1
@@ -614,13 +550,9 @@ Application=        DumpChan
 Data=               (Empty)
 Blocking_in=        (Not Blocking)
 Variables:
-SIPCALLID=500CEBC0-9483-4CED-B1E4-16D953655CFC@192.168.1.116
-SIPUSERAGENT=SJphone/1.61.312b (SJ Labs)
-SIPDOMAIN=192.168.1.133
-SIPURI=sip:4400@192.168.1.116
 ```
 
-> **[2nd-ed note]** This is sample `chan_sip` `DumpChan` output from the 1st edition (note the `SIP/4400-...` channel name and `SIP*` variables). On Asterisk 22 the channel name would be `PJSIP/4400-...` and the SIP detail variables come from the `PJSIP_HEADER`/`CHANNEL(pjsip,...)` dialplan functions rather than the old `SIPCALLID`/`SIPUSERAGENT` variables. The output is illustrative; consider regenerating it from a live PJSIP channel for the 2nd edition.
+The field layout above is the Asterisk 22 `DumpChan` output (a real `PJSIP/...` channel name, the `CallerIDNum`/`ConnectedLineID` fields, and the `Raw*`/`Transcode`/`BridgeID` rows that PJSIP channels populate). Unlike the old driver, a PJSIP channel does not auto-set `SIPCALLID`/`SIPUSERAGENT` channel variables; the equivalent SIP details are read on demand with the `PJSIP_HEADER()` and `CHANNEL()` dialplan functions — for example `${CHANNEL(pjsip,call-id)}`, `${PJSIP_HEADER(read,User-Agent)}`, and `${CHANNEL(rtp,dest)}` for the remote RTP address.
 
 ### Environment-specific variables
 
@@ -857,11 +789,9 @@ To enable dialing between extension, we could use the channel variable ${EXTEN},
 exten=_4XXX,1,Dial(PJSIP/${EXTEN})
 ```
 
-> **[2nd-ed note]** `Dial(SIP/...)` updated to `Dial(PJSIP/...)`; the `SIP/` channel technology no longer exists in Asterisk 21+.
-
 ### Dialing to an external destination
 
-To dial an external destination you could precede the number dialed with a route. In North America, it is common to use 9 followed by the number to be dialed externally. If you are using an analog or digital channel to the PSTN, the command should look like the following: If you want to use the SIP trunk instead of the DAHDI, use the `PJSIP/...@siptrunk` channel (the legacy `chan_sip` form was `SIP/trunk`).
+To dial an external destination you could precede the number dialed with a route. In North America, it is common to use 9 followed by the number to be dialed externally. If you are using an analog or digital channel to the PSTN, the command should look like the following: If you want to use the SIP trunk instead of the DAHDI, use the `PJSIP/...@siptrunk` channel.
 
 ```
 [from-internal]
@@ -870,9 +800,7 @@ or
 exten=_9NXXXXXX,1,Dial(PJSIP/${EXTEN:1}@siptrunk,20,tT)
 ```
 
-The above line will permit you to dial 9 and the desired number. In the example given, you will use the first DAHDI channel (DAHDI/1). If you have several lines and this one is busy, the call will not be completed. However, you could use the following line to automatically choose the first available DAHDI channel. Optionally, you can use the SIP trunk instead of DAHDI.
-
-> **[2nd-ed note]** The legacy `Dial(SIP/trunk/...)` form was updated to PJSIP's `Dial(PJSIP/number@trunkendpoint,...)` syntax, where the dialled number is the user part and `siptrunk` is the endpoint configured above.
+The above line will permit you to dial 9 and the desired number. In the example given, you will use the first DAHDI channel (DAHDI/1). If you have several lines and this one is busy, the call will not be completed. However, you could use the following line to automatically choose the first available DAHDI channel. Optionally, you can use the SIP trunk instead of DAHDI. In the PJSIP form `Dial(PJSIP/number@siptrunk,...)`, the dialled number is the user part and `siptrunk` is the endpoint configured above.
 
 ```
 [from-internal]
@@ -909,8 +837,6 @@ exten = s,n,Hangup()
 exten = s,1,Dial(${OPERATOR},40,tT)
 exten = s,n,Hangup()
 ```
-
-> **[2nd-ed note]** `OPERATOR=SIP/6000` updated to `OPERATOR=PJSIP/6000`.
 
 ### Receiving a call using direct inward dialing (DID)
 
@@ -1031,7 +957,7 @@ exten=>6003,1,Dial(IAX2/6003)
 exten=>6004,1,Dial(IAX2/6004)
 ```
 
-> **[2nd-ed note]** All `SIP/` channel references in this digital-receptionist example were updated to `PJSIP/`. `IAX2/` is unchanged — `chan_iax2` still ships in Asterisk 22, though it is now considered legacy and SIP/PJSIP is preferred.
+The SIP extensions use `PJSIP/` and the IAX extensions use `IAX2/` — both drivers ship in Asterisk 22, though `chan_iax2` is now considered legacy and SIP/PJSIP is preferred.
 
 In the file menu1.gsm, record the message “press the extension or wait for the operator”. When the user dials the number 6000, he will be sent to extension 6000. At this point, you should have a clear understanding of the use of several applications, including answer(), background(), goto(), hangup(), and playback(). If you do not have a clear understanding, please read this chapter again until you feel comfortable with the content. You will use the background application very often. Once you understand the basics of extensions, priorities, and applications, it will be easy to create a simple dial plan. These concepts will be explored in greater depth later in the book, and you will see that the dial plan will become more powerful.
 

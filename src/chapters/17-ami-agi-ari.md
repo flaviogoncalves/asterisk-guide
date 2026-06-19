@@ -58,8 +58,6 @@ Endpoint:  <Endpoint/CID.....................................>  <State.....>  <C
  Endpoint:  4000                                                 Not in use    0 of inf
 ```
 
-> **[2nd-ed note]** The original example used `sip show peers`, which relied on chan_sip. chan_sip was removed in Asterisk 21. The equivalent PJSIP command is `pjsip show endpoints`. Verify the exact output format against an Asterisk 22 instance.
-
 ## Extending Asterisk using the System() application
 
 The system() application enables Asterisk to call an external application.
@@ -83,7 +81,7 @@ Example: This application does a screen-pop using netbios WindowsPopup.
 ```
 exten => 9000,1,System(/bin/echo -e "'Incoming Call From -> ${CALLERID(num)}
 \\r Received: ${DATETIME}'"|/usr/bin/smbclient -M target_netbiosname)
-exten => 9000,2,Dial(SIP/9000,15,t)
+exten => 9000,2,Dial(PJSIP/9000,15,t)
 exten => 9000,3,Hangup
 ```
 
@@ -238,18 +236,13 @@ Action Privilege Synopsis
   AgentLogoff      agent,all        Sets an agent as no longer logged in
   Agents           agent,all        Lists agents and their status
   UnpauseMonitor   call,all         Unpause monitoring of a channel
-  MeetmeList       reporting,all    List participants in a conference
-  MeetmeUnmute     call,all         Unmute a Meetme user
-  MeetmeMute       call,all         Mute a Meetme user
-  PlayDTMF         call,all         Play DTMF signal on a specific channel.
-  SIPnotify        system,all       Send a SIP notify
-  SIPshowregistry  system,reportin  Show SIP registrations (text format)
-  SIPqualifypeer   system,reportin  Show SIP peer (text format)
-  SIPshowpeer      system,reportin  Show SIP peer (text format)
-  SIPpeers         system,reportin  List SIP peers (text format)
+  PlayDTMF                        call,all         Play DTMF signal on a specific channel.
+  PJSIPShowEndpoints              system,reportin  Lists PJSIP endpoints
+  PJSIPShowEndpoint               system,reportin  Detail listing of an endpoint
+  PJSIPQualify                    system,all       Qualify a chan_pjsip endpoint
+  PJSIPShowRegistrationsOutbound  system,reportin  Lists outbound registrations
+  PJSIPShowContacts               system,reportin  Lists PJSIP Contacts
 ```
-
-> **[2nd-ed note]** The `SIPpeers`, `SIPshowpeer`, `SIPqualifypeer`, `SIPshowregistry`, and `SIPnotify` AMI actions were provided by `chan_sip`, which was removed in Asterisk 21. In Asterisk 22 these actions do not exist. The PJSIP equivalents are `PJSIPShowEndpoints`, `PJSIPShowEndpoint`, and `PJSIPShowRegistrationsOutbound`. The `MeetMe*` actions also require `app_meetme`, which depends on DAHDI; on systems without DAHDI, use `ConfBridge` instead. The remainder of the list above is still valid in Asterisk 22. Remove the SIP* rows from the table or mark them legacy before publishing.
 
 ```
   AGI              agi,all          Add an AGI command to execute by Async AGI
@@ -300,8 +293,8 @@ Link events are triggered when two channels are connected and voice transmission
 
 ```
    Event: Link
-   Channel1: SIP/4001-AAAA
-   Channel2: SIP/4000-BBBB
+   Channel1: PJSIP/4001-AAAA
+   Channel2: PJSIP/4000-BBBB
    Uniqueid1: 1234567890.12
    Uniqueid2: 1234567890.12
 ```
@@ -312,8 +305,8 @@ Unlink events are triggered when a link between two channels is disconnected jus
 
 ```
    Event: Link
-   Channel1: SIP/4001-AAAA
-   Channel2: SIP/4000-BBBB
+   Channel1: PJSIP/4001-AAAA
+   Channel2: PJSIP/4000-BBBB
    Uniqueid1: 1234567890.12
    Uniqueid2: 1234567890.12
 ```
@@ -583,13 +576,13 @@ Notes about using quotes:
 Step 7 – Pass variables Channel variables can be set in the AGI, but cannot be used inside the AGI. The following example does not work inside an AGI.
 
 ```
-SET VARIABLE MY_DIALCOMMAND "SIP/${EXTEN}"
+SET VARIABLE MY_DIALCOMMAND "PJSIP/${EXTEN}"
 ```
 
 The following example does work:
 
 ```
-SET VARIABLE MY_DIALCOMMAND "SIP/4000"
+SET VARIABLE MY_DIALCOMMAND "PJSIP/4000"
 ```
 
 Step 8: Asterisk responses The following is necessary to verify responses from Asterisk:

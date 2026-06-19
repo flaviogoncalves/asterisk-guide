@@ -82,7 +82,7 @@ The following table summarizes the differences among the session protocols.
 | MGCP | IETF/ITU | MGCP phones (no provider/gateway support) |
 | SCCP | Cisco proprietary | Cisco phones |
 
-> **[2nd-ed note]** In Asterisk 22, SIP is handled exclusively by `chan_pjsip` (chan_sip was removed in Asterisk 21). Consider refreshing this table to reflect current module names and support status.
+> **[2nd-ed note]** Consider refreshing this table to reflect current Asterisk 22 module names and support status.
 
 ## Peers, Users, and Friends
 
