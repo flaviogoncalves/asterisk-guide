@@ -183,7 +183,7 @@ In older versions of Asterisk you had the command Macro. This command was deprec
 gosub([[context,]exten,]priority[(arg1[,...][,argN])])
 ```
 
-The command GOSUB has been available since the early versions of Asterisk and received parameter support in version 10. With parameters, it is now possible to replace completely the old Macro commands. Macros (`app_macro`) were removed from Asterisk 22; you must use GOSUB for subroutines.
+The command GOSUB has been available since the early versions of Asterisk and received parameter support in version 10. With parameters, it is now possible to replace completely the old Macro commands. Macros (`app_macro`) were removed in Asterisk 21; you must use GOSUB for subroutines.
 
 ### Creating the subroutine
 
