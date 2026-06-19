@@ -703,4 +703,28 @@ In this chapter, you have learned how to interface external programs to the Aste
 
 ## Quiz
 
-1. Which of the following is not an interfacing method for Asterisk? A. AMI B. AGI C. Asterisk –rx D. System() E. External() 2. AMI allows for passing Asterisk commands via TCP sockets. This resource is enabled by default. A. True B. False 3. AMI is very safe, because its authentication is done using MD5 challenge/response. A. True B. False 4. FastAGI allows the calling of external scripts from the dial plan to an external machine using TCP sockets (usually 4573). A. True B. False 5. DeadAGI is used in active channels. It can be used in DAHDI channels, but not in SIP or IAX channels. A. True B. False 6. AGI supports only PHP as a scripting language A. True B. False 7. The command _____________ shows all available AGI commands. 8. The command ________________ shows all available AMI commands. Answers: 1-E, 2 – A, 3- B, 4 – A, 5 – B, 6 – B, 7 – agi show commands, 8- manager show commands.
+1. Which of the following is NOT an interfacing method for Asterisk?
+   - A. AMI
+   - B. AGI
+   - C. `asterisk -rx`
+   - D. System()
+   - E. External()
+2. AMI allows passing Asterisk commands over TCP sockets, and this is enabled by default.
+   - A. True
+   - B. False
+3. AMI is very safe, because its authentication uses MD5 challenge/response.
+   - A. True
+   - B. False
+4. FastAGI lets the dial plan call external scripts on another machine over TCP sockets (usually port 4573).
+   - A. True
+   - B. False
+5. DeadAGI is used on active channels. It can be used on DAHDI channels but not on SIP or IAX channels.
+   - A. True
+   - B. False
+6. AGI supports only PHP as a scripting language.
+   - A. True
+   - B. False
+7. The command ___ shows all available AGI commands.
+8. The command ___ shows all available AMI commands.
+
+**Answers:** 1 — E · 2 — A · 3 — B · 4 — A · 5 — B · 6 — B · 7 — `agi show commands` · 8 — `manager show commands`
