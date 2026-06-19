@@ -166,7 +166,7 @@ The following codecs are supported:
 - G.722 (High Definition) – (64 Kbps)
 - G.723.1 - Only pass-through mode
 - G.726 - (16/24/32/40kbps)
-- G.729 - Binary codec module freely distributed by Sangoma (8Kbps)
+- G.729 - Binary codec module distributed by Sangoma; the download is free of charge, but lawful use requires purchasing a per-channel license (8Kbps)
 - GSM - (12-13 Kbps)
 - iLBC - (15 Kbps)
 - LPC10 - (2.5 Kbps)
