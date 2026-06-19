@@ -28,3 +28,8 @@ src/docx-media/
 # Provider production config (reference only — contains third-party secrets/numbers)
 /sip.conf
 /extensions.conf
+
+# Slidev
+slides/node_modules/
+slides/dist*/
+slides/.slidev/

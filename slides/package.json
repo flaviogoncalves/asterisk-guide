@@ -1,0 +1,17 @@
+{
+  "name": "asterisk-guide-slides",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Slidev decks for Asterisk Guide (2nd ed., Asterisk 22 LTS) — one deck per chapter.",
+  "scripts": {
+    "dev": "slidev",
+    "intro": "slidev 02-introduction.md",
+    "build": "slidev build",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@slidev/cli": "^0.50.0",
+    "@slidev/theme-default": "^0.25.0",
+    "@slidev/theme-seriph": "^0.25.0"
+  }
+}
