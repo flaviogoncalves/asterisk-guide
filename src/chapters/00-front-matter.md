@@ -2,7 +2,7 @@
 \frontmatter
 ```
 
-# Copyright {.unnumbered}
+## Copyright {.unnumbered}
 
 *Complete Asterisk Training* — Second Edition (Asterisk 22 LTS)
 
@@ -28,7 +28,7 @@ While every precaution has been taken in preparing this book, the author assumes
 responsibility for errors or omissions, or for damages resulting from the use of the
 information contained herein.
 
-# Preface {.unnumbered}
+## Preface {.unnumbered}
 
 This book is for anyone who wants to learn how to install and configure a PBX (Private
 Branch Exchange) based on Asterisk 22 LTS. Asterisk is an open source telephony
@@ -51,7 +51,7 @@ it you will be able to build and operate a real PBX with advanced features. The 
 has a companion — hands-on labs and an online course — at **VoIP School Blackbelt**
 (<https://voip.school>).
 
-# Audience {.unnumbered}
+## Audience {.unnumbered}
 
 This book is intended for readers who are new to Asterisk. I assume you are comfortable
 with Linux — the shell, a text editor, and basic system administration. You can follow
@@ -61,7 +61,7 @@ not recommend running Asterisk on a desktop environment or inside a lightly-reso
 VM. Some familiarity with IP networks, Voice over IP (VoIP), and basic telephony
 concepts will help.
 
-# What's new in the second edition {.unnumbered}
+## What's new in the second edition {.unnumbered}
 
 The second edition is a thorough modernization for **Asterisk 22 LTS** (released 2024,
 supported through October 2028). The headline changes:
@@ -81,7 +81,7 @@ supported through October 2028). The headline changes:
 - **A new structure.** The book is now organized into four parts — Foundations,
   Channels & Connectivity, Dialplan & Call Features, and Integration & Operations.
 
-# About the author {.unnumbered}
+## About the author {.unnumbered}
 
 Flavio E. Gonçalves was born in 1966 in Brazil. He has had a strong interest in
 computers since getting his first PC in 1983, and earned an engineering degree in 1989
@@ -99,7 +99,7 @@ technical standpoint.
 Flavio is a father of two and lives in Florianópolis, Brazil — one of the most
 beautiful places in the world — where he spends his free time surfing and sailing.
 
-# Feedback, credits & training {.unnumbered}
+## Feedback, credits & training {.unnumbered}
 
 I try hard to find and eliminate errors, but some always slip through. If you find
 something wrong, please let me know and I will act on it.
