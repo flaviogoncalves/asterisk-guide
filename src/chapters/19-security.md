@@ -266,7 +266,7 @@ There are two types of certificates you can use self-signed and commercial. Self
 
 #### Configuring TLS with self signed certificates
 
-Below is a step-by-step guide on how to implement TLS. The chan_sip example that follows is kept for reference but is **legacy** (chan_sip was removed in Asterisk 21+); the PJSIP configuration in the next section is the one to use on Asterisk 22. We are going to use Blink (www.icanblink.com) as our softphone. Blink supports natively and free TLS and SRTP. Step 1. Create a private RSA key using 3DES encryption with length of 4096 bits for our certification authority. The command below present in /usr/src/asterisk-22.x.y/contrib/scripts will create the Certification Authority and The Asterisk Certificate. As usual adapt the instructions if required, versions change, directories change. Please, pay attention on what you are doing. Use your domain or IP address in the –C option. The command ast_tls_cert has three options.
+Below is a step-by-step guide on how to implement TLS. The chan_sip example that follows is kept for reference but is **legacy** (chan_sip was removed in Asterisk 21+); the PJSIP configuration in the next section is the one to use on Asterisk 22. We will use the SipPulse Softphone, which supports TLS and SRTP natively. (Any TLS/SRTP-capable SIP softphone works the same way.) Step 1. Create a private RSA key using 3DES encryption with length of 4096 bits for our certification authority. The command below present in /usr/src/asterisk-22.x.y/contrib/scripts will create the Certification Authority and The Asterisk Certificate. As usual adapt the instructions if required, versions change, directories change. Please, pay attention on what you are doing. Use your domain or IP address in the –C option. The command ast_tls_cert has three options.
 
 - -C host or IP address (I have used 192.168.0.74, the IP address of my VM)
 - -O Organizational name
@@ -343,19 +343,15 @@ transport=tls
 context=from-internal
 ```
 
-Step 3: Install the Blink softphone (www.icanblink.com) Step 4: Copy the certificate Authority to the computer running blink. After installing blink copy the file /etc/asterisk/keys/ca.crt to your computer. If you are using windows you may try winscp. For Linux simply copy using scp. The screenshots for this lab were taken on windows 10 and blink for windows. Step 5: Create an account on blink In the initial screen add the account normally like any other sip account. Use the right password, the authentication is still based on the password. Step 6: Set TLS as the transport in the server properties. Set the port to 5061 and transport as TLS. Adjust your iptables to open the port 5061.
+Step 3: Install a TLS-capable SIP softphone (the author uses the SipPulse Softphone). Step 4: Copy the certificate authority to the computer running the softphone. After installing it, copy the file /etc/asterisk/keys/ca.crt to the computer running the softphone (use scp, or WinSCP on Windows) if you are using a self-signed certificate. Step 5: Create the account in the softphone. In the account screen add the account normally like any other sip account. Use the right password, the authentication is still based on the password. Step 6: Set TLS as the transport in the account settings. In the SipPulse Softphone account screen (below), choose **TLS** as the transport and use port 5061. Adjust your firewall to open TCP port 5061.
 
-> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
+![The SipPulse Softphone account screen — enter the Server (your Asterisk IP or domain), Username, Password, and Display Name, then choose the Transport (UDP, TCP, or TLS).](../images/softphone/sipphone-account.png)
 
-Step 7: Add the certification authority to the blink softphone. Pay attention to this step, go to the advanced TAB, not the account TAB.
+Step 7: Trust the certificate authority. If your Asterisk TLS certificate is signed by a public CA (for example Let's Encrypt — see the *Deployment* chapter), a modern softphone such as the SipPulse Softphone trusts it automatically through the system certificate store, with no manual import. If you use a self-signed certificate, import its CA (`/etc/asterisk/keys/ca.crt`) into the client or the operating-system trust store, or accept it when prompted.
 
-> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
+Step 8: You do **not** need a client certificate. A common misconception is that each phone needs its own certificate to authenticate — it does not. At this point Asterisk only *encrypts* the session; authentication is still username and password. Asterisk does not verify client certificates by default, so there is no need to distribute a per-client certificate.
 
-Step 8: Remove any certificate from the account itself A common misconception is that you need a client certificate to authenticate. This is not true, the server at this point is not checking client certificates. Here we are only encrypting the authentication is still user and password. Asterisk do not verify the client certificates and it would be a pain to have to distribute individual certificates for each client connecting to the server.
-
-> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
-
-Step 9: DON’T FORGET, restart completely blink after changing the certificate authority. Right click and quit do not simply close and open the softphone (VERY IMPORTANT).
+Step 9: After changing the certificate or transport, fully restart the softphone (quit and relaunch, not just close the window) so it reconnects over the new transport.
 
 ### Configuring TLS with chan_pjsip
 
@@ -538,9 +534,9 @@ context=local
 
 Step 2: Softphone configuration
 
-In the softphone, enable SRTP for the account media (set the SRTP/media encryption option to mandatory) so that voice is encrypted.
+In the softphone, enable SRTP for the account media (set the **SRTP (Media Encryption)** option to *Mandatory*) so that voice is encrypted.
 
-> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
+![The SipPulse Softphone account settings (lower section) — set **Transport** to TLS and **SRTP (Media Encryption)** to *Mandatory* so signaling and media are both encrypted.](../images/softphone/sipphone-config.png)
 
 ## Enabling two way authentication for international calls
 

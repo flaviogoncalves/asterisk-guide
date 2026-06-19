@@ -439,9 +439,7 @@ Step 3: Add the contact to other soft-phones. In this example, the Xlite is acco
 availability
 ```
 
-Step 4: Now call extension 2001 and check the status of the phone in the right panel of the soft- phone. Use the console commands core show hints to see the presence status changing in the server and (legacy chan_sip) sip show inuse to show how many calls you have on each line. On Asterisk 22, use `pjsip show endpoints` to inspect endpoint and channel state.
-
-> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
+Step 4: Now call extension 2001 and check the status of the phone in the right panel of the soft- phone. Use the console commands core show hints to see the presence status changing in the server and (legacy chan_sip) sip show inuse to show how many calls you have on each line. On Asterisk 22, use `pjsip show endpoints` to inspect endpoint and channel state. The presence/BLF status appears in the softphone's contacts or BLF panel — exactly how it is shown depends on the client.
 
 #### Codec configuration
 
