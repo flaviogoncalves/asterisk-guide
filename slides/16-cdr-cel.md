@@ -325,7 +325,7 @@ exten => 100,1,Set(CDR(jitter)=${RTPAUDIOQOSJITTER})
 </div>
 
 <div class="mt-3 p-2 text-sm" style="border-left: 4px solid #1C5D99;">
-<code>cdr_mysql</code> is deprecated in Asterisk 22 — the recommended path is <code>cdr_adaptive_odbc</code> with a MySQL ODBC driver.
+<code>cdr_mysql</code> was removed in Asterisk 19 (no native MySQL CDR driver on 22) — use <code>cdr_adaptive_odbc</code> with a MySQL ODBC driver.
 </div>
 
 ---
@@ -345,7 +345,7 @@ layout: section
 - `cdr_adaptive_odbc` — **preferred** for databases
 - `cdr_odbc` — unixODBC (legacy)
 - `cdr_pgsql` — PostgreSQL
-- `cdr_mysql` — MySQL (**deprecated**)
+- `cdr_mysql` — MySQL (**removed in Asterisk 19**)
 - `cdr_freetds` — Sybase / MSSQL
 - `cdr_manager` — CDR to AMI
 - `cdr_radius` — RADIUS

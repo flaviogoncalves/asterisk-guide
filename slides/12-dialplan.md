@@ -480,7 +480,7 @@ include => afterhours,*,sat-sun,*,*
 **`GotoIfTime()`**
 
 ```ini
-GotoIfTime(times,weekdays,mdays,months[,tz]?label)
+GotoIfTime(times,weekdays,mdays,months[,timezone]?[labeliftrue][:labeliffalse])
 ```
 
 ```ini

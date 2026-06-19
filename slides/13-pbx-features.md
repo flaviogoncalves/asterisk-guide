@@ -106,7 +106,6 @@ DTMF feature codes live in `features.conf`. Since Asterisk 12+, **parking moved 
 [featuremap]
 ;blindxfer => #     ; Blind transfer
 ;disconnect => *    ; Disconnect
-;automon => *1      ; One-touch record (Monitor)
 ;atxfer => *2       ; Attended transfer
 ;parkcall => #72    ; One-step park
 ;automixmon => *3   ; One-touch MixMonitor
@@ -386,13 +385,13 @@ Records and **mixes** both legs of the channel to a single file.
 
 ```ini
 ; extensions.conf
-exten => _4XXX,1,Set(DYNAMIC_FEATURES=automon)
-exten => _4XXX,n,Dial(PJSIP/${EXTEN},20,jtTwW)
+exten => _4XXX,1,Set(DYNAMIC_FEATURES=automixmon)
+exten => _4XXX,n,Dial(PJSIP/${EXTEN},20,jtTXx)
 ```
 
 <div class="text-sm mt-2">
 
-- **`automon`** — one-touch record: dial **\*1** to start recording mid-call (`wW` enables it)
+- **`automixmon`** — one-touch record: dial **\*3** to start recording mid-call (`Xx` enables it)
 - Options: `a` append · `b` only while bridged · `v`/`V`/`W(x)` volume (-4…4)
 - A `<command>` can run when recording ends; `MIXMONITOR_FILENAME` holds the file
 
@@ -407,10 +406,10 @@ Set the feature globally instead of before every `Dial()`:
 ```ini
 ; extensions.conf
 [globals]
-DYNAMIC_FEATURES => automon
+DYNAMIC_FEATURES => automixmon
 ```
 
-Older split recordings (IN / OUT) land in `/var/spool/asterisk/monitor` and can be combined with `sox`:
+The removed Monitor app wrote split IN / OUT files that you then combined with `soxmix` — a step MixMonitor eliminates:
 
 ```bash
 soxmix *in.wav *out.wav output.wav
@@ -473,7 +472,7 @@ exten => 100,1,Set(CHANNEL(musicclass)=default)
 exten => 100,n,Dial(PJSIP/2000)
 
 exten => 6601,1,Answer()
-exten => 6601,n,WaitMusicOnHold(30)
+exten => 6601,n,MusicOnHold(default,30)
 ```
 
 <div class="mt-2 text-sm opacity-70">
@@ -550,8 +549,8 @@ layout: section
 - **Parking** lives in `res_parking.conf` (lot `default`, ext **700**, slots **701–720**); DTMF codes stay in `features.conf`.
 - **Transfer** is **blind (#)** or **attended (\*2)** — keep media on Asterisk with `direct_media=no` or `Dial(...,tT)`.
 - **Pickup** with **\*8** works within your `call_group`/`pickup_group`.
-- **Conferencing is ConfBridge** (`confbridge.conf` + `CONFBRIDGE()`); MeetMe is not built by default in Asterisk 22.
-- **`MixMonitor()`** (and one-touch **automon / \*1**) records calls; **MOH** defaults to file-based, set per PJSIP endpoint with `moh_suggest`.
+- **Conferencing is ConfBridge** (`confbridge.conf` + `CONFBRIDGE()`); MeetMe was removed in Asterisk 21.
+- **`MixMonitor()`** (and one-touch **automixmon / \*3**) records calls; **MOH** defaults to file-based, set per PJSIP endpoint with `moh_suggest`.
 
 </v-clicks>
 
