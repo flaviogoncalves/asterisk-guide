@@ -12,7 +12,7 @@ By the end of this chapter, the reader should be able to:
 
 ## Asterisk CDR Format
 
-Asterisk generates a call detail record (CDR) for each call. These records are stored, by default, in a text file in a comma separated value (CSV) in the /var/log/asterisk/cdr-csv. The file is organized in the following fields: CDR Description Type Size Accountcode Account Number to use String Src Caller ID Number String Dst Destination Extension String Dcontext Destination Context String Caller ID with Text String Channel Channel Used String Dstchannel Destination channel String Lastapp Last application String Lastdata Last application data String Start Start of call Date/Time Answer Answer of call Date/Time End End of Call Date/Time Duration Time, from dial to hang up Integer (seconds) Billsec Time, from answer to hang up Integer (seconds) Disposition What Happened to the call String (ANSWERED, NO ANSWER, BUSY, FAILED) Amaflags Flags (DOCUMENTATION, String BILLING, IGNORE) User field User defined field String Sample of csv file imported into a table. AccountCode CallerID No. Extension Context CallerID text Src Dst 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> SIP/8576-5f30 SIP/8584-9153 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> SIP/8576-96f5 SIP/8584-3312 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> SIP/8576-74ac SIP/8584-297b 1234 4830258576 2012348584 admin "Joana D’Arc" <4830258576> SIP/8576-2c5d SIP/8584-9870 1234 4830258584 2012348576 default "Luis Sample" <4830258584> SIP/8584-03fd SIP/8576-645c Application Appdata Start Answer End Dur Bil Disposition Amaflags Dial SIP/8584|30|tT 27/3/2006 16:05 27/3/2006 16:05 27/3/2006 16:05 ANSWERED DOCUMENTATION Dial SIP/8584|30|tT 27/3/2006 16:16 27/3/2006 16:16 27/3/2006 16:16 ANSWERED BILLING Dial SIP/8584|30|tT 27/3/2006 16:22 27/3/2006 16:22 27/3/2006 16:22 ANSWERED BILLING Dial SIP/8584|30|tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING Dial SIP/8576|30|tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING
+Asterisk generates a call detail record (CDR) for each call. These records are stored, by default, in a text file in a comma separated value (CSV) in the /var/log/asterisk/cdr-csv. The file is organized in the following fields: CDR Description Type Size Accountcode Account Number to use String Src Caller ID Number String Dst Destination Extension String Dcontext Destination Context String Caller ID with Text String Channel Channel Used String Dstchannel Destination channel String Lastapp Last application String Lastdata Last application data String Start Start of call Date/Time Answer Answer of call Date/Time End End of Call Date/Time Duration Time, from dial to hang up Integer (seconds) Billsec Time, from answer to hang up Integer (seconds) Disposition What Happened to the call String (ANSWERED, NO ANSWER, BUSY, FAILED, CONGESTION) Amaflags Flags (DEFAULT, OMIT, BILLING, DOCUMENTATION) String User field User defined field String Sample of csv file imported into a table. AccountCode CallerID No. Extension Context CallerID text Src Dst 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> SIP/8576-5f30 SIP/8584-9153 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> SIP/8576-96f5 SIP/8584-3312 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> SIP/8576-74ac SIP/8584-297b 1234 4830258576 2012348584 admin "Joana D’Arc" <4830258576> SIP/8576-2c5d SIP/8584-9870 1234 4830258584 2012348576 default "Luis Sample" <4830258584> SIP/8584-03fd SIP/8576-645c Application Appdata Start Answer End Dur Bil Disposition Amaflags Dial SIP/8584|30|tT 27/3/2006 16:05 27/3/2006 16:05 27/3/2006 16:05 ANSWERED DOCUMENTATION Dial SIP/8584|30|tT 27/3/2006 16:16 27/3/2006 16:16 27/3/2006 16:16 ANSWERED BILLING Dial SIP/8584|30|tT 27/3/2006 16:22 27/3/2006 16:22 27/3/2006 16:22 ANSWERED BILLING Dial SIP/8584|30|tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING Dial SIP/8576|30|tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING
 
 ## Account codes and automated message accounting
 
@@ -28,11 +28,12 @@ Similar to the way in which a record can be flagged for billing or documentation
 ```
 [8576]
 type=endpoint
-amaflags=default
 accountcode=Support
 ```
 
-> **[2nd-ed note]** The original example used `sip.conf` syntax (`type=friend`, `username=`). chan_sip was removed in Asterisk 21; the equivalent in pjsip.conf is shown above. Verify `amaflags` spelling in PJSIP endpoint config (it may be `ama_flags` depending on Asterisk version).
+The AMA flag is not a `pjsip.conf` endpoint option in Asterisk 22; set it per call from the dialplan with the `CHANNEL` function (for example `Set(CHANNEL(amaflags)=billing)`), or with `Set(CDR(amaflags)=billing)`.
+
+> **[2nd-ed note]** The original example used `sip.conf` syntax (`type=friend`, `username=`). chan_sip was removed in Asterisk 21; the equivalent in pjsip.conf is shown above. There is no `amaflags`/`ama_flags` option in the PJSIP `[endpoint]` section — `accountcode` is supported, but AMA flags must be set on the channel via the dialplan.
 
 ## Changing the CSV and/or CDR format
 
@@ -245,13 +246,19 @@ Set a flag for billing purposes. Options are default, omit, documentation, and b
 Set(CDR(amaflags)=amaflags)
 ```
 
-### NoCDR()
+### Set(CDR_PROP(disable)=1)
 
-No CDRs recorded to the file or database.
+Disables CDR recording for the current channel, so no CDR is written to the file or database. Setting it back to `0` re-enables recording.
+
+```
+Set(CDR_PROP(disable)=1)
+```
+
+> **[2nd-ed note]** The original text used the `NoCDR()` application. `NoCDR` was deprecated and then removed in Asterisk 21; use `Set(CDR_PROP(disable)=1)` instead.
 
 ### ResetCDR()
 
-Resets the CDR to zero. If the w option is set, it saves the original CDR record.
+Resets the Call Data Record: the `start` time (and, if answered, the `answer` time) is set to the current time and all CDR variables are wiped. If the `v` option is set, the CDR variables are preserved during the reset.
 
 ### Set(CDR(userfield)=Value)
 
@@ -350,7 +357,7 @@ In this chapter we have learned how to implement CDR recording in text files and
    - E. BILLING
    - F. DOCUMENTATION
 5. To associate a department with a CDR you use the ___ command, and the account code can be read with the ___ channel variable.
-6. The difference between NoCDR() and ResetCDR() is that NoCDR() does not generate any record, while ResetCDR() zeroes the current record.
+6. The difference between `Set(CDR_PROP(disable)=1)` and `ResetCDR()` is that disabling the CDR prevents any record from being written, while `ResetCDR()` resets (zeroes) the current record. (The `NoCDR()` application that previously disabled CDRs was removed in Asterisk 21.)
    - A. False
    - B. True
 7. To use a user-defined field with the `cdr_csv.so` module, you must edit the source code and recompile Asterisk.
