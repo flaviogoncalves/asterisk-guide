@@ -24,3 +24,7 @@ src/docx-media/
 .env
 .env.*
 !.env.example
+
+# Provider production config (reference only — contains third-party secrets/numbers)
+/sip.conf
+/extensions.conf

@@ -13,6 +13,8 @@ services:
       - ./asterisk/etc:/etc/asterisk:ro
     ports:
       - "5060:5060/udp"            # SIP for the SipPulse Softphone on your LAN
+      - "8088:8088/tcp"            # ARI / HTTP (Lab 8)
+      - "8089:8089/tcp"            # HTTPS / WSS for WebRTC (Lab 6)
       - "10000-10100:10000-10100/udp"   # RTP
     networks:
       lab:
