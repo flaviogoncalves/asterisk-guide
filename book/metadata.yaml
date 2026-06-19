@@ -1,14 +1,15 @@
 ---
 title: "Complete Asterisk Training"
-subtitle: "A systematic guide to building an IP PBX — 2nd Edition (Asterisk 22 LTS)"
+subtitle: "Building an IP PBX with Asterisk 22 LTS"
 author: "Flavio E. Gonçalves"
-date: "2nd Edition"
+date: "Second Edition"
 lang: en-US
 documentclass: book
 classoption:
   - oneside
 toc: true
-toc-depth: 2
+toc-title: "Contents"
+toc-depth: 1
 numbersections: true
 # KDP 6x9 print trim with sane margins; xelatex for font embedding.
 geometry: "paperwidth=6in,paperheight=9in,inner=0.75in,outer=0.6in,top=0.75in,bottom=0.75in"
