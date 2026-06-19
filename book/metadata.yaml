@@ -11,12 +11,17 @@ toc: true
 toc-title: "Contents"
 toc-depth: 1
 numbersections: true
-# KDP 6x9 print trim with sane margins; xelatex for font embedding.
-geometry: "paperwidth=6in,paperheight=9in,inner=0.75in,outer=0.6in,top=0.75in,bottom=0.75in"
-fontsize: 10pt
+# KDP paperback — 7.5x9.25 trim, no-bleed interior (good code/diagram width, affordable).
+# Gutter (inner) 0.75in is safe for any count <=700 pages (KDP min for 301-500pp is 0.625");
+# outer/top/bottom are well above the 0.25in no-bleed minimum. The interior PDF must NOT
+# contain the cover — the KDP paperback cover is a separate wraparound file (see kdp-formatter).
+geometry: "paperwidth=7.5in,paperheight=9.25in,inner=0.75in,outer=0.5in,top=0.6in,bottom=0.6in"
+fontsize: 11pt
 colorlinks: true
 linkcolor: black
 urlcolor: blue
+# Front cover (EPUB uses this directly; the PDF embeds it as a full first page via interior.tex)
+cover-image: "src/images/cover.png"
 # Monospace-friendly code blocks
 listings: false
 ...

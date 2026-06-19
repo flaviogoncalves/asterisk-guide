@@ -35,8 +35,8 @@ Asterisk interprets “=” and “=>” in the same way. Differences in syntax 
 | Grammar | How the object is created | Conf. file | Example |
 |---------|---------------------------|------------|---------|
 | Simple Group | All in the same line | `extensions.conf` | `exten => 4000,1,Dial(PJSIP/4000)` |
-| Option Inheritance | Options are defined first, the object inherits the options | `chan_dahdi.conf` | `[channels]`<br>`context=default`<br>`signalling=fxs_ks`<br>`group=1`<br>`channel => 1` |
-| Complex Entity | Each entity receives a context | `pjsip.conf`, `iax.conf` | `[cisco]`<br>`type=endpoint`<br>`auth=cisco-auth`<br>`aors=cisco`<br>`context=trusted` |
+| Option Inheritance | Options are defined first, the object inherits the options | `chan_dahdi.conf` | `[channels]; context=default; signalling=fxs_ks; group=1; channel => 1` |
+| Complex Entity | Each entity receives a context | `pjsip.conf`, `iax.conf` | `[cisco]; type=endpoint; auth=cisco-auth; aors=cisco; context=trusted` |
 
 ### Simple Group
 

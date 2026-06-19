@@ -24,7 +24,7 @@ printf '  %s\n' "${CHAPTERS[@]##*/}"
 # --resource-path lets Pandoc resolve the chapters' ../images/ figure links.
 COMMON=( --from=commonmark_x
          --metadata-file="$META"
-         --resource-path="$SRC"
+         --resource-path="$SRC:$ROOT:$ROOT/src/images"
          --toc --toc-depth=2 )
 
 echo "→ EPUB"

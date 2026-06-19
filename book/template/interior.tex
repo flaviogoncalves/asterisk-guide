@@ -40,7 +40,18 @@
 % ---- links in brand colour (hyperref is loaded by pandoc after this header) ----
 \AtBeginDocument{\hypersetup{linkcolor=brandink,urlcolor=brand,citecolor=brand}}
 
-% ---- code blocks: box every verbatim block ----
+% NOTE: the KDP paperback interior must NOT contain the cover — it is uploaded as a separate
+% wraparound file (back+spine+front). The EPUB embeds the cover via `cover-image` in metadata.
+
+% ---- code blocks: wrap long lines AND box them ----
+% fvextra extends fancyvrb with line breaking; load it before pandoc's own fancyvrb.
+\usepackage{fvextra}
+% wraps pandoc's *highlighted* code (the Highlighting/Verbatim env inside Shaded)
+\fvset{breaklines=true,breakanywhere=true,fontsize=\footnotesize}
+% wraps pandoc's *plain* code blocks too (\begin{verbatim}); show a small wrap arrow
+\RecustomVerbatimEnvironment{verbatim}{Verbatim}%
+  {breaklines=true,breakanywhere=true,fontsize=\footnotesize,%
+   breaksymbolleft={\footnotesize\color{codeframe}\ensuremath{\hookrightarrow}\,}}
 \usepackage{mdframed}
 \mdfdefinestyle{codebox}{backgroundcolor=codebg,linecolor=codeframe,linewidth=0.4pt,
   innerleftmargin=8pt,innerrightmargin=8pt,innertopmargin=6pt,innerbottommargin=6pt,
