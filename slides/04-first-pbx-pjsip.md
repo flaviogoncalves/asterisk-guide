@@ -242,7 +242,7 @@ aors=6000
 
 [6000-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=6000
 password=#MySecret1#7
 
@@ -267,7 +267,7 @@ aors=6001
 
 [6001-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=6001
 password=Mys3cr3t#
 
@@ -465,7 +465,7 @@ from_domain=domain
 
 [siptrunk-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=login
 password=secret
 ```

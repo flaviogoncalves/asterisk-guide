@@ -271,8 +271,8 @@ Compression lets you fit many calls on one data network — rates beyond 8:1.
 </div>
 <div>
 
-- **GSM** — 12–13 kbps
-- **iLBC** — 15 kbps
+- **GSM** — 13 kbps
+- **iLBC** — 13.3 kbps
 - **Speex** — 2.15–44.2 kbps
 - **G.723.1 / LPC10** — pass-through / very low rate
 

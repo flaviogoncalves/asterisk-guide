@@ -406,7 +406,7 @@ pip install requests websocket-client
 
 ---
 
-# The Python client
+# The Python client — setup & REST helpers
 
 ```python
 import json, requests
@@ -422,7 +422,17 @@ def play(cid, media):
     return requests.post(f"{BASE}/channels/{cid}/play",
                          params={"media": media}, auth=AUTH).json()
 def hangup(cid): requests.delete(f"{BASE}/channels/{cid}", auth=AUTH)
+```
 
+<div class="text-sm opacity-80 mt-2">
+Three one-line REST helpers over <code>requests</code>; <code>play()</code> returns the <code>Playback</code> object so we can track its <code>id</code>.
+</div>
+
+---
+
+# The Python client — the event loop
+
+```python
 ws = create_connection(
     f"ws://{ARI_HOST}:{ARI_PORT}/ari/events?app={APP}&api_key={ARI_USER}:{ARI_PASS}")
 playback_owner = {}
@@ -435,6 +445,10 @@ while True:
         cid = playback_owner.pop(event["playback"]["id"], None)
         if cid: hangup(cid)
 ```
+
+<div class="text-sm opacity-80 mt-2">
+Open the WebSocket, then loop: on <code>StasisStart</code> answer + play; on <code>PlaybackFinished</code> hang up.
+</div>
 
 ---
 

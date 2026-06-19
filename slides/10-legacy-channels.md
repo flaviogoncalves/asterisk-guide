@@ -565,7 +565,7 @@ exten => _22XX,1,Dial(IAX2/Branch/${EXTEN})
 
 **Auth methods** — plaintext, **MD5**, or **RSA** key pairs.
 
-RSA (SHA-1 digest) is strongest: generate with `astkeygen -n`, keep the **private** key secret, share the **public** key with the peer.
+RSA (SHA-1 digest) is strongest: generate with `astgenkey -n`, keep the **private** key secret, share the **public** key with the peer.
 
 ```ini
 [hq]
@@ -677,7 +677,7 @@ A single <code>sip.conf</code> <code>[peer]</code>/<code>[friend]</code> is spli
 | `type=friend/peer/user` | a single `type=endpoint` |
 | `host=dynamic` | `type=aor`, `max_contacts=1` (device REGISTERs) |
 | `register=>user:secret@host/ext` | `type=registration` (`server_uri`, `client_uri`, `outbound_auth`) |
-| `secret=` / `username=` | `type=auth`, `auth_type=userpass` |
+| `secret=` / `username=` | `type=auth`, `auth_type=digest` |
 | `dtmfmode=rfc2833` | `dtmf_mode=rfc4733` |
 | `nat=force_rport,comedia` | `force_rport=yes`, `rewrite_contact=yes`, `rtp_symmetric=yes` |
 | `qualify=yes` | `qualify_frequency=` on the **aor** |
@@ -705,7 +705,7 @@ aors=2000
 
 [2000]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=2000
 password=senha
 

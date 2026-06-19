@@ -469,7 +469,7 @@ monitor-join = yes
 </div>
 
 <div class="mt-3 p-2 text-sm" style="border-left: 4px solid #1C5D99;">
-The standalone <strong>Monitor</strong> application was removed in Asterisk 22 — <code>monitor-type</code> now accepts only <strong>MixMonitor</strong>.
+The standalone <strong>Monitor</strong> application was removed in Asterisk 21 (absent in 22) — <code>monitor-type</code> now accepts only <strong>MixMonitor</strong>.
 </div>
 
 ---

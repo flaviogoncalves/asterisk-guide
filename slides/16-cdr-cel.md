@@ -474,12 +474,12 @@ layout: section
 the account code lands on the CDR.
 
 ```ini
-exten => _9011.,1,Authenticate(/password,daj)
+exten => _9011.,1,Authenticate(secret,a)   ; a = stamp the code as accountcode
  same => n,Dial(PJSIP/trunk/${EXTEN:1},20,tT)
  same => n,Hangup()
-exten => _9011.,102,Playback(unauthorized)
- same => 103,Hangup()
 ```
+
+<div class="text-sm opacity-80">On three wrong tries <code>Authenticate</code> plays a failure prompt and <strong>hangs up</strong> — there is no priority-jump fall-through.</div>
 
 <div grid="~ cols-2 gap-8 text-sm mt-3">
 <div>
@@ -493,7 +493,7 @@ exten => _9011.,102,Playback(unauthorized)
 <div>
 
 - `r` — remove the key after success (with `d`)
-- `j` — jump to `n+101` on invalid auth
+- `m` — the parameter is a file of account codes
 
 </div>
 </div>
@@ -510,12 +510,12 @@ asterisk*CLI> database put senha 123456 1
 `voicemail.conf` passwords.
 
 ```ini
-exten => _9011.,1,VMAuthenticate(${CALLERID(num)}@local,ajs)
+exten => _9011.,1,VMAuthenticate(${CALLERID(num)}@default,s)
  same => n,Dial(PJSIP/trunk/${EXTEN:1},20,tT)
  same => n,Hangup()
-exten => _9011.,102,Playback(unauthorized)
- same => 103,Hangup()
 ```
+
+<div class="text-sm opacity-80"><code>s</code> skips the prompts; the only valid option. On failure the app hangs up.</div>
 
 <div class="mt-3 text-sm">
 

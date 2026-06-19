@@ -534,7 +534,7 @@ auth=xlite
 ```ini
 [xlite]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=xlite
 password=#supersecret#
 
@@ -581,7 +581,7 @@ contact=sip:sip.flagonc.com:5600
 ```ini
 [siptrunk]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=1020
 password=supersecret
 
@@ -699,14 +699,14 @@ backgroundSize: contain
  Endpoint:  <Endpoint/CID.....................>  <State.....>  <Channels.>
     I/OAuth:  <AuthId/UserName...........................................>
         Aor:  <Aor............................................>  <MaxContact>
-      Contact:  <Aor/ContactUri..........................> <Status> <RTT(ms)..>
+      Contact:  <Aor/ContactUri..................> <Hash....> <Status> <RTT(ms)..>
     Transport:  <TransportId........>  <Type>  <cos>  <tos>  <BindAddress....>
 ===========================================================================
 
  Endpoint:  xlite                                Not in use    0 of inf
      InAuth:  xlite/xlite
         Aor:  xlite                                              2
-      Contact:  xlite/sip:xlite@192.168.1.116:...  Avail  21.482
+      Contact:  xlite/sip:xlite@192.168.1.116:... e8e29c5f10 Avail  21.482
 ```
 
 <div class="text-sm mt-2 opacity-80">

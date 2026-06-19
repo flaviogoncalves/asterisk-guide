@@ -247,7 +247,7 @@ Originate    originate,all    Originate a call
 Hangup       system,call,all  Hangup a channel
 Status       system,call,...  List channel status
 Command      command,all      Execute an Asterisk CLI command
-PJSIPShowEndpoints  system,reporting  Lists PJSIP endpoints
+PJSIPShowEndpoints  system           Lists PJSIP endpoints
 ```
 
 ---

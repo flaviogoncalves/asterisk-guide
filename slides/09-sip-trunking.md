@@ -194,7 +194,7 @@ After a reload, check `pjsip show registrations`:
  <Registration/ServerURI.........>  <Auth.......>  <Status.......>
 =====================================================================
 
- itsp-reg/sip:itsp.example.com:5060  itsp-auth      Rejected  (exp. 56s)
+ itsp-reg/sip:itsp.example.com:5060  itsp-auth      Registered  (exp. 3554s)
 
 Objects found: 1
 ```
@@ -202,8 +202,8 @@ Objects found: 1
 <div grid="~ cols-2 gap-8 mt-2 text-sm">
 <div>
 
-- Against a **live** provider, `Status` reads **`Registered`** with seconds until the next refresh.
-- `(exp. Ns)` counts down to the next attempt.
+- `Status` reads **`Registered`** with the seconds until the next refresh.
+- `(exp. Ns)` counts down to that refresh.
 
 </div>
 <div>

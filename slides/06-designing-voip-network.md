@@ -453,7 +453,8 @@ First call 31.2 kbps; each additional call only 9.6 kbps.
 Append the frame size to the codec in `allow`:
 
 ```ini
-allow=ulaw:30
+allow=ulaw
+use_ptime=yes
 ```
 
 Bigger packets amortize the 58-byte header stack over more voice — at the cost of latency.
