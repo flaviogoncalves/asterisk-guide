@@ -490,14 +490,14 @@ while (!feof($stdin)) {
   $temp = fgets($stdin);
   $temp = str_replace("\n","",$temp);
   $s = explode(":",$temp);
-  $agivar[$s[0]] = trim($s[1]);
-  If (($temp == "") || ($temp == "\n")) {
+  $agi[$s[0]] = trim($s[1]);
+  if (($temp == "") || ($temp == "\n")) {
     break;
   }
 }
 ```
 
-The previous script will create an array named $agivar. Available options are:
+The previous script will create an array named $agi. Available options are:
 
 - agi_request – AGI file name
 - agi_channel – AGI originating channel
@@ -510,7 +510,7 @@ The previous script will create an array named $agivar. Available options are:
 - agi_priority – Priority
 - agi_accountcode – Originating account code
 
-To call a variable named agi_extensions, use $agivar[agi_extensions]. Step 6: Use channel AGI At this point, you can start talking to Asterisk. Use the fputs command to send commands to AGI. You can also use the echo command.
+To call a variable named agi_extensions, use $agi[agi_extensions]. Step 6: Use channel AGI At this point, you can start talking to Asterisk. Use the fputs command to send commands to AGI. You can also use the echo command.
 
 ```
 fputs($stdout,"SAY NUMBER 4000 '79#' \n");
@@ -547,7 +547,7 @@ fputs($stdlog,$msg . "\n");
 Step 9: Kill the locked (zombie) processes If your script fails for some reason, the process will hang. Use the killproc command to clean it before testing again.
 
 ```
- #!/usr/bin/php4 -q
+ #!/usr/bin/php -q
  <?php
  ob_implicit_flush(true);
  set_time_limit(6);
@@ -574,7 +574,7 @@ Step 9: Kill the locked (zombie) processes If your script fails for some reason,
  // Put agi headers in the array
  while ($env=read()) {
    $s = split(": ",$env);
-   $agi[str_replace("agi_","",$s[[0])] = trim($s[[1]);
+   $agi[str_replace("agi_","",$s[0])] = trim($s[1]);
    if (($env == "") || ($env == "\n")) {
      break;
    }
