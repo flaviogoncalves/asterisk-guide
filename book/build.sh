@@ -26,6 +26,7 @@ COMMON=( --from=commonmark_x
          --metadata-file="$META"
          --resource-path="$SRC:$ROOT:$ROOT/src/images"
          --lua-filter="$ROOT/book/strip-notes.lua"
+         --lua-filter="$ROOT/book/wrap-tables.lua"
          --toc --toc-depth=2 )
 
 echo "→ EPUB"
