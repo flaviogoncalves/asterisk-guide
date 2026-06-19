@@ -61,11 +61,11 @@ Dial(agent/<name>)
 
 Agent 300
 
-- You can check the status of the agents using the command core show agents”
+- You can check the status of the agents using the command `agent show all`
 - the command agentlogin is executed and the agent is associated with the current channel.
 - The user dials an extension with the application agentlogin .
 
-![Agents: a user logs in by dialing an extension that runs the agentlogin application, which binds Agent 300 to the current channel; you can check agent status with `core show agents`](../images/14-queues-fig04.png)
+![Agents: a user logs in by dialing an extension that runs the agentlogin application, which binds Agent 300 to the current channel; you can check agent status with `agent show all`](../images/14-queues-fig04.png)
 
 You can define the agents in the file agents.conf
 
@@ -113,7 +113,7 @@ Calls are distributed among members according to one of these strategies:
 
 Agents are implemented as proxy channels. They can be used inside the queues. Another use for the agent channels is extension mobility. The user can log in using any phone and receive its calls. This allows a user to go to any room to make it an office. You can dial an agent in the dial plan using dial(agent/<name>). You define agents in the agents.conf file.
 
-![Agent mobility: the user picks up any phone, dials a login extension, and passes the agent number and password; after agentlogin() succeeds the agent (Agent 300) is ready to take calls, and you can check status with the CLI command show agents](../images/14-queues-fig05.png)
+![Agent mobility: the user picks up any phone, dials a login extension, and passes the agent number and password; after agentlogin() succeeds the agent (Agent 300) is ready to take calls, and you can check status with the CLI command `agent show all`](../images/14-queues-fig05.png)
 
 ### Agent Groups
 
@@ -175,13 +175,13 @@ RemoveQueueMember(queuename[|interface])
 
 Some applications and console commands are capable of helping the work with queues. The following outlines what each application does:
 
-![Support applications (AddQueueMember, RemoveQueueMember) and CLI commands (show agents, show queues, show queue <name>) used to manage queues at runtime](../images/14-queues-fig09.png)
+![Support applications (AddQueueMember, RemoveQueueMember) and CLI commands (agent show all, queue show, queue show <name>) used to manage queues at runtime](../images/14-queues-fig09.png)
 
 ## Configuration tasks
 
 The figure below summarizes the major tasks to create a working queue system.
 
-![The ACD configuration tasks: (1) create the call queue (required), (2) define agent parameters (optional), (3) create agents (optional), (4) put the queue in the dial plan (required), (5) configure agent recording (optional), and (6) verify with show agents and show queues (optional)](../images/14-queues-fig10.png)
+![The ACD configuration tasks: (1) create the call queue (required), (2) define agent parameters (optional), (3) create agents (optional), (4) put the queue in the dial plan (required), (5) configure agent recording (optional), and (6) verify with agent show all and queue show (optional)](../images/14-queues-fig10.png)
 
 Step 1: Create the call queue In the file queues.conf:
 
@@ -273,7 +273,7 @@ Step 4: Insert the queue in the dial plan
 In the file extensions.conf:
 ; Telemarketing queue.
 exten=>_0800XXXXXXX,1,Answer
-exten=>_0800XXXXXXX,2,SetMusicOnHold(default)
+exten=>_0800XXXXXXX,2,Set(CHANNEL(musicclass)=default)
 exten=>_0800XXXXXXX,3,Set(TIMEOUT(digit)=5)
 exten=>_0800XXXXXXX,4,Set(TIMEOUT(response)=10)
 exten=>_0800XXXXXXX,5,Background(welcome)

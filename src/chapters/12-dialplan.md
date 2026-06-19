@@ -216,7 +216,7 @@ exten=>6003,1,Gosub(stdexten,s,1(PJSIP/6003,${EXTEN}))
 
 To implement call forward and black lists, we need some way to store and restore data. Fortunately, Asterisk provides a mechanism for storing and retrieving data from a built-in database called AstDB. In modern Asterisk (including Asterisk 22) AstDB is backed by **SQLite3** (the file `/var/lib/asterisk/astdb.sqlite3`); older versions used Berkeley DB v1. This is similar to the Windows registry database using the family and keys hierarchical concept. The data persist between Asterisk restarts.
 
-> **[2nd-ed note]** Since Asterisk 1.8 the AstDB is stored in SQLite3 (`astdb.sqlite3`), not the legacy Berkeley DB v1 file. The family/key API is unchanged.
+> **[2nd-ed note]** Since Asterisk 10 the AstDB is stored in SQLite3 (`astdb.sqlite3`), not the legacy Berkeley DB v1 file used by Asterisk 1.8 and earlier. The family/key API is unchanged.
 
 ### Functions, applications, and CLI commands
 
