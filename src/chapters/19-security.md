@@ -105,7 +105,7 @@ You can prevent eavesdropping by encrypting your VoIP traffic. The other way is 
 
 The best way to implement security is to create a security policy. For this training I will suggest a security policy for most Asterisk installations. Use it as the base starting point and change it according to your needs. The suggested security policy follows below: 1. No unnecessary UDP/TCP ports open 2. No access to any administrative interface (SSH/HTTPS) open on the Internet. 3. To access SSH and/or HTTP/HTTPS there should be an explicit exceptions in IPTABLES firewall 4. Strong passwords with 12 characters and at least one special character 5. Ban IP addresses failing more than 10 times in the authentication using Fail2ban 6. Password confirmation for International calls 7. Limit access to the SIP port to your known range of IP address If you require to have external access to your PBX, there are two possibilities. Use a SBC (Session Border Controller) to protect your server against DOS/DDOS or use a VPN whenever you want external access. If you leave the port 5060 open on the Internet without a SBC or VPN, you are open to a DOS/DDOS attack. The risk is yours.
 
-#### PJSIP-era hardening (Asterisk 22)
+### PJSIP-era hardening (Asterisk 22)
 
 Beyond the firewall and Fail2Ban, Asterisk 22's PJSIP stack provides several configuration-level controls that should be part of your security policy. These complement (not replace) the network controls above:
 
@@ -564,4 +564,43 @@ In this chapter you have learned about the risks of having an IP PBX connected t
 
 ## Quiz
 
-Below our traditional end of chapter quiz. 1. What is the most important countermeasure against Internet Revenue Share Fraud. a. Implement SRTP b. Keep Asterisk updated c. Implement TLS d. Use strong passwords 2. SIP fuzzing is defined as: a. DoS attack using malformed requests and replies b. Service theft where passwords are bruteforced c. Eavesdropping of current calls d. DDoS with SIP request flooding 3. The TFTPTheft occurs when the server is configured to provide configuration files over TFTP. You can avoid it using: a. FTP b. HTTP c. HTTPS with username and password d. SCP 4. Man in the middle attacks use a technique called: a. TFTP Theft b. ARP Spoofing c. MAC Poisoning d. DSNIFF 5. For SRTP asterisk uses the following system to exchange keys: a. Mikey b. SDES c. ZRTP d. Pluto 6. The utility to generate the certificate authority and certificates is found on usr/src/asterisk-22.x.y/contrib/scripts: a. ast_tls_cert b. gen_tls c. gen_ast_tls d. tls_generator 7. Valid strategies to prevent eavesdropping (Check all that apply): a. Implement analog eavesdropping detectors b. Use the utility ARPWatch to detect ARP spoofing c. Enable ARP Spoofing detection in the switches d. Use SRTP 8. Asterisk support strong authentication verifying clients certificates a. True b. False Answers: 1-d, 2-a,3-c,4-b,5-b,6-a,7-bcd,8-b
+1. What is the most important countermeasure against Internet Revenue Share Fraud?
+   - A. Implement SRTP
+   - B. Keep Asterisk updated
+   - C. Implement TLS
+   - D. Use strong passwords
+2. SIP fuzzing is defined as:
+   - A. A DoS attack using malformed requests and replies
+   - B. Service theft where passwords are brute-forced
+   - C. Eavesdropping on current calls
+   - D. A DDoS with a flood of SIP requests
+3. TFTPTheft occurs when the server provides configuration files over TFTP. You can avoid it using:
+   - A. FTP
+   - B. HTTP
+   - C. HTTPS with username and password
+   - D. SCP
+4. Man-in-the-middle attacks use a technique called:
+   - A. TFTP theft
+   - B. ARP spoofing
+   - C. MAC poisoning
+   - D. dsniff
+5. For SRTP, Asterisk uses the following system to exchange keys:
+   - A. MIKEY
+   - B. SDES
+   - C. ZRTP
+   - D. Pluto
+6. The utility that generates the certificate authority and certificates, found in `/usr/src/asterisk-22.x.y/contrib/scripts`, is:
+   - A. ast_tls_cert
+   - B. gen_tls
+   - C. gen_ast_tls
+   - D. tls_generator
+7. Valid strategies to prevent eavesdropping (check all that apply):
+   - A. Implement analog eavesdropping detectors
+   - B. Use the ARPwatch utility to detect ARP spoofing
+   - C. Enable ARP-spoofing detection in the switches
+   - D. Use SRTP
+8. Asterisk supports strong authentication by verifying client certificates.
+   - A. True
+   - B. False
+
+**Answers:** 1 — D · 2 — A · 3 — C · 4 — B · 5 — B · 6 — A · 7 — B, C, D · 8 — B
