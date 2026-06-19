@@ -1,6 +1,6 @@
-# Extending Asterisk with AMI, AGI and ARI
+# Extending Asterisk with AMI and AGI
 
-In several situations, it may be necessary to extend Asterisk features using external applications. There are many different ways by which it may be extended. In this chapter, we will cover different ways to integrate Asterisk with other systems. There are three major ways to integrate Asterisk, AMI Asterisk Manager Interface, AGI – Asterisk Gateway Interface and ARI Asterisk RESTful Interface. We will also look at the command asterisk –rx and the system() application. To choose which way you want to integrate with Asterisk depends on the application. For AGI the most usual application is the IVR connected to a database. For AMI, dialers are the most popular app. ARI (introduced in Asterisk 12) has matured into the recommended approach for building new telephony applications and is now widely adopted.
+In several situations, it may be necessary to extend Asterisk features using external applications. There are many different ways by which it may be extended. In this chapter, we will cover two of the classic ways to integrate Asterisk with other systems: AMI – Asterisk Manager Interface and AGI – Asterisk Gateway Interface. We will also look at the command asterisk –rx and the system() application. To choose which way you want to integrate with Asterisk depends on the application. For AGI the most usual application is the IVR connected to a database. For AMI, dialers are the most popular app. A third, more modern interface — ARI, the Asterisk REST Interface — is covered separately in the next chapter.
 
 ## Objectives
 
@@ -15,7 +15,6 @@ By the end of this chapter, the reader should be able to:
 - Explain what Asterisk manager proxy is and how it works
 - Describe different AGI Flavors (DeadAGI, AGI, EAGI, FastAGI)
 - Execute a simple AGI program created with PHP
-- Describe Asterisk REST Interface (ARI) and understand when to choose it over AGI/AMI for new development.
 
 ## Major ways to extend Asterisk
 
@@ -612,32 +611,7 @@ exten => 0800400001, 1, Agi(agi://192.168.0.1)
 
 When the TCP connection is lost or disconnected, the AGI ends and the TCP connection is closed, followed by a call disconnection. This resource is useful to ease the CPU load from your Asterisk server running scripts in an external server. You may obtain more details about FastAGI in the source code directory (please see the file “agi/fastagi-test”). The Asterisk-Java library provides a FastAGI server implementation for Java. For more information, see https://github.com/asterisk-java/asterisk-java
 
-## Asterisk REST Interface (ARI)
-
-ARI (Asterisk REST Interface) was introduced in Asterisk 12 and is now the recommended approach for building sophisticated telephony applications on top of Asterisk 22. Where AMI provides a raw event stream and AGI hijacks a channel for script-driven control, ARI hands the application full control over channels, bridges, endpoints, and media through a clean HTTP/WebSocket API. Asterisk becomes a media engine; your application provides all the call-control logic.
-
-A typical ARI workflow:
-1. Your application opens a WebSocket to `ws://asterisk-host:8088/ari/events?app=myapp&api_key=user:pass`.
-2. Asterisk delivers events (channel created, DTMF received, playback finished, etc.) as JSON objects.
-3. Your application issues REST commands back to Asterisk (`POST /ari/channels`, `POST /ari/bridges`, `POST /ari/channels/{id}/play`, etc.) to manipulate the call.
-
-ARI is configured in `/etc/asterisk/ari.conf` and `/etc/asterisk/http.conf`. A minimal `ari.conf`:
-
-```
-[general]
-enabled=yes
-pretty=yes
-
-[myuser]
-type=user
-read_only=no
-password=mypassword
-password_format=plain
-```
-
-> **[2nd-ed note]** Verify `ari.conf` parameter names against Asterisk 22 documentation at https://docs.asterisk.org/Configuration/Interfaces/Asterisk-REST-Interface-ARI/. Consider expanding this section with a short Stasis dialplan example and a WebSocket client snippet (Python `websockets` or Node.js `ws` are popular choices for ARI clients in 2024+).
-
-Popular ARI client libraries include `ari-client` (Node.js), `ari4java` (Java), and `panoramisk` (Python asyncio). For new development, ARI is strongly preferred over AGI/AMI when you need granular call control.
+ARI, the modern REST/WebSocket interface, gets its own chapter next.
 
 ## Changing the source code
 
@@ -645,7 +619,7 @@ Asterisk is developed in C language (not C++). Teaching C programming is beyond 
 
 ## Summary
 
-In this chapter, you have learned how to interface external programs to the Asterisk PBX. We have started with asterisk –rx passing commands from the Linux shell to the Asterisk console. Next, we learned about the System() application, which allows calling an external program from the dial plan. AMI is the closest interface to a CTI interface common in traditional PBXs. To call an application from the dial plan, we used the AGI, with a taste for its different flavors: DeadAGI for dead channels, EAGI for handling the audio streaming, Fast AGI for using TCP sockets as the input/output interface, and normal AGI for calling and processing the scripts inside the same Asterisk box. Finally, we introduced ARI, the modern REST/WebSocket API that gives external applications full control of Asterisk channels and bridges — the recommended interface for new development in Asterisk 22.
+In this chapter, you have learned how to interface external programs to the Asterisk PBX. We have started with asterisk –rx passing commands from the Linux shell to the Asterisk console. Next, we learned about the System() application, which allows calling an external program from the dial plan. AMI is the closest interface to a CTI interface common in traditional PBXs. To call an application from the dial plan, we used the AGI, with a taste for its different flavors: DeadAGI for dead channels, EAGI for handling the audio streaming, Fast AGI for using TCP sockets as the input/output interface, and normal AGI for calling and processing the scripts inside the same Asterisk box. The next chapter is dedicated to ARI, the modern REST/WebSocket API that gives external applications full control of Asterisk channels and bridges.
 
 ## Quiz
 
@@ -672,15 +646,15 @@ In this chapter, you have learned how to interface external programs to the Aste
    - B. False
 7. The command ___ shows all available AGI commands.
 8. The command ___ shows all available AMI commands.
-9. Which statements about ARI (Asterisk REST Interface) are correct? (Choose all that apply.)
-   - A. It was introduced in Asterisk 12.
-   - B. Applications receive events as JSON over a WebSocket and issue control commands over HTTP/REST.
-   - C. It is configured in `ari.conf` (together with `http.conf`).
-   - D. It is the legacy interface that AGI replaced.
-10. In a `[myuser]` section of `ari.conf`, which option marks the user as authorized for read-only requests?
-    - A. `read_only=yes`
-    - B. `permission=read`
-    - C. `write=no`
-    - D. `access=ro`
+9. In an AMI action packet, which header does the client include so that the asynchronous responses and events coming back from Asterisk can be correlated with the action that triggered them?
+   - A. `ActionID`
+   - B. `Variable`
+   - C. `Secret`
+   - D. `Event`
+10. Which AMI manager.conf permission class must a user have in order to run the `Originate` action and place an outbound call?
+    - A. `originate`
+    - B. `verbose`
+    - C. `log`
+    - D. `reporting`
 
-**Answers:** 1 — E · 2 — B · 3 — B · 4 — A · 5 — B · 6 — B · 7 — `agi show commands` · 8 — `manager show commands` · 9 — A, B, C · 10 — A
+**Answers:** 1 — E · 2 — B · 3 — B · 4 — A · 5 — B · 6 — B · 7 — `agi show commands` · 8 — `manager show commands` · 9 — A · 10 — A
