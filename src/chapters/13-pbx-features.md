@@ -178,14 +178,14 @@ features.conf file.
 
 ### Configuration task list
 
-Follow the steps below to configure the call pickup feature. Step 1: Configure a call group for your extensions. This is done in the channel configuration file (pjsip.conf, iax.conf, chan_dahdi.conf). For PJSIP endpoints, set `callgroup` and `pickupgroup` in the endpoint section of `pjsip.conf`. This task is required.
+Follow the steps below to configure the call pickup feature. Step 1: Configure a call group for your extensions. This is done in the channel configuration file (pjsip.conf, iax.conf, chan_dahdi.conf). For PJSIP endpoints, set `call_group` and `pickup_group` in the endpoint section of `pjsip.conf` (pjsip.conf uses snake_case option names). This task is required.
 
 For PJSIP (pjsip.conf):
 ```
 [4x00]
 type=endpoint
-callgroup=1
-pickupgroup=1,2
+call_group=1
+pickup_group=1,2
 ```
 
 
@@ -201,7 +201,7 @@ There are different ways to implement a conference on Asterisk. The first option
 
 ConfBridge supports HD voice conferences and video conferencing. There are some limitations for videoconference such as no transcoding — all participants have to use the same codec and profile. The videoconference uses a follow-the-talker mode, displaying the image of the last person to speak. You may easily configure new DTMF menus in ConfBridge.
 
-> **[2nd-ed note]** MeetMe (`app_meetme`) was deprecated in Asterisk 10 and **removed from Asterisk 21 and later**. It required DAHDI for timing and is no longer available in Asterisk 22. All conference room deployments must use ConfBridge. The MeetMe section below is retained for historical reference only.
+> **[2nd-ed note]** MeetMe (`app_meetme`) was **deprecated in Asterisk 19** and was scheduled for removal in Asterisk 21, but that removal was paused (at the request of the ViciDial project). The module source still ships with Asterisk 22, but it requires DAHDI and is **not built by the default Asterisk 22 build** — a standard install has no `app_meetme.so` and the `MeetMe()` application is unavailable. All new conference room deployments must use ConfBridge. The MeetMe section below is retained for historical reference only.
 
 ### Confbridge
 
@@ -260,11 +260,11 @@ exten => 1,n,Set(CONFBRIDGE(user,marked)=yes)
 exten => 1,n,ConfBridge(vendas)
 ```
 
-## Meetme (Legacy — removed in Asterisk 21+)
+## Meetme (Legacy — deprecated, not built by default in Asterisk 22)
 
-> **[2nd-ed note]** `app_meetme` was removed in Asterisk 21 and does not exist in Asterisk 22. The content below is kept for historical reference and for readers upgrading from older systems. **For new installations, use ConfBridge (see above).** The DAHDI dependency and `dahdi_dummy` module are not required for ConfBridge.
+> **[2nd-ed note]** `app_meetme` was deprecated in Asterisk 19. Its planned removal in Asterisk 21 was paused, so the source still ships in Asterisk 22, but the module is not built by the default Asterisk 22 build (it depends on DAHDI). A standard Asterisk 22 install therefore has no `MeetMe()` application. The content below is kept for historical reference and for readers upgrading from older systems. **For new installations, use ConfBridge (see above).** The DAHDI dependency and `dahdi_dummy` module are not required for ConfBridge.
 
-Alternatively, in older Asterisk versions you could use the meetme() application. Meetme is a conference bridge that is very simple to use. Remember, meetme was deprecated in Asterisk 10 and depends on the DAHDI module for synchronization.
+Alternatively, in older Asterisk versions you could use the meetme() application. Meetme is a conference bridge that is very simple to use. Remember, meetme was deprecated in Asterisk 19 and depends on the DAHDI module for synchronization.
 
 ![MeetMe conference types — single-speaker, password-protected, and dynamic conferences — all requiring a Zaptel/DAHDI timing source](../images/13-pbx-features-fig07.png)
 
@@ -491,7 +491,7 @@ directory=/var/lib/asterisk/moh
 
 ### MOH configuration tasks
 
-Now, to use music on hold, set the MOH class in the channel configuration files (chan_dahdi.conf, pjsip.conf, iax.conf, and so on). For PJSIP endpoints, set `musicclass` in the endpoint section of `pjsip.conf`. The freeplay tunes installed are now in wav format. At the time of installation, you can select (using make menuselect) the MOH file formats available. If you want to add new MOH files, you will have to supply them in the required formats. For example:
+Now, to use music on hold, set the MOH class in the channel configuration files (chan_dahdi.conf, pjsip.conf, iax.conf, and so on). For PJSIP endpoints, set `moh_suggest` in the endpoint section of `pjsip.conf` (the legacy `musicclass` option name applies to chan_dahdi and other channel drivers, not to PJSIP). The freeplay tunes installed are now in wav format. At the time of installation, you can select (using make menuselect) the MOH file formats available. If you want to add new MOH files, you will have to supply them in the required formats. For example:
 
 ```
 In /etc/asterisk/chan_dahdi.conf, add the line:
