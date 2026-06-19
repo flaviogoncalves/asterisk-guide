@@ -184,7 +184,7 @@ To get a complete description of the command you can use core show application c
 
 ![Output of `core show application confbridge`, showing the synopsis, syntax, and the bridge_profile, user_profile, and menu arguments](../images/13-pbx-features-fig06.png)
 
-> **[2nd-ed note]** A ConfBridge diagram would help here: show several SIP endpoints joining a single named conference (e.g. `101`) through `ConfBridge()`, with one participant flagged as admin, and a callout that the mixing/timing is handled by `res_confbridge` + the built-in `res_timing_*` timer (no DAHDI).
+![Several PJSIP endpoints join one named ConfBridge conference (101); one participant is the admin. The mixing and timing are handled by `res_confbridge` and the built-in `res_timing_*` timer — no DAHDI required.](../images/13-pbx-features-fig09.png)
 
 As you can see above there are three important arguments, each mapping to a section type in `confbridge.conf`. **bridge_profile** (a `type=bridge` section): here you select the maximum number of participants (`max_members`), recording (`record_conference`), `video_mode`, and many other bridge-wide parameters.
 

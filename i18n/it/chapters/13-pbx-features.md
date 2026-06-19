@@ -1,21 +1,21 @@
 # Utilizzo delle funzionalità del PBX
 
-Nei sistemi SIP, la maggior parte delle funzionalità telefoniche è implementata nell'endpoint. Esiste una varietà di telefoni SIP e produttori, e l'interoperabilità non è garantita. Il team di sviluppo di Asterisk ha svolto un lavoro straordinario implementando la maggior parte delle funzionalità direttamente nel PBX, rendendo Asterisk quasi indipendente dall'endpoint. Tuttavia, a volte troverai la stessa funzione eseguita sia dal telefono che da Asterisk stesso. L'integrazione tra telefono e PBX è la prossima frontiera dell'usabilità, ed è l'ambito su cui si stanno concentrando attualmente i sistemi proprietari. In questo capitolo, imparerai come utilizzare la maggior parte di queste funzionalità.
+Nei sistemi SIP, la maggior parte delle funzionalità telefoniche è implementata nell'endpoint. Esiste una grande varietà di telefoni SIP e produttori, e l'interoperabilità non è garantita. Il team di sviluppo di Asterisk ha svolto un lavoro straordinario implementando la maggior parte delle funzionalità direttamente nel PBX, rendendo Asterisk quasi indipendente dall'endpoint. Tuttavia, a volte troverai la stessa funzione eseguita sia dal telefono che da Asterisk stesso. L'integrazione tra telefono e PBX è la prossima frontiera dell'usabilità, su cui i sistemi proprietari si stanno concentrando proprio ora. In questo capitolo, imparerai come utilizzare la maggior parte di queste funzionalità.
 
 ## Obiettivi
 
 Al termine di questo capitolo, sarai in grado di comprendere e utilizzare:
 
 - Parcheggio di chiamata (Call Parking)
-- Risposta di chiamata (Call Pickup)
+- Risposta a chiamata (Call Pickup)
 - Trasferimento di chiamata (Call Transfer)
 - Conferenza (ConfBridge)
-- Registrazione di chiamata
+- Registrazione di chiamata (Call Recording)
 - Musica d'attesa (Music on hold)
 
 ## Dove sono implementate le funzionalità
 
-Innanzitutto, è importante capire quando le funzionalità del PBX vengono eseguite dal PBX stesso e quando invece è il telefono a svolgere tutto il lavoro. Ad esempio, potresti trasferire una chiamata utilizzando il tasto TRANSFER sul telefono o componendo # (trasferimento incondizionato eseguito dal PBX stesso).
+Innanzitutto, è importante capire quando le funzionalità del PBX vengono eseguite e quando invece è il telefono a svolgere tutto il lavoro. Ad esempio, potresti trasferire una chiamata utilizzando il tasto TRANSFER sul telefono o componendo # (trasferimento incondizionato eseguito dal PBX stesso).
 
 ## Funzionalità implementate da Asterisk
 
@@ -23,7 +23,7 @@ Queste funzionalità sono implementate nel PBX dal codice di Asterisk:
 
 - Musica d'attesa
 - Parcheggio di chiamata
-- Risposta di chiamata
+- Risposta a chiamata
 - Registrazione di chiamata
 - Sala conferenze ConfBridge
 - Trasferimento di chiamata (cieco e consultivo)
@@ -37,7 +37,7 @@ Queste funzionalità devono essere programmate nel dialplan di Asterisk (extensi
 - Trasferimento di chiamata su mancata risposta
 - Filtraggio chiamate (blacklist)
 - Non disturbare (Do not disturb)
-- Ripetizione chiamata (Redial)
+- Ricomposizione (Redial)
 
 ## Funzionalità solitamente implementate dal telefono
 
@@ -53,13 +53,13 @@ Queste funzionalità sono implementate dal firmware del telefono:
 
 ## Il file di configurazione delle funzionalità
 
-Alcune delle funzionalità presentate in questo capitolo sono configurate nel file di configurazione features.conf. È possibile modificare il comportamento di alcune funzionalità modificando questo file. Abbiamo incluso il relativo estratto qui sotto. Nelle prossime sezioni di questo capitolo, descriveremo ciascuna funzionalità. Estratto dal file di esempio (Asterisk 22)
+Alcune delle funzionalità presentate in questo capitolo sono configurate nel file di configurazione features.conf. È possibile modificare il comportamento di alcune funzionalità modificando questo file. Abbiamo incluso il relativo estratto qui sotto. Nelle prossime sezioni di questo capitolo, descriveremo ogni funzionalità. Estratto dal file di esempio (Asterisk 22)
 
-![La sezione `[featuremap]` di features.conf, con i codici funzione DTMF predefiniti](../images/13-pbx-features-fig02.png)
+![La sezione `[featuremap]` di features.conf, con i codici DTMF predefiniti per le funzionalità](../images/13-pbx-features-fig02.png)
 
-A partire da Asterisk 12, il parcheggio di chiamata è stato spostato fuori da `features.conf` nel suo modulo dedicato, `res_parking`, con configurazione in `res_parking.conf`. Il blocco parking-lot qui sotto (`parkext`, `parkpos`, `context`, `parkingtime` e così via) risiede in `res_parking.conf`. La sezione `[featuremap]` (i codici funzione DTMF, incluso `parkcall`) rimane in `features.conf`.
+Da Asterisk 12, il parcheggio di chiamata è stato spostato fuori da `features.conf` nel suo modulo dedicato, `res_parking`, con la configurazione in `res_parking.conf`. Il blocco parking-lot qui sotto (`parkext`, `parkpos`, `context`, `parkingtime` e così via) risiede in `res_parking.conf`. La sezione `[featuremap]` (i codici DTMF delle funzionalità, incluso `parkcall`) rimane in `features.conf`.
 
-Le opzioni del parcheggio risiedono in `res_parking.conf`. Un parcheggio chiamato `default` esiste sempre, anche se non è presente nel file di configurazione. L'estratto qui sotto è tratto dal file `res_parking.conf.sample` di Asterisk 22:
+Le opzioni del parcheggio risiedono in `res_parking.conf`. Un parcheggio chiamato `default` esiste sempre, anche se non è presente nel file di configurazione. L'estratto qui sotto è tratto da Asterisk 22 `res_parking.conf.sample`:
 
 ```
 ; res_parking.conf
@@ -84,7 +84,7 @@ context => parkedcalls          ; Which context parked calls and the default par
 ;parkedmusicclass = default    ; MOH class to use for the parked channel
 ```
 
-I codici funzione DTMF (incluso `parkcall` a un solo passaggio) rimangono nella sezione `[featuremap]` di `features.conf`:
+I codici DTMF delle funzionalità (incluso `parkcall` in un solo passaggio) rimangono nella sezione `[featuremap]` di `features.conf`:
 
 ```
 ; features.conf
@@ -103,21 +103,21 @@ and/or x option in the Dial() or Queue() app call!
 
 ## Trasferimento di chiamata
 
-Il trasferimento di chiamata può essere implementato dal telefono, da un ATA o da Asterisk stesso. Consulta il manuale del tuo telefono per capire come vengono trasferite le chiamate. Se il tuo telefono non supporta il trasferimento di chiamata, puoi utilizzare Asterisk per completare questa operazione. Il trasferimento di chiamata è implementato in due modi diversi. Il primo modo consiste nell'utilizzare la funzionalità di trasferimento cieco: componi # seguito dal numero verso cui trasferire la chiamata. A volte utilizzerai la funzione di trasferimento del tuo telefono IP o softphone IP. Puoi modificare il carattere di trasferimento modificando il parametro blindxfer nel file features.conf. Puoi abilitare il trasferimento assistito in Asterisk rimuovendo il ; prima del parametro atxfer nel file features.conf. Durante una conversazione, dovrai premere *2. Asterisk dirà “transfer” e ti darà un segnale di linea. Il chiamante viene messo in musica d'attesa. Dopo aver parlato con la persona di destinazione e aver riagganciato il telefono, il sistema mette in comunicazione il chiamante con la destinazione.
+Il trasferimento di chiamata può essere implementato dal telefono, da un ATA o da Asterisk stesso. Consulta il manuale del tuo telefono per capire come vengono trasferite le chiamate. Se il tuo telefono non supporta il trasferimento di chiamata, puoi utilizzare Asterisk per completare questa operazione. Il trasferimento di chiamata è implementato in due modi diversi. Il primo modo consiste nell'utilizzare la funzionalità di trasferimento cieco: componi # seguito dal numero verso cui trasferire. A volte utilizzerai la funzionalità di trasferimento del tuo telefono IP o softphone IP. Puoi modificare il carattere di trasferimento modificando il parametro blindxfer nel file features.conf. Puoi abilitare il trasferimento assistito in Asterisk rimuovendo il ; prima del parametro atxfer nel file features.conf. Durante una conversazione, dovrai premere *2. Asterisk dirà “transfer” e ti darà un segnale di linea. Il chiamante viene messo in musica d'attesa. Dopo aver parlato con la persona di destinazione e aver riagganciato il telefono, il sistema mette in comunicazione il chiamante con la destinazione.
 
 ![Trasferimento di chiamata: i passaggi per un trasferimento cieco (premi # durante la chiamata) e un trasferimento assistito (premi *2)](../images/13-pbx-features-fig03.png)
 
 ### Elenco delle attività di configurazione
 
-1. Per un endpoint PJSIP, assicurati che l'opzione `direct_media` sia impostata su `no` (in modo che il flusso multimediale passi attraverso Asterisk e i codici funzione vengano rilevati), oppure utilizza un'opzione `t`/`T` nell'applicazione `Dial()`
+1. Per un endpoint PJSIP, assicurati che l'opzione `direct_media` sia impostata su `no` (in modo che il media fluisca attraverso Asterisk e i codici delle funzionalità vengano rilevati), oppure utilizza un'opzione `t`/`T` nell'applicazione `Dial()`
 
 ## Parcheggio di chiamata
 
-Questa funzionalità viene utilizzata per parcheggiare una chiamata. Questo è utile, ad esempio, quando rispondi a una telefonata lontano dalla tua postazione e vuoi trasferire la chiamata sulla tua scrivania. Puoi farlo parcheggiando la chiamata in un'estensione. Una volta raggiunta la tua scrivania, componi semplicemente il numero dell'estensione di parcheggio per recuperare la chiamata.
+Questa funzionalità viene utilizzata per parcheggiare una chiamata. Questo è utile, ad esempio, quando rispondi a una telefonata lontano dalla tua postazione e vuoi trasferire la chiamata sulla tua scrivania. Puoi farlo parcheggiando la chiamata in un'extension. Una volta raggiunta la scrivania, componi semplicemente il numero dell'extension di parcheggio per recuperare la chiamata.
 
 ![Parcheggio di chiamata: componi 700 per parcheggiare una chiamata nel primo slot libero (701–720); Asterisk annuncia lo slot, che componi da qualsiasi telefono per recuperare la chiamata](../images/13-pbx-features-fig04.png)
 
-Per impostazione predefinita, l'estensione 700 viene utilizzata per parcheggiare una chiamata. Nel mezzo di una conversazione, premi # per trasferire la chiamata all'estensione 700. Ora Asterisk annuncerà la tua estensione di parcheggio, come 701 o 702. Riaggancia il telefono e il chiamante verrà messo in attesa. Vai al telefono sulla tua scrivania e componi l'estensione di parcheggio annunciata per recuperare la chiamata. Se il chiamante rimane parcheggiato per troppo tempo, la funzione di timeout si attiverà e l'estensione originariamente chiamata squillerà di nuovo.
+Per impostazione predefinita, l'extension 700 viene utilizzata per parcheggiare una chiamata. Nel mezzo di una conversazione, premi # per trasferire la chiamata all'extension 700. Ora Asterisk annuncerà la tua extension di parcheggio, come 701 o 702. Riaggancia il telefono e il chiamante verrà messo in attesa. Vai al telefono della tua scrivania e componi l'extension di parcheggio annunciata per recuperare la chiamata. Se il chiamante rimane parcheggiato per molto tempo, la funzionalità di timeout si attiverà e l'extension originariamente chiamata squillerà di nuovo.
 
 ### Elenco delle attività di configurazione
 
@@ -129,23 +129,23 @@ include => parkedcalls
 
 Passaggio 2: Testa la funzionalità di parcheggio di chiamata componendo #700. Note:
 
-- L'estensione di parcheggio non verrà mostrata nel comando CLI dialplan show.
+- L'extension di parcheggio non verrà mostrata nel comando CLI dialplan show.
 - È necessario ricaricare il modulo di parcheggio dopo aver modificato il file di configurazione del parcheggio: `module reload res_parking.so`. Per le modifiche a features.conf, `module reload features.so`.
 - Per parcheggiare una chiamata, devi trasferire a #700. Verifica le opzioni `t` e `T` nell'applicazione `Dial()`.
 
-## Risposta di chiamata
+## Risposta a chiamata
 
-La risposta di chiamata ti consente di catturare una chiamata da un collega nello stesso gruppo di chiamata. Questo aiuterebbe a evitare, ad esempio, di doversi alzare per rispondere a una chiamata che sta squillando sul telefono di un'altra persona nella tua stanza, ma che non è presente. Componendo *8, puoi catturare una chiamata all'interno del tuo gruppo di chiamata. Questo numero può essere modificato nel
+La risposta a chiamata ti consente di catturare una chiamata da un collega nello stesso gruppo di chiamata. Questo aiuta, ad esempio, a evitare di doversi alzare per rispondere a una chiamata che sta squillando per un'altra persona nella tua stanza, ma che non è presente. Componendo *8, puoi catturare una chiamata all'interno del tuo gruppo di chiamata. Questo numero può essere modificato nel
 
 ```
 features.conf file.
 ```
 
-![Risposta di chiamata: i membri possono catturare solo le chiamate all'interno del proprio gruppo; l'operatore (pickupgroup=1,2,3) può rispondere alle chiamate di ogni gruppo](../images/13-pbx-features-fig05.png)
+![Risposta a chiamata: i membri possono catturare solo le chiamate all'interno del proprio gruppo; l'operatore (pickupgroup=1,2,3) può rispondere alle chiamate di ogni gruppo](../images/13-pbx-features-fig05.png)
 
 ### Elenco delle attività di configurazione
 
-Segui i passaggi seguenti per configurare la funzionalità di risposta di chiamata. Passaggio 1: Configura un gruppo di chiamata per le tue estensioni. Questo viene fatto nel file di configurazione del canale (pjsip.conf, iax.conf, chan_dahdi.conf). Per gli endpoint PJSIP, imposta `call_group` e `pickup_group` nella sezione endpoint di `pjsip.conf` (pjsip.conf utilizza nomi di opzioni in snake_case). Questa attività è obbligatoria.
+Segui i passaggi seguenti per configurare la funzionalità di risposta a chiamata. Passaggio 1: Configura un gruppo di chiamata per le tue extension. Questo viene fatto nel file di configurazione del canale (pjsip.conf, iax.conf, chan_dahdi.conf). Per gli endpoint PJSIP, imposta `call_group` e `pickup_group` nella sezione endpoint di `pjsip.conf` (pjsip.conf utilizza nomi di opzioni in snake_case). Questa attività è obbligatoria.
 
 Per PJSIP (pjsip.conf):
 ```
@@ -156,7 +156,7 @@ pickup_group=1,2
 ```
 
 
-Passaggio 2: Modifica il numero della funzionalità di risposta di chiamata (opzionale). Questo è impostato nella sezione `[general]` di `features.conf`, non in `pjsip.conf`:
+Passaggio 2: Modifica il numero della funzionalità di risposta a chiamata (opzionale). Questo è impostato nella sezione `[general]` di `features.conf`, non in `pjsip.conf`:
 
 ```
 ; features.conf
@@ -166,11 +166,11 @@ pickupexten = *8   ; Configures the call pickup extension (default is *8)
 
 ## Conferenza (call conference)
 
-Esistono diversi modi per implementare una conferenza su Asterisk. La prima opzione è semplicemente utilizzare la funzionalità di conferenza a tre del telefono. Utilizzando questa funzionalità nel telefono, non è richiesto alcun supporto nel server stesso. Tuttavia, quando desideri una conferenza con più di 3 persone, dovresti gestire una sala conferenze. L'applicazione di conferenza moderna di Asterisk è ConfBridge (`app_confbridge`).
+Esistono diversi modi per implementare una conferenza su Asterisk. La prima opzione è semplicemente utilizzare la funzionalità di conferenza a tre del telefono. Utilizzando questa funzionalità nel telefono non è richiesto alcun supporto nel server stesso. Tuttavia, quando desideri una conferenza con più di 3 persone, dovresti gestire una sala conferenze. L'applicazione di conferenza moderna di Asterisk è ConfBridge (`app_confbridge`).
 
-ConfBridge supporta conferenze vocali HD e videoconferenze. Ci sono alcune limitazioni per le videoconferenze, come l'assenza di transcodifica: tutti i partecipanti devono utilizzare lo stesso codec e profilo. La videoconferenza utilizza una modalità "follow-the-talker", che visualizza l'immagine dell'ultima persona che ha parlato. Puoi configurare facilmente nuovi menu DTMF in ConfBridge.
+ConfBridge supporta conferenze vocali HD e videoconferenze. Ci sono alcune limitazioni per le videoconferenze, come l'assenza di transcodifica: tutti i partecipanti devono utilizzare lo stesso codec e profilo. La videoconferenza utilizza una modalità "follow-the-talker", visualizzando l'immagine dell'ultima persona che ha parlato. Puoi configurare facilmente nuovi menu DTMF in ConfBridge.
 
-ConfBridge sostituisce la vecchia applicazione MeetMe, che è stata deprecata in Asterisk 19 e rimossa in Asterisk 21. A differenza di MeetMe, ConfBridge **non** richiede DAHDI o una sorgente di temporizzazione hardware: si basa sull'interfaccia di temporizzazione integrata di Asterisk (`res_timing_timerfd` su Linux, o `res_timing_pthread`), quindi non è necessario alcun modulo `dahdi_dummy`. Se stai migrando da un sistema più vecchio che utilizzava `MeetMe()` e `meetme.conf`, sostituiscili con `ConfBridge()` e `confbridge.conf` come descritto di seguito.
+ConfBridge sostituisce la vecchia applicazione MeetMe, che è stata deprecata in Asterisk 19 e rimossa in Asterisk 21. A differenza di MeetMe, ConfBridge **non** richiede DAHDI o una sorgente di timing hardware: si basa sull'interfaccia di timing integrata di Asterisk (`res_timing_timerfd` su Linux, o `res_timing_pthread`), quindi non è necessario alcun modulo `dahdi_dummy`. Se stai migrando da un sistema più vecchio che utilizzava `MeetMe()` e `meetme.conf`, sostituiscili con `ConfBridge()` e `confbridge.conf` come descritto di seguito.
 
 ### ConfBridge
 
@@ -180,11 +180,11 @@ Per avviare una sala conferenze, la sintassi è elencata di seguito.
 ConfBridge(conference,bridge_profile,user_profile,menu)
 ```
 
-Per ottenere una descrizione completa del comando, puoi utilizzare core show application confbridge.
+Per ottenere una descrizione completa del comando puoi usare core show application confbridge.
 
 ![Output di `core show application confbridge`, che mostra la sinossi, la sintassi e gli argomenti bridge_profile, user_profile e menu](../images/13-pbx-features-fig06.png)
 
-> **[Nota 2ª ed.]** Un diagramma di ConfBridge sarebbe utile qui: mostrare diversi endpoint SIP che si uniscono a una singola conferenza denominata (es. `101`) tramite `ConfBridge()`, con un partecipante contrassegnato come admin, e un richiamo al fatto che il mixing/temporizzazione è gestito da `res_confbridge` + il timer integrato `res_timing_*` (nessun DAHDI).
+![Diversi endpoint PJSIP si uniscono a una conferenza ConfBridge denominata (101); un partecipante è l'amministratore. Il mixing e il timing sono gestiti da `res_confbridge` e dal timer integrato `res_timing_*` — non è richiesto DAHDI.](../images/13-pbx-features-fig09.png)
 
 Come puoi vedere sopra, ci sono tre argomenti importanti, ognuno dei quali mappa a un tipo di sezione in `confbridge.conf`. **bridge_profile** (una sezione `type=bridge`): qui selezioni il numero massimo di partecipanti (`max_members`), la registrazione (`record_conference`), `video_mode` e molti altri parametri a livello di bridge.
 
@@ -219,7 +219,7 @@ type=menu
 6=leave_conference
 ```
 
-#### Funzioni ConfBridge
+#### Funzioni di ConfBridge
 
 Le opzioni del bridge di conferenza possono essere passate dinamicamente nel dialplan utilizzando la funzione CONFBRIDGE(). Vedi gli esempi qui sotto:
 
@@ -231,32 +231,32 @@ exten => 1,n,Set(CONFBRIDGE(user,marked)=yes)
 exten => 1,n,ConfBridge(sales)
 ```
 
-### Comandi admin di ConfBridge e migrazione da MeetMe
+### Comandi di amministrazione di ConfBridge e migrazione da MeetMe
 
-Se provieni da MeetMe, le funzioni di amministrazione che utilizzavi tramite `MeetMeAdmin()` e l'opzione `a` (admin) sono ora espresse tramite il **profilo utente admin** (`admin=yes`) più le azioni del **menu**. Un amministratore che si unisce con un profilo admin e un menu contenente azioni admin può bloccare la sala, espellere utenti e silenziare i partecipanti in tempo reale dal tastierino. Le azioni di menu rilevanti in `confbridge.conf` sono:
+Se provieni da MeetMe, le funzioni di amministrazione che utilizzavi tramite `MeetMeAdmin()` e l'opzione `a` (admin) sono ora espresse tramite il **profilo utente amministratore** (`admin=yes`) più le azioni del **menu**. Un amministratore che si unisce con un profilo admin e un menu contenente azioni di amministrazione può bloccare la sala, espellere utenti e silenziare i partecipanti dal vivo tramite il tastierino. Le azioni di menu pertinenti in `confbridge.conf` sono:
 
-- `admin_kick_last` -- espelli l'ultimo utente che si è unito
-- `admin_toggle_mute_participants` -- silenzia/riattiva tutti i partecipanti non admin
+- `admin_kick_last` -- espelle l'ultimo utente che si è unito
+- `admin_toggle_mute_participants` -- silenzia/riattiva tutti i partecipanti non amministratori
 - `toggle_mute` -- silenzia/riattiva te stesso
 - `participant_count` -- annuncia il numero di partecipanti
 - `leave_conference` -- abbandona il bridge e continua nel dialplan
 
-Queste sostituiscono i flag dell'opzione `MeetMe()` di MeetMe (`a`, `A`, `m`, `M`, `l`, `x`, …) e i comandi `MeetMeAdmin()` (`k`, `K`, `L`, `M`, `N`, …). Non esiste `meetme.conf` in Asterisk 22; tutta la configurazione della conferenza risiede in `confbridge.conf` e le modifiche vengono applicate con `module reload res_confbridge.so`.
+Queste sostituiscono i flag delle opzioni di MeetMe `MeetMe()` (`a`, `A`, `m`, `M`, `l`, `x`, …) e i comandi `MeetMeAdmin()` (`k`, `K`, `L`, `M`, `N`, …). Non esiste `meetme.conf` in Asterisk 22; tutta la configurazione della conferenza risiede in `confbridge.conf` e le modifiche vengono applicate con `module reload res_confbridge.so`.
 
 ### Esempio di ConfBridge
 
-Per creare una sala conferenze raggiungibile all'estensione 500, in `extensions.conf`:
+Per creare una sala conferenze raggiungibile all'extension 500, in `extensions.conf`:
 
 ```
 exten => 500,1,Answer()
  same => n,ConfBridge(101,default_bridge,default_user,sample_user_menu)
 ```
 
-Il primo chiamante che compone il 500 crea la conferenza `101`; i chiamanti successivi si uniscono ad essa. I profili e i menu qui referenziati (`default_bridge`, `default_user`, `sample_user_menu`) sono definiti in `confbridge.conf`. Per richiedere un PIN, imposta `pin=` nel profilo utente; per rendere un partecipante un amministratore della conferenza, assegna loro un profilo utente con `admin=yes`.
+Il primo chiamante a comporre il 500 crea la conferenza `101`; i chiamanti successivi si uniscono ad essa. I profili e i menu qui referenziati (`default_bridge`, `default_user`, `sample_user_menu`) sono definiti in `confbridge.conf`. Per richiedere un PIN, imposta `pin=` nel profilo utente; per rendere un partecipante un amministratore della conferenza, assegna loro un profilo utente con `admin=yes`.
 
 ## Registrazione di chiamata
 
-Esistono diversi modi per registrare una chiamata in Asterisk. Puoi utilizzare l'applicazione `MixMonitor()` per registrare facilmente le chiamate. (La vecchia applicazione `Monitor`, che registrava due file separati, è stata rimossa; utilizza invece `MixMonitor`.)
+Esistono diversi modi per registrare una chiamata in Asterisk. Puoi utilizzare l'applicazione `MixMonitor()` per registrare facilmente le chiamate. (La vecchia applicazione `Monitor`, che registrava due file separati, è stata rimossa; usa invece `MixMonitor`.)
 
 ### Utilizzo dell'applicazione MixMonitor
 
@@ -276,16 +276,16 @@ Registra una chiamata e mixa l'audio durante la registrazione. Sintassi: `MixMon
 - W(<x>) - Regola entrambi i volumi, udibile e parlato, di un fattore <x> (da -4 a 4)
 - <command> verrà eseguito al termine della registrazione. Qualsiasi stringa corrispondente a ^{X} verrà de-escapata in ${X} e tutte le variabili verranno valutate in quel momento. La variabile MIXMONITOR_FILENAME conterrà il nome del file utilizzato per la registrazione.
 
-Una risorsa interessante è la funzionalità di registrazione one-touch `automixmon`, che consente a una parte di comporre un codice DTMF (predefinito `*3`) durante una chiamata per avviare immediatamente (e disattivare) la registrazione. Si basa su MixMonitor, quindi scrive un singolo file mixato. Esempio:
+Una risorsa interessante è la funzionalità di registrazione one-touch `automixmon`, che consente a una parte di comporre un codice DTMF (predefinito `*3`) durante una chiamata per avviare immediatamente (e disattivare) la registrazione. È basata su MixMonitor, quindi scrive un singolo file mixato. Esempio:
 
 ```
 exten => _4XXX,1,Set(DYNAMIC_FEATURES=automixmon)
  same => n,Dial(PJSIP/${EXTEN},20,jtTXx) ; X and x enable one-touch MixMonitor recording
 ```
 
-Le opzioni `X` e `x` abilitano la funzionalità MixMonitor one-touch rispettivamente per il chiamante e il chiamato. Poiché MixMonitor registra un singolo file mixato, non è necessario combinare file IN/OUT separati in seguito (il vecchio approccio `automon`/`Monitor`, che produceva due file per `soxmix`, è stato rimosso insieme all'applicazione `Monitor`).
+Le opzioni `X` e `x` abilitano la funzionalità di MixMonitor one-touch rispettivamente per il chiamante e il chiamato. Poiché MixMonitor registra un singolo file mixato, non c'è bisogno di combinare file IN/OUT separati in seguito (il vecchio approccio `automon`/`Monitor`, che produceva due file per `soxmix`, è stato rimosso insieme all'applicazione `Monitor`).
 
-Se non vuoi utilizzare Set() prima dell'applicazione Dial(), puoi impostarlo nella sezione globals:
+Se non vuoi usare Set() prima dell'applicazione Dial(), puoi impostarlo nella sezione globals:
 
 ```
 [globals]
@@ -294,7 +294,7 @@ DYNAMIC_FEATURES=automixmon
 
 ### Musica d'attesa
 
-La musica d'attesa (MOH) è cambiata diverse volte tra le versioni 1.0, 1.2 e 1.4. Nell'ultima versione, la MOH è impostata per impostazione predefinita su “FILE-BASED”. In altre parole, Asterisk fornirà i file MOH in formati come g729, alaw, ulaw e gsm. Pertanto, non è necessario transcodificare la musica prima di inviarla al canale. Ciò consente di risparmiare tempo di elaborazione, il che è una modifica gradita per coloro che lavorano con sistemi di produzione. Nelle versioni precedenti, la MOH era solitamente fornita tramite MP3 (può ancora essere configurata in quel modo). Fornire MOH tramite MP3 obbliga Asterisk a transcodificare, consumando preziosa potenza della CPU nel processo. Il nuovo file di configurazione è mostrato di seguito. Nota che la classe predefinita ora utilizza la modalità nativa del formato file mode=files. Tutte le altre modalità sono commentate. Ogni sezione è una classe. L'unica classe non commentata a questo punto è default. Se vuoi avere classi diverse per file diversi, dovrai creare nuove sezioni (classi).
+La musica d'attesa (MOH) è cambiata diverse volte tra le versioni 1.0, 1.2 e 1.4. Nell'ultima versione, la MOH è impostata per impostazione predefinita su “FILE-BASED”. In altre parole, Asterisk fornirà i file MOH in formati come g729, alaw, ulaw e gsm. Pertanto, non è necessario transcodificare la musica prima di inviarla al canale. Questo risparmia tempo di processore, il che è una modifica gradita per chi lavora con sistemi in produzione. Nelle versioni precedenti, la MOH era solitamente fornita in MP3 (può ancora essere configurata in quel modo). Fornire MOH utilizzando MP3 obbliga Asterisk a transcodificare, spendendo preziosa potenza della CPU nel processo. Il nuovo file di configurazione è mostrato di seguito. Nota che la classe predefinita ora utilizza la modalità nativa del formato file mode=files. Tutte le altre modalità sono commentate. Ogni sezione è una classe. L'unica classe non commentata a questo punto è default. Se vuoi avere classi diverse per file diversi, dovrai creare nuove sezioni (classi).
 
 ![La configurazione di esempio di musiconhold.conf, che elenca le modalità MOH valide (quietmp3, mp3, custom, files, …)](../images/13-pbx-features-fig10.png)
 
@@ -360,7 +360,7 @@ directory=/var/lib/asterisk/moh
 
 ### Attività di configurazione MOH
 
-Ora, per utilizzare la musica d'attesa, imposta la classe MOH nei file di configurazione del canale (chan_dahdi.conf, pjsip.conf, iax.conf e così via). Per gli endpoint PJSIP, imposta `moh_suggest` nella sezione endpoint di `pjsip.conf` (il nome dell'opzione legacy `musicclass` si applica a chan_dahdi e ad altri driver di canale, non a PJSIP). I brani freeplay installati sono ora in formato wav. Al momento dell'installazione, puoi selezionare (utilizzando make menuselect) i formati di file MOH disponibili. Se vuoi aggiungere nuovi file MOH, dovrai fornirli nei formati richiesti. Ad esempio:
+Ora, per utilizzare la musica d'attesa, imposta la classe MOH nei file di configurazione del canale (chan_dahdi.conf, pjsip.conf, iax.conf e così via). Per gli endpoint PJSIP, imposta `moh_suggest` nella sezione endpoint di `pjsip.conf` (il nome dell'opzione legacy `musicclass` si applica a chan_dahdi e ad altri driver di canale, non a PJSIP). I brani freeplay installati sono ora in formato wav. Al momento dell'installazione, puoi selezionare (usando make menuselect) i formati di file MOH disponibili. Se vuoi aggiungere nuovi file MOH, dovrai fornirli nei formati richiesti. Ad esempio:
 
 ```
 In /etc/asterisk/chan_dahdi.conf, add the line:
@@ -379,7 +379,7 @@ exten => 100,1,StartMusicOnHold(default)
  same => n,Dial(PJSIP/2)
 ```
 
-Per riprodurre la musica d'attesa per un tempo fisso come test rapido, utilizza l'applicazione `MusicOnHold` con una durata (in secondi):
+Per riprodurre musica d'attesa per un tempo fisso come test rapido, usa l'applicazione `MusicOnHold` con una durata (in secondi):
 
 ```
 [local]
@@ -393,18 +393,18 @@ Le mappe delle applicazioni ti consentono di aggiungere nuove funzionalità util
 ## Quiz
 
 1. Quali affermazioni sono vere riguardo al parcheggio di chiamata?
-   - A. Per impostazione predefinita, l'estensione 800 viene utilizzata per il parcheggio di chiamata.
+   - A. Per impostazione predefinita, l'extension 800 viene utilizzata per il parcheggio di chiamata.
    - B. Quando sei lontano dalla tua scrivania e ricevi una chiamata, puoi parcheggiarla; il sistema annuncia lo slot di parcheggio e tu componi quello slot da qualsiasi telefono per recuperare la chiamata.
-   - C. Per impostazione predefinita, l'estensione 700 parcheggia una chiamata e le chiamate vengono parcheggiate negli slot 701–720.
+   - C. Per impostazione predefinita, l'extension 700 parcheggia una chiamata e le chiamate vengono parcheggiate negli slot 701–720.
    - D. Componi 700 per recuperare una chiamata parcheggiata.
-2. Per utilizzare la funzionalità di risposta di chiamata, tutte le estensioni devono trovarsi nello stesso ___. Per i canali DAHDI, questo viene configurato nel file ___.
-3. Quando trasferisci una chiamata, puoi scegliere tra un trasferimento ___, dove la destinazione non viene consultata prima, e un trasferimento ___, dove parli con la destinazione prima di completarlo.
+2. Per utilizzare la funzionalità di risposta a chiamata, tutte le extension devono trovarsi nello stesso ___. Per i canali DAHDI questo è configurato nel file ___.
+3. Quando trasferisci una chiamata puoi scegliere tra un trasferimento ___, dove la destinazione non viene consultata prima, e un trasferimento ___, dove parli con la destinazione prima di completarlo.
 4. Per effettuare un trasferimento assistito (consultativo) utilizzi la sequenza ___; per un trasferimento cieco utilizzi ___.
    - A. #1, *2
    - B. *2, #1
    - C. #2, #1
    - D. #1, #2
-5. Per ospitare conferenze in Asterisk 22, utilizzi l'applicazione ___.
+5. Per ospitare chiamate in conferenza in Asterisk 22, utilizzi l'applicazione ___.
 6. In ConfBridge, a un partecipante vengono concessi privilegi di amministratore (espellere, silenziare altri, bloccare la sala) impostando ___ nel suo profilo utente (`confbridge.conf`):
    - A. admin=yes
    - B. marked=yes

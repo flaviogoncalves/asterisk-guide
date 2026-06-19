@@ -167,8 +167,6 @@ Re-initialize your computer and verify the correct loading of the drivers.
 
 As a rule of thumb, you should use the version with the required features. Asterisk follows a release model of alternating LTS (long-term support) and standard releases. At the time of this edition, **Asterisk 22 is the current LTS release** (released October 2024; the latest point release is 22.10.0), which makes it the best one to choose now. Asterisk 20 is the previous LTS, and version 16 (used in the first edition) is end-of-life. For production systems, always pick an LTS release.
 
-> **[2nd-ed note]** Author/print-time check only: confirm the latest 22.x point release at downloads.asterisk.org and update the version string above if a newer one has shipped.
-
 ## Compiling Asterisk
 
 If you have previously compiled software, compiling Asterisk will be an easy task. Run the following commands to compile and install Asterisk. Remember, you can choose which applications and modules to build using make menuselect. Step 1: Download the source code
@@ -221,8 +219,6 @@ ldconfig
 - Select the sound formats and languages you want in the *Core Sound Packages*, *Music On Hold File Packages*, and *Extras Sound Packages* menus; anything you check there is downloaded and installed automatically during `make install`.
 
 After making your selections, choose **Save & Exit** and continue with `make`.
-
-> **[2nd-ed note]** Author action: replace the 1st-edition `make menuselect` screenshot with a fresh Asterisk 22 capture whose Channel Drivers screen shows chan_pjsip and no chan_sip/chan_skinny/chan_mgcp.
 
 ## Starting and stopping Asterisk
 

@@ -4,8 +4,6 @@ In a 2026 pure-VoIP world, the channel types in this chapter are increasingly ra
 
 ## Analog channels (FXO/FXS)
 
-> **[2nd-ed note]** Update front-matter dates/ISBN for the 2nd edition before publication.
-
 As of Asterisk 22, DAHDI and analog telephony cards remain fully supported, and DAHDI still builds against current kernels. The majority of new deployments are nonetheless pure VoIP (SIP trunks, PJSIP), so analog/TDM hardware is now a niche choice — found mainly in legacy environments, rural PSTN connectivity, or regulated markets. Everything below still applies to those scenarios.
 
 There are several ways to connect the public switched telephone network (PSTN). The best way depends on how the telephone company makes this connection available in your area. The simplest way is to use an analog line, similar to the line you use at home. In this section, we will show you how to configure analog cards from Sangoma™ (formerly Digium™) and Xorcom™.
