@@ -23,7 +23,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             pandoc \
             texlive-xetex texlive-fonts-recommended texlive-latex-extra \
-            fonts-dejavu lmodern
+            fonts-dejavu lmodern fonts-texgyre
           pandoc --version | head -1
 
       - name: Build PDF, EPUB and LaTeX
