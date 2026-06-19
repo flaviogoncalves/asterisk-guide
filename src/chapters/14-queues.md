@@ -370,7 +370,7 @@ All events from queues are logged to /var/log/asterisk/queue_log. The format of 
 - SYSCOMPAT
 - TRANSFER(extension|context|holdtime|calltime)
 
-You can build your own utility to process these events or use a ready-to-run statistics package. We have tested two utilities on the asteriskguide:
+You can build your own utility to process these events or use a ready-to-run statistics package. We have tested two utilities at voip.school:
 
 - Qlog analyzer (http://www.micpc.com/qloganalyzer/) – Excellent open source package
 - Queue metrics (http://queuemetrics.com/) – One of the most complete packages for queue stats

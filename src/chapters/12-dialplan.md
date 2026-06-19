@@ -628,8 +628,8 @@ options
 [default]
 ; Define maximum number of messages per folder for a particular context.
 ;maxmsg=50
-4400=>4400,Clint Eastwood,ceastwood@asteriskguide.com
-4401=>4401,John Wayne,jwayne@asteriskguide.com
+4400=>4400,Clint Eastwood,ceastwood@voip.school
+4401=>4401,John Wayne,jwayne@voip.school
 ```
 
 2. Create these extensions in your dial plan

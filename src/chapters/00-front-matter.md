@@ -48,10 +48,8 @@ Linux box and the willingness to learn.
 
 This book will not turn you into a guru on its own — no book can — but by the end of
 it you will be able to build and operate a real PBX with advanced features. The book
-has a companion: hands-on labs and an online course at **VoIP School Blackbelt**.
-
-> **[2nd-ed note]** Insert the VoIP School Blackbelt URL and any course/coupon details
-> here. (The 1st edition pointed at Udemy and a GitHub wiki; both are retired.)
+has a companion — hands-on labs and an online course — at **VoIP School Blackbelt**
+(<https://voip.school>).
 
 # Audience {.unnumbered}
 
@@ -107,12 +105,8 @@ I try hard to find and eliminate errors, but some always slip through. If you fi
 something wrong, please let me know and I will act on it.
 
 This book is also used as training material. If you would like to use it in your own
-training center, or to take the companion online course and labs, get in touch through
-**VoIP School Blackbelt**.
-
-> **[2nd-ed note]** Insert the canonical contact email and the VoIP School Blackbelt URL
-> here (1st-edition address `flavio@asteriskguide.com` / `www.asteriskguide.com` to be
-> replaced).
+training center, or to take the companion online course and labs, visit **VoIP School
+Blackbelt** at <https://voip.school> or email <flavio@voip.school>.
 
 **Credits.** Cover work: Karla Braga. Reviewers: Luis F. Gonçalves, Guilherme Goes
 (dCAP), and professional proofreaders. My thanks also to the many students whose

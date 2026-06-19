@@ -260,7 +260,7 @@ I started with an inexpensive FXO card. Some inexpensive V.90 fax/modems work wi
 
 X100P clones. Some of the incompatibilities can be solved using a patch, more information can be found at:
 
-- http://www.asteriskguide.com/mediawiki/index.php/Asterisk_patch_for_the_X100P_card
+- http://www.voip.school/mediawiki/index.php/Asterisk_patch_for_the_X100P_card
 
 ## Asterisk scenarios
 

@@ -30,7 +30,7 @@ Usually, the proxy, redirect, and location servers are hosted within the same ha
 
 #### SIP Register process
 
-Before a phone can receive calls, it needs to be registered to a location database. In the location database, the IP address will be bonded to the name. In the following example, extension 8500 will be bound to IP address 200.180.1.1. You do not necessarily need to use phone numbers. In the SIP architecture, the registered extension could be flavio@asteriskguide.com as well.
+Before a phone can receive calls, it needs to be registered to a location database. In the location database, the IP address will be bonded to the name. In the following example, extension 8500 will be bound to IP address 200.180.1.1. You do not necessarily need to use phone numbers. In the SIP architecture, the registered extension could be flavio@voip.school as well.
 
 ![08-the-sip-protocol figure 1](../images/08-the-sip-protocol-img01.png)
 
@@ -332,8 +332,8 @@ sip2.yourdomain.com
 200.175.61.150
 ;
 ; DNS SRV records for SIP
-_sip._udp.yourdomain.com  21600 IN SRV 10 0 5060 sip1.asteriskguide.com.
-_sip._udp.yourdomain.com  21600 IN SRV 20 0 5060 sip2.asteriskguide.com.
+_sip._udp.yourdomain.com  21600 IN SRV 10 0 5060 sip1.voip.school.
+_sip._udp.yourdomain.com  21600 IN SRV 20 0 5060 sip2.voip.school.
 ```
 
 After configuring the DNS, you can use the URI, which points to a SIP user, SIP phone, or telephone extension. A SIP URI looks similar to an email address (e.g., sip:chuck@yourpartnerdomain.com). Using SIP URIs, no telephone number is needed to make a call from one SIP phone to another. To dial an external user, simply use a statement as the one shown below.
@@ -1313,7 +1313,7 @@ Treat its output as a **starting point**: review every generated object,
 especially transports, NAT settings, and codec lists, and test thoroughly before
 going to production.
 
-Let’s migrate the sip.conf in our companion labs (github labs https://github.com/flaviogoncalves/AsteriskTraining)
+Let’s migrate the sip.conf in our companion labs at VoIP School Blackbelt (voip.school)
 
 #### sip.conf
 
@@ -1454,7 +1454,7 @@ max_contacts = 1
 qualify_frequency=15
 ```
 
-Full PJSIP configuration is covered in the PJSIP section of this chapter, and the official documentation at docs.asterisk.org has full coverage of the channel. In our labs on github, lab 5 lets you practice what you have just learned. (https://github.com/flaviogoncalves/AsteriskTraining/wiki/Lab-5----Using- PJSIP)
+Full PJSIP configuration is covered in the PJSIP section of this chapter, and the official documentation at docs.asterisk.org has full coverage of the channel. In our companion labs at voip.school, lab 5 lets you practice what you have just learned.
 
 ![09-pjsip-the-new-sip-channel figure 7](../images/09-pjsip-the-new-sip-channel-img07.png)
 

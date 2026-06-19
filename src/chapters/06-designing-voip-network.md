@@ -149,7 +149,7 @@ Codec G.729 (8 Kbps)
 
 You can easily calculate other bandwidth requirements using an online VoIP bandwidth calculator.
 
-> **[2nd-ed note]** The original calculator URL (http://www.asteriskguide.com/bandcalc/bandcalc.php) may no longer be active; verify and replace with a current resource.
+> **[2nd-ed note]** The original calculator URL (http://www.voip.school/bandcalc/bandcalc.php) may no longer be active; verify and replace with a current resource.
 
 ### Traffic Engineering
 

@@ -695,7 +695,7 @@ Put these expressions in your dial plan and use the NoOP() application to evalua
 ```
 exten=9002,1,set(NAME="FLAVIO")                 ;Set NAME=FLAVIO
 exten=9002,n,set(I=4)
-exten=9002,n,set(URI="40001@asteriskguide.com")
+exten=9002,n,set(URI="40001@voip.school")
 exten=9002,n,NoOP(${NAME})
 exten=9002,n,NoOP(${I})
 exten=9002,n,NoOP($[${I}+${I}])
