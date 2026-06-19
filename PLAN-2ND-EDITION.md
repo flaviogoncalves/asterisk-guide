@@ -69,8 +69,11 @@ PART IV — INTEGRATION & OPERATIONS
 
 ## Execution roadmap (lab-first, phased, checkpoint at each boundary)
 
-- **Phase 1 — Lab:** scaffold a reproducible Docker Asterisk 22 lab (pinned image, PJSIP
-  endpoints, softphone target). Becomes the worked example in the install + Deployment chapters.
+- **Phase 1 — Lab: ✅ DONE.** Reproducible Docker Asterisk 22.10.0 lab (built from source),
+  PJSIP endpoints + IP-identified SIPp endpoint; `lab.sh verify` places a real headless SIPp
+  call to ext 9000 and asserts 200 OK (passing). Public repo + CI/CD pipeline (Phase 6's press)
+  delivered early: https://github.com/flaviogoncalves/complete-asterisk-training builds
+  PDF/EPUB/LaTeX on every push/PR (first build green: 355-page PDF).
 - **Phase 2 — Restructure:** reorganize the 17 modernized files into the 15-chapter / 4-part
   TOC; perform the ch8+9 merge and the ch4+5+7 legacy merge. Renumber + fix cross-refs.
 - **Phase 3 — Verify:** run every config/CLI example against the lab; capture real Asterisk 22
