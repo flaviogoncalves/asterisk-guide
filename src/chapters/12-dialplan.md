@@ -181,7 +181,7 @@ In older versions of Asterisk you had the command Macro. This command was deprec
 gosub([[context,]exten,]priority[(arg1[,...][,argN])])
 ```
 
-The command GOSUB has been available since the early versions of Asterisk and received parameter support in version 10. With parameters, it is now possible to replace completely the old Macro commands. Macros (`app_macro`) were removed in Asterisk 21; you must use GOSUB for subroutines.
+The command GOSUB has been available since Asterisk 1.6 and supports passing arguments (available inside the subroutine as `${ARG1}`, `${ARG2}`, and so on). With arguments, it is now possible to replace completely the old Macro commands. Macros (`app_macro`) were removed in Asterisk 21; you must use GOSUB for subroutines.
 
 ### Creating the subroutine
 
@@ -544,27 +544,17 @@ The e-mail body and e-mail subject will be created as described below. You can m
 
 ## Voicemail Web interface
 
-There is a Perl script in the source distribution called vmail.cgi located in /usr/src/asterisk/vmail.cgi. The command “make install” does not install this interface unless you run make webvmail. This script requires the Perl command interpreter and Apache to be installed on the server.
+There is a Perl script in the source distribution called `vmail.cgi`, located at `contrib/scripts/vmail.cgi` in the Asterisk source tree (it still ships with Asterisk 22). The command `make install` does not install this interface; you must run `make webvmail` from the source directory. This script requires the Perl command interpreter and a web server (such as Apache) to be installed on the server.
 
 ```
 make webvmail
 ```
 
-You might need to edit this script before installing. Copy the source files to the html directory.
-
-```
-cp /usr/asterisk/images/*.gif  /var/html/asterisk
-```
-
-Use the following command to make the cgi executable.
-
-```
-chmod +x vmail.cgi
-```
+The `make webvmail` target installs the script (setuid root) into your web server's CGI directory (`HTTP_CGIDIR`) and copies the supporting images from `images/*.gif` into `HTTP_DOCSDIR/_asterisk` (by default `/var/www/html/_asterisk`). If those paths do not match your web server layout, edit the `HTTP_CGIDIR` and `HTTP_DOCSDIR` variables in the top-level `Makefile` before running the target.
 
 ## Voicemail notification
 
-You can configure voicemail to send a notify message to your phone when you have new voicemail. Voicemail notification works with SIP phones, DAHDI phones, and some IAX2 phones. To indicate an unheard voicemail, an indicator light may blink or the phone may play a shutter tone. You need to configure the mailbox in the corresponding channel configuration file. Example: `pjsip.conf` (in the endpoint section):
+You can configure voicemail to send a notify message to your phone when you have new voicemail. In Asterisk 22, Message Waiting Indication (MWI) works with PJSIP and SIP phones as well as DAHDI phones. To indicate an unheard voicemail, an indicator light may blink or the phone may play a shutter tone. You need to configure the mailbox in the corresponding channel configuration file. Example: `pjsip.conf` (in the endpoint section):
 
 ```
 mailboxes=8590

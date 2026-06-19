@@ -144,16 +144,17 @@ this:
  <Registration/ServerURI..............................>  <Auth....................>  <Status.......>
 ==========================================================================================
 
- itsp-reg/sip:itsp.example.com:5060                      itsp-auth                   Unregistered      (exp. 4s ago)
+ itsp-reg/sip:itsp.example.com:5060                      itsp-auth                   Rejected          (exp. 56s)
 
 Objects found: 1
 ```
 
-Against a live provider the `Status` column reads `Registered` with the seconds
-remaining until the next refresh. `Unregistered` (or `Rejected`) means the
-provider did not accept the login — turn on `pjsip set logger on` and read the
-`401`/`403` reply, almost always a wrong username, password, or `client_uri`
-domain.
+The `(exp. Ns)` suffix counts down the seconds until the next attempt; once it
+crosses zero it briefly reads `(exp. Ns ago)` before the retry fires. Against a
+live provider the `Status` column reads `Registered` with the seconds remaining
+until the next refresh. `Rejected` (or `Unregistered`) means the provider did not
+accept the login — turn on `pjsip set logger on` and read the `401`/`403` reply,
+almost always a wrong username, password, or `client_uri` domain.
 
 ## IP-based (static) trunks
 
@@ -567,15 +568,21 @@ from_domain=itsp.example.com
   address the media actually came from, not the address the SDP claims.
 - **`force_rport=yes`** — reply to SIP from the source IP/port of the request
   (RFC 3581), instead of trusting the `Via` header.
-- **`rewrite_contact=yes`** — replace the contact URI the far side advertised with
-  the address the packet really came from. On a *registration* trunk this matters
-  most for the AOR; on a static trunk it keeps in-dialog requests routable.
+- **`rewrite_contact=yes`** — on inbound SIP messages from this endpoint, rewrite
+  the `Contact` header (or an appropriate `Record-Route` header) to the source IP
+  address and port the packet really came from. Per the option's own
+  documentation, this "helps servers communicate with endpoints that are behind
+  NATs" and "helps reuse reliable transport connections such as TCP and TLS."
 
-> **Phones vs trunks.** `rewrite_contact` is almost always right for phones (their
-> contact is a private address). On a static IP-based trunk you may *not* want it,
-> because the provider's contact is already a correct public address — rewriting
-> it can break in-dialog routing through their SBC. Enable it for registration
-> trunks and NAT'd phones; test before enabling it on a static carrier trunk.
+> **Recommendation — phones vs trunks.** `rewrite_contact` is almost always the
+> right choice for phones, because their advertised contact is typically a private
+> RFC 1918 address that is not routable back to them. On a static IP-based trunk
+> the provider's contact is usually already a correct public address, so rewriting
+> it is often unnecessary; some operators prefer to leave it off there and enable
+> it only for registration trunks and NAT'd phones. The documented effect of the
+> option is purely the inbound `Contact`/`Record-Route` rewrite above — so the
+> safe practice is to test against your specific carrier before flipping it on a
+> static trunk.
 
 You can confirm the effective settings on any endpoint with
 `pjsip show endpoint <name>` — `direct_media`, `rtp_symmetric`, `force_rport`,

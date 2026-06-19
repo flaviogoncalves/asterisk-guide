@@ -1,6 +1,6 @@
 # Fact-check ledger — SIP trunking, DID & the PSTN
 
-Verified: 30 · Wrong (fixed): 0 · Unverified: 2
+Verified: 31 · Wrong (fixed): 0 · Reworded: 1 · Unverified: 0
 
 | # | Claim (quoted) | Line | Verdict | Source |
 |---|----------------|------|---------|--------|
@@ -16,7 +16,7 @@ Verified: 30 · Wrong (fixed): 0 · Unverified: 2
 | 10 | auth default is `userpass` | 120 | VERIFIED | lab: auth_type "(Default: userpass)" (so book's note that you'll "still see userpass" is correct) |
 | 11 | `contact_user` becomes the user part of the registered Contact | 114, 132-134 | VERIFIED | lab: `config show help res_pjsip_outbound_registration registration contact_user` → "Contact User to use in request. If this value is not set, this defaults to 's'" |
 | 12 | "`retry_interval=60` ... retry every 60 seconds" | 115, 135 | VERIFIED | lab: `config show help res_pjsip_outbound_registration registration retry_interval` → "(Default: 60)"; unsigned integer seconds |
-| 13 | `pjsip show registrations` output columns (Registration/ServerURI, Auth, Status) | 142-150 | VERIFIED | lab: command exists; format matches CLI registration table |
+| 13 | `pjsip show registrations` output columns (Registration/ServerURI, Auth, Status) + `(exp. Ns)` suffix | 142-156 | VERIFIED | lab: configured temp `itsp-reg` registration, reloaded `res_pjsip_outbound_registration.so` → reproduced `itsp-reg/sip:itsp.example.com:5060  itsp-auth-reg  Rejected  (exp. 56s)`; suffix format confirmed in source `res/res_pjsip_outbound_registration.c` cli_print_body (`expsecs < 0 ? "s ago)" : "s)"`) |
 | 14 | IP-based trunk authenticates "by source IP address, not by SIP credentials" via `identify` | 160-169 | VERIFIED | lab: `config show help res_pjsip_endpoint_identifier_ip identify match` → "IP addresses or networks to match against" |
 | 15 | `match` accepts "an IP address, a CIDR range, or a hostname" | 195, 723 | VERIFIED | lab: identify match Description → "comma-delimited list of IP addresses or hostnames. IP addresses may have a subnet mask appended ... CIDR or dotted-decimal notation" |
 | 16 | "Hostnames are resolved once, at configuration load time" | 195-196 | VERIFIED | lab: identify match Description describes SRV/A/AAAA resolution performed when the hostname is configured (load time); no runtime re-resolution |
@@ -37,10 +37,30 @@ Verified: 30 · Wrong (fixed): 0 · Unverified: 2
 | 31 | "private RFC 1918 address" for behind-NAT private addressing | 508-509 | VERIFIED | RFC 1918 — Address Allocation for Private Internets (10/8, 172.16/12, 192.168/16) |
 | 32 | Lab runs Asterisk 22.10.0 + SIPp on 172.30.0.0/24; sipp-identify matches 172.30.0.0/24 | 19, 586-588, 209-226 | VERIFIED | lab: `core show version` → "Asterisk 22.10.0"; `pjsip show identifies` → sipp-identify Match 172.30.0.0/24 |
 
-## Unverified items (author should confirm)
+## Resolved (previously unverified)
 
-- **`rewrite_contact` "On a static trunk it keeps in-dialog requests routable" / "can break in-dialog routing through their SBC" (lines 572, 576-578).** The lab doc string confirms rewrite_contact rewrites Contact/Record-Route to source IP:port and helps with NAT/connection reuse, but the specific operational guidance about SBC in-dialog routing is expert advice, not a documented default — reasonable but not citable to docs. Marked UNVERIFIED (interpretive, not a doc fact).
-- **`pjsip show registrations` "(exp. 4s ago)" wording for an Unregistered entry (line 147).** The command and the Registration/Auth/Status columns are real, but the exact "(exp. Ns ago)" suffix could not be reproduced in the lab because `itsp-reg` is not configured there. The format is plausible and consistent with PJSIP CLI output; treat the literal seconds value as illustrative. UNVERIFIED.
+- **`rewrite_contact` SBC in-dialog routing guidance (lines ~570-582).** REWORDED.
+  The hard, citable fact is the option's documented effect: "On inbound SIP
+  messages from this endpoint, the Contact header or an appropriate Record-Route
+  header will be changed to have the source IP address and port ... helps servers
+  communicate with endpoints that are behind NATs ... helps reuse reliable
+  transport connections such as TCP and TLS." (lab: `config show help
+  res_pjsip endpoint rewrite_contact`). The prose now states that documented effect
+  verbatim and reframes the static-trunk "can break in-dialog routing through their
+  SBC" claim as a clearly-marked operational *recommendation* ("often unnecessary
+  ... test against your specific carrier") rather than a stated fact. The specific
+  SBC breakage assertion was removed as a factual claim.
+- **`pjsip show registrations` "(exp. 4s ago)" (line ~147).** VERIFIED + corrected
+  to real lab output. Configured a temporary `type=registration` (`itsp-reg` →
+  `sip:itsp.example.com:5060`) in the lab and reloaded
+  `res_pjsip_outbound_registration.so`; reproduced real output:
+  `itsp-reg/sip:itsp.example.com:5060   itsp-auth-reg   Rejected   (exp. 56s)`.
+  The snippet now shows that reproduced line (status `Rejected`, countdown
+  `(exp. Ns)`). The `(exp. Ns ago)` form is confirmed in source —
+  `res/res_pjsip_outbound_registration.c` `cli_print_body`:
+  `state ? (expsecs < 0 ? "s ago)" : "s)") : ""` — it prints only when a state
+  exists and expiry is in the past; the prose now explains the countdown and the
+  brief `(exp. Ns ago)` form. (Lab config restored to original afterward.)
 
 ## Notes
 - Quiz answer key (line 767) is internally consistent with verified facts: Q4 (auth_type=userpass → deprecated/converted to digest), Q6 (${EXTEN:-2}), Q7 (CHANUNAVAIL + CONGESTION), Q9 (transport external_*_address), Q10 (rtp_symmetric) all verified above.

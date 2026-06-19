@@ -1,6 +1,6 @@
 # Fact-check ledger — Dial Plan advanced features
 
-Verified: 26 · Wrong (fixed): 1 · Unverified: 3
+Verified: 29 · Wrong (fixed): 1 · Unverified: 0
 
 | # | Claim (quoted) | Line | Verdict | Source |
 |---|----------------|------|---------|--------|
@@ -14,7 +14,7 @@ Verified: 26 · Wrong (fixed): 1 · Unverified: 3
 | 8 | Goto() syntax `Goto([[context,]extension,]priority)` (Quiz Q9) | 854-858 | VERIFIED | lab: `core show application Goto` — Syntax `Goto([[context,]extension,]priority)` |
 | 9 | "Macro ... was deprecated a long time ago in favor of GOSUB" | 178 | VERIFIED | app_macro deprecated in 16 https://www.asterisk.org/asterisk-21-module-removal/ ; ASTERISK-29558 |
 | 10 | GOSUB command format `gosub([[context,]exten,]priority[(arg1[,...][,argN])])` | 181 | VERIFIED | lab: `core show application GoSub` — Syntax `Gosub([[context,]extension,]priority[(arg1[,...][,argN])])` |
-| 11 | "GOSUB ... received parameter support in version 10" | 184 | UNVERIFIED | No primary source pinning argument support to exactly v10; docs/changelog not located. Plausible but unconfirmed. |
+| 11 | "GOSUB ... received parameter support in version 10" | 184 | WRONG (fixed) | "version 10" not supportable. lab: `apps/app_stack.c` Gosub apps carry `<version>1.6.1.0</version>`; Gosub with arguments exists since Asterisk 1.6. v10 was a syntax change (pipe→comma separators), not when arguments were added. Fixed to "available since Asterisk 1.6 and supports passing arguments (`${ARG1}`…)". https://docs.asterisk.org/Configuration/Dialplan/Subroutines/Gosub/ |
 | 12 | "Macros (`app_macro`) were removed in Asterisk 21; you must use GOSUB" | 184 | VERIFIED | lab: `module show like macro` → 0 modules; `core show application Macro` → not registered. Removed in 21 https://www.asterisk.org/asterisk-21-module-removal/ |
 | 13 | "In modern Asterisk (including Asterisk 22) AstDB is backed by SQLite3 (`/var/lib/asterisk/astdb.sqlite3`); older versions used Berkeley DB v1" | 217 | VERIFIED | lab: `ls /var/lib/asterisk/astdb.sqlite3` exists; https://docs.asterisk.org/Fundamentals/Asterisk-Internal-Database/SQLite3-astdb-back-end/ |
 | 14 | "Since Asterisk 1.8 the AstDB is stored in SQLite3" (2nd-ed note) — FIXED to "Since Asterisk 10 ... used by Asterisk 1.8 and earlier" | 219 | WRONG (fixed) | Switch was in Asterisk 10; Berkeley DB used by 1.8 and previous. https://docs.asterisk.org/Fundamentals/Asterisk-Internal-Database/SQLite3-astdb-back-end/ |
@@ -32,25 +32,22 @@ Verified: 26 · Wrong (fixed): 1 · Unverified: 3
 | 26 | Directory() syntax `Directory([vm-context][,dial-context[,options]])`; names from voicemail.conf; options e/f/l/b/m/p | 591-638 | VERIFIED | lab: `core show application Directory` — Syntax `Directory([vm-context][,dial-context[,options]])` |
 | 27 | MWI mailbox set with `mailboxes` option in PJSIP `[endpoint]`; handled by res_pjsip_mwi | 567-573 | VERIFIED | lab: `config show help res_pjsip endpoint mailboxes` (since 12.0.0); `module show like res_pjsip_mwi` → running |
 | 28 | Pattern `_912.` matches before `_9.`; "An included context is processed later than a pattern in the same context" | 158-166 | VERIFIED | Asterisk best-match / include ordering — pattern specificity & includes processed last. https://docs.asterisk.org/Configuration/Dialplan/Pattern-Matching/ |
-| 29 | "Voicemail notification works with SIP phones, DAHDI phones, and some IAX2 phones" | 567 | UNVERIFIED | General MWI capability; no single authoritative page enumerating "some IAX2" — left as-is (low risk). |
-| 30 | vmail.cgi installed via `make webvmail`; Perl + Apache | 545-553 | UNVERIFIED | Could not confirm vmail.cgi still ships in the Asterisk 22 source tree; not testable in lab (no source tree). |
+| 29 | "Voicemail notification works with SIP phones, DAHDI phones, and some IAX2 phones" | 567 | WRONG (fixed) | Official MWI page enumerates chan_sip, chan_pjsip, and chan_dahdi; IAX2 is NOT listed. Generalized to "PJSIP and SIP phones as well as DAHDI phones." https://docs.asterisk.org/Configuration/Applications/Voicemail/Message-Waiting-Indication/ |
+| 30 | vmail.cgi installed via `make webvmail`; Perl + web server | 545-557 | VERIFIED (fixed paths) | lab: `find /usr/src/asterisk* -name vmail.cgi` → `/usr/src/asterisk-22.10.0/contrib/scripts/vmail.cgi` (ships in 22); `Makefile` `webvmail:` target (line 862) installs setuid into `$(HTTP_CGIDIR)` and copies `images/*.gif` into `$(HTTP_DOCSDIR)/_asterisk` (default `/var/www/html/_asterisk`). Chapter's stale paths (`/usr/src/asterisk/vmail.cgi`, `/usr/asterisk/images`, `/var/html/asterisk`, manual `chmod`) corrected. |
 | 31 | Quiz Q6/Q10 answers: AstDB = SQLite3; delete single key = DB_DELETE() | 843-865 | VERIFIED | Same sources as rows 13, 17 |
 
 ## Summary
 
-- Verified: 26
+- Verified: 29
 - Wrong (fixed): 1
-- Unverified: 3
+- Unverified: 0
 
 ## Wrong / fixed
 
 - Line 219 (2nd-ed note): "Since Asterisk 1.8 the AstDB is stored in SQLite3" → corrected to "Since Asterisk 10 ... used by Asterisk 1.8 and earlier." The SQLite3 switch landed in Asterisk 10; Berkeley DB was used by 1.8 and previous. Source: https://docs.asterisk.org/Fundamentals/Asterisk-Internal-Database/SQLite3-astdb-back-end/
-
-## Unverified — author to resolve before print
-
-1. Line 184 — "GOSUB ... received parameter support in version 10." Could not find a primary doc/changelog pinning Gosub argument support to exactly Asterisk 10. The fact that Gosub takes args is verified (lab); the version is the unconfirmed part.
-2. Line 567 — "Voicemail notification works with SIP phones, DAHDI phones, and some IAX2 phones." MWI generally works; the "some IAX2" qualifier has no single authoritative citation.
-3. Lines 545-553 — vmail.cgi / `make webvmail`. Could not confirm this web interface still ships in the Asterisk 22 source distribution (no source tree available in the lab to check).
+- Line 184 — "GOSUB ... received parameter support in version 10" → corrected to "available since Asterisk 1.6 and supports passing arguments (`${ARG1}`…)." The "version 10" milestone was a syntax change (pipe→comma separators), not when arguments were introduced; Gosub with arguments has existed since 1.6. Source: lab `apps/app_stack.c` (`<version>1.6.1.0</version>`); https://docs.asterisk.org/Configuration/Dialplan/Subroutines/Gosub/
+- Line 567 — "works with SIP phones, DAHDI phones, and some IAX2 phones" → generalized to "PJSIP and SIP phones as well as DAHDI phones." The official MWI page lists chan_sip, chan_pjsip, and chan_dahdi; IAX2 is not listed. Source: https://docs.asterisk.org/Configuration/Applications/Voicemail/Message-Waiting-Indication/
+- Lines 545-557 — vmail.cgi / `make webvmail`. Confirmed it still ships in Asterisk 22.10.0 at `contrib/scripts/vmail.cgi`; corrected the stale install paths. Source: lab `find` + top-level `Makefile` `webvmail:` target (line 862): installs setuid into `$(HTTP_CGIDIR)` and copies `images/*.gif` into `$(HTTP_DOCSDIR)/_asterisk` (default `/var/www/html/_asterisk`).
 
 ## Other notes (not fact errors)
 

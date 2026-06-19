@@ -289,7 +289,7 @@ exten => 9000,2,AgentLogin()
 
 ### Configure queue recording
 
-Calls may be recorded using Asterisk's monitor or mixmonitor application. Recording can be enabled from within the queue application, beginning when the call is actually picked up. Only successful calls are recorded, and no recordings are performed while people are listening to MOH. To enable monitoring, simply specify monitor-format. This feature is otherwise disabled. You can set the filename for the recording using Set (MONITOR_FILENAME=<filename>); otherwise
+Calls may be recorded using Asterisk's MixMonitor application. (The standalone Monitor application was removed in Asterisk 22, and the queues.conf `monitor-type` option now accepts only MixMonitor.) Recording can be enabled from within the queue application, beginning when the call is actually picked up. Only successful calls are recorded, and no recordings are performed while people are listening to MOH. To enable monitoring, simply specify monitor-format. This feature is otherwise disabled. You can set the filename for the recording using Set (MONITOR_FILENAME=<filename>); otherwise
 
 ```
 it will use MONITOR_FILENAME=${UNIQUEID}.
@@ -349,7 +349,7 @@ exten=>112,3,Queue(customerservice)
 
 ## The application agentcallbacklogin() is removed
 
-The application `agentcallbacklogin()` was deprecated in version 1.2 and was removed in Asterisk 12. It is not available in Asterisk 22. The recommended approach is to use `AddQueueMember()` with a PJSIP interface to dynamically add callback-style members to a queue. The document `queues-with-callback-members.txt` was included in older Asterisk `/doc` directories for migration guidance.
+The application `agentcallbacklogin()` was deprecated by Digium in Asterisk 1.4 (July 2006) and is no longer available in Asterisk 22. The recommended approach is to use `AddQueueMember()` with a PJSIP interface to dynamically add callback-style members to a queue. The document `queues-with-callback-members.txt` was included in older Asterisk `/doc` directories for migration guidance.
 
 > **[2nd-ed note]** Verify whether the `chan_agent` channel driver (app_agent_pool) is still the preferred mechanism for agent callback behavior in Asterisk 22, or whether direct PJSIP members with `AddQueueMember()`/`RemoveQueueMember()` is now the standard pattern.
 
@@ -361,7 +361,8 @@ All events from queues are logged to /var/log/asterisk/queue_log. The format of 
 - AGENTDUMP
 - AGENTLOGIN(channel)
 - AGENTLOGOFF(channel|logintime)
-- AGENTCALLBACKLOGOFF(exten@context|logintime|reason)
+- ATTENDEDTRANSFER(destexten|destcontext|holdtime|calltime|origposition)
+- BLINDTRANSFER(extension|context|holdtime|calltime|origposition)
 - COMPLETEAGENT(holdtime|calltime|origposition)
 - COMPLETECALLER(holdtime|calltime|origposition)
 - CONFIGRELOAD
@@ -369,11 +370,10 @@ All events from queues are logged to /var/log/asterisk/queue_log. The format of 
 - ENTERQUEUE(url|callerid)
 - EXITEMPTY(position|origposition|waittime)
 - EXITWITHKEY(key|position)
-- EXITWITHTIMEOUT(position)
+- EXITWITHTIMEOUT(position|origposition|waittime)
 - QUEUESTART
 - RINGNOANSWER(ringtime)
 - SYSCOMPAT
-- TRANSFER(extension|context|holdtime|calltime)
 
 You can build your own utility to process these events or use a ready-to-run statistics package. We have tested two utilities at voip.school:
 

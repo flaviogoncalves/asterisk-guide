@@ -57,68 +57,37 @@ Some of the features presented in this chapter are configured in the features.co
 
 ![The `[featuremap]` section of features.conf, with the default DTMF feature codes](../images/13-pbx-features-fig02.png)
 
-> **[2nd-ed note]** As of Asterisk 12+, call parking was moved out of features.conf/app_features into its own module `res_parking` with configuration in `res_parking.conf` (also referred to as `parking.conf`). The `[general]` parking block below (parkext, parkpos, context, parkingtime, etc.) should be updated to show `res_parking.conf` syntax. The `[featuremap]` section remains in `features.conf`.
+> **[2nd-ed note]** As of Asterisk 12+, call parking was moved out of `features.conf`/`app_features` into its own module `res_parking` with configuration in `res_parking.conf`. The parking-lot block below (parkext, parkpos, context, parkingtime, etc.) lives in `res_parking.conf` and is shown using the syntax from the Asterisk 22 `res_parking.conf.sample`. The `[featuremap]` section (the DTMF feature codes, including `parkcall`) remains in `features.conf`.
+
+The parking-lot options live in `res_parking.conf`. A parking lot named `default` always exists, even if it is not present in the configuration file. The excerpt below is taken from the Asterisk 22 `res_parking.conf.sample`:
 
 ```
-[general]
-parkext => 700                  ; What extension to dial to park        (all parking lots)
-parkpos => 701-720              ; What extensions to park calls on. (defafult parking lot)
-                                ; These needs to be numeric, as Asterisk starts from the start
-position
-                                ; and increments with one for the next parked call.
-context => parkedcalls          ; Which context parked calls are in (default parking lot)
-;parkinghints = no              ; Add hints priorities automatically for parking slots (default is
-no).
-;parkingtime => 45              ; Number of seconds a call can be parked for
-                                ; (default is 45 seconds)
-;comebacktoorigin = yes ; Whether to return to the original calling extension upon parking
-                                ; timeout or to send the call to context 'parkedcallstimeout' at
-                                ; extension 's', priority '1' (default is yes).
-;courtesytone = beep            ; Sound file to play to the parked caller
-                                ; when someone dials a parked call
-                                ; or the Touch Monitor is activated/deactivated.
-;parkedplay = caller            ; Who to play the courtesy tone to when picking up a parked call
-                                ; one of: parked, caller, both  (default is caller)
-;parkedcalltransfers = caller   ; Enables or disables DTMF based transfers when picking up a parked
-call.
-                                ; one of: callee, caller, both, no (default is no)
-;parkedcallreparking = caller   ; Enables or disables DTMF based parking when picking up a parked
-call.
-                                ; one of: callee, caller, both, no (default is no)
-;parkedcallhangup = caller      ; Enables or disables DTMF based hangups when picking up a parked
-call.
-                                ; one of: callee, caller, both, no (default is no)
-;parkedcallrecording = caller   ; Enables or disables DTMF based one-touch recording when picking up a
-parked call.
-                                ; one of: callee, caller, both, no (default is no)
-;adsipark = yes                 ; if you want ADSI parking announcements
-;findslot => next               ; Continue to the 'next' free parking space.
-                                ; Defaults to 'first' available
-;parkedmusicclass=default       ; This is the MOH class to use for the parked channel
-                                ; as long as the class is not set on the channel directly
-                                ; using Set(CHANNEL(musicclass)=whatever) in the dialplan
-;transferdigittimeout => 3      ; Number of seconds to wait between digits when transferring a call
-                                ; (default is 3 seconds)
-;xfersound = beep               ; to indicate an attended transfer is complete
-;xferfailsound = beeperr        ; to indicate a failed transfer
-;pickupexten = *8               ; Configure the pickup extension. (default is *8)
-;featuredigittimeout = 1000     ; Max time (ms) between digits for
-                            ; feature activation  (default is 1000 ms)
-;atxfernoanswertimeout = 15 ; Timeout for answer on attended transfer default is 15 seconds.
-;atxferdropcall = no        ; If someone does an attended transfer, then hangs up before the
-transferred
-                            ; caller is connected, then by default, the system will try to call back
-the
-                            ; person that did the transfer.  If this is set to "yes", the callback
-will
-                            ; not be attempted and the transfer will just fail.
-;atxferloopdelay = 10       ; Number of seconds to sleep between retries (if atxferdropcall = no)
-;atxfercallbackretries = 2  ; Number of times to attempt to send the call back to the transferer.
-                            ; By default, this is 2.
-; Note that the DTMF features listed below only work when two channels have answered and are bridged
-;together. They can not be used while the remote party is ringing or in progress. If you require this
-feature you can use
-; Local/ channels in combination with Answer to accomplish it.
+; res_parking.conf
+[default]                       ; Default Parking Lot
+parkext => 700                  ; What extension to dial to park. (optional; if
+                                ; specified, extensions will be created for parkext and
+                                ; the whole range of parkpos)
+parkpos => 701-720              ; What range of parking spaces to use - must be numeric.
+                                ; Creates these spaces as extensions if parkext is set.
+context => parkedcalls          ; Which context parked calls and the default park
+                                ; extension are created in
+;parkingtime => 45             ; Number of seconds a call can be parked before returning
+;comebacktoorigin = yes        ; When a parked call times out, attempt to send it back to
+                               ; the peer that parked it (default is yes)
+;courtesytone = beep           ; Sound file to play when someone picks up a parked call
+;parkedplay = caller           ; Who to play courtesytone to: parked, caller, both (default caller)
+;parkedcalltransfers = caller  ; Enable DTMF transfers when picking up a parked call (default no)
+;parkedcallreparking = caller  ; Enable DTMF parking when picking up a parked call (default no)
+;parkedcallhangup = caller     ; Enable DTMF hangups when picking up a parked call (default no)
+;findslot => next              ; 'next' uses the next space after the most recently used one;
+                               ; 'first' (default) uses the lowest-numbered space available
+;parkedmusicclass = default    ; MOH class to use for the parked channel
+```
+
+The DTMF feature codes (including one-step `parkcall`) remain in the `[featuremap]` section of `features.conf`:
+
+```
+; features.conf
 [featuremap]
 ;blindxfer => #1                ; Blind transfer  (default is #) -- Make sure to set the T and/or t
 option in the Dial() or Queue() app call!
@@ -154,10 +123,10 @@ By default, the 700 extension is used to park a call. In the middle of a convers
 
 ### Configuration task list
 
-Follow the steps below to enable call parking. Step 1: Enable call parking: (required) In the extensions.conf file, type the following statement.
+Follow the steps below to enable call parking. Step 1: Make the parking lot reachable from your dialplan (required). The default parking lot's `context` is `parkedcalls` (set in `res_parking.conf`). Include that context in the context your phones dial from, in `extensions.conf`:
 
 ```
-include=>parkedcalls
+include => parkedcalls
 ```
 
 Step 2: Test the call parking feature by dialing #700. Notes:
@@ -274,7 +243,11 @@ Using the meetme show CLI command, you can obtain the description above. To use 
 
 ![The MeetMe() application: syntax `MeetMe([confno][,[options][,pin]])` and its main option flags](../images/13-pbx-features-fig08.png)
 
-The meetme() application gets the user into a specified meetme conference. If the conference number is omitted, the user will be prompted to enter one. The user can leave the conference by hanging up or—if the p option is specified—by pressing #. Please note: The DAHDI kernel modules and at least one hardware driver (or dahdi_dummy) must be present for conferencing to operate properly. In addition, the chan_dahdi channel driver must be loaded for the i and r options to operate at all. The option string may contain zero or one or more of the following characters:
+The meetme() application gets the user into a specified meetme conference. If the conference number is omitted, the user will be prompted to enter one. The user can leave the conference by hanging up or—if the p option is specified—by pressing #. Please note: The DAHDI kernel modules and at least one hardware driver (or dahdi_dummy) must be present for conferencing to operate properly. In addition, the chan_dahdi channel driver must be loaded for the i and r options to operate at all.
+
+> **[2nd-ed note]** The option-flag and admin-command lists that follow describe the legacy `app_meetme` interface and reflect historical `MeetMe()`/`MeetMeAdmin()` documentation. Because `app_meetme` is not built by the default Asterisk 22 install, these flags cannot be confirmed against a running Asterisk 22 system; they are reproduced for readers maintaining older deployments. On Asterisk 22, use ConfBridge and the `CONFBRIDGE()` dialplan function instead.
+
+The option string may contain zero or one or more of the following characters:
 
 - 'a' -- sets admin mode
 - 'A' -- sets marked mode
