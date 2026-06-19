@@ -115,3 +115,13 @@ matter + auto TOC; voip.school branding swept book-wide).
 - VoIP School Blackbelt canonical URL + contact email for the book.
 - New ISBN + edition date for the 2nd edition.
 - GUI screenshots reshoot (needs a human at a softphone) — or delegate to a tester.
+
+## Final-step tasks (do at the end)
+
+- **Rename the book** from "Complete Asterisk Training" back to **"Asterisk Configuration
+  Guide"** or **"Asterisk Guide"** (author to pick). Update `book/metadata.yaml` title,
+  the front-matter colophon, README, and any in-text references.
+- **Modernize the salvaged legacy labs** (`docs/legacy-labs/`) into the per-chapter Lab
+  sections + the Asterisk 22 Docker lab.
+- Resolve all remaining `[2nd-ed note]` markers; assign the new ISBN/edition date.
+- Decide `auth_type`: switch examples from deprecated `userpass` to `digest` book-wide.
