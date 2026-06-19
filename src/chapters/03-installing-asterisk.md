@@ -24,7 +24,7 @@ Asterisk does not need a lot of hardware to run, however there are some tips to 
 - Echo cancellation. Echo cancellation may take a lot of CPU/FPU, in some cases you should choose hardware echo cancellation using DSPs in the telephony interface card
 - Availability. Use RAID1 or 5 to increase availability. Remember, Asterisk is 24x7 application.
 
-The main component for an Asterisk Server is the network adapter. A good server network adapter is recommended. CPU is important when you need to support high complexity codecs such as g.729 and iLBC and echo cancellation. You may choose to use dedicated DSPs, Digium provides a DSP card named TC400B capable to support 120 g729 simultaneous calls. The best practice is to choose a new, server class, computer from a known manufacturer. To know exactly how many simultaneous calls or how many registered users a specific machine can support, you should test this hardware with a stress test tool such as SIPP (http://sipp.sourceforge.net). Some hardware manufacturers such as Xorcom (http://www.xorcom.com) publish its results in the website. Note: Some Asterisk applications, such as meetme and music on hold, requires a clock source. Usually, the clock source is a telephony interface card. If your system does not use a telephony interface card, you will have to load dahdi_dummy to provide a clock source.
+The main component for an Asterisk Server is the network adapter. A good server network adapter is recommended. CPU is important when you need to support high complexity codecs such as g.729 and iLBC and echo cancellation. You may choose to use dedicated DSPs, Sangoma (formerly Digium) provides a DSP card named TC400B capable to support 120 g729 simultaneous calls. The best practice is to choose a new, server class, computer from a known manufacturer. To know exactly how many simultaneous calls or how many registered users a specific machine can support, you should test this hardware with a stress test tool such as SIPP (http://sipp.sourceforge.net). Some hardware manufacturers such as Xorcom (http://www.xorcom.com) publish its results in the website. Note: Some Asterisk applications, such as ConfBridge and music on hold, require a clock source. Usually, the clock source is a telephony interface card. If your system does not use a telephony interface card, you will have to load dahdi_dummy to provide a clock source.
 
 ### Hardware configuration
 
@@ -94,7 +94,7 @@ apt-get install build-essential git wget openssl libssl-dev libxml2-dev \
 
 > **[2nd-ed note]** The original list referenced `subversion`, `libnewt-dev`, and `libncurses5-dev`. Asterisk source is now hosted on Git (subversion is no longer needed), and modern Debian/Ubuntu ship `libncurses-dev` rather than the versioned `libncurses5-dev`. Prefer `./contrib/scripts/install_prereq install` over a hand-maintained list.
 
-#### DAHDI
+### DAHDI
 
 DAHDI (Digium/Sangoma Asterisk Hardware Device Interface) is the architecture of drivers for analog and digital cards. Before installing Asterisk it is important to install DAHDI if you are planning to use analog or digital interfaces. DAHDI still exists for analog/digital telephony cards but is increasingly niche — most modern deployments are pure VoIP and can skip this section entirely. Install DAHDI only if you have physical telephony interface hardware. Get the source files using:
 
@@ -108,7 +108,7 @@ Uncompress the files using:
 tar -xzvf dahdi-linux-complete-current.tar.gz
 ```
 
-#### Compiling DAHDI drivers
+### Compiling DAHDI drivers
 
 You will need to compile the DAHDI modules. The commands ./configure and make menuselect where introduced several years ago. The latter enables you to select which utilities and modules to build. The following commands will do this:
 
@@ -163,13 +163,13 @@ xpp_usb
 
 Re-initialize your computer and verify the correct loading of the drivers.
 
-### Which version to choose
+## Which version to choose
 
 As a rule of thumb, you should use the version with the required features. Asterisk follows a release model of alternating LTS (long-term support) and standard releases. At the time of this edition, **Asterisk 22 is the current LTS release** (released 2024, supported through 2028), which makes it the best one to choose now. Asterisk 20 is the previous LTS, and version 16 (used in the first edition) is end-of-life. For production systems, always pick an LTS release.
 
 > **[2nd-ed note]** Verify the exact current point release at downloads.asterisk.org before going to print. As of this writing the 22 branch is the active LTS.
 
-#### Compiling Asterisk
+## Compiling Asterisk
 
 If you have previously compiled software, compiling Asterisk will be an easy task. Run the following commands to compile and install Asterisk. Remember, you can choose which applications and modules to build using make menuselect. Step 1: Download the source code
 
@@ -212,7 +212,7 @@ ldconfig
 
 `make install` installs the binaries and modules, `make samples` writes the sample configuration files into `/etc/asterisk`, `make config` installs the startup scripts (systemd unit and/or init script), and `ldconfig` refreshes the shared-library cache.
 
-#### Selecting modules with menuselect
+### Selecting modules with menuselect
 
 `make menuselect` opens a text-based menu where you choose exactly which applications, codecs, channels, and resources to build. A few notes specific to Asterisk 22:
 
@@ -222,7 +222,9 @@ ldconfig
 
 After making your selections, choose **Save & Exit** and continue with `make`.
 
-### Starting and stopping Asterisk
+> **[2nd-ed note]** Insert a fresh `make menuselect` screenshot captured from Asterisk 22 (the 1st-edition screenshot showed chan_sip/chan_skinny/chan_mgcp, which no longer exist). The Channel Drivers screen should show chan_pjsip and no chan_sip.
+
+## Starting and stopping Asterisk
 
 With this minimal configuration, it’s possible to start Asterisk successfully. For learning and debugging, you can start Asterisk in the foreground attached to the console:
 
@@ -236,7 +238,7 @@ Use the CLI command stop now to shutdown Asterisk.
 CLI>core stop now
 ```
 
-##### Starting Asterisk with systemd
+### Starting Asterisk with systemd
 
 On modern Linux distributions (Debian 12, Ubuntu 22.04/24.04, Rocky/AlmaLinux 9), the system service manager is **systemd**. The `make config` step installs a systemd unit file, so the recommended way to run Asterisk in production is through `systemctl`:
 
@@ -252,7 +254,7 @@ Once Asterisk is running as a service, attach to its CLI with `asterisk -r` (con
 
 > **[2nd-ed note]** On older systems Asterisk was started via the legacy SysV init script (`/etc/init.d/asterisk`) and the **safe_asterisk** wrapper, which restarted Asterisk automatically if it crashed. With systemd, automatic restart is handled by the unit file's `Restart=` directive, so `safe_asterisk` is generally no longer needed. The legacy init/`safe_asterisk` approach still works but is deprecated on systemd-based distributions.
 
-#### Asterisk runtime options
+### Asterisk runtime options
 
 The Asterisk starting process is very simple. If Asterisk is run without any parameters, it is launched as a daemon.
 
@@ -266,23 +268,21 @@ You can access the Asterisk console by executing the following command. Please n
 /sbin/asterisk -r
 ```
 
-#### Available runtime options for Asterisk
+### Available runtime options for Asterisk
 
 You can show the available runtime options using asterisk –h
-
-![02-download-and-install figure 1](../images/02-download-and-install-img01.png)
 
 ```
 sipast:/usr/src/asterisk-22.x.y# asterisk -h
 ```
 
-Asterisk 22, Copyright (C) 1999 - 2024, Sangoma Technologies Corporation and others. Usage: asterisk [OPTIONS] Valid Options: -V Display version number and exit -C <configfile> Use an alternate configuration file -G <group> Run as a group other than the caller -U <user> Run as a user other than the caller -c Provide console CLI -d Increase debugging (multiple d's = more debugging) -f Do not fork -F Always fork -g Dump core in case of a crash -h This help screen -i Initialize crypto keys at startup -L <load> Limit the maximum load average before rejecting new calls -M <value> Limit the maximum number of calls to the specified value -m Mute debugging and console output on the console -n Disable console colorization -p Run as pseudo-realtime thread -q Quiet mode (suppress output) -r Connect to Asterisk on this machine -R Same as -r, except attempt to reconnect if disconnected -s <socket> Connect to Asterisk via socket <socket> (only valid with -r) -t Record soundfiles in /var/tmp and move them where they belong after they are done -T Display the time in [Mmm dd hh:mm:ss] format for each line of output to the CLI -v Increase verbosity (multiple v's = more verbose) -x <cmd> Execute command <cmd> (implies -r) -X Enable use of #exec in asterisk.conf -W Adjust terminal colors to compensate for a light background
+Asterisk 22.10.0, Copyright (C) 1999 - 2025, Sangoma Technologies Corporation and others. Usage: asterisk [OPTIONS] Valid Options: -V Display version number and exit -C <configfile> Use an alternate configuration file -G <group> Run as a group other than the caller -U <user> Run as a user other than the caller -c Provide console CLI -d Increase debugging (multiple d's = more debugging) -f Do not fork -F Always fork -g Dump core in case of a crash -h This help screen -i Initialize crypto keys at startup -L <load> Limit the maximum load average before rejecting new calls -M <value> Limit the maximum number of calls to the specified value -m Mute debugging and console output on the console -n Disable console colorization -p Run as pseudo-realtime thread -q Quiet mode (suppress output) -r Connect to Asterisk on this machine -R Same as -r, except attempt to reconnect if disconnected -s <socket> Connect to Asterisk via socket <socket> (only valid with -r) -t Record soundfiles in /var/tmp and move them where they belong after they are done -T Display the time in [Mmm dd hh:mm:ss] format for each line of output to the CLI -v Increase verbosity (multiple v's = more verbose) -x <cmd> Execute command <cmd> (implies -r) -X Enable use of #exec in asterisk.conf -W Adjust terminal colors to compensate for a light background
 
-### Installation directories
+## Installation directories
 
 Asterisk is installed on several directories, which can be modified in the asterisk.conf file. For training purposes I would change the verbose from 3 to 15, for production keep it in 3. The option max_calls and max_load are good options to protect your system from overloading.
 
-#### asterisk.conf
+### asterisk.conf
 
 ```
 [directories](!) ; remove the (!) to enable this
@@ -417,7 +417,7 @@ communicating
 ;astctl = asterisk.ctl
 ```
 
-### Log files and log rotation
+## Log files and log rotation
 
 Asterisk PBX logs its messages on the /var/log/asterisk directory. The file that controls the logs
 
@@ -593,10 +593,13 @@ messages => notice,warning,error
 
 ```
 CLI> logger show channels
-Channel                             Type     Status    Configuration
--------                             ----     ------    -------------
-/var/log/asterisk/messages          File     Enabled    - Warning Notice Error
-                                    Console  Enabled    - Warning Notice Error
+Logger queue limit: 1000
+
+Channel                             Type     Formatter  Status    Configuration
+-------                             ----     ---------  ------    -------------
+/var/log/asterisk/security          File     default    Enabled    - SECURITY
+/var/log/asterisk/full              File     default    Enabled    - NOTICE WARNING ERROR VERBOSE DTMF FAX
+/var/log/asterisk/messages          File     default    Enabled    - NOTICE WARNING ERROR
 CLI> logger rotate
   == Parsing '/etc/asterisk/logger.conf': Found
 Asterisk Event Logger restarted
@@ -620,7 +623,7 @@ More information about logrotate can be obtained using:
 #man logrotate
 ```
 
-### Uninstalling Asterisk
+## Uninstalling Asterisk
 
 To uninstall Asterisk, use:
 
@@ -634,15 +637,15 @@ To uninstall Asterisk and all configuration files, use:
 make uninstall-all
 ```
 
-### Asterisk installation notes
+## Asterisk installation notes
 
 This section will provide some advice about issues to address before installing Asterisk.
 
-#### Production Systems
+### Production Systems
 
 If Asterisk is installed in a production environment, you should pay attention to the system design. A server has to be optimized in such a way that telephony systems have priority over other system processes. Asterisk should not run together with processor-intensive software such as X-Windows. If you need to run CPU-intensive processes (e.g., a huge database), use a separate server. Generally speaking, Asterisk is susceptible to hardware performance variations. Thus, try using Asterisk in a hardware environment that does not require more than 40% of CPU utilization.
 
-#### Network Tips
+### Network Tips
 
 If you plan to use IP phones, it is important that you pay attention to your network. Voice protocols are very good and resistant to latency and even jitters; however, if you use a poorly configured local area network, voice quality will suffer. It is only possible to guarantee good voice quality using quality of service (QoS) in switches and routers. Voice in a local area network tends to be good, but even in a LAN environment, if you have 10 Mbps hubs with too many collisions, you will end up having a distorted or crappy voice. Follow these recommendations to ensure the best possible voice quality:
 
@@ -651,10 +654,10 @@ If you plan to use IP phones, it is important that you pay attention to your net
 - Use VLANs to separate unnecessary broadcasts of the voice network. You don’t want a virus destroying your voice network with ARP broadcasts.
 - Educate users about expectations in a voice network. Without QoS, don’t state that the voice will be perfect as in most cases it won’t be. A quality of voice similar to a mobile phone will most often be achieved. Use quality phones as problems with firmware and hardware design are common.
 
-### Summary
+## Summary
 
 In this chapter, you have learned about the minimum hardware requirements as well as how to download, install, and compile Asterisk. Asterisk should be executed with a non-root user for security reasons. You should check your network environment before starting the production environment.
 
-### Quiz
+## Quiz
 
 1. What’s the minimal Asterisk hardware configuration? 2. Telephony interface cards for Asterisk usually have some Digital Signal Processors (DSPs) built in and do not need a lot of CPU resources from the PC. A. True B. False 3. If you want perfect voice quality, you need to implement end-to-end quality of service (QoS). A. True B. False 4. You should always choose the latest Asterisk version as it is the most stable version. A. True B. False 5. What is the recommended way to install the build dependencies for Asterisk 22? 6. If you don’t have a TDM interface card, you will end up needing a clock source for synchronization. The dahdi_dummy driver fills this role. This is necessary because some applications like _______ and ________ require a time reference. 7. When you install Asterisk, it’s better to leave desktop interfaces such as GNOME or KDE out. Graphical user interfaces take up numerous CPU cycles. A. True B. False 8. Asterisk configuration files are located in the ____________________ directory. 9. To install Asterisk sample files, you need to type the following command: 10. Why is it important to start Asterisk with a non-root user? Anwers: 1. 512MB memory, 10GB HD, 1 core 2. B 3. A 4. B 5. Run `./contrib/scripts/install_prereq install` from the extracted Asterisk source directory — it installs the correct packages for your distribution. 6. MeetMe (ConfBridge) and MusicOnHold 7. A 8. /etc/asterisk 9. make samples 10. security
