@@ -388,6 +388,38 @@ In this chapter, you have learned that Asterisk Real Time allows you to put your
 
 ## Quiz
 
-> **[2nd-ed note]** Questions 5 and 6 describe limitations of **chan_sip** realtime (the channel object not existing until a call, rtcachefriends, NAT/MWI). chan_sip was removed in Asterisk 21, and PJSIP realtime via Sorcery does not share those limitations. Consider rewriting these two questions around PJSIP/Sorcery objects (ps_endpoints/ps_aors/ps_auths/ps_contacts) for the 2nd edition, or framing them explicitly as legacy chan_sip history.
+1. Asterisk Realtime is part of the standard Asterisk distribution.
+   - A. True
+   - B. False
+2. A database server's connection parameters are configured in the file:
+   - A. extensions.conf
+   - B. sip.conf
+   - C. res_odbc.conf
+   - D. extconfig.conf
+3. The `extconfig.conf` file configures the tables used by Realtime. It has two distinct sections (check two):
+   - A. Static configuration
+   - B. Realtime configuration
+   - C. Outbound routes
+   - D. IP addresses and database ports
+4. In static configuration, once the objects are loaded from the database they are kept in Asterisk's memory and refreshed only on start or reload.
+   - A. True
+   - B. False
+5. Unlike the old chan_sip realtime, PJSIP realtime (Sorcery) fully supports `qualify` and MWI for realtime endpoints.
+   - A. True
+   - B. False
+6. In PJSIP realtime, which tables hold the endpoints and their registered contacts?
+   - A. `ps_endpoints` and `ps_contacts`
+   - B. `sippeers` and `sipregs`
+   - C. `ps_config` and `ps_data`
+   - D. `extconfig` and `res_odbc`
+7. You can still use text configuration files even after enabling ARA.
+   - A. True
+   - B. False
+8. phpMyAdmin is mandatory when you use Realtime.
+   - A. True
+   - B. False
+9. The database must be created with every field that exists in the configuration file.
+   - A. True
+   - B. False
 
-1. Asterisk real-time is part of the standard Asterisk distribution. A. True B. False 2. Configuration of a database server’s parameters is done in the following file: A. extensions.conf B. sip.conf C. res_odbc.conf D. extconfig.conf 3. The file extconfig.conf is used to configure the tables used by real time. This file has two distinct sections (check two): A. Static configuration B. Real-time configuration C. Outbound routes D. IP addresses and database ports 4. In the static configuration, once you load the objects from the database, they are loaded dynamically into Asterisk’s memory whenever necessary. A. True B. False 5. When a SIP channel is configured in real time, it’s not possible to use resources such as “qualify” or MWI (message waiting indicator) because the channel does not exist until a call is made. This causes the following problems: A. This channel can call, but not receive calls B. The SIP channel could not be used behind NAT because qualify is used to keep NAT translation open. C. It’s not possible to make MWI work in the phones that support it. D. It’s not possible to use the channel since SIP is always static. 6. If you want to use real-time configuration with SIP channels, but need to support NAT and MWI, you should use: A. Real Time was not created for use with NAT B. rtcachefriends=yes in sip.conf C. Only MWI is possible D. To use NAT, the configuration needs to be static 7. You can still use text configuration files even after installing ARA. A. True B. False 8. Phpadmin is mandatory when you use Real Time. A. True B. False 9. The database has to be created with all the existing fields of the configuration file. A. True B. False Answers 1A, 2C,3-AB, 4A, 5-BC,6-B,7-A,8-B,9-B
+**Answers:** 1 — A · 2 — C · 3 — A, B · 4 — A · 5 — A · 6 — A · 7 — A · 8 — B · 9 — B
