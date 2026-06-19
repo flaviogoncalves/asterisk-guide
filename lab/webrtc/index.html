@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!--
+  Minimal WebRTC softphone for the Asterisk 22 lab, using SIP.js.
+  Serve over http and open in a browser, then accept the lab's self-signed
+  cert once by visiting https://localhost:8089/ws in the same browser.
+
+  Registers as endpoint webrtc-1000 and can call 600 (echo) or 9000 (greeting).
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Astbook WebRTC softphone</title>
+  <script src="https://cdn.jsdelivr.net/npm/sip.js@0.21.2/dist/sip.min.js"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 3rem auto; }
+    input, button { font-size: 1rem; padding: .4rem; margin: .2rem 0; }
+    #log { white-space: pre-wrap; background:#111; color:#0f0; padding:.6rem; height:12rem; overflow:auto; }
+  </style>
+</head>
+<body>
+  <h1>Astbook WebRTC softphone</h1>
+  <label>Asterisk host: <input id="host" value="localhost" /></label><br/>
+  <label>Extension to call: <input id="target" value="600" /></label><br/>
+  <button id="register">Register (webrtc-1000)</button>
+  <button id="call">Call</button>
+  <button id="hangup">Hang up</button>
+  <audio id="remoteAudio" autoplay></audio>
+  <div id="log"></div>
+
+<script>
+const log = (m) => { const l=document.getElementById('log'); l.textContent += m+"\n"; l.scrollTop=l.scrollHeight; };
+let ua, registerer, session;
+
+document.getElementById('register').onclick = async () => {
+  const host = document.getElementById('host').value;
+  const uri = SIP.UserAgent.makeURI(`sip:webrtc-1000@${host}`);
+  ua = new SIP.UserAgent({
+    uri,
+    transportOptions: { server: `wss://${host}:8089/ws` },
+    authorizationUsername: 'webrtc-1000',
+    authorizationPassword: 'Lab-webrtc-secret',
+    sessionDescriptionHandlerFactoryOptions: { constraints: { audio: true, video: false } },
+  });
+  ua.delegate = {
+    onInvite(inv) { session = inv; inv.accept(); attachMedia(inv); log('Incoming call — answered'); }
+  };
+  await ua.start();
+  registerer = new SIP.Registerer(ua);
+  await registerer.register();
+  log('Registered as webrtc-1000');
+};
+
+document.getElementById('call').onclick = async () => {
+  const host = document.getElementById('host').value;
+  const target = document.getElementById('target').value;
+  const uri = SIP.UserAgent.makeURI(`sip:${target}@${host}`);
+  session = new SIP.Inviter(ua, uri);
+  attachMedia(session);
+  await session.invite();
+  log('Calling ' + target);
+};
+
+document.getElementById('hangup').onclick = async () => {
+  if (!session) return;
+  try { await (session.state === 'Established' ? session.bye() : session.cancel()); } catch(e){}
+  log('Hung up');
+};
+
+function attachMedia(s) {
+  s.stateChange.addListener((state) => {
+    log('Session: ' + state);
+    if (state === 'Established') {
+      const pc = s.sessionDescriptionHandler.peerConnection;
+      const remote = new MediaStream();
+      pc.getReceivers().forEach(r => r.track && remote.addTrack(r.track));
+      document.getElementById('remoteAudio').srcObject = remote;
+    }
+  });
+}
+</script>
+</body>
+</html>

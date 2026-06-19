@@ -1,0 +1,46 @@
+# Captured from the lab — Asterisk 22.10.0 — WebRTC verification
+
+## http show status
+HTTP Server Status:
+Prefix: 
+Server: Asterisk/22.10.0
+Server Enabled and Bound to 0.0.0.0:8088
+
+HTTPS Server Enabled and Bound to 0.0.0.0:8089
+
+Enabled URI's:
+/media/... => Media over Websocket
+/ws => Asterisk HTTP WebSocket
+
+Enabled Redirects:
+  None.
+
+Path Restrictions:
+  None.
+
+## pjsip show transports
+
+Transport:  <TransportId........>  <Type>  <cos>  <tos>  <BindAddress....................>
+==========================================================================================
+
+Transport:  transport-udp             udp      0      0  0.0.0.0:5060
+Transport:  transport-wss             wss      0      0  0.0.0.0:5060
+
+Objects found: 2
+
+
+## pjsip show endpoint webrtc-1000 (excerpt)
+ Endpoint:  webrtc-1000                                          Unavailable   0 of inf
+     InAuth:  webrtc-1000/webrtc-1000
+        Aor:  webrtc-1000                                        1
+ aors                               : webrtc-1000
+ auth                               : webrtc-1000
+ dtls_auto_generate_cert            : Yes
+ dtls_fingerprint                   : SHA-256
+ dtls_setup                         : actpass
+ ice_support                        : true
+ media_encryption                   : dtls
+ media_encryption_optimistic        : false
+ rtcp_mux                           : true
+ use_avpf                           : true
+ webrtc                             : yes

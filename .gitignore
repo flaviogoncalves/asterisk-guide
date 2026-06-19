@@ -10,3 +10,6 @@ src/raw/
 
 # Lab runtime
 lab/**/*.log
+
+# TLS keys (generate locally with lab/make-certs.sh)
+lab/asterisk/etc/keys/
