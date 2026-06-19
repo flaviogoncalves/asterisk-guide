@@ -263,24 +263,83 @@ Action Privilege Synopsis
 If you need to know specific command parameters, use the manager show command <command>. Example:
 
 ```
-asterisk*CLI> manager show command originate
+asterisk*CLI> manager show command Originate
+
+  -= Info about Manager Command 'Originate' =-
+
+[Synopsis]
+Originate a call.
+
+[Provided By]
+builtin
+
+[Since]
+0.2.0
+
+[Description]
+Generates an outgoing call to a <Extension>/<Context>/<Priority> or
+<Application>/<Data>
+
+[Syntax]
 Action: Originate
-Synopsis: Originate Call
-Privilege: call,all
-Description: Generates an outgoing call to a Extension/Context/Priority or
-  Application/Data
-Variables: (Names marked with * are required)
-        *Channel: Channel name to call
-        Exten: Extension to use (requires 'Context' and 'Priority')
-        Context: Context to use (requires 'Exten' and 'Priority')
-        Priority: Priority to use (requires 'Exten' and 'Context')
-        Application: Application to use
-        Data: Data to use (requires 'Application')
-        Timeout: How long to wait for call to be answered (in ms)
-        CallerID: Caller ID to be set on the outgoing channel
-        Variable: Channel variable to set, multiple Variable: headers are allowed
-        Account: Account code
-        Async: Set to 'true' for fast origination
+[ActionID:] <value>
+Channel: <value>
+[Exten:] <value>
+[Context:] <value>
+[Priority:] <value>
+[Application:] <value>
+[Data:] <value>
+[Timeout:] <value>
+[CallerID:] <value>
+[Variable:] <value>
+[Account:] <value>
+[EarlyMedia:] <value>
+[Async:] <value>
+[Codecs:] <value>
+[ChannelId:] <value>
+[OtherChannelId:] <value>
+[PreDialGoSub:] <value>
+
+[Arguments]
+Channel
+    Channel name to call.
+Exten
+    Extension to use (requires 'Context' and 'Priority')
+Context
+    Context to use (requires 'Exten' and 'Priority')
+Priority
+    Priority to use (requires 'Exten' and 'Context')
+Application
+    Application to execute.
+Data
+    Data to use (requires 'Application').
+Timeout
+    How long to wait for call to be answered (in ms.).
+CallerID
+    Caller ID to be set on the outgoing channel.
+Variable
+    Channel variable to set, multiple Variable: headers are allowed.
+Account
+    Account code.
+EarlyMedia
+    Set to 'true' to force call bridge on early media.
+Async
+    Set to 'true' for fast origination.
+Codecs
+    Comma-separated list of codecs to use for this call.
+ChannelId
+    Channel UniqueId to be set on the channel.
+OtherChannelId
+    Channel UniqueId to be set on the second local channel.
+PreDialGoSub
+    Context,Extension,Priority to set options/headers needed before
+    starting the outgoing extension.
+
+[Privilege]
+originate,all
+
+[See Also]
+OriginateResponse
 ```
 
 ### Event packets

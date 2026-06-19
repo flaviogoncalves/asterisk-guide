@@ -70,9 +70,11 @@ These are *dated sections* rather than wrong claims:
   "Events available" list was a garbled legacy AMI-v1 Java-class catalog). Replaced with a
   short, lab-verified pointer to `manager show events` / `manager show event <name>` and the
   modern `Bridge*` events.
-- **Ch 12 (AMI), Originate help block** — old `Variables:` format; 22 uses
-  `[Synopsis]/[Syntax]/[Arguments]`. Content is accurate and the command is still valid —
-  kept; reformat only if desired. Low priority.
+- **Ch 12 (AMI), Originate help block — DONE (reformatted).** Replaced the old `Variables:`
+  block with the real Asterisk 22 `manager show command Originate` output in the modern
+  `[Synopsis]/[Syntax]/[Arguments]` style (captured from the lab), which also adds the
+  current fields the old block lacked: `EarlyMedia`, `Codecs`, `ChannelId`,
+  `OtherChannelId`, `PreDialGoSub`.
 - **Ch 4 figure** — commission a redrawn TCP/IP-model figure if a visual is wanted (the
   OSI figure was replaced by a table).
 - **Ch 13 (realtime) phpMyAdmin screenshots** — refresh with a current tool or convert
