@@ -58,6 +58,11 @@
   skipabove=9pt,skipbelow=9pt,roundcorner=2pt}
 \surroundwithmdframed[style=codebox]{verbatim}
 
+% ---- tables: smaller font so wide tables (esp. cells with inline code) don't bleed ----
+\usepackage{etoolbox}
+\AtBeginEnvironment{longtable}{\footnotesize}
+\AtBeginEnvironment{tabular}{\footnotesize}
+
 % ---- editorial callouts: pandoc blockquotes get an accent left rule ----
 \newmdenv[topline=false,bottomline=false,rightline=false,linewidth=2pt,
   linecolor=brand!60,leftmargin=0pt,innerleftmargin=10pt,innerrightmargin=0pt,
