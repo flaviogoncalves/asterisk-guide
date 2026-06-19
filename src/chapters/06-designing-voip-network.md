@@ -71,7 +71,6 @@ improve call quality. A few protocol specifics:
 - **IAX2** is unusual: it multiplexes both signaling and media over a single UDP port
   (4569), which simplifies NAT and firewall traversal.
 
-> **[author]** Optional: commission a redrawn figure of the TCP/IP stack above if a visual is wanted; the table is otherwise self-contained.
 
 ## How to choose a protocol
 

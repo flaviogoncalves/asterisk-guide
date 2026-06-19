@@ -1,5 +1,5 @@
 {
-"00-front-matter.md": "61e21dfa6f2cba228a336c84ab400e56350c353ccd2742e21a7d6c8294f19e64",
+"00-front-matter.md": "04d31f5a9847c8a914dada1f7f40a44a7a402fff14cdec72e33b011d2b4aa291",
 "01-part1.md": "a972cf7bfc5b338d5fe1dbecd7f395baf97b08363b44dce57f3356b68697bf3b",
 "02-introduction.md": "cb79608610e3e76765050c1f29c55b41bdec8355bcf0da97dec8185371da2b00",
 "03-installing-asterisk.md": "d2444a527c381b3a29309cf85da6b16f0723df227e7b9819ed7e22e5cfc270ae",
@@ -17,7 +17,7 @@
 "19-security.md": "fb4ef0163ede2f72cdeed263528d19e682c521deb5665b2c81c26273a9f8e0b3",
 "20-deployment.md": "61bc2a6c009f91b5915cf159f8152ebd8a86cd67daf9a0a438442240eed30ee8",
 "04-first-pbx-pjsip.md": "965f7944ab0443894d090d76fb7ac98ee71e4f582e43a80e24e0809c8a002098",
-"06-designing-voip-network.md": "bef472f14060ea30fc42bfdc6833b7efe448121ee5b1d4c44835ed77b60f3bfe",
+"06-designing-voip-network.md": "e7d6006fcdf1ad31cf256bd4c45b8e1b51da9779b9fc0e6537bc3d11c022706a",
 "07-sip-and-pjsip.md": "1653c14597e7d24acd503f80bfda468ea0126859ba88791036525bc86a111f4f",
 "10-legacy-channels.md": "2c0bdb83b8a04800ab25f161a7a1f260a00716aeee6c97c70c923c4a37c35f35",
 "10a-migration-to-pjsip.md": "453fbff63240c35eb1a122d74e68e8aa8438cea22597207bbf58b49b5c90258b",

@@ -13,7 +13,6 @@ in any form or by any means without the prior written consent of the author, exc
 for brief excerpts used in published reviews.
 
 **Edition:** Second Edition.
-**ISBN:** *to be assigned.*
 
 > **[author TODO]** Assign a new 2nd-edition ISBN (do not reuse 1st-ed 9781796396973) and set the publication date before print.
 
