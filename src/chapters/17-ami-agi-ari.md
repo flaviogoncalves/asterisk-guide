@@ -709,7 +709,7 @@ In this chapter, you have learned how to interface external programs to the Aste
    - C. `asterisk -rx`
    - D. System()
    - E. External()
-2. AMI allows passing Asterisk commands over TCP sockets, and this is enabled by default.
+2. AMI allows passing Asterisk commands over TCP sockets, and this interface is enabled by default in a fresh Asterisk install.
    - A. True
    - B. False
 3. AMI is very safe, because its authentication uses MD5 challenge/response.
@@ -726,5 +726,15 @@ In this chapter, you have learned how to interface external programs to the Aste
    - B. False
 7. The command ___ shows all available AGI commands.
 8. The command ___ shows all available AMI commands.
+9. Which statements about ARI (Asterisk REST Interface) are correct? (Choose all that apply.)
+   - A. It was introduced in Asterisk 12.
+   - B. Applications receive events as JSON over a WebSocket and issue control commands over HTTP/REST.
+   - C. It is configured in `ari.conf` (together with `http.conf`).
+   - D. It is the legacy interface that AGI replaced.
+10. In a `[myuser]` section of `ari.conf`, which option marks the user as authorized for read-only requests?
+    - A. `read_only=yes`
+    - B. `permission=read`
+    - C. `write=no`
+    - D. `access=ro`
 
-**Answers:** 1 — E · 2 — A · 3 — B · 4 — A · 5 — B · 6 — B · 7 — `agi show commands` · 8 — `manager show commands`
+**Answers:** 1 — E · 2 — B · 3 — B · 4 — A · 5 — B · 6 — B · 7 — `agi show commands` · 8 — `manager show commands` · 9 — A, B, C · 10 — A

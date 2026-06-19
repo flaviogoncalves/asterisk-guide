@@ -813,24 +813,16 @@ In this chapter, you have learned how to receive calls using an IVR or an auto-a
    - A. Execute the extensions Monday to Friday, 08:00 to 18:00
    - B. Execute the options every day in all months
    - C. Nothing; the format is invalid
-2. The following statements make the caller who dialed extension 8590 (mark all that apply):
-
-   ```
-   exten => 8590/482518888,1,Congestion
-   exten => 8590,2,Dial(DAHDI/1,20,j)
-   exten => 8590,3,Voicemail(u8590)
-   exten => 8590,103,Voicemail(b8590)
-   ```
-
-   - A. Receive a busy tone if CallerID = 482518888
-   - B. Receive a busy tone, regardless of the number dialed
-   - C. Dial the DAHDI/1 channel
-   - D. Go to voicemail if DAHDI/1 is busy or unanswered, except when CallerID = 482518888
-3. To concatenate several extensions, you separate them with the ___ character.
-4. A voice menu is usually created with the ___ application.
-5. You can include files inside configuration files using the ___ statement.
-6. The Asterisk database is based on:
-   - A. Oracle
+2. In modern Asterisk (including Asterisk 22), the fields of a time-based `include =>` and of `GotoIfTime()` are separated by which character?
+   - A. The pipe `|`
+   - B. The comma `,`
+   - C. The semicolon `;`
+   - D. The slash `/`
+3. To dial several channels at once (ringing them simultaneously), you separate them inside `Dial()` with the ___ character.
+4. A voice menu that plays a prompt while waiting for the caller to dial an extension is usually created with the ___ application.
+5. You can include the contents of another file inside `extensions.conf` using the ___ statement (note: this is different from the `include =>` context statement).
+6. In Asterisk 22, the built-in AstDB database is backed by:
+   - A. Berkeley DB v1
    - B. MySQL
    - C. SQLite3
    - D. PostgreSQL
@@ -840,16 +832,15 @@ In this chapter, you have learned how to receive calls using an IVR or an auto-a
 8. With the Background() application, you must wait until the message finishes playing before you can press a DTMF digit to choose an option.
    - A. False
    - B. True
-9. The valid formats for the goto() application are:
+9. Given the syntax `Goto([[context,]extension,]priority)`, which of the following are valid invocations of the Goto() application? (mark all that apply)
    - A. Goto(context,extension)
    - B. Goto(context,extension,priority)
    - C. Goto(extension,priority)
    - D. Goto(priority)
-10. Switches are used to direct dial plan processing to another server.
-    - A. False
-    - B. True
-11. A subroutine can automate the processing of an extension, and you can pass any number of parameters to it.
-    - A. True
-    - B. False
+10. To delete a single key from AstDB in the Asterisk 22 dial plan, you use:
+    - A. The `DBdel()` application
+    - B. The `DB_DELETE()` function
+    - C. The `DBdeltree()` application
+    - D. The `LookupBlacklist()` application
 
-**Answers:** 1 — A · 2 — A, C, D · 3 — `&` · 4 — Background() · 5 — #include · 6 — C · 7 — A · 8 — A · 9 — B, C, D · 10 — B · 11 — A
+**Answers:** 1 — A · 2 — B · 3 — `&` · 4 — Background() · 5 — #include · 6 — C · 7 — A · 8 — A · 9 — B, C, D · 10 — B

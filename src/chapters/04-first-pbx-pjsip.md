@@ -1043,50 +1043,50 @@ In this chapter, you’ve learned that configuration files are stored in the /et
 
 ## Quiz
 
-1. The channel configuration files are:
-   - A. `/etc/dahdi/system.conf`
-   - B. `/etc/asterisk/chan_dahdi.conf`
-   - C. `pjsip.conf`
-   - D. `iax.conf`
-2. Defining a context in the channel configuration file matters because it sets the incoming context for calls from that channel — a call from the channel is processed in the matching context in `extensions.conf`.
+1. The channel configuration files are (choose all that apply):
+   - A. `/etc/asterisk/chan_dahdi.conf`
+   - B. `/etc/asterisk/pjsip.conf`
+   - C. `/etc/asterisk/iax.conf`
+   - D. `/etc/asterisk/extensions.conf`
+2. On Asterisk 22, the single `chan_sip` peer `[6001]` (`type=friend`/`host=dynamic`) is replaced in `pjsip.conf` by which set of related objects?
+   - A. A `type=peer` and a `type=user`
+   - B. A `type=endpoint`, a `type=auth`, and a `type=aor`
+   - C. A single `type=friend`
+   - D. A `type=transport` and a `type=global`
+3. Defining a context in the channel configuration file matters because it sets the incoming context for calls from that channel — a call from the channel is processed in the matching context in `extensions.conf`.
    - A. True
    - B. False
-3. The main differences between the `playback()` and `background()` applications are (choose two):
-   - A. Playback simply plays a prompt but does not wait for digits.
-   - B. Background simply plays a prompt but does not wait for digits.
+4. The main differences between the `Playback()` and `Background()` applications are (choose two):
+   - A. Playback plays a prompt but does not wait for digits.
+   - B. Background plays a prompt but does not wait for digits.
    - C. Background plays a message and waits for digits to be pressed.
    - D. Playback plays a message and waits for digits to be pressed.
-4. When a call enters Asterisk through a telephony interface card (FXO), it is handled in the special extension:
+5. When a call enters Asterisk through a telephony interface card (FXO) with no DID, it is handled in the special extension:
    - A. `0`
    - B. `9`
    - C. `s`
    - D. `i`
-5. Valid formats for the `goto()` application are (choose three):
+6. Valid formats for the `Goto()` application are (choose three):
    - A. `Goto(context,extension,priority)`
    - B. `Goto(priority,context,extension)`
    - C. `Goto(extension,priority)`
    - D. `Goto(priority)`
-6. An extension cannot be defined as (choose all correct answers):
-   - A. An alphanumeric literal
-   - B. A numeric literal
-   - C. A pattern beginning with a "." (dot) character
-   - D. A pattern starting with a "_" (underscore) character
-7. The pattern `_7[1-5]XX` matches (choose all correct answers):
+7. The pattern `_7[1-5]XX` matches (choose all that apply):
    - A. 7100
    - B. 7600
    - C. 7630
    - D. 7230
-8. An incoming context for a DAHDI-compatible telephony interface is defined in the ___ configuration file:
-   - A. `/etc/dahdi/system.conf`
-   - B. `/etc/asterisk/chan_dahdi.conf`
-   - C. `/etc/asterisk/asterisk.conf`
-   - D. `/etc/asterisk/modules.conf`
+8. In `Dial(PJSIP/${EXTEN},20,tTm)`, what does the `m` option do?
+   - A. Limits the call to a maximum duration.
+   - B. Provides music on hold to the caller instead of ringback until the channel answers.
+   - C. Sends DTMF digits after the called party answers.
+   - D. Forces the caller ID using a dial plan hint.
 9. In the option-inheritance grammar used by `chan_dahdi.conf`, you:
    - A. Define the object in a single line.
    - B. Define options first and declare the objects below the defined options.
-   - C. Define a context for each object.
-10. Priorities must be consecutive.
-    - A. False
-    - B. True
+   - C. Define a separate context for each object.
+10. Priorities in an extension must be numbered consecutively (1, 2, 3, …) and cannot use `n`.
+    - A. True
+    - B. False
 
-**Answers:** 1 — B, C, D · 2 — A · 3 — A, C · 4 — C · 5 — A, C, D · 6 — C · 7 — A, D · 8 — B · 9 — B · 10 — B
+**Answers:** 1 — A, B, C · 2 — B · 3 — A · 4 — A, C · 5 — C · 6 — A, C, D · 7 — A, D · 8 — B · 9 — B · 10 — B
