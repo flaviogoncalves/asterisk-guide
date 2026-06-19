@@ -95,7 +95,7 @@ Being honest: "newest and lab-verified" is necessary but not sufficient. Here is
 
 6. **FreePBX / GUI reality.** The overwhelming majority of production Asterisk installs run **FreePBX**. *No* book in the market covers the modern FreePBX/Sangoma stack well, and THIS book is pure CLI/config-file. That's pedagogically pure but commercially blind: many buyers want to understand the GUI they actually operate, or how hand-written dialplan coexists with FreePBX-generated config.
 7. **High availability / clustering.** No HA, no active-passive failover, no DB replication patterns, no `res_pjsip` behind a load balancer. Production VoIP lives and dies on this. Absent from the market — a gap THIS book could *own*.
-8. **Session Border Controllers (SBC) & topology.** Real deployments front Asterisk with an SBC (Kamailio/OpenSIPS/commercial). Given the author literally wrote the OpenSIPS book, **not** having a "where Asterisk sits behind an SBC" chapter is a missed, uniquely-credible opportunity.
+8. **Session Border Controllers (SBC) & topology.** Real deployments front Asterisk with an SBC (OpenSIPS/commercial). Given the author literally wrote the OpenSIPS book, **not** having a "where Asterisk sits behind an SBC" chapter is a missed, uniquely-credible opportunity.
 9. **AI / voicebots / STT-TTS.** This is the #1 reason people open Asterisk in 2026. ARI + external media + real-time STT/TTS (and now `ARI external media` / audio-socket patterns to LLMs) is the hot topic. **Every** competing book predates it entirely. If THIS book ships without it, it leaves its single biggest differentiator on the table.
 10. **Observability.** No Prometheus/Grafana, no structured logging, no `res_prometheus`-style metrics, no SIPp-driven load testing chapter (despite SIPp already being in the lab). Modern ops readers expect this.
 11. **Containers/Kubernetes at depth.** The book installs via Docker (good) but "run Asterisk in production on Kubernetes" (stateful SIP, host networking, RTP port ranges, SDP/NAT in pods) is unaddressed and is a frequent real-world pain point.
@@ -131,7 +131,7 @@ Prioritized. P0 = needed to credibly claim "best"; P1 = strong differentiators; 
 2. **Add a `chan_sip → pjsip.conf` migration cookbook (appendix or boxed sections).** Side-by-side `sip.conf` → `pjsip.conf` for the common cases (endpoint, trunk, NAT, registration, codecs). This converts the *entire installed base* of legacy users — the largest, most motivated audience — and no competitor has it.
 3. **Make Voicemail and IVR/Auto-Attendant unmistakably first-class.** Ensure each has a clear, indexed home (within PBX features is fine, but signposted). Buyers comparing TOCs against the Definitive Guide must not see them "missing."
 4. **Ship a real index, glossary, and consistent terminology pass.** This is what makes a KDP book read as *professional* next to O'Reilly. The CONTEXT.md glossary already exists — surface it.
-5. **Add an SBC / topology chapter (or strong appendix): "Asterisk behind an SBC."** Leverage the author's OpenSIPS authority. Show Asterisk fronted by OpenSIPS/Kamailio, why, and the PJSIP config that makes it work. Uniquely credible for this author; absent everywhere else.
+5. **Add an SBC / topology chapter (or strong appendix): "Asterisk behind an SBC."** Leverage the author's OpenSIPS authority. Show Asterisk fronted by OpenSIPS, why, and the PJSIP config that makes it work. Uniquely credible for this author; absent everywhere else.
 
 ### P1 — Differentiators that make it the *best*, not just the newest
 

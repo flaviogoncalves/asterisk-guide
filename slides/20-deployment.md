@@ -24,6 +24,9 @@ Chapter 18
 
 <style>
 h1 { color: #1C5D99; }
+/* QA: keep code inside the 16:9 frame — shrink slightly + wrap long lines (lossless) */
+.slidev-layout pre { font-size: 0.8em; line-height: 1.32; }
+.slidev-layout pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
 </style>
 
 ---
@@ -462,7 +465,7 @@ Externalizing state is the **prerequisite** for both HA and horizontal scaling. 
 
 ### SIP proxies in front
 
-To scale *beyond* one server, put **Kamailio / OpenSIPS** in front of a pool of Asterisk media servers. The proxy does registration + routing (no media); Asterisk does call processing.
+To scale *beyond* one server, put **OpenSIPS** in front of a pool of Asterisk media servers. The proxy does registration + routing (no media); Asterisk does call processing.
 
 *(SipPulse itself uses OpenSIPS in front of its media/application servers.)*
 
@@ -530,7 +533,7 @@ A **Session Border Controller** terminates SIP/RTP at the edge, hides topology, 
 </div>
 
 <div class="mt-4 p-3 text-sm" style="border-left: 4px solid #1C5D99;">
-<strong>Never expose raw Asterisk to the internet.</strong> A cloud VM's public IP is scanned within minutes of coming up. An SBC — or at minimum a hardened proxy (OpenSIPS/Kamailio) plus Fail2Ban — is the standard edge.
+<strong>Never expose raw Asterisk to the internet.</strong> A cloud VM's public IP is scanned within minutes of coming up. An SBC — or at minimum a hardened proxy (OpenSIPS) plus Fail2Ban — is the standard edge.
 </div>
 
 ---
@@ -566,7 +569,7 @@ layout: section
 - **Containerize** with an immutable, pinned image and config **bind-mounted** from a git'd `/etc/asterisk`; either use **host networking** or publish an RTP range that **exactly matches `rtp.conf`**, and mount **persistent volumes** for state.
 - **Back up** what config doesn't capture: voicemail, recordings, `astdb.sqlite3`, CDR/CEL.
 - **Observe** at four levels — CLI (live), CDR/CEL (history), AMI/ARI (events), `res_prometheus` → Grafana (dashboards) — keeping AMI/ARI off the public internet.
-- **Stay up:** active/standby + **floating IP** (failover drops live calls). **Grow:** externalize state with **PJSIP Realtime**, front with **Kamailio/OpenSIPS**; **media caps a server**.
+- **Stay up:** active/standby + **floating IP** (failover drops live calls). **Grow:** externalize state with **PJSIP Realtime**, front with **OpenSIPS**; **media caps a server**.
 - **Cloud:** treat the VM as behind NAT (`external_media_address`, `local_net`), open both firewalls, pick a low-latency region, put an **SBC** at the edge.
 
 </v-clicks>

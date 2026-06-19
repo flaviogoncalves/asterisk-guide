@@ -24,6 +24,9 @@ Chapter 10
 
 <style>
 h1 { color: #1C5D99; }
+/* QA: keep code inside the 16:9 frame — shrink slightly + wrap long lines (lossless) */
+.slidev-layout pre { font-size: 0.8em; line-height: 1.32; }
+.slidev-layout pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
 </style>
 
 ---

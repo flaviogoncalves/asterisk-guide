@@ -521,11 +521,11 @@ on shared/replicated storage (or `ODBC_STORAGE`), and the astdb keys you depend 
 database. Once state is external, the Asterisk nodes become closer to interchangeable
 front-ends.
 
-### SIP proxies in front (Kamailio / OpenSIPS)
+### SIP proxies in front (OpenSIPS)
 
 To scale *beyond* one server's capacity you put a **SIP proxy/load balancer** in front of
-a pool of Asterisk media servers. **Kamailio** and **OpenSIPS** are purpose-built, very
-high-throughput SIP proxies (they handle hundreds of thousands of registrations and route
+a pool of Asterisk media servers. **OpenSIPS** is a purpose-built, very
+high-throughput SIP proxy (they handle hundreds of thousands of registrations and route
 signaling without touching media). The proxy presents a single SIP address to the world,
 maintains the registration/location service, and distributes calls across the Asterisk
 back-ends. This separation — a lightweight proxy tier doing registration and routing, a
@@ -615,7 +615,7 @@ firewall and the cloud security group.
   absorbs DoS and scanning traffic before it reaches Asterisk. The Security chapter's core
   recommendation — *do not expose raw Asterisk to the internet* — applies doubly in the
   cloud, where your VM's public IP is being scanned within minutes of coming up. An SBC (or
-  at minimum a hardened SIP proxy like OpenSIPS/Kamailio plus Fail2Ban) is the standard
+  at minimum a hardened SIP proxy like OpenSIPS plus Fail2Ban) is the standard
   edge.
 
 ## Summary
@@ -634,7 +634,7 @@ endpoints`) for the live view, **CDR/CEL** for history, **AMI/ARI** for programm
 events, and the **`res_prometheus`** exporter into Grafana for dashboards and alerts —
 while keeping AMI/ARI off the public internet. To **stay up**, run active/standby with a
 **floating IP** (accepting that failover drops live calls); to **grow**, externalize state
-with **PJSIP Realtime**, front a pool of media servers with **Kamailio/OpenSIPS**, and
+with **PJSIP Realtime**, front a pool of media servers with **OpenSIPS**, and
 minimize transcoding because **media — not registrations — is what caps a server**.
 Finally, in the **cloud**, treat the VM as behind NAT (`external_media_address`,
 `local_net`), open the firewall per the Security chapter in both the host and the provider
