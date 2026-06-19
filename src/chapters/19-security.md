@@ -21,7 +21,11 @@ The main attacks to IP telephony can be classified as DOS/DDOS, Theft of Service
 
 ### DDoS/DOS
 
-Denial of Service and Distributed Denial of Service are popular attacks to any IT infrastructure. It is not different with SIP and other Voice over IP protocols. Distributed denial of service is usually perpetrated by a botnet while DOS just by a single computer. In 2010 hackers used the Sality botnet to scan all vulnerable SIP devices. The DOS is applied usually thru techniques such as fuzzing and flooding. Flooding can use SIP, IAX, RTP and other protocols. They can stop the service completely or degrade the voice quality. They are very hard to mitigate if the ports are open to the Internet. Below are some of the tools used by attackers
+Denial of Service and Distributed Denial of Service are popular attacks to any IT infrastructure. It is not different with SIP and other Voice over IP protocols. Distributed denial of service is usually perpetrated by a botnet while DOS just by a single computer. In 2010 hackers used the Sality botnet to scan all vulnerable SIP devices.
+
+![A peer-to-peer botnet directing thousands of SIP registration attempts at a server](../images/19-security-fig01.png)
+
+The DOS is applied usually thru techniques such as fuzzing and flooding. Flooding can use SIP, IAX, RTP and other protocols. They can stop the service completely or degrade the voice quality. They are very hard to mitigate if the ports are open to the Internet. Below are some of the tools used by attackers
 
 - Fuzzing :
 
@@ -59,39 +63,31 @@ o
 
 My recommendations are
 
-![15-asterisk-security figure 1](../images/15-asterisk-security-img01.png)
-
-![15-asterisk-security figure 2](../images/15-asterisk-security-img02.png)
-
 1. Do not expose your Asterisk server on the Internet, unless necessary with proper protection (SBC) 2. In the internal network use a Virtual LAN for voice, mainly if you are in a University, College where the number of users is high. 3. Use VPN or TLS for external access.
 
 ### Internet Revenue Share Fraud
 
-This fraud is a bit tricky to understand. The key is to understand the concept of an International premium rate number (IPRN). An IPRN is a number that you can allocate for free in some specific internet phone companies. Search for Internet Premium Rate Number Providers and you will find a bunch of them. In this type of operator you can allocate, as an example, a number in a satellite network such as Iridium, a destination costing tenths of dollars per minute to the caller. The IPRN provider will pay you back a percentage of the revenue (10 to 20% of the income) for any minute received.
+This fraud is a bit tricky to understand. The key is to understand the concept of an International premium rate number (IPRN).
 
-![15-asterisk-security figure 3](../images/15-asterisk-security-img03.png)
+![The three steps of Internet Revenue Share Fraud: buy a premium rate number, find a vulnerable VoIP device and call the number, then collect the payout](../images/19-security-fig02.png)
 
-![15-asterisk-security figure 4](../images/15-asterisk-security-img04.png)
+An IPRN is a number that you can allocate for free in some specific internet phone companies. Search for Internet Premium Rate Number Providers and you will find a bunch of them. In this type of operator you can allocate, as an example, a number in a satellite network such as Iridium, a destination costing tenths of dollars per minute to the caller. The IPRN provider will pay you back a percentage of the revenue (10 to 20% of the income) for any minute received.
 
-![15-asterisk-security figure 5](../images/15-asterisk-security-img05.png)
-
-![15-asterisk-security figure 6](../images/15-asterisk-security-img06.png)
+![An IPRN provider price list showing per-country payout rates and test numbers](../images/19-security-fig03.png)
 
 After the allocation phase, the hacker tries to find any open Asterisk server capable to dial the allocated IPRN. The PBX from the victim, controlled by the hacker, will make hundreds of calls to the IPRN number generating a large pay back for the hacker and a huge phone bill for the victim. Many times, higher then hundreds of thousands of dollars in a single weekend. Main tools used by hackers to attack a PBX 1. SIPVicious: http://code.google.com/p/sipvicious/. Sipvicious is a security tool set easy to use. Its main objective is to recognize vulnerable PBXs and crack the SIP passwords using a brute force attack. The most used tool is svcrack. The tool is capable to test thousands of passwords per second. 2. Phone vulnerabilities. Another point frequently used by hackers as an attack vector is the phone itself. Many people installing Asterisk do not change the default password in the web interface of the phone. Once these phones are open on the Internet, hackers can try to use the default interface password to download the configuration where they can often find the secret SIP password. .
 
 #### TFTPTheft:
 
-If you are using auto provisioning of phones using TFTP, you are probably open to this type of attack. TFTP is a simple and insecure form of a File Transfer Protocol. The name of the configuration files are easily guessable using the mac address followed by .cfg (e.g. 001A2B3C4D5E.cfg). A wise hacker can easily create a utility to try all MAC addresses sequentially or simply download a tool to do it. The configuration file is usually unencrypted and have the secret SIP password inside.
+If you are using auto provisioning of phones using TFTP, you are probably open to this type of attack. TFTP is a simple and insecure form of a File Transfer Protocol.
+
+![An attacker downloading guessable .cfg files from a TFTP server, harvesting plaintext credentials from the configuration files](../images/19-security-fig04.png)
+
+The name of the configuration files are easily guessable using the mac address followed by .cfg (e.g. 001A2B3C4D5E.cfg). A wise hacker can easily create a utility to try all MAC addresses sequentially or simply download a tool to do it. The configuration file is usually unencrypted and have the secret SIP password inside.
 
 #### Mitigation for brute force attacks and tftp theft
 
-To mitigate these attacks you may apply the solutions below. Brute force: The best solution to mitigate brute force attacks is prevent sequential unauthorized attempts. Almost any Asterisk installer use the utility fail2ban for this. When fail2ban detects multiple attempts with the wrong password or user name, it bans the IP of the attacker for a certain
-
-![15-asterisk-security figure 7](../images/15-asterisk-security-img07.png)
-
-![15-asterisk-security figure 8](../images/15-asterisk-security-img08.png)
-
-amount of time. The second measure against brute force is to use strong passwords, more than 12 characters, at least one special character. Tftptheft: To prevent TFTPTheft configure provisioning to use https with name and password. The file is transmitted encrypted and a name and password prevents attackers to attempt downloading any files.
+To mitigate these attacks you may apply the solutions below. Brute force: The best solution to mitigate brute force attacks is prevent sequential unauthorized attempts. Almost any Asterisk installer use the utility fail2ban for this. When fail2ban detects multiple attempts with the wrong password or user name, it bans the IP of the attacker for a certain amount of time. The second measure against brute force is to use strong passwords, more than 12 characters, at least one special character. Tftptheft: To prevent TFTPTheft configure provisioning to use https with name and password. The file is transmitted encrypted and a name and password prevents attackers to attempt downloading any files.
 
 ### Eavesdropping
 
@@ -127,7 +123,11 @@ Instead of discovering all vulnerabilities associated with all Asterisk protocol
 netstat –pantu |grep asterisk
 ```
 
-The output of the command is shown below If you look at the output, you will discover that many ports are open. Do we need them? Not necessarily, 2727 is the MGCP protocol (chan_mgcp), 4569 is the IAX (chan_iax2). If you are not using these protocols, you can simply remove the module in the configuration file modules.conf.
+The output of the command is shown below.
+
+![netstat output showing the many ports bound by Asterisk, including 4569 (IAX) and 2727 (MGCP)](../images/19-security-fig05.png)
+
+If you look at the output, you will discover that many ports are open. Do we need them? Not necessarily, 2727 is the MGCP protocol (chan_mgcp), 4569 is the IAX (chan_iax2). If you are not using these protocols, you can simply remove the module in the configuration file modules.conf.
 
 > **[2nd-ed note]** The 1st edition recommended falling back to **chan_sip** to avoid PJSIP's "random DNS port" problem and to keep only port 5060 open. **chan_sip no longer exists in Asterisk 21+ — this is no longer an option in Asterisk 22.** PJSIP is now the only SIP channel and must be used. Regarding the random high port: this comes from the resolver in res_pjsip making outbound DNS queries (the source port is ephemeral, like any client DNS lookup), not from an inbound listener — your firewall only needs to allow **established/related** return traffic for it (the iptables `conntrack ESTABLISHED,RELATED` rule shown below already covers this). You do **not** need to open a wide inbound high-UDP range just for PJSIP DNS. If you want fully deterministic behaviour you can also point Asterisk at a fixed resolver or disable `res_pjsip`'s async resolver; verify the exact module/option name for your build before relying on it.
 
@@ -144,7 +144,7 @@ noload => chan_skinny.so
 
 With the instructions above, I have removed all unnecessary channels keeping only PJSIP. You can choose whatever protocol modules you want, just remove the unused ones. The result is shown in the screenshot below — only the SIP port (5060) bound by your PJSIP transport is now exposed inbound.
 
-![15-asterisk-security figure 9](../images/15-asterisk-security-img09.png)
+![netstat output after disabling the unused modules: only UDP port 5060 remains bound by Asterisk](../images/19-security-fig06.png)
 
 ### Implementing the security police with IPTABLES
 
@@ -345,13 +345,15 @@ context=from-internal
 
 Step 3: Install the Blink softphone (www.icanblink.com) Step 4: Copy the certificate Authority to the computer running blink. After installing blink copy the file /etc/asterisk/keys/ca.crt to your computer. If you are using windows you may try winscp. For Linux simply copy using scp. The screenshots for this lab were taken on windows 10 and blink for windows. Step 5: Create an account on blink In the initial screen add the account normally like any other sip account. Use the right password, the authentication is still based on the password. Step 6: Set TLS as the transport in the server properties. Set the port to 5061 and transport as TLS. Adjust your iptables to open the port 5061.
 
-![15-asterisk-security figure 10](../images/15-asterisk-security-img10.png)
+> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
 
-Step 7: Add the certification authority to the blink softphone. Pay attention to this step, go to the advanced TAB, not the account TAB. Step 8: Remove any certificate from the account itself A common misconception is that you need a client certificate to authenticate. This is not true, the server at this point is not checking client certificates. Here we are only encrypting the authentication is still user and password. Asterisk do not verify the client certificates and it would be a pain to have to distribute individual certificates for each client connecting to the server.
+Step 7: Add the certification authority to the blink softphone. Pay attention to this step, go to the advanced TAB, not the account TAB.
 
-![15-asterisk-security figure 11](../images/15-asterisk-security-img11.png)
+> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
 
-![15-asterisk-security figure 12](../images/15-asterisk-security-img12.png)
+Step 8: Remove any certificate from the account itself A common misconception is that you need a client certificate to authenticate. This is not true, the server at this point is not checking client certificates. Here we are only encrypting the authentication is still user and password. Asterisk do not verify the client certificates and it would be a pain to have to distribute individual certificates for each client connecting to the server.
+
+> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
 
 Step 9: DON’T FORGET, restart completely blink after changing the certificate authority. Right click and quit do not simply close and open the softphone (VERY IMPORTANT).
 
@@ -377,11 +379,6 @@ Step 2: Configure pjsip to support TLS. Add a section for TLS transport in the f
 type=transport
 protocol=tls
 bind=0.0.0.0:5061
-```
-
-![15-asterisk-security figure 13](../images/15-asterisk-security-img13.png)
-
-```
 cert_file=/etc/asterisk/keys/asterisk.crt
 priv_key_file=/etc/asterisk/keys/asterisk.key
 method=tlsv1_2
@@ -541,13 +538,13 @@ context=local
 
 Step 2: Softphone configuration
 
+In the softphone, enable SRTP for the account media (set the SRTP/media encryption option to mandatory) so that voice is encrypted.
+
+> **[2nd-ed note]** Replace with a current screenshot taken in the SipPulse Softphone.
+
 ## Enabling two way authentication for international calls
 
-Sometimes the best way is to not have international routes. However, if you really need to dial international, use an extra password. We are going to use the Asterisk application vmauthenticate to ask for the voicemail password before dialing internationally. This is configured in the dialplan in the
-
-![15-asterisk-security figure 14](../images/15-asterisk-security-img14.png)
-
-extensions.conf. See the example below. So a hacker, even after discovering a peer password or to compromise a phone still needs the voicemail password to dial this destination.
+Sometimes the best way is to not have international routes. However, if you really need to dial international, use an extra password. We are going to use the Asterisk application vmauthenticate to ask for the voicemail password before dialing internationally. This is configured in the dialplan in the extensions.conf. See the example below. So a hacker, even after discovering a peer password or to compromise a phone still needs the voicemail password to dial this destination.
 
 ```
 exten=_9011.,1,Playback(pleasedialyourvmpassword)

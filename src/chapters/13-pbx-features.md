@@ -43,7 +43,7 @@ These features need to be programmed in the Asterisk dial plan (extensions.conf)
 
 These features are implemented by the phone’s firmware:
 
-![11-using-pbx-features figure 1](../images/11-using-pbx-features-img01.png)
+![Where the PBX features are usually implemented: in Asterisk itself, in the dial plan, or in the phone](../images/13-pbx-features-fig01.png)
 
 - Call on hold
 - Blind transfer
@@ -54,6 +54,8 @@ These features are implemented by the phone’s firmware:
 ## The features configuration file
 
 Some of the features presented in this chapter are configured in the features.conf configuration file. It is possible to change the behavior of some features by modifying this file. We have included the relevant excerpt below. In the next sections of this chapter, we will describe each feature. Excerpt from the sample file (Asterisk 22)
+
+![The `[featuremap]` section of features.conf, with the default DTMF feature codes](../images/13-pbx-features-fig02.png)
 
 > **[2nd-ed note]** As of Asterisk 12+, call parking was moved out of features.conf/app_features into its own module `res_parking` with configuration in `res_parking.conf` (also referred to as `parking.conf`). The `[general]` parking block below (parkext, parkpos, context, parkingtime, etc.) should be updated to show `res_parking.conf` syntax. The `[featuremap]` section remains in `features.conf`.
 
@@ -136,6 +138,8 @@ and/or x option in the Dial() or Queue() app call!
 
 Call transfer can be implemented by the phone, by ATA, or by Asterisk itself. Refer to your phone manual to understand how calls are transferred. If your phone does not support call transfer, you can use Asterisk to accomplish this task. Call transfer is implemented in two different ways. The first way is to use the blind transfer feature: dial # followed by the number to be transferred. Sometimes you will use the transfer feature of your IP phone or IP soft phone. You can change the transfer character by editing the blindxfer parameter in the features.conf file. You can enable assisted transfer in Asterisk by removing the ; before the atxfer parameter in the features.conf file. During a conversation, you would press *2. Asterisk will say “transfer” and will give you a dial tone. The caller is sent to music on hold. After you speak to the destination person and hang up the phone, the system bridges the caller to the destination.
 
+![Call transfer: the steps for a blind transfer (press # during the call) and an attended transfer (press *2)](../images/13-pbx-features-fig03.png)
+
 ### Configuration task list
 
 1. If the phone is SIP based, make sure that the option directmedia is equal to no or use a t or T option in the dial() application
@@ -144,9 +148,7 @@ Call transfer can be implemented by the phone, by ATA, or by Asterisk itself. Re
 
 This feature is used to park a call. This helps, for example, when you are answering a phone call outside of your room and you want to transfer the call back to your desk. You may accomplish this by parking the call in an extension. Once you reach your desk, simply dial the number of the parking extension to recover the call.
 
-![11-using-pbx-features figure 2](../images/11-using-pbx-features-img02.png)
-
-![11-using-pbx-features figure 3](../images/11-using-pbx-features-img03.png)
+![Call parking: dial 700 to park a call into the first free slot (701–720); Asterisk announces the slot, which you dial from any phone to retrieve the call](../images/13-pbx-features-fig04.png)
 
 By default, the 700 extension is used to park a call. In the middle of a conversation, press # to transfer the call to the 700 extension. Now the Asterisk will announce your parking extension, such as 701 or 702. Hang up the phone, and the caller will be placed on hold. Go to your desk phone and dial the announced parking extension to recover the call. If the caller is parked for a long time, the timeout feature will trigger and the original dialed extension will ring again.
 
@@ -164,10 +166,6 @@ Step 2: Test the call parking feature by dialing #700. Notes:
 - It is necessary to reload the parking module after changing the parking configuration file: `module reload res_parking.so`. For features.conf changes, `module reload features.so`.
 - To park a call, you need to transfer to #700. Verify the options t and T in the dial() application.
 
-![11-using-pbx-features figure 4](../images/11-using-pbx-features-img04.png)
-
-![11-using-pbx-features figure 5](../images/11-using-pbx-features-img05.png)
-
 ## Call pickup
 
 Call pickup allows you to capture a call from a colleague in the same call group. This would help avoid, for example, having to wake up to take a call that is ringing to another person in your room, but who is not present. By dialing *8, you can capture a call within your call group. This number can be modified in the
@@ -175,6 +173,8 @@ Call pickup allows you to capture a call from a colleague in the same call group
 ```
 features.conf file.
 ```
+
+![Call pickup: members can only capture calls within their own group; the operator (pickupgroup=1,2,3) can pick up calls from every group](../images/13-pbx-features-fig05.png)
 
 ### Configuration task list
 
@@ -200,8 +200,6 @@ pickupexten=*8; Configures the call pickup extension
 
 There are different ways to implement a conference on Asterisk. The first option is simply to use the three-way conference capability of the phone. By using this feature in the phone you do not require any support in the server itself. However, when you want a conference with more than 3 people, you should run a conference room. Asterisk's modern conference application is ConfBridge (`app_confbridge`).
 
-![11-using-pbx-features figure 6](../images/11-using-pbx-features-img06.png)
-
 ConfBridge supports HD voice conferences and video conferencing. There are some limitations for videoconference such as no transcoding — all participants have to use the same codec and profile. The videoconference uses a follow-the-talker mode, displaying the image of the last person to speak. You may easily configure new DTMF menus in ConfBridge.
 
 > **[2nd-ed note]** MeetMe (`app_meetme`) was deprecated in Asterisk 10 and **removed from Asterisk 21 and later**. It required DAHDI for timing and is no longer available in Asterisk 22. All conference room deployments must use ConfBridge. The MeetMe section below is retained for historical reference only.
@@ -214,9 +212,11 @@ To start a conference room, the syntax is listed below.
 ConfBridge(conference,bridge_profile,user_profile,menu)
 ```
 
-To get a complete description of the command you can use core show application confbridge. As you can see above there are three important sections: Bridge_profile: You define the profile in the file confbridge.conf. There you may select the maximum number of participants, recording, video_mode and many other bridge parameters.
+To get a complete description of the command you can use core show application confbridge.
 
-![11-using-pbx-features figure 7](../images/11-using-pbx-features-img07.png)
+![Output of `core show application confbridge`, showing the synopsis, syntax, and the bridge_profile, user_profile, and menu arguments](../images/13-pbx-features-fig06.png)
+
+As you can see above there are three important sections: Bridge_profile: You define the profile in the file confbridge.conf. There you may select the maximum number of participants, recording, video_mode and many other bridge parameters.
 
 It doesn’t make sense to reproduce the entire example file here, so let me give you a simple example on how to configure a bridge_profile in the file confbridge.conf.
 
@@ -267,15 +267,13 @@ exten => 1,n,ConfBridge(vendas)
 
 Alternatively, in older Asterisk versions you could use the meetme() application. Meetme is a conference bridge that is very simple to use. Remember, meetme was deprecated in Asterisk 10 and depends on the DAHDI module for synchronization.
 
+![MeetMe conference types — single-speaker, password-protected, and dynamic conferences — all requiring a Zaptel/DAHDI timing source](../images/13-pbx-features-fig07.png)
+
 ### The meetme() application
 
 Using the meetme show CLI command, you can obtain the description above. To use meetme, you need to compile the DAHDI drivers and have at least one DAHDI kernel module loaded. If you don’t have at least one DAHDI card installed, load the dahdi_dummy kernel module to provide a timing source. Description:
 
-![11-using-pbx-features figure 8](../images/11-using-pbx-features-img08.png)
-
-![11-using-pbx-features figure 9](../images/11-using-pbx-features-img09.png)
-
-![11-using-pbx-features figure 10](../images/11-using-pbx-features-img10.png)
+![The MeetMe() application: syntax `MeetMe([confno][,[options][,pin]])` and its main option flags](../images/13-pbx-features-fig08.png)
 
 The meetme() application gets the user into a specified meetme conference. If the conference number is omitted, the user will be prompted to enter one. The user can leave the conference by hanging up or—if the p option is specified—by pressing #. Please note: The DAHDI kernel modules and at least one hardware driver (or dahdi_dummy) must be present for conferencing to operate properly. In addition, the chan_dahdi channel driver must be loaded for the i and r options to operate at all. The option string may contain zero or one or more of the following characters:
 
@@ -392,6 +390,8 @@ There are several ways to record a call in Asterisk. You can use the mixmonitor(
 
 The mixmonitor application records the audio in the current channel to the specified file. If the filename is an absolute path, it uses that path. Otherwise, it creates the file in the configured monitoring directory from asterisk.conf.
 
+![The MixMonitor() application: records and mixes the audio of a channel to a file, with options for append, bridged-only, and volume adjustment](../images/13-pbx-features-fig09.png)
+
 ### Mixmonitor()
 
 Record a call and mix the audio during the recording [Description] MixMonitor(<file>.<ext>[|<options>[|<command>]]) Records the audio on the current channel to the specified file. options: a- Append to the file instead of overwriting it. b-Only save audio to the file while the channel is bridged. Note: does not include conferences. v(<x>) - Adjust the heard volume by a factor of <x> V(<x>) - Adjust the spoken volume by a factor of <x> W(<x>) - Adjust both heard and spoken volumes Valid options:
@@ -428,6 +428,8 @@ DYNAMIC_FEATURES=>automon
 
 Music on hold (MOH) has changed several times among versions 1.0, 1.2, and 1.4. In the latest version, MOH defaults to “FILE-BASED”. In other words, Asterisk will supply the MOH files in formats such as g729, alaw, ulaw, and gsm. Thus, it is not necessary to transcode the music before sending it to the channel. This saves processor time, which is a welcomed modification for those working with production systems. In older versions, MOH was usually provided by MP3 (it still can be configured that way). Providing MOH using MP3 obligates Asterisk to transcode, spending valuable CPU power in the process. The new configuration file is shown below. Note that the default class now uses the native file format mode=files. All other modes are commented. Each section is a class. The only uncommented class at this point is default. If you want to have different classes for different files, you will need to create new sections (classes).
 
+![The musiconhold.conf sample configuration, listing the valid MOH modes (quietmp3, mp3, custom, files, …)](../images/13-pbx-features-fig10.png)
+
 ```
 ; Music on Hold -- Sample Configuration
 ;[samplemp3]
@@ -438,13 +440,6 @@ Music on hold (MOH) has changed several times among versions 1.0, 1.2, and 1.4. 
 ; quietmp3      -- default
 ; mp3           -- loud
 ; mp3nb         -- unbuffered
-```
-
-![11-using-pbx-features figure 11](../images/11-using-pbx-features-img11.png)
-
-![11-using-pbx-features figure 12](../images/11-using-pbx-features-img12.png)
-
-```
 ; quietmp3nb    -- quiet unbuffered
 ; custom        -- run a custom application (See examples below)
 ; files         -- read files from a directory in any Asterisk supported

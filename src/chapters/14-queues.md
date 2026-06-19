@@ -12,7 +12,11 @@ By the end of this chapter, you should be able to:
 
 ## How queues work?
 
-Call queues are not exactly a novelty. When you have a high inbound call flow, it is hard to distribute calls appropriately. Using a group strategy where the phone simultaneously rings on all agents does not seem to work, unless you have only a few agents. However, a call queue will only deliver calls to a single available agent each time and put the customer on hold with music when there are no agents available. The queue works by retaining the call while finding an unoccupied agent to answer the call. One of the biggest benefits of the queue is to avoid losing calls while providing the possibility to generate statistics. Usually, a call queue works like this:
+Call queues are not exactly a novelty. When you have a high inbound call flow, it is hard to distribute calls appropriately. Using a group strategy where the phone simultaneously rings on all agents does not seem to work, unless you have only a few agents. However, a call queue will only deliver calls to a single available agent each time and put the customer on hold with music when there are no agents available. The queue works by retaining the call while finding an unoccupied agent to answer the call. One of the biggest benefits of the queue is to avoid losing calls while providing the possibility to generate statistics.
+
+![A call queue: incoming 1-800 calls enter the queue and an ACD strategy (ringall, rrmemory, leastrecent, priority, and others) distributes them to the available agents](../images/14-queues-fig01.png)
+
+Usually, a call queue works like this:
 
 - Agents log in to the queue.
 - Incoming calls are queued.
@@ -27,7 +31,7 @@ The main application for queues is customer service. When using queues, you avoi
 
 The ACD architecture is formed by queues and agents. One agent can be in two queues at the same time. A queue can have agents, channels, and agent groups.
 
-![12-call-queues figure 1](../images/12-call-queues-img01.png)
+![ACD architecture: each queue (Customer Service, Inside Sales) is fed by a phone number and delivers calls to agents, who are in turn bound to physical channels](../images/14-queues-fig02.png)
 
 ## Queues
 
@@ -43,7 +47,7 @@ The old behavior for the queue was serial type. The queue waited for a call to b
 
 Queues are configured in the queues.conf file. In the figure, you will find a working example of a queue.
 
-![12-call-queues figure 2](../images/12-call-queues-img02.png)
+![A working example of the queues.conf file, showing the [general] section and a [customerservice] queue with strategy, service level, announcements, recording, and members](../images/14-queues-fig03.png)
 
 ### Agents
 
@@ -61,15 +65,9 @@ Agent 300
 - the command agentlogin is executed and the agent is associated with the current channel.
 - The user dials an extension with the application agentlogin .
 
+![Agents: a user logs in by dialing an extension that runs the agentlogin application, which binds Agent 300 to the current channel; you can check agent status with `core show agents`](../images/14-queues-fig04.png)
+
 You can define the agents in the file agents.conf
-
-![12-call-queues figure 3](../images/12-call-queues-img03.png)
-
-![12-call-queues figure 4](../images/12-call-queues-img04.png)
-
-![12-call-queues figure 5](../images/12-call-queues-img05.png)
-
-![12-call-queues figure 6](../images/12-call-queues-img06.png)
 
 ```
 ; Agent configuration
@@ -116,6 +114,8 @@ Calls are distributed among members according to one of these strategies:
 
 Agents are implemented as proxy channels. They can be used inside the queues. Another use for the agent channels is extension mobility. The user can log in using any phone and receive its calls. This allows a user to go to any room to make it an office. You can dial an agent in the dial plan using dial(agent/<name>). You define agents in the agents.conf file.
 
+![Agent mobility: the user picks up any phone, dials a login extension, and passes the agent number and password; after agentlogin() succeeds the agent (Agent 300) is ready to take calls, and you can check status with the CLI command show agents](../images/14-queues-fig05.png)
+
 ### Agent Groups
 
 You may choose to use agent groups. This function does not take ACD strategies into consideration. You will probably prefer to list all agents individually. If you want to transfer to an agent group, you
@@ -131,11 +131,7 @@ use agent groups.
 
 Agents are defined in the file agents.conf. Below is a working example of the file.
 
-![12-call-queues figure 7](../images/12-call-queues-img07.png)
-
-![12-call-queues figure 8](../images/12-call-queues-img08.png)
-
-![12-call-queues figure 9](../images/12-call-queues-img09.png)
+![A working example of the agents.conf file: a [general] section with persistentagents, an [agents] section with the default parameters (autologoff, ackcall, endcall, wrapuptime, musiconhold), and two agent definitions (300 and 301)](../images/14-queues-fig06.png)
 
 ## ACD-related applications
 
@@ -144,6 +140,8 @@ The Asterisk queue system makes several applications available to implement the 
 ### The application queue()
 
 This applications queues incoming calls into a particular call queue as defined in queues.conf. The option string may contain zero or more of the following characters: In addition to transferring the call, a call may be parked and then picked up by another user. The optional URL will be sent to the called party if the channel supports it. The optional AGI parameter will set up an AGI script to be executed on the calling party's channel once they are connected to a queue member. The timeout will cause the queue to fail out after a specified number of seconds, checked between each timeout and retry cycle. This application sets the QUEUE status variable upon completion:
+
+![The queue() application: its syntax `Queue(queuename[|options[|URL][|announceoverride][|timeout][|AGI]])` and the available single-letter options (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
 
 - TIMEOUT
 - FULL
@@ -155,6 +153,8 @@ This applications queues incoming calls into a particular call queue as defined 
 ### The application agentlogin()
 
 This application asks the agent to log in to the system. It always returns -1. While logged in, the agent receiving calls will hear a beep when a new call comes in. The agent can dump the call by pressing the * key.
+
+![The agentlogin() application: its syntax `AgentLogin([AgentNo][|options])` and the `s` option for a silent login that does not announce the login confirmation](../images/14-queues-fig08.png)
 
 ### The application addQueueMember()
 
@@ -176,9 +176,15 @@ RemoveQueueMember(queuename[|interface])
 
 Some applications and console commands are capable of helping the work with queues. The following outlines what each application does:
 
+![Support applications (AddQueueMember, RemoveQueueMember) and CLI commands (show agents, show queues, show queue <name>) used to manage queues at runtime](../images/14-queues-fig09.png)
+
 ## Configuration tasks
 
-The figure below summarizes the major tasks to create a working queue system. Step 1: Create the call queue In the file queues.conf:
+The figure below summarizes the major tasks to create a working queue system.
+
+![The ACD configuration tasks: (1) create the call queue (required), (2) define agent parameters (optional), (3) create agents (optional), (4) put the queue in the dial plan (required), (5) configure agent recording (optional), and (6) verify with show agents and show queues (optional)](../images/14-queues-fig10.png)
+
+Step 1: Create the call queue In the file queues.conf:
 
 ```
 [telemarketing]
