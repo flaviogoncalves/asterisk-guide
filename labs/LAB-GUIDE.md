@@ -17,6 +17,10 @@ single username or password.
 
 ### Softphone accounts (your PBX, created by the lab)
 
+**Get the softphone:** download the **SipPulse Softphone** from
+<https://www.sippulse.com/produtos/softphone> (Windows/macOS/Linux), or use the no-install
+browser version at <https://softphone.sippulse.com.br/crosscall/>.
+
 | Account | Password | What it is |
 |--------:|----------|------------|
 | `6001` | `Lab-6001-secret` | Desk phone "Alice" |
@@ -146,8 +150,10 @@ Objects found: 4
 
 ### Step 5 — Install a softphone and register `6001`
 
-Download the **SipPulse Softphone** (Windows/macOS/Linux) and create an account with the
-credentials from the front page:
+Download the **SipPulse Softphone** for Windows, macOS, or Linux from
+<https://www.sippulse.com/produtos/softphone> (or, to skip installing, use the browser version
+at <https://softphone.sippulse.com.br/crosscall/>). Then create an account with the credentials
+from the front page:
 
 | Field | Value |
 |-------|-------|
