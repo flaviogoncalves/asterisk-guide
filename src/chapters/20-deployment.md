@@ -623,65 +623,45 @@ at the edge.
    - B. Reboot the server
    - C. `asterisk -rx 'core reload'`
    - D. Rebuild the container image
-3. Why does the lab's container `CMD` run Asterisk with `-f` (do not fork)?
-   - A. To enable TLS
-   - B. So the container's main process stays in the foreground and the container does not exit
-   - C. To run as root
-   - D. To disable RTP
-4. In the lab's `docker-compose.yml`, the line `./asterisk/etc:/etc/asterisk:ro` does what?
-   - A. Copies the config into the image at build time
-   - B. Bind-mounts the host config directory into the container, read-only
-   - C. Creates a persistent volume for voicemail
-   - D. Publishes the SIP port
-5. A containerized (bridged-network) Asterisk connects calls but has **no audio**. The most likely cause is:
+3. A containerized (bridged-network) Asterisk connects calls but has **no audio**. The most likely cause is:
    - A. The dialplan is wrong
    - B. The published RTP UDP port range does not match `rtpstart`/`rtpend` in `rtp.conf`
    - C. CDR is disabled
    - D. The CLI is unreachable
-6. Which directories must be mounted as **persistent volumes** so a container redeploy does not lose state? (check all that apply)
+4. Which directories must be mounted as **persistent volumes** so a container redeploy does not lose state? (check all that apply)
    - A. `/var/spool/asterisk` (voicemail, recordings)
    - B. `/var/lib/asterisk` (astdb)
    - C. `/etc/asterisk` (already bind-mounted from the host)
    - D. `/usr/sbin`
-7. The `astdb` is:
-   - A. The CDR database
-   - B. Asterisk's internal SQLite key/value store at `/var/lib/asterisk/astdb.sqlite3`
-   - C. The voicemail store
-   - D. The PJSIP realtime schema
-8. Which CLI command gives the live count of active calls?
+5. Which CLI command gives the live count of active calls?
    - A. `cdr show status`
    - B. `core show channels`
    - C. `pjsip show transports`
    - D. `module show like prometheus`
-9. In Asterisk 22, the supported way to expose call/channel metrics to a Prometheus/Grafana stack is:
+6. In Asterisk 22, the supported way to expose call/channel metrics to a Prometheus/Grafana stack is:
    - A. Parsing the `full` log file
    - B. The `res_prometheus.so` module
    - C. AGI scripts
    - D. There is none
-10. In an active/standby HA setup using a floating IP, what happens to calls **in progress** when the IP fails over to the standby node?
-    - A. They continue seamlessly with replicated state
-    - B. They are dropped and must be redialed; the service itself recovers in seconds
-    - C. They are queued until the active node returns
-    - D. They are converted to voicemail
-11. What is the prerequisite for both HA failover and horizontal scaling across multiple Asterisk nodes?
-    - A. Running as root
-    - B. Externalizing state (e.g. PJSIP Realtime registrations in a shared database)
-    - C. Disabling CDR
-    - D. Using bridged networking
-12. On a cloud VM, which `pjsip.conf` transport settings make Asterisk advertise its public address so remote audio works? (check all that apply)
-    - A. `external_media_address`
-    - B. `external_signaling_address`
-    - C. `local_net`
-    - D. `qualify_frequency`
-13. Which resource most directly caps how many simultaneous calls one Asterisk server can handle?
-    - A. The number of registered users
-    - B. Media processing, especially transcoding
-    - C. The size of `/etc/asterisk`
-    - D. The CDR backend
-14. For an internet-facing deployment, the Security chapter's core rule — applied doubly in the cloud — is:
+7. What is the prerequisite for both HA failover and horizontal scaling across multiple Asterisk nodes?
+   - A. Running as root
+   - B. Externalizing state (e.g. PJSIP Realtime registrations in a shared database)
+   - C. Disabling CDR
+   - D. Using bridged networking
+8. Which resource most directly caps how many simultaneous calls one Asterisk server can handle?
+   - A. The number of registered users
+   - B. Media processing, especially transcoding
+   - C. The size of `/etc/asterisk`
+   - D. The CDR backend
+9. On a cloud VM, which `pjsip.conf` transport settings make Asterisk advertise its public address so remote audio works? (check all that apply)
+   - A. `external_media_address`
+   - B. `external_signaling_address`
+   - C. `local_net`
+   - D. `qualify_frequency`
+10. For an internet-facing deployment, the Security chapter's core rule — applied doubly in the cloud — is:
     - A. Always run two NICs
     - B. Never expose raw Asterisk to the internet; put an SBC (or hardened proxy + Fail2Ban) at the edge
     - C. Use UDP only
     - D. Disable TLS
 
-**Answers:** 1 — B · 2 — C · 3 — B · 4 — B · 5 — B · 6 — A, B · 7 — B · 8 — B · 9 — B · 10 — B · 11 — B · 12 — A, B, C · 13 — B · 14 — B
+**Answers:** 1 — B · 2 — C · 3 — B · 4 — A, B · 5 — B · 6 — B · 7 — B · 8 — B · 9 — A, B, C · 10 — B

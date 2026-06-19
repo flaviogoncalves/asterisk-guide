@@ -252,41 +252,50 @@ In this chapter, you have learned that Asterisk treats VoIP using channels. It s
 
 ## Quiz
 
-1. List at least four benefits of VoIP.
+1. Which of the following are benefits of VoIP described in this chapter (check all that apply)?
+   - A. Convergence of data and voice networks to reduce cost
+   - B. Lower infrastructure cost for additions, removals, and changes
+   - C. Open standards that free you from a single vendor
+   - D. Easier and cheaper Computer Telephony Integration
+   - E. Guaranteed lower per-minute calling rates than any phone company
 2. Convergence is the integration of voice, data, and video in a single network; its primary benefit is cost reduction in the implementation and maintenance of separate networks.
    - A. False
    - B. True
-3. Asterisk cannot use resources from the PSTN and VoIP simultaneously because the codecs are not compatible.
+3. Asterisk treats every VoIP protocol as a channel and can bridge any channel type to any other, transcoding between codecs when needed.
    - A. False
    - B. True
-4. Asterisk is a SIP proxy with integration to other protocols.
-   - A. False
-   - B. True
-5. In the OSI reference model, SIP, H.323, and IAX2 are in the ___ layer.
+4. In Asterisk 22, SIP is handled by which channel driver?
+   - A. chan_sip
+   - B. chan_pjsip
+   - C. chan_skinny
+   - D. chan_mgcp
+5. In the OSI reference model, the signaling protocols SIP, H.323, and IAX2 operate at the ___ layer.
    - A. Presentation
    - B. Application
    - C. Physical
    - D. Session
    - E. Data link
-6. SIP is the most adopted protocol for IP phones and is an open standard ratified by the IETF.
+6. SIP is the most adopted protocol for IP phones and is an open standard largely defined by the IETF in RFC 3261.
    - A. False
    - B. True
-7. H.323 is an unimportant protocol with very few applications, abandoned by a market that is moving to SIP.
-   - A. False
-   - B. True
+7. IAX2 transports both signaling and media over a single UDP port, which makes it efficient and easy to traverse NAT. Which UDP port does IAX2 use?
+   - A. 5060
+   - B. 1720
+   - C. 4569
+   - D. 5061
 8. IAX was originally developed by Digium (now Sangoma). Despite limited adoption by phone vendors, IAX is excellent when you need (check all that apply):
-   - A. To reduce bandwidth usage
+   - A. To reduce bandwidth usage (it does not use RTP)
    - B. A video media format
-   - C. NAT traversal
-   - D. A protocol standardized by the IETF or ITU
-9. "Users" can receive calls from Asterisk.
+   - C. Easy NAT and firewall traversal
+   - D. Trunk mode to combine many Asterisk-to-Asterisk calls and amortize header overhead
+9. In the legacy chan_sip model, a "user" can receive calls from Asterisk.
    - A. False
    - B. True
-10. Regarding codecs, check all the true statements:
+10. Regarding codecs in Asterisk 22, check all the true statements:
     - A. G.711 is equivalent to PCM and uses 64 Kbps of bandwidth.
-    - B. G.729 requires a per-channel license fee.
+    - B. Sangoma's codec_g729 module is free to download, but lawful use requires a purchased per-channel license.
     - C. GSM is popular because it uses about 13 Kbps and needs no license.
-    - D. G.711 u-law is common in the US, while a-law is common in Europe and Latin America.
-    - E. G.729 is light and uses very few CPU resources to encode/decode.
+    - D. G.711 u-law is common in North America, while a-law is common in Europe and Latin America.
+    - E. G.729 is light and uses very few CPU resources to encode and decode compared with G.711.
 
-**Answers:** 1 — Convergence, Computer-Telephony Integration, reduced costs, video (among others) · 2 — A · 3 — A · 4 — A · 5 — D · 6 — B · 7 — B · 8 — A, C · 9 — B · 10 — A, B, C, D
+**Answers:** 1 — A, B, C, D · 2 — B · 3 — B · 4 — B · 5 — D · 6 — B · 7 — C · 8 — A, C, D · 9 — A · 10 — A, B, C, D

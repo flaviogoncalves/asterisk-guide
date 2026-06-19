@@ -596,8 +596,18 @@ In this chapter you have learned about the risks of having an IP PBX connected t
    - B. Use the ARPwatch utility to detect ARP spoofing
    - C. Enable ARP-spoofing detection in the switches
    - D. Use SRTP
-8. Asterisk supports strong authentication by verifying client certificates.
+8. Asterisk supports strong authentication by verifying client certificates. (The PJSIP TLS transport can require and verify the client's certificate.)
    - A. True
    - B. False
+9. On Asterisk 22, which PJSIP endpoint setting turns on SRTP media encryption using in-SDP (SDES) keys?
+   - A. `encryption=yes`
+   - B. `media_encryption=sdes`
+   - C. `srtp=mandatory`
+   - D. `transport=tls`
+10. In Asterisk 22, Fail2Ban must read PJSIP failed-authentication events from the dedicated ________ logger channel (enabled in `logger.conf`), because the old chan_sip log lines no longer exist.
+   - A. `console`
+   - B. `messages`
+   - C. `security`
+   - D. `verbose`
 
-**Answers:** 1 — D · 2 — A · 3 — C · 4 — B · 5 — B · 6 — A · 7 — B, C, D · 8 — B
+**Answers:** 1 — D · 2 — A · 3 — C · 4 — B · 5 — B · 6 — A · 7 — B, C, D · 8 — A · 9 — B · 10 — C
