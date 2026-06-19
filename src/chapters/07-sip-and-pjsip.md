@@ -697,7 +697,7 @@ Now you can show the history:
 
 Then to see a specific request or reply, show the history item:
 
-![Output of `pjsip show history entry 3`: the full text of a single captured message (a 200 OK to a REGISTER) including its Via, Call-ID, From, To, and CSeq headers](../images/07-sip-and-pjsip-fig22.png)
+![Output of `pjsip show history entry`: the full text of a single captured SIP message — here Asterisk 22's `404 Not Found` reply to an OPTIONS probe — showing the Via (with `rport`/`received`), Call-ID, From, To and CSeq headers, the `Allow`/`Supported` capabilities, and the `Server: Asterisk PBX 22.10.0` header](../images/07-sip-and-pjsip-fig22.png)
 
 Very easy, isn’t it? You may also clear the history whenever you want using `pjsip set history clear`.
 

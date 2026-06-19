@@ -562,9 +562,7 @@ mailboxes=8590
 
 > **[2nd-ed note]** In PJSIP the mailbox hint is set with the `mailboxes` option inside the `[endpoint]` section of `pjsip.conf`, rather than `mailbox=` in `sip.conf`. MWI subscriptions are handled by `res_pjsip_mwi`. Verify the exact configuration syntax for Asterisk 22.
 
-![10-dialplan-advanced-features figure 14](../images/10-dialplan-advanced-features-img14.png)
-
-![10-dialplan-advanced-features figure 15](../images/10-dialplan-advanced-features-img15.png)
+![The Comedian Mail web interface (`vmail.cgi`): the Asterisk Web-Voicemail login — enter your mailbox and password to play, save, forward, or delete voicemail from a browser. It still ships with Asterisk 22 and is installed with `make webvmail`.](../images/10-dialplan-advanced-features-img14.png)
 
 ### Lab: Message Notification in the Phone
 
