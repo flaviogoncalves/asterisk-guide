@@ -96,6 +96,20 @@ File numbering interleaves unnumbered Part dividers (`NN-partN.md`), so on disk:
 - **Phase 6 — Produce:** Pandoc → LaTeX 6×9 print PDF + EPUB; proof; (optionally) publish the
   public source repo.
 
+## Better source found: the DOCX
+
+`~/Downloads/AstV16A.docx` (the last 1st-edition manuscript) has **clean, high-quality
+images** — including 46 EMF/WMF **vector diagrams** that the PDF extraction mangled.
+Strategy: keep the already-modernized text, **harvest the DOCX images chapter by chapter**
+(see the `chapter-review` skill). EMF/WMF need LibreOffice (`soffice --headless`) to convert
+to PNG; the 89 PNG + 2 JPEG are usable as-is.
+
+## Chapter-by-chapter pass (current mode)
+
+Per the author: review and polish **one chapter at a time** with the `chapter-review` skill
+(`.claude/skills/chapter-review/`). Front matter ✅ done (clean title page + roman front
+matter + auto TOC; voip.school branding swept book-wide).
+
 ## Pending inputs from author (non-blocking)
 
 - VoIP School Blackbelt canonical URL + contact email for the book.
