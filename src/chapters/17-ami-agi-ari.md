@@ -184,7 +184,7 @@ Action Privilege Synopsis
   WaitEvent        <none>           Wait for an event to occur
   ModuleCheck      system,all       Check if module is loaded
   ModuleLoad       system,all       Module management
-  CoreShowChannel  system,reportin  List currently active channels
+  CoreShowChannels system,reportin  List currently active channels
   Reload           system,config,a  Send a reload event
   CoreStatus       system,reportin  Show PBX core status variables
   CoreSettings     system,reportin  Show PBX core settings (version etc)
