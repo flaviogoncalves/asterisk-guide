@@ -1,6 +1,6 @@
 # Modernization brief — READ FIRST (shared rules for every chapter)
 
-You are updating *Complete Asterisk Training* (Flavio E. Gonçalves) from
+You are updating *Asterisk Guide* (Flavio E. Gonçalves) from
 **Asterisk 16 → Asterisk 22 LTS** for a 2nd edition. The author is a SIP/VoIP
 expert who will review your work. **Accuracy beats completeness.**
 

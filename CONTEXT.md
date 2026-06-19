@@ -1,4 +1,4 @@
-# Complete Asterisk Training — 2nd Edition
+# Asterisk Guide — 2nd Edition
 
 The canonical terminology for the book. The 2nd edition targets **Asterisk 22 LTS**,
 where PJSIP is the only SIP channel. Use these terms consistently across every chapter;

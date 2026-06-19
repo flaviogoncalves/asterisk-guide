@@ -1,4 +1,4 @@
-# Plan — Complete Asterisk Training, 2nd Edition
+# Plan — Asterisk Guide, 2nd Edition
 
 Living plan. Captures decisions from the planning interview and open questions.
 
@@ -80,7 +80,7 @@ File numbering interleaves unnumbered Part dividers (`NN-partN.md`), so on disk:
 - **Phase 1 — Lab: ✅ DONE.** Reproducible Docker Asterisk 22.10.0 lab (built from source),
   PJSIP endpoints + IP-identified SIPp endpoint; `lab.sh verify` places a real headless SIPp
   call to ext 9000 and asserts 200 OK (passing). Public repo + CI/CD pipeline (Phase 6's press)
-  delivered early: https://github.com/flaviogoncalves/complete-asterisk-training builds
+  delivered early: https://github.com/flaviogoncalves/asterisk-guide builds
   PDF/EPUB/LaTeX on every push/PR (first build green: 355-page PDF).
 - **Phase 2 — Restructure: ✅ DONE.** Reorganized into the final 16-chapter / 4-part TOC:
   merged old ch8+9 → "SIP & PJSIP in depth", merged old ch4+5+7 → "Legacy channels", added
@@ -118,7 +118,7 @@ matter + auto TOC; voip.school branding swept book-wide).
 
 ## Final-step tasks (do at the end)
 
-- **Rename the book** from "Complete Asterisk Training" back to **"Asterisk Configuration
+- **Rename the book** from "Asterisk Guide" back to **"Asterisk Configuration
   Guide"** or **"Asterisk Guide"** (author to pick). Update `book/metadata.yaml` title,
   the front-matter colophon, README, and any in-text references.
 - **Modernize the salvaged legacy labs** (`docs/legacy-labs/`) into the per-chapter Lab

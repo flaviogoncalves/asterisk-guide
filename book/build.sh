@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$ROOT/src/chapters"
 OUT="$ROOT/build"
 META="$ROOT/book/metadata.yaml"
-NAME="complete-asterisk-training"
+NAME="asterisk-guide"
 
 mkdir -p "$OUT"
 

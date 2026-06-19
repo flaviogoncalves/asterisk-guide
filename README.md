@@ -1,8 +1,8 @@
-# Complete Asterisk Training — 2nd Edition
+# Asterisk Guide — 2nd Edition
 
 [![Build book](../../actions/workflows/build-book.yml/badge.svg)](../../actions/workflows/build-book.yml)
 
-The open source of *Complete Asterisk Training* by **Flavio E. Gonçalves** — a systematic guide
+The open source of *Asterisk Guide* by **Flavio E. Gonçalves** — a systematic guide
 to building an IP PBX with **Asterisk 22 LTS**. The Markdown source and the lab are free; the
 **paper book** (Amazon KDP) and the **VoIP School Blackbelt** training are the supported products.
 
@@ -17,7 +17,7 @@ Every push and pull request builds the book in three formats. Grab them from:
 
 ```bash
 # needs: pandoc + a LaTeX engine (xelatex)
-bash book/build.sh        # → build/complete-asterisk-training.{pdf,epub,tex}
+bash book/build.sh        # → build/asterisk-guide.{pdf,epub,tex}
 ```
 
 ## Repository layout

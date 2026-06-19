@@ -4,7 +4,7 @@
 
 ## Copyright {.unnumbered}
 
-*Complete Asterisk Training* — Second Edition (Asterisk 22 LTS)
+*Asterisk Guide* — Second Edition (Asterisk 22 LTS)
 
 Copyright © 2006–2026 Flavio E. Gonçalves. All rights reserved.
 
