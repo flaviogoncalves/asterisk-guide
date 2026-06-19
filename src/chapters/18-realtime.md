@@ -47,7 +47,7 @@ extconfig.conf file format:
 ; formatting information.
 ```
 
-![16-asterisk-realtime figure 1](../images/16-asterisk-realtime-img01.png)
+![Asterisk Real Time architecture: configuration files and static database tables are loaded when Asterisk starts, while realtime database tables provide dynamic configuration that is read on demand during a call.](../images/18-realtime-fig01.png)
 
 ```
 ;
@@ -226,7 +226,7 @@ You can also use the real-time system to create the dial plan. ARA uses the stat
 
 > **[2nd-ed note]** The `extensions` realtime family is unchanged in Asterisk 22, but the `Appdata` here uses the old `SIP/` technology. On Asterisk 22 (chan_sip removed) dial PJSIP channels instead, e.g. `PJSIP/4000`.
 
-![16-asterisk-realtime figure 2](../images/16-asterisk-realtime-img02.png)
+![Building a dial plan with Asterisk Real Time: extensions.conf uses a `switch => realtime` statement to pull extension rows (context, exten, priority, app, data) from a database table instead of from the text file.](../images/18-realtime-fig02.png)
 
 320 | Capítulo 1 | Introdução ao Asterisk
 
@@ -292,9 +292,9 @@ apt-get install phpmyadmin
 
 Below are two screenshots of the utility log in screen and the table screen. Use astdb/supersecret as name and password.
 
-![16-asterisk-realtime figure 3](../images/16-asterisk-realtime-img03.png)
+> **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
 
-![16-asterisk-realtime figure 4](../images/16-asterisk-realtime-img04.png)
+> **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
 
 322 | Capítulo 1 | Introdução ao Asterisk Step 5: Database is already configure for ODBC (since the CDR lab)
 
@@ -331,9 +331,7 @@ id=6010, max_contacts=1
 id=6010, transport=transport-udp, aors=6010, auth=6010-auth
 ```
 
-![16-asterisk-realtime figure 5](../images/16-asterisk-realtime-img05.png)
-
-![16-asterisk-realtime figure 6](../images/16-asterisk-realtime-img06.png)
+> **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
 
 The remaining account settings are spread across the PJSIP objects. The legacy chan_sip block (context, host=dynamic, disallow/allow, dtmfmode) maps to the PJSIP fields below:
 
@@ -357,8 +355,6 @@ mysql -u asterisk -p
 ```
 
 Enter password:
-
-![16-asterisk-realtime figure 7](../images/16-asterisk-realtime-img07.png)
 
 324 | Capítulo 1 | Introdução ao Asterisk --> Use asterisk when asked. Use phpadmin to include an extension in the database. If you prefer, use the following commands instead in the MySQL client interface.
 
