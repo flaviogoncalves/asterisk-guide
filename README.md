@@ -42,5 +42,6 @@ verified against the Asterisk 22 lab in [`lab/`](./lab).
 
 ## License
 
-> **[decision needed before going public]** Choose and add a `LICENSE` (e.g. CC BY-NC for the
-> prose, plus a permissive license for the code/lab). Until then, default copyright applies.
+Everything in this repository is licensed **CC BY-NC-SA 4.0** (see [`LICENSE`](./LICENSE)) —
+free to read, share, and adapt for non-commercial purposes with attribution. The paper book
+(Amazon KDP) and the VoIP School Blackbelt training are the author's commercial products.
