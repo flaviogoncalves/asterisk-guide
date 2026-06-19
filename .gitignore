@@ -13,3 +13,6 @@ lab/**/*.log
 
 # TLS keys (generate locally with lab/make-certs.sh)
 lab/asterisk/etc/keys/
+
+# DOCX media working cache (regenerate via pandoc --extract-media; final images go in src/images/)
+src/docx-media/
