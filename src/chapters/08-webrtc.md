@@ -305,3 +305,65 @@ AVPF profile. Add STUN/TURN when crossing NAT, serve your page over HTTPS, and p
 a SIP.js (or JsSIP) client at `wss://asterisk:8089/ws`. For browser phones on your
 PBX, Asterisk-native WebRTC is the simplest path; for large-scale media, pair it with
 a gateway.
+
+## Quiz
+
+1. Which transport does a WebRTC browser client use to carry SIP signaling to
+   Asterisk?
+   - A. Plain UDP on port 5060
+   - B. A secure WebSocket (`wss://`) to Asterisk's HTTP server
+   - C. TLS on port 5061
+   - D. A raw TCP socket on port 8088
+
+2. WebRTC media between the browser and Asterisk is encrypted using which mechanism?
+   - A. SDES-SRTP (keys exchanged in the SDP)
+   - B. DTLS-SRTP (keys derived from a DTLS handshake)
+   - C. IPsec
+   - D. Plain RTP — WebRTC does not encrypt media
+
+3. True or false: when you set `webrtc=yes`, you must manually generate and install
+   the DTLS certificate used to encrypt the media.
+
+4. On which port does the lab's Asterisk HTTP server expose the **secure** WebSocket
+   for WebRTC?
+   - A. 5060
+   - B. 5061
+   - C. 8088
+   - D. 8089
+
+5. Which of the following does `webrtc=yes` turn on by default? (Choose all that
+   apply.)
+   - A. `media_encryption: dtls`
+   - B. `ice_support: true`
+   - C. `rtcp_mux: true`
+   - D. `use_avpf: true`
+   - E. `transport: transport-udp`
+
+6. Fill in the blank: WebRTC negotiates connectivity by having both sides gather and
+   probe candidate addresses (host, STUN-reflexive, TURN-relayed) using the
+   ________ framework.
+
+7. In `rtp.conf`, which two settings point Asterisk at an external server so it can
+   discover its public address and relay media when direct paths fail? (Choose all
+   that apply.)
+   - A. `icesupport=yes`
+   - B. `stunaddr=`
+   - C. `turnaddr=`
+   - D. `tlsbindaddr=`
+
+8. The URL path that Asterisk's `res_http_websocket` exposes for WebRTC signaling is
+   ________.
+
+9. According to the chapter, when should you reach for a dedicated media gateway
+   (such as Janus) instead of Asterisk-native WebRTC?
+   - A. Whenever any browser needs to make a call
+   - B. When you must scale many browser media sessions independently of call
+     control, do selective forwarding for large conferences, or keep the media plane
+     separate from the PBX
+   - C. Only when the browser does not support DTLS
+   - D. When you want voicemail and IVR to work for the browser endpoint
+
+10. True or false: `getUserMedia` (microphone access) works on any `http://` page, so
+    serving the browser softphone over HTTPS is optional.
+
+**Answers:** 1 — B · 2 — B · 3 — False (Asterisk auto-generates the DTLS cert; `dtls_auto_generate_cert: Yes`) · 4 — D · 5 — A, B, C, D · 6 — ICE · 7 — B, C · 8 — `/ws` · 9 — B · 10 — False (secure context required: `getUserMedia` only works on `https://` or `http://localhost`)
