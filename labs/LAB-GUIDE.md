@@ -571,14 +571,24 @@ exten => 9999,1,NoOp(Inbound from trunk, caller ${CALLERID(num)})
 exten => _.,1,Goto(9999,1)                ; catch any inbound number
 ```
 
-Reload (`dialplan reload`). Now trigger an inbound call **from the provider's web page**
-(`sip.flagonc.com` click-to-call to your account number) — your PBX answers and plays the
-prompt. Watch it arrive:
+Reload (`dialplan reload`). Now trigger an inbound call. Two ways:
+
+- **Self-test (no second person):** once the outbound rule from Step 4 is in place, dial **your
+  own trunk number** — e.g. from `6001` dial `1050` (your account). The call goes out to the
+  provider, which routes it straight back to your registered phone as a genuine *inbound* call,
+  landing in `from-pstn`.
+- **From outside:** have a classmate dial your account number, or use the provider's web
+  click-to-call.
+
+Watch the inbound leg arrive — you'll see a `PJSIP/flagonc-…` channel in **`from-pstn`** answer
+and play the prompt:
 
 ```bash
-docker compose -f lab/docker-compose.yml exec asterisk asterisk -rx 'pjsip set logger on'
-# place the inbound call, then:
 docker compose -f lab/docker-compose.yml exec asterisk asterisk -rx 'core show channels'
+```
+
+```
+PJSIP/flagonc-00000005   9999@from-pstn:3   Up   Playback(demo-congrats)
 ```
 
 ### Step 4 — Place an outbound call (free, over the trunk)
@@ -605,8 +615,8 @@ You'll see a `PJSIP/flagonc-…` channel reach **`Up`**.
 ### ✅ Checkpoint
 
 `pjsip show registrations` reads **`Registered`**; dialling `800` reaches the provider's echo
-test over the trunk (a `PJSIP/flagonc-…` channel goes `Up`); and an inbound click-to-call from
-the provider reaches your `from-pstn` context.
+test over the trunk (a `PJSIP/flagonc-…` channel goes `Up`); and dialling your own number (the
+self-test above) comes back as an **inbound** `PJSIP/flagonc-…` channel in `from-pstn`.
 
 ### Troubleshooting
 
