@@ -519,63 +519,6 @@ DAHDI/2
 DAHDI/g1  - First available channel in group 1
 ```
 
-### Quiz
-
-1. Supervision signaling includes:
-   - A. On-hook
-   - B. Off-hook
-   - C. Ringing
-   - D. DTMF
-2. Information signaling includes:
-   - A. DTMF
-   - B. Dial tone
-   - C. Invalid number
-   - D. Ringback
-   - E. Congestion
-   - F. Busy
-   - G. Pulse
-3. There are two types of analog interface available for Asterisk, FXS and FXO. Mark the correct answers:
-   - A. FXS (Foreign eXchange Station) can be connected directly to the company PBX extension port.
-   - B. FXO (Foreign eXchange Office) can be connected to the public switched telephone network.
-   - C. FXS (Foreign eXchange Station) provides a dial tone and can be connected to a standard analog phone.
-4. To configure DAHDI hardware, you should first edit the ___ file:
-   - A. /etc/dahdi/system.conf
-   - B. /etc/asterisk/chan_dahdi.conf
-   - C. /etc/asterisk/unicall.conf
-   - D. serial.conf
-5. The DAHDI hardware is independent of Asterisk. In chan_dahdi.conf you configure Asterisk channels, not the hardware itself.
-   - A. True
-   - B. False
-6. When using a TDM400 with an ___ port, you must connect the PC power supply to the card with a dedicated connector (similar to a hard-disk power connector).
-   - A. FXO
-   - B. FXS
-   - C. E&M
-   - D. ISDN
-7. Echo, pops, and noise on a DAHDI card are often related to:
-   - A. Asterisk compilation
-   - B. Cable problems
-   - C. PCI interrupt conflicts
-   - D. Electromagnetic interference
-8. When a card has echo problems, what can you do (check all that apply)?
-   - A. Change the tx and rx gains
-   - B. Change the echo-cancellation algorithm (OSLEC, MG2)
-   - C. Use hardware echo cancellation
-   - D. Activate call-progress detection
-   - E. Invert tip and ring
-9. For precise billing on analog channels it is important to activate the feature that detects exactly when the call was answered. You should activate ___ on Asterisk and at the phone company:
-   - A. Answer reversal
-   - B. Billing reversal
-   - C. Charge reversal
-   - D. Polarity reversal
-   - E. Dial-tone generation
-10. Caller-ID signaling on analog lines is country-dependent. The most frequently used standard in North America is:
-    - A. V.23
-    - B. DTMF
-    - C. Polarity reversal
-    - D. Battery reversal
-
-**Answers:** 1 — A, B, C · 2 — B, C, D, E, F · 3 — B, C · 4 — A · 5 — A · 6 — B · 7 — C · 8 — A, B, C · 9 — D · 10 — A
-
 ## Digital channels (E1/T1/PRI / TDM)
 
 > **[2nd-ed note]** As of Asterisk 22, DAHDI and libpri remain fully supported, but TDM digital trunks (E1/T1/ISDN PRI) are increasingly replaced by SIP trunks in new deployments. This chapter remains fully applicable where TDM connectivity is required; readers in greenfield environments may prefer SIP trunking (Chapter 3) for similar channel density.
@@ -1701,43 +1644,6 @@ DAHDI/g1  - First available channel in group 1
 [cadence] Integer from 1 to 4
 ```
 
-### Questions
-
-1. Regarding T1 and E1 signaling, mark the correct statements:
-   - A. E1 is digital signaling that uses 1.544 Mbit/s of bandwidth.
-   - B. T1 is often used in Latin America and Europe.
-   - C. An ISDN PRI uses 30 channels on an E1 trunk and 23 channels on a T1 trunk.
-   - D. ISDN is an example of CCS signaling, while MFC/R2 is an example of CAS signaling.
-2. To configure the hardware with a DAHDI interface, you should first edit the ___ file:
-   - A. system.conf
-   - B. chan_dahdi.conf
-   - C. unicall.conf
-   - D. serial.conf
-3. The DAHDI hardware is independent of Asterisk. In chan_dahdi.conf you configure Asterisk channels, not the hardware itself.
-   - A. False
-   - B. True
-4. R2 signaling as defined by the ITU is standardized worldwide, with no country variations.
-   - A. True
-   - B. False
-5. The utility that detects and configures DAHDI channels automatically is:
-   - A. dahdi_generator
-   - B. dahdi_genconf
-   - C. dahdigenconf
-   - D. generate_dahdi
-6. ISDN BRI is common in Europe. A BRI line supports ___ voice/data channels and ___ signaling channel(s):
-   - A. 15, 2
-   - B. 30, 2
-   - C. 23, 1
-   - D. 2, 1
-7. When using a USB 2.0 connection, you can support only 32 channels.
-   - A. True
-   - B. False
-8. You can improve Asterisk's echo cancellation by installing OSLEC.
-   - A. True
-   - B. False
-
-**Answers:** 1 — C, D · 2 — A · 3 — B · 4 — B · 5 — B · 6 — D · 7 — B · 8 — A
-
 ## The IAX2 protocol
 
 In this chapter, we will learn about the Inter-Asterisk eXchange (IAX) protocol, including its strengths and weaknesses. Details such as trunk mode and the interconnection of two Asterisk servers will also be covered. All references in this document correspond to IAX version 2. The IAX protocol provides media transport and signaling for voice and video. IAX is very innovative; it saves bandwidth in trunk mode and is much simpler than SIP when you need to traverse NAT. The primary use for IAX nowadays is to interconnect Asterisk servers. IAX was created primarily for voice, but it can also accommodate video and other multimedia streams. IAX was inspired from other VoIP protocols, such as SIP and MGCP. Instead of using two separate protocols for signaling and media, IAX unified them to make a unique protocol. IAX does not use RTP for media transport; instead, it embeds the media in the same UDP connection.
@@ -2490,42 +2396,53 @@ vtsvoffice*CLI>iax2 no debug
 
 This chapter has reviewed the strengths and weaknesses of the IAX protocol. It has demonstrated how IAX works in several scenarios, such as soft-phones and a trunk between two Asterisk servers. Trunk mode allows you to save bandwidth by carrying more than one call in a single packet. Finally, you learned console commands that you can use to check the status and debug the protocol.
 
-### Quiz
+## Quiz
 
-1. Two of the main benefits of IAX are bandwidth savings and easier NAT traversal.
-   - A. False
-   - B. True
-2. The IAX protocol uses different UDP ports for signaling and media.
-   - A. False
-   - B. True
-3. The bandwidth used by the IAX protocol is the voice payload plus which headers (mark all that apply)?
-   - A. IP
-   - B. UDP
-   - C. IAX
-   - D. RTP
-   - E. cRTP
-4. It is important to match the codec payload (20–30 ms) with the frame synchronization (20 ms default) when using trunk mode.
-   - A. False
-   - B. True
-5. When IAX is used in trunk mode, just one header is used for multiple calls.
-   - A. False
-   - B. True
-6. IAX is the most used protocol to connect to service providers because it is easier for NAT traversal.
-   - A. False
-   - B. True
-7. In an IAX channel string `IAX/[<user>[:<secret>]@]<peer>[:<portno>][/<exten>[@<context>][/<options>]]`, the `<secret>` field can be a password or an ___.
-8. `iax2 show registry` provides information about:
-   - A. Registered users
-   - B. Providers to which Asterisk is connected
-9. The jitter buffer sacrifices latency to produce a steady flow of voice.
-   - A. False
-   - B. True
-10. RSA keys can be used for IAX authentication. You must keep the ___ key secret and give your customers the matching ___ key:
-    - A. public, private
-    - B. private, public
-    - C. shared, private
-    - D. public, shared
+1. Regarding the two analog Foreign eXchange interfaces, mark the correct statements (choose all that apply):
+   - A. An FXO interface connects to the public switched telephone network (PSTN) central office and draws dial tone from it.
+   - B. An FXS interface provides dial tone and ringing power to a standard analog phone, fax, or modem.
+   - C. An FXS interface is the correct way to connect Asterisk to a telco line.
+   - D. An FXO interface can also be connected to an extension port of a legacy PBX.
+2. Supervision signaling on an analog line includes which of the following (choose all that apply)?
+   - A. On-hook
+   - B. Off-hook
+   - C. Ringing
+   - D. DTMF
+3. Echo, pops, and noise on a DAHDI analog card are most often caused by:
+   - A. The way Asterisk was compiled
+   - B. PCI interrupt conflicts
+   - C. An incorrect SIP codec
+   - D. A missing dial plan
+4. For precise billing on analog channels you must detect exactly when the far end answers. Which feature do you activate on Asterisk (and request from the telco) to do this?
+   - A. Answer reversal
+   - B. Billing reversal
+   - C. Polarity reversal
+   - D. Dial-tone generation
+5. The DAHDI hardware is independent of Asterisk: the physical card is configured in `/etc/dahdi/system.conf`, while `chan_dahdi.conf` defines the Asterisk channels, not the hardware itself.
+   - A. True
+   - B. False
+6. Regarding digital trunk capacity and signaling, mark the correct statements (choose all that apply):
+   - A. An E1 trunk carries 30 voice channels and a T1 trunk carries 24.
+   - B. An ISDN PRI uses 30B+D on an E1 and 23B+D on a T1.
+   - C. ISDN is an example of CCS signaling, while MFC/R2 is an example of CAS signaling.
+   - D. T1 is the digital trunk most commonly used in Europe and Latin America.
+7. Which utility automatically detects DAHDI cards and generates `/etc/dahdi/system.conf` and `dahdi-channels.conf`?
+   - A. dahdi_generator
+   - B. dahdi_genconf
+   - C. dahdi_cfg
+   - D. generate_dahdi
+8. The IAX2 protocol multiplexes both signaling and media over a single UDP port (4569 by default) and does not use RTP.
+   - A. True
+   - B. False
+9. What is the main practical advantage of using IAX2 trunk mode between two Asterisk servers?
+   - A. It encrypts every call with TLS by default
+   - B. It carries several calls under a single header, saving bandwidth
+   - C. It removes the need for any codec
+   - D. It allocates a separate UDP port per call for better quality
+10. RSA keys can be used for IAX2 authentication. Which key must you keep secret, and which do you give to the other server?
+    - A. Keep the public key secret; share the private key
+    - B. Keep the private key secret; share the public key
+    - C. Keep the shared key secret; share the private key
+    - D. Both keys must be shared
 
-**Answers:** 1 — B · 2 — A · 3 — A, B, C · 4 — B · 5 — B · 6 — A · 7 — RSA key · 8 — A · 9 — B · 10 — B
-
-> **[2nd-ed note]** Question 6's answer (A — False) is even more clearly correct in Asterisk 22: SIP/PJSIP is overwhelmingly the dominant provider-interconnection protocol today.
+**Answers:** 1 — A, B, D · 2 — A, B, C · 3 — B · 4 — C · 5 — A · 6 — A, B, C · 7 — B · 8 — A · 9 — B · 10 — B
