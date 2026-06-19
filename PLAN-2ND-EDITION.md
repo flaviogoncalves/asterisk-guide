@@ -82,8 +82,10 @@ File numbering interleaves unnumbered Part dividers (`NN-partN.md`), so on disk:
   call to ext 9000 and asserts 200 OK (passing). Public repo + CI/CD pipeline (Phase 6's press)
   delivered early: https://github.com/flaviogoncalves/complete-asterisk-training builds
   PDF/EPUB/LaTeX on every push/PR (first build green: 355-page PDF).
-- **Phase 2 — Restructure:** reorganize the 17 modernized files into the 15-chapter / 4-part
-  TOC; perform the ch8+9 merge and the ch4+5+7 legacy merge. Renumber + fix cross-refs.
+- **Phase 2 — Restructure: ✅ DONE.** Reorganized into the final 16-chapter / 4-part TOC:
+  merged old ch8+9 → "SIP & PJSIP in depth", merged old ch4+5+7 → "Legacy channels", added
+  unnumbered Part dividers + 3 new-chapter stubs (WebRTC, SIP trunking, Deployment), renumbered
+  all files, fixed PDF-wrapped titles. Build switched to `commonmark_x`. CI green (358-pp PDF).
 - **Phase 3 — Verify:** run every config/CLI example against the lab; capture real Asterisk 22
   output; convert CLI screenshots to text blocks; resolve technical `[2nd-ed note]` markers.
 - **Phase 4 — New chapters:** draft WebRTC, SIP trunking/DID/PSTN, and Deployment/monitoring/
