@@ -1764,13 +1764,13 @@ You may use IAX in several ways. In this section, we will show you how to config
 
 #### Connecting a soft-phone using IAX
 
-Asterisk supports IP phones based on IAX such as the ATCOM and the old ATA from Digium (called IAXy) as well as soft-phones such as Zoiper. The process for soft-phones, ATAs, and hard- phones is similar. To configure an IAX device, you need to edit the iax.conf file in /etc/asterisk
+Asterisk supports IP phones based on IAX such as the ATCOM and the old ATA from Digium (called IAXy) as well as soft-phones that still implement the IAX2 protocol. The process for soft-phones, ATAs, and hard- phones is similar. To configure an IAX device, you need to edit the iax.conf file in /etc/asterisk
 
 ```
 directory.
 ```
 
-We will use the Zoiper (www.zoiper.com) as an example. It is a full-featured and free soft-phone. Step 1: Make a backup of the original iax.conf file using:
+We will use an IAX2-capable soft-phone as an example. Step 1: Make a backup of the original iax.conf file using:
 
 ```
 #cd /etc/asterisk
@@ -1852,7 +1852,7 @@ secret=senha
 host=dynamic
 ```
 
-In the above commands, we have defined a friend named [2003]. The context is the default (in the first labs we always use the default context to avoid confusion; this context will be fully explained in chapter 9). The line “host=dynamic” provides a dynamic registration of the phone’s IP address. Step 3: Download and install Zoiper™ from the following URL: http://www.zoiper.com/ Note: URLs frequently change. Please resort to “googling” if you cannot find the file at this specific URL. You can choose other soft-phones for the lab as well. Step 4: Configure an IAX account in the client (right-click the Zoiper tray icon → *Add account* → IAX). Note that the SipPulse Softphone is SIP-only and cannot register over IAX2, so for IAX testing you need a client that still supports the protocol.
+In the above commands, we have defined a friend named [2003]. The context is the default (in the first labs we always use the default context to avoid confusion; this context will be fully explained in chapter 9). The line “host=dynamic” provides a dynamic registration of the phone’s IP address. Step 3: Download and install an IAX2-capable soft-phone. You can choose any soft-phone that still supports the IAX2 protocol for the lab. Step 4: Configure an IAX account in the client (typically *Add account* → IAX). Note that the SipPulse Softphone is SIP-only and cannot register over IAX2, so for IAX testing you need a client that still supports the protocol.
 
 Step 5: Configure the extensions.conf file to test your IAX device.
 
@@ -2723,12 +2723,12 @@ exten=_20XX,1,dial(SIP/${EXTEN})
 exten=_20XX,n,Hangup()
 ```
 
-Step 2: Now configure the soft-phone to use presence. We will show you how to configure X-Lite.
+Step 2: Now configure the soft-phone to use presence. We will show you how to configure the SipPulse Softphone.
 
 - Sequence: right-click->SIP Account Settings->Properties->Presence
 - Change the presence model from peer-to-peer to presence agent, which will make the soft-phone subscribe Asterisk for SIP events.
 
-Step 3: Add the contact to other soft-phones. In this example, the Xlite is account 2000, so we will add a contact for account 2001. Sequence: Open the right panel (presence panel in Xlite)->Click in Contacts->Add a contact. Fill the name 2001. Display as 2001 and don’t forget to check the box Show this contact’s availability.
+Step 3: Add the contact to other soft-phones. In this example, the SipPulse Softphone is account 2000, so we will add a contact for account 2001. Sequence: Open the right panel (presence panel in the softphone)->Click in Contacts->Add a contact. Fill the name 2001. Display as 2001 and don’t forget to check the box Show this contact’s availability.
 
 Step 4: Now call extension 2001 and check the status of the phone in the right panel of the soft-phone. Use the console command `core show hints` to see the presence status changing in the server (in legacy chan_sip, `sip show inuse` showed how many calls you had on each line). On Asterisk 22, use `pjsip show endpoints` to inspect endpoint and channel state. The presence/BLF status appears in the softphone's contacts or BLF panel — exactly how it is shown depends on the client.
 
@@ -3044,14 +3044,14 @@ allow=ulaw
 alwaysauthreject=yes
 allowguest=no
 register=>1020:supersecret@sip.api4com.com:5600/9999
-[zoiper]
+[alice]
 type=friend
 secret=#supersecret#
 host=dynamic
 qualify=yes
 directmedia=no
 context=from-internal
-[xlite]
+[bob]
 type=friend
 secret=#supersecret#
 host=dynamic
@@ -3079,9 +3079,9 @@ Non mapped elements start
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [general]
 bindport = 5060
-[zoiper]
+[alice]
 qualify = yes
-[xlite]
+[bob]
 qualify = yes
 [siptrunk]
 defaultuser = 1020
@@ -3107,38 +3107,38 @@ server_uri = sip:sip.api4com.com:5600
 type = auth
 password = supersecret
 username = 1020
-[zoiper]
+[alice]
 type = aor
 max_contacts = 1
-[zoiper]
+[alice]
 type = auth
-username = zoiper
+username = alice
 password = #supersecret#
-[zoiper]
+[alice]
 type = endpoint
 context = from-internal
 disallow = all
 allow = ulaw
 direct_media = no
-auth = zoiper
-outbound_auth = zoiper
-aors = zoiper
-[xlite]
+auth = alice
+outbound_auth = alice
+aors = alice
+[bob]
 type = aor
 max_contacts = 1
-[xlite]
+[bob]
 type = auth
-username = xlite
+username = bob
 password = #supersecret#
-[xlite]
+[bob]
 type = endpoint
 context = from-internal
 disallow = all
 allow = ulaw
 direct_media = no
-auth = xlite
-outbound_auth = xlite
-aors = xlite
+auth = bob
+outbound_auth = bob
+aors = bob
 [siptrunk]
 type = aor
 contact = sip:1020@sip.api4com.com:5600
@@ -3165,7 +3165,7 @@ aors = siptrunk
 While the conversion seems ok, we can see that some elements such as qualify=yes cannot be mapped directly. To fix you have to add to the aor section the command qualify_frequency=time in seconds. Example below.
 
 ```
-[xlite]
+[bob]
 type = aor
 max_contacts = 1
 qualify_frequency=15

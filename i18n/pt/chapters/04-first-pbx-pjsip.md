@@ -1,6 +1,6 @@
 # Construindo seu primeiro PBX com PJSIP
 
-Neste capítulo, você aprenderá como realizar uma configuração básica de um PBX Asterisk. O objetivo principal aqui é ver o PBX funcionando pela primeira vez, ser capaz de discar entre ramais, discar para uma mensagem sendo reproduzida e discar para um único tronco analógico ou SIP. A ideia por trás deste capítulo é garantir que seu Asterisk esteja instalado e funcionando o mais rápido possível. Após concluir o trabalho neste capítulo, você terá base suficiente para se preparar para os capítulos subsequentes, onde nos aprofundaremos mais nos detalhes de configuração.
+Neste capítulo, você aprenderá como realizar uma configuração básica de um PBX Asterisk. O objetivo principal aqui é ver o PBX funcionando pela primeira vez, ser capaz de discar entre ramais, discar para uma mensagem sendo reproduzida e discar para um único trunk analógico ou SIP. A ideia por trás deste capítulo é garantir que seu Asterisk esteja instalado e funcionando o mais rápido possível. Após concluir o trabalho neste capítulo, você terá base suficiente para se preparar para os capítulos subsequentes, onde nos aprofundaremos mais nos detalhes de configuração.
 
 ## Objetivos
 
@@ -8,7 +8,7 @@ Ao final deste capítulo, você deverá ser capaz de:
 
 - Entender e editar arquivos de configuração;
 - Instalar softphones baseados em SIP;
-- Instalar e configurar um tronco SIP;
+- Instalar e configurar um trunk SIP;
 - Instalar e configurar uma conexão analógica;
 - Discar entre ramais;
 - Discar entre telefones e destinos externos; e
@@ -28,14 +28,14 @@ Key = value; Variable designation
 Key => value; Object declaration
 ```
 
-O Asterisk interpreta “=” e “=>” da mesma forma. Diferenças na sintaxe são usadas para distinguir entre objetos e variáveis. Use “=” quando quiser declarar uma variável e “=>” para designar um objeto. A sintaxe é a mesma entre todos os arquivos, mas três tipos de gramática são usados, conforme discutido abaixo.
+O Asterisk interpreta “=” e “=>” da mesma maneira. Diferenças na sintaxe são usadas para distinguir entre objetos e variáveis. Use “=” quando quiser declarar uma variável e “=>” para designar um objeto. A sintaxe é a mesma entre todos os arquivos, mas três tipos de gramática são usados, conforme discutido abaixo.
 
 ## Gramáticas
 
 | Gramática | Como o objeto é criado | Arquivo de conf. | Exemplo |
 |---------|---------------------------|------------|---------|
 | Grupo Simples | Tudo na mesma linha | `extensions.conf` | `exten => 4000,1,Dial(PJSIP/4000)` |
-| Herança de Opções | Opções são definidas primeiro, o objeto herda as opções | `chan_dahdi.conf` | `[channels]; context=default; signalling=fxs_ks; group=1; channel => 1` |
+| Herança de Opções | As opções são definidas primeiro, o objeto herda as opções | `chan_dahdi.conf` | `[channels]; context=default; signalling=fxs_ks; group=1; channel => 1` |
 | Entidade Complexa | Cada entidade recebe um contexto | `pjsip.conf`, `iax.conf` | `[cisco]; type=endpoint; auth=cisco-auth; aors=cisco; context=trusted` |
 
 ### Grupo Simples
@@ -82,15 +82,15 @@ A entidade [entity1] possui os valores “value1” e “value2” para as opç�
 
 ## Opções para construir um LAB para Asterisk
 
-Para configurar um PBX, você precisará de um hardware básico. Não é difícil nem caro, mas existem algumas opções a serem consideradas. Tudo o que você precisará são dois telefones e uma conexão com a rede pública. Algumas opções e combinações são possíveis ao criar seu laboratório, as quais discutiremos abaixo.
+Para configurar um PBX, você precisará de um hardware básico. Não é difícil nem caro, mas há algumas opções a serem consideradas. Tudo o que você precisará são dois telefones e uma conexão com a rede pública. Algumas opções e combinações são possíveis ao criar seu laboratório, as quais discutiremos abaixo.
 
 ### Opção 1: LAB Completo
 
-Com o LAB completo, é possível testar todos os cenários disponíveis e comparar soluções como ATA, telefones IP e softphones. Você também pode aprender sobre troncos analógicos e SIP. Você precisará de:
+Com o LAB completo, é possível testar todos os cenários disponíveis e comparar soluções como ATA, telefones IP e softphones. Você também pode aprender sobre trunks analógicos e SIP. Você precisará de:
 
-- Um adaptador de telefone analógico (ATA) SIP
+- Um adaptador de telefone analógico SIP (ATA)
 - Um telefone IP
-- Um servidor dedicado para o Asterisk
+- Um servidor dedicado para Asterisk
 - Uma estação de trabalho com um softphone
 - Uma placa de interface analógica com pelo menos duas interfaces (1 FXO e 1 FXS)
 - Uma conta de provedor VoIP
@@ -99,27 +99,27 @@ Com o LAB completo, é possível testar todos os cenários disponíveis e compar
 
 Com o LAB econômico, simplificamos um pouco. Usamos o ATA, que geralmente é menos caro que o telefone IP, e uma única placa FXO, que é realmente barata. Não poderemos usar telefones analógicos conectados diretamente ao servidor, mas isso não ocorre comumente na prática. Você precisará de:
 
-- Um adaptador de telefone analógico (ATA) SIP
-- Um servidor dedicado para o Asterisk
+- Um adaptador de telefone analógico SIP (ATA)
+- Um servidor dedicado para Asterisk
 - Uma estação de trabalho para o softphone
 - Uma placa de interface analógica com 1 FXO
 - Uma conta com um provedor VoIP
 
-### Opção 3: Laboratório super econômico
+### Opção 3: LAB Super econômico
 
-O terceiro LAB usa um servidor virtualizado no próprio notebook do aluno. O problema com este modelo são os conflitos gerados pela porta UDP. Às vezes, tanto o servidor Asterisk quanto o softphone tentam acessar a mesma porta, impedindo que o Asterisk vincule a porta de endereço. Outra questão é a qualidade das chamadas; ambientes virtuais não são indicados para aplicações de tempo real como o Asterisk. Use um softphone gratuito para o servidor e a estação de trabalho e uma conexão de tronco com um provedor SIP. Você precisará de:
+O terceiro LAB usa um servidor virtualizado no próprio notebook do aluno. O problema com este modelo são os conflitos gerados pela porta UDP. Às vezes, tanto o servidor Asterisk quanto o softphone tentam acessar a mesma porta, impedindo que o Asterisk vincule a porta de endereço. Outra questão é a qualidade das chamadas; ambientes virtuais não são indicados para aplicações de tempo real como o Asterisk. Use um softphone gratuito para o servidor e a estação de trabalho e uma conexão de trunk com um provedor SIP. Você precisará de:
 
 - Um laptop executando um softphone
 - Uma máquina virtual (VirtualBox, VMware ou similar) para instalar o Asterisk
 - Uma conta com um provedor VoIP
 
-## Sequência de instalação
+## Sequência de Instalação
 
 Para ajudá-lo a entender a sequência de instalação, delineamos a sequência de passos necessários para instalar e configurar o Asterisk.
 
-![Layout do laboratório de referência: softphones SIP/IAX, um telefone IP e adaptadores analógicos como ramais (1), o servidor Asterisk com interfaces ETH0/FXO/FXS (3) e os troncos para a PSTN através de um provedor VoIP ou um link de banda larga (2).](../images/04-first-pbx-fig01.png)
+![Layout do laboratório de referência: softphones SIP/IAX, um telefone IP e adaptadores analógicos como ramais (1), o servidor Asterisk com interfaces ETH0/FXO/FXS (3) e os trunks para a PSTN através de um provedor VoIP ou um link de banda larga (2).](../images/04-first-pbx-fig01.png)
 
-1. Configuração de ramais a. Ramais SIP (ATA, Softphone, Telefone IP) b. Ramais IAX c. Ramais FXS 2. Configuração de tronco a. Configuração de um tronco SIP b. Configuração de um tronco FXO 3. Construindo um dialplan básico a. Discagem entre ramais b. Discagem para destinos externos c. Recebendo uma chamada no ramal da operadora d. Recebendo uma chamada em um atendimento automático
+1. Configuração de ramais a. Ramais SIP (ATA, Softphone, Telefone IP) b. Ramais IAX c. Ramais FXS 2. Configuração de trunk a. Configuração de um trunk SIP b. Configuração de um trunk FXO 3. Construção de um dialplan básico a. Discagem entre ramais b. Discagem para destinos externos c. Recebimento de uma chamada no ramal da operadora d. Recebimento de uma chamada em um atendimento automático
 
 ## Configuração dos ramais
 
@@ -127,13 +127,13 @@ Os ramais são telefones SIP, IAX ou analógicos conectados a uma porta FXS. Par
 
 ### Ramais SIP
 
-No Asterisk 22, o PJSIP (a pilha `res_pjsip`, configurada em `/etc/asterisk/pjsip.conf`) é o driver de canal SIP. Ele suporta múltiplos transportes por endpoint, é mantido ativamente e é o único driver SIP fornecido com a plataforma. (O driver original `chan_sip` foi removido no Asterisk 21 — veja o capítulo *Legacy channels* se precisar migrar uma configuração antiga.)
+No Asterisk 22, o PJSIP (a pilha `res_pjsip`, configurada em `/etc/asterisk/pjsip.conf`) é o driver de canal SIP. Ele suporta múltiplos transportes por endpoint, é ativamente mantido e é o único driver SIP fornecido com a plataforma. (O driver original `chan_sip` foi removido no Asterisk 21 — veja o capítulo *Legacy channels* se precisar migrar uma configuração antiga.)
 
 A ideia aqui é configurar um PBX simples. (Capítulos subsequentes fornecem uma sessão completa de SIP/PJSIP com todos os detalhes.) O PJSIP é configurado em `/etc/asterisk/pjsip.conf` e contém todos os parâmetros relacionados a telefones SIP e provedores VoIP. Clientes SIP precisam ser configurados antes que você possa fazer e receber chamadas.
 
 #### O transporte
 
-No PJSIP, a configuração do listener (endereço de bind, porta, protocolo) reside em um objeto `transport`. O Asterisk possui proteção integrada contra adivinhação de nome de usuário — ele sempre retorna um desafio de autenticação idêntico para usuários desconhecidos e conhecidos, e solicitações não identificadas repetidas de um IP são limitadas por taxa através das opções `[global]` `unidentified_request_count`/`unidentified_request_period`. As principais opções de um transporte são:
+No PJSIP, a configuração do listener (endereço de bind, porta, protocolo) reside em um objeto `transport`. O Asterisk possui proteção integrada contra adivinhação de nome de usuário — ele sempre retorna um desafio de autenticação idêntico para usuários desconhecidos e conhecidos, e solicitações não identificadas repetidas de um IP são limitadas via opções `[global]` `unidentified_request_count`/`unidentified_request_period`. As principais opções de um transporte são:
 
 - protocol: O protocolo de transporte — `udp`, `tcp`, `tls`, `ws` ou `wss`.
 - bind: Endereço e porta aos quais o listener se vincula. Se você definir o endereço como `0.0.0.0`, ele se vinculará a todas as interfaces; a porta SIP padrão é 5060 para UDP/TCP.
@@ -150,7 +150,7 @@ protocol=udp
 bind=10.1.30.45:5060
 ```
 
-A seleção de codec (`disallow`/`allow`) e o `context` padrão são configurados em cada `endpoint` (mostrado abaixo), não no transporte. Chamadas anônimas/convidadas são tratadas por um `endpoint` chamado `anonymous`. Os timers de registro são controlados por AOR via `maximum_expiration`/`default_expiration`.
+A seleção de codec (`disallow`/`allow`) e o `context` padrão são configurados em cada `endpoint` (mostrado abaixo), não no transporte. Chamadas anônimas/convidadas são tratadas por um `endpoint` chamado `anonymous`. Timers de registro são controlados por AOR via `maximum_expiration`/`default_expiration`.
 
 #### Clientes SIP
 
@@ -160,9 +160,9 @@ No PJSIP, um cliente SIP é construído a partir de um conjunto de objetos relac
 
 - `endpoint`: O comportamento da chamada — codecs (`allow`/`disallow`), o dialplan `context` e quais `auth` e `aors` ele usa.
 - `auth`: As credenciais. `username` é o usuário de autenticação SIP e `password` é o segredo usado para autenticar o dispositivo.
-- `aor`: O "endereço de registro" (AOR) — onde o endpoint pode ser alcançado. Ou um `contact=` estático (para um dispositivo em um IP fixo) ou `max_contacts=` para permitir que o dispositivo se registre dinamicamente.
+- `aor`: O "endereço de registro" (AOR) — onde o endpoint pode ser alcançado. Seja um `contact=` estático (para um dispositivo em um IP fixo) ou `max_contacts=` para permitir que o dispositivo se registre dinamicamente.
 
-Aviso: Use senhas fortes, com pelo menos 8 caracteres, caracteres alfanuméricos e numéricos, e pelo menos um símbolo. Relatos de servidores hackeados apareceram nas listas de discussão, e crackers de senha de força bruta para SIP estão facilmente disponíveis para script kiddies. Fraude de telecomunicações custa milhares de dólares para consumidores e provedores.
+Aviso: Use senhas fortes, com pelo menos 8 caracteres, caracteres alfanuméricos e numéricos, e pelo menos um símbolo. Relatos de servidores hackeados apareceram nas listas de discussão, e crackers de senha de força bruta para SIP estão facilmente disponíveis para script kiddies. Fraudes telefônicas custam milhares de dólares para consumidores e provedores.
 
 O endpoint 6000 é um dispositivo em um IP fixo, portanto, seu AOR carrega um `contact` estático em vez de permitir o registro. O endpoint 6001 é um dispositivo que se registra, portanto, seu AOR permite que ele se registre (`max_contacts=1`):
 
@@ -204,7 +204,7 @@ type=aor
 max_contacts=1
 ```
 
-O PJSIP permite que as seções `endpoint`, `auth` e `aor` compartilhem o mesmo nome de seção (por exemplo, os dois blocos `[6001]` acima, distinguidos por seu `type=`); muitos administradores, em vez disso, adicionam sufixos (`[6001]`, `[6001-auth]`, `[6001]` aor) para facilitar a leitura. Para um dispositivo que se registra, o contato é aprendido dinamicamente quando o telefone se registra, portanto, o AOR não precisa de um `contact` estático.
+O PJSIP permite que as seções `endpoint`, `auth` e `aor` compartilhem o mesmo nome de seção (por exemplo, os dois blocos `[6001]` acima, distinguidos por seus `type=`); muitos administradores, em vez disso, adicionam sufixos (`[6001]`, `[6001-auth]`, `[6001]` aor) para legibilidade. Para um dispositivo que se registra, o contato é aprendido dinamicamente quando o telefone se registra, portanto, o AOR não precisa de um `contact` estático.
 
 ## Ramais IAX
 
@@ -236,12 +236,12 @@ allow = ulaw
 
 Após terminar as seções gerais, é hora de configurar os clientes IAX.
 
-- [name]: Quando um dispositivo SIP se conecta ao Asterisk, ele usa a parte do nome de usuário do SIP URI para encontrar o peer/user.
-- type: Configura a classe de conexão. As opções são peer, user e friend. o peer: O Asterisk envia chamadas para um peer. o user: O Asterisk recebe chamadas de um usuário. o friend: Ambos ocorrem ao mesmo tempo.
+- [name]: Quando um dispositivo SIP se conecta ao Asterisk, ele usa a parte do nome de usuário da URI SIP para encontrar o peer/user.
+- type: Configura a classe de conexão. As opções são peer, user e friend. o peer: Asterisk envia chamadas para um peer. o user: Asterisk recebe chamadas de um user. o friend: Ambos ocorrem ao mesmo tempo.
 - host: Endereço IP ou nome de host. A opção mais comum é dynamic, que é usada quando o host se registra no Asterisk.
-- secret: Senha para autenticar peers e usuários.
+- secret: Senha para autenticar peers e users.
 
-Aviso: Use senhas fortes com pelo menos 8 caracteres, caracteres alfanuméricos e numéricos, e pelo menos um símbolo. Relatos de servidores hackeados apareceram nas listas de discussão, e crackers de senha de força bruta para hashes md5 SIP estão disponíveis para script kiddies. Fraude de telecomunicações custa milhares de dólares para consumidores e provedores. Exemplo:
+Aviso: Use senhas fortes com pelo menos 8 caracteres, caracteres alfanuméricos e numéricos, e pelo menos um símbolo. Relatos de servidores hackeados apareceram nas listas de discussão, e crackers de senha de força bruta para hashes md5 SIP estão disponíveis para script kiddies. Fraudes telefônicas custam milhares de dólares para consumidores e provedores. Exemplo:
 
 ```
 [guest]
@@ -264,9 +264,9 @@ context=from-internal
 
 ## Configurando os dispositivos SIP
 
-Após definir os telefones no arquivo de configuração do Asterisk, é hora de configurar o próprio telefone. Neste exemplo, mostraremos como configurar um softphone gratuito. A 1ª edição usou o X-Lite da CounterPath; esse produto foi descontinuado, então use qualquer softphone SIP gratuito moderno (por exemplo, Zoiper, Linphone ou MicroSIP). Verifique o manual do seu dispositivo para entender os parâmetros do seu telefone. Passo 1: Configure o telefone para usar o ramal 6000. Execute o programa de instalação. Após a execução, abra as configurações de conta/SIP e adicione uma nova conta SIP. Preencha as informações necessárias.
+Após definir os telefones no arquivo de configuração do Asterisk, é hora de configurar o próprio telefone. Neste exemplo, mostraremos como configurar um softphone gratuito — o SipPulse Softphone (baixe-o em https://www.sippulse.com/produtos/softphone). Verifique o manual do seu dispositivo para entender os parâmetros do seu telefone. Passo 1: Configure o telefone para usar o ramal 6000. Execute o programa de instalação. Após a execução, abra as configurações de conta/SIP e adicione uma nova conta SIP. Preencha as informações necessárias.
 
-![A tela de conta do SipPulse Softphone — insira o Servidor (seu IP ou domínio do Asterisk), Nome de Usuário, Senha e Nome de Exibição, depois escolha o Transporte (UDP, TCP ou TLS).](../images/softphone/sipphone-account.png){width=35%}
+![Tela de conta do SipPulse Softphone — insira o Servidor (seu IP ou domínio do Asterisk), Nome de Usuário, Senha e Nome de Exibição, depois escolha o Transporte (UDP, TCP ou TLS).](../images/softphone/sipphone-account.png){width=35%}
 
 Nome de Exibição: 6000  Nome de Usuário: 6000  Senha: #MySecret1#7  Nome de Usuário de Autorização: 6000  Domínio: ip_do_seu_servidor. Confirme se seu telefone está registrado usando o comando de console `pjsip show endpoints` (ou `pjsip show endpoint 6000` para detalhes; `pjsip show contacts` mostra os contatos AOR registrados). Repita a configuração para o telefone 6001.
 
@@ -274,19 +274,19 @@ Nome de Exibição: 6000  Nome de Usuário: 6000  Senha: #MySecret1#7  Nome de U
 
 ## Configurando os dispositivos IAX
 
-IAX2 é um protocolo legado (veja o capítulo *Legacy channels*), e o SipPulse Softphone é apenas SIP, portanto, ele não pode registrar uma conta IAX. Se você precisar testar o IAX2, use um cliente que ainda o suporte (por exemplo, Zoiper, que historicamente oferecia IAX). Crie uma nova conta IAX,
+IAX2 é um protocolo legado (veja o capítulo *Legacy channels*), e o SipPulse Softphone é apenas SIP, portanto, ele não pode registrar uma conta IAX. Se você precisar testar o IAX2, use um softphone que ainda o suporte. Crie uma nova conta IAX,
 
 3. Selecione nova conta IAX. 4. Insira as opções relacionadas para o telefone 6003 e, opcionalmente, para o 6004. 5. Salve a configuração e verifique se o telefone está registrado usando iax2 show peers. Importante: Use uma conta para SIP e outra para IAX. Se você quiser configurar o sistema para tocar tanto IAX quanto SIP ao mesmo tempo, mostraremos como fazer isso na seção de dialplan.
 
 ### Configurando uma interface PSTN
 
-Para se conectar à PSTN, você precisará de uma interface FXO (Foreign Exchange Office) e uma linha telefônica. Você também pode usar um ramal de PBX existente. Você pode obter uma placa de interface de telefonia com uma interface FXO de vários fabricantes. Neste exemplo, mostraremos como instalar uma placa de interface DAHDI.
+Para se conectar à PSTN, você precisará de uma interface FXO (foreign exchange office) e uma linha telefônica. Você também pode usar um ramal de PBX existente. Você pode obter uma placa de interface de telefonia com uma interface FXO de vários fabricantes. Neste exemplo, mostraremos como instalar uma placa de interface DAHDI.
 
 ![Portas FXS e FXO: a porta FXS aciona um telefone analógico (fornece tom de discagem e toque), enquanto a porta FXO conecta o Asterisk à linha da operadora.](../images/04-first-pbx-fig02.png)
 
 ### Linhas analógicas usando DAHDI
 
-Você pode comprar uma placa analógica compatível com DAHDI de vários fabricantes. A X100P foi uma das primeiras placas da Digium e já foi descontinuada. Alguns fabricantes ainda produzem clones semelhantes. Além do preço da X100P, encontramos vários problemas entre essas placas e novas placas-mãe, então use com cuidado. A X100P, na minha opinião, não é uma boa escolha para um ambiente de produção. Qualquer placa compatível com DAHDI deve funcionar. Graças à equipe de desenvolvedores do DAHDI, agora temos uma ferramenta para detectar e configurar as placas de interface quase automaticamente. Se você acabou de instalar os drivers DAHDI, não se esqueça de executar make config e reiniciar a máquina para carregá-lo automaticamente. Você pode usar os comandos abaixo para detectar e configurar sua placa. Passo 1: Para detectar seu hardware, use:
+Você pode comprar uma placa analógica compatível com DAHDI de vários fabricantes. A X100P foi uma das primeiras placas da Digium e já foi descontinuada. Alguns fabricantes ainda produzem clones semelhantes. Além do preço da X100P, encontramos vários problemas entre essas placas e novas placas-mãe, então use-a com cuidado. A X100P, na minha opinião, não é uma boa escolha para um ambiente de produção. Qualquer placa compatível com DAHDI deve funcionar. Graças à equipe de desenvolvedores do DAHDI, agora temos uma ferramenta para detectar e configurar as placas de interface quase automaticamente. Se você acabou de instalar os drivers DAHDI, não se esqueça de executar make config e reiniciar a máquina para carregá-los automaticamente. Você pode usar os comandos abaixo para detectar e configurar sua placa. Passo 1: Para detectar seu hardware, use:
 
 ```
 dahdi_hardware.
@@ -310,9 +310,9 @@ Passo 4: Edite o arquivo /etc/dahdi/modules e comente todos os drivers não util
 CLI>dahdi show channels
 ```
 
-### Conectando-se à PSTN usando um provedor VoIP
+### Conectando à PSTN usando um provedor VoIP
 
-Se o seu orçamento for realmente limitado, você pode configurar um tronco SIP para se conectar à PSTN. É certamente a maneira mais acessível de se conectar à PSTN. Existem milhares de provedores VoIP em todo o mundo. Para se conectar a um deles, você precisará de alguns parâmetros. Parâmetros fornecidos pelo provedor SIP.
+Se o seu orçamento for realmente limitado, você pode configurar um trunk SIP para se conectar à PSTN. É certamente a maneira mais acessível de se conectar à PSTN. Existem milhares de provedores VoIP em todo o mundo. Para se conectar a um deles, você precisará de alguns parâmetros. Parâmetros fornecidos pelo provedor SIP.
 
 - username: login
 - password: secret
@@ -325,7 +325,7 @@ Dois parâmetros devem ser determinados por você.
 - Ramal para receber chamadas — neste caso: 9999
 - context: from-sip
 
-No PJSIP, um tronco SIP de registro é construído a partir da mesma família de objetos usada para um endpoint, mais objetos `registration` e `identify` explícitos. O objeto `registration` diz ao Asterisk para se registrar no provedor, o objeto `identify` corresponde ao tráfego de entrada do IP do provedor para o endpoint (o PJSIP autentica INVITEs de entrada pelo IP de origem), e o `outbound_auth` fornece as credenciais para chamadas de saída e registro:
+No PJSIP, um trunk SIP de registro é construído a partir da mesma família de objetos usada para um endpoint, além de objetos explícitos `registration` e `identify`. O objeto `registration` diz ao Asterisk para se registrar no provedor, o objeto `identify` corresponde ao tráfego de entrada do IP do provedor para o endpoint (o PJSIP autentica INVITEs de entrada por IP de origem), e `outbound_auth` fornece as credenciais para chamadas de saída e registro:
 
 ```
 [siptrunk]
@@ -366,7 +366,7 @@ contact_user=9999
 retry_interval=60
 ```
 
-Para acessar este tronco, usaremos o nome de canal `PJSIP/siptrunk`. A configuração `dtmf_mode=rfc4733` transporta DTMF fora da banda (RFC 4733 torna obsoleta a RFC 2833 mais antiga; o payload é idêntico). A opção `identify`/`match` aceita endereços IP, CIDRs ou nomes de host, mas nomes de host são resolvidos uma vez no momento do carregamento da configuração, portanto, para um provedor com IPs variáveis, liste o(s) IP(s) de sinalização explicitamente. Confirme o registro com `pjsip show registrations`.
+Para acessar este trunk, usaremos o nome de canal `PJSIP/siptrunk`. A configuração `dtmf_mode=rfc4733` transporta DTMF fora de banda (RFC 4733 torna obsoleta a RFC 2833 mais antiga; o payload é idêntico). A opção `identify`/`match` aceita endereços IP, CIDRs ou nomes de host, mas nomes de host são resolvidos uma vez no momento do carregamento da configuração, portanto, para um provedor com IPs variáveis, liste o(s) IP(s) de sinalização explicitamente. Confirme o registro com `pjsip show registrations`.
 
 ## Introdução ao dialplan
 
@@ -377,11 +377,11 @@ O dialplan é como o coração do Asterisk. Ele define como o Asterisk lida com 
 - Aplicações
 - Contextos
 
-Vamos criar um dialplan básico. Em seções subsequentes deste livro, dedicarei um capítulo exclusivamente ao dialplan. Se você instalou os arquivos de exemplo (make samples), o extensions.conf já existe. Salve-o com outro nome e comece com um arquivo em branco.
+Vamos criar um dialplan básico. Nas seções subsequentes deste livro, dedicarei um capítulo exclusivamente ao dialplan. Se você instalou os arquivos de exemplo (make samples), o extensions.conf já existe. Salve-o com outro nome e comece com um arquivo em branco.
 
 ## A estrutura do arquivo extensions.conf
 
-O arquivo extensions.conf é separado em seções. A primeira é a seção [general], seguida pela seção [globals]. O início de cada seção começa com a definição de seu nome (ou seja, [default]) e termina quando outra seção é criada.
+O arquivo extensions.conf é separado em seções. A primeira é a seção [general] seguida pela seção [globals]. O início de cada seção começa com a definição de seu nome (por exemplo, [default]) e termina quando outra seção é criada.
 
 ### A seção [general]
 
@@ -393,11 +393,11 @@ A seção general fica no topo do arquivo. Antes de começar a configurar o dial
 command save dialplan.
 ```
 
-Aviso: Se você emitir um comando save dialplan a partir da CLI, você acabará perdendo todas as observações e comentários no arquivo.
+Aviso: Se você emitir um comando save dialplan da CLI, acabará perdendo quaisquer observações e comentários no arquivo.
 
-- autofallthrough: Se autofallthrough estiver definido, então, se um ramal ficar sem coisas para fazer, ele encerrará a chamada com BUSY, CONGESTION ou HANGUP, dependendo do melhor palpite do Asterisk. Este é o padrão. Se autofallthrough não estiver definido, então, se um ramal ficar sem coisas para fazer, o Asterisk aguardará um novo ramal ser discado.
-- clearglobalvars: Se clearglobalvars estiver definido, as variáveis globais serão limpas e reanalisadas em um dialplan reload ou Asterisk reload. Se clearglobalvars não estiver definido, as variáveis globais persistirão através de recarregamentos e — mesmo se excluídas do extensions.conf ou de um de seus arquivos incluídos — elas permanecerão definidas com o valor anterior.
-- extenpatternmatchnew: Usa um algoritmo de correspondência de padrão mais rápido, o que ajuda visivelmente quando você tem um grande número de ramais. O padrão é no.
+- autofallthrough: Se autofallthrough estiver definido, então, se um ramal ficar sem coisas para fazer, ele terminará a chamada com BUSY, CONGESTION ou HANGUP, dependendo do melhor palpite do Asterisk. Este é o padrão. Se autofallthrough não estiver definido, então, se um ramal ficar sem coisas para fazer, o Asterisk aguardará um novo ramal ser discado.
+- clearglobalvars: Se clearglobalvars estiver definido, as variáveis globais serão limpas e reanalisadas em um dialplan reload ou Asterisk reload. Se clearglobalvars não estiver definido, as variáveis globais persistirão durante recarregamentos e — mesmo se excluídas do extensions.conf ou de um de seus arquivos incluídos — elas permanecerão definidas com o valor anterior.
+- extenpatternmatchnew: Usa um algoritmo de correspondência de padrões mais rápido, o que ajuda visivelmente quando você tem um grande número de ramais. O padrão é no.
 - userscontext: Este é o contexto onde as entradas do users.conf são registradas.
 
 ### A seção [globals]
@@ -421,19 +421,19 @@ exten=9000,n,hangup()
 
 Contexto é a partição nomeada do dialplan. Após as seções [general] e [globals], o dialplan é um conjunto de contextos nos quais cada contexto possui vários ramais, cada ramal possui várias prioridades e cada prioridade chama uma aplicação com vários argumentos.
 
-![Fluxo de chamada do Asterisk: cada chamada chega em um canal (IAX, SIP e outros) como uma perna de chamada de entrada; o contexto do canal — definido globalmente ou por canal no arquivo de configuração do canal — decide qual contexto no extensions.conf processa a chamada antes que ela saia na perna de saída.](../images/04-first-pbx-fig03.png)
+![Fluxo de chamada do Asterisk: toda chamada chega em um canal (IAX, SIP e outros) como uma perna de chamada de entrada; o contexto do canal — definido globalmente ou por canal no arquivo de configuração do canal — decide qual contexto no extensions.conf processa a chamada antes que ela saia na perna de saída.](../images/04-first-pbx-fig03.png)
 
 ![Processamento de chamada: o `context=` definido para um canal (em chan_dahdi.conf ou pjsip.conf) nomeia o contexto correspondente no extensions.conf onde o dialplan lida com a chamada.](../images/04-first-pbx-fig04.png)
 
 Você pode construir um dialplan simples para alcançar outros telefones e a PSTN. No entanto, o Asterisk é muito mais poderoso do que isso. Nosso objetivo é ensinar mais detalhes sobre o que é possível no dialplan.
 
-## Ramais (Extensions)
+## Ramais
 
-Ao contrário do PBX tradicional, onde os ramais estão associados a telefones, interfaces, menus e assim por diante, no Asterisk, um ramal é uma lista de comandos a serem processados quando um número ou nome de ramal específico é acionado. Os comandos são processados em ordem de prioridade.
+Ao contrário do PBX tradicional, onde os ramais estão associados a telefones, interfaces, menus, etc., no Asterisk um ramal é uma lista de comandos a serem processados quando um número ou nome de ramal específico é acionado. Os comandos são processados em ordem de prioridade.
 
-![Sintaxe de ramal: `exten => number(name),{priority|label}[(alias)],application`. Ramais podem ser numéricos, alfanuméricos, numéricos com identificador de chamadas (Caller ID), um padrão ou um ramal padrão como `s`; prioridades podem ser um número, `n` (próximo), `s` (mesmo), um deslocamento ou um `hint`.](../images/04-first-pbx-fig05.png)
+![Sintaxe de ramal: `exten => number(name),{priority|label}[(alias)],application`. Ramais podem ser numéricos, alfanuméricos, numéricos com identificador de chamadas (caller ID), um padrão ou um ramal padrão como `s`; prioridades podem ser um número, `n` (próximo), `s` (mesmo), um deslocamento ou um `hint`.](../images/04-first-pbx-fig05.png)
 
-Um ramal pode ser literal, padrão ou especial. Um ramal padrão inclui apenas números ou nomes e os caracteres * e #; 12#89* é um ramal literal válido. Nomes também podem ser usados para correspondência de ramais. Ramais diferenciam maiúsculas de minúsculas. No entanto, você não pode criar dois ramais com o mesmo nome, mas com casos diferentes. Quando um ramal é discado, o comando com a primeira prioridade é executado, seguido pelo comando com prioridade 2 e assim por diante. Isso acontece até que a chamada seja desconectada ou algum comando retorne o número um, indicando falha. O que o Asterisk faz quando a última prioridade é executada é regulado pelo parâmetro autofallthrough. Veja a seção [general] neste capítulo. Exemplo:
+Um ramal pode ser literal, padrão ou especial. Um ramal padrão inclui apenas números ou nomes e os caracteres * e #; 12#89* é um ramal literal válido. Nomes também podem ser usados para correspondência de ramal. Ramais diferenciam maiúsculas de minúsculas. No entanto, você não pode criar dois ramais com o mesmo nome, mas com casos diferentes. Quando um ramal é discado, o comando com a primeira prioridade é executado, seguido pelo comando com prioridade 2 e assim por diante. Isso acontece até que a chamada seja desconectada ou algum comando retorne o número um, indicando falha. O que o Asterisk faz quando a última prioridade é executada é regulado pelo parâmetro autofallthrough. Veja a seção [general] neste capítulo. Exemplo:
 
 ```
 exten=>123,1,Answer
@@ -441,7 +441,7 @@ exten=>123,n,Playback(tt-weasels)
 exten=>123,n,Hangup
 ```
 
-Acima, você encontra a lista de instruções a serem processadas quando o ramal 123 é discado. A primeira prioridade é atender o canal (necessário quando o canal está no estado de toque: ou seja, canais FXO). A segunda prioridade é reproduzir um arquivo de áudio chamado tt-weasels. A terceira prioridade desliga o canal. Outra opção é lidar com a chamada de acordo com o identificador de chamadas (Caller ID). Você pode usar o caractere / para especificar o Caller ID a ser processado. Exemplos:
+Acima você encontra a lista de instruções a serem processadas quando o ramal 123 é discado. A primeira prioridade é atender o canal (necessário quando o canal está no estado de toque: ou seja, canais FXO). A segunda prioridade é reproduzir um arquivo de áudio chamado tt-weasels. A terceira prioridade desliga o canal. Outra opção é lidar com a chamada de acordo com o identificador de chamadas (caller ID). Você pode usar o caractere / para especificar o identificador de chamadas a ser processado. Exemplos:
 
 ```
 exten=>123/100,1,Answer()
@@ -449,13 +449,13 @@ exten=>123/100,n,Playback(tt-weasels)
 exten=>123/100,n,Hangup()
 ```
 
-Este exemplo acionará o ramal 123 e executará as seguintes opções apenas se o Caller ID for 100. Isso também pode ser feito usando o padrão descrito abaixo:
+Este exemplo acionará o ramal 123 e executará as seguintes opções apenas se o identificador de chamadas for 100. Isso também pode ser feito usando o padrão descrito abaixo:
 
 ```
 exten=>1234/_256NXXXXXX,1,Answer()
 ```
 
-hint: mapeia um ramal para um canal. É usado para monitorar o estado do canal. É usado em conjunto com a presença. O telefone precisa suportar isso.
+hint: mapeia um ramal para um canal. É usado para monitorar o estado do canal. É usado em conjunto com a presença. O telefone deve suportar isso.
 
 #### Padrões
 
@@ -469,11 +469,11 @@ O Asterisk usa alguns nomes de ramais como ramais padrão.
 
 ![Ramais especiais do Asterisk: `i` (inválido), `s` (início), `h` (desligar), `t` (tempo limite), `T` (tempo limite absoluto), `o` (operadora), `a` (pressionado `*` no correio de voz), `fax` (detecção de fax) e `Talk` (usado com BackgroundDetect).](../images/04-first-pbx-fig07.png)
 
-Descrição: s: Início (Start). É usado para lidar com uma chamada quando não há número discado. É útil para troncos FXO e processamento de menu interno. t: Tempo limite (Timeout). É usado quando as chamadas permanecem inativas após um prompt ter sido reproduzido. Também é usado para desligar uma linha inativa. T: AbsoluteTimeout. Se você estabelecer um limite de chamada usando a função de dialplan `TIMEOUT(absolute)`, assim que a chamada exceder o limite definido, ela será enviada para o ramal T. h: Desligar (Hangup). É chamado após o usuário desconectar a chamada. i: Inválido (Invalid). É acionado quando você chama um ramal inexistente no contexto. O uso desses ramais pode afetar o conteúdo dos registros CDR — especificamente, o dst que não contém o número discado. o: Operadora (Operator). É usado para ir para a operadora quando o usuário pressiona “0” durante o correio de voz. O uso desses ramais pode alterar o conteúdo dos registros de faturamento (CDR) — em particular, o campo dst não terá o número discado. Para contornar esse problema, você deve usar a opção g na aplicação dial() e considerar as funções resetcdr(w) e/ou nocdr()
+Descrição: s: Início (Start). É usado para lidar com uma chamada quando não há número discado. É útil para trunks FXO e processamento de menu interno. t: Tempo limite (Timeout). É usado quando as chamadas permanecem inativas após um prompt ter sido reproduzido. Também é usado para desligar uma linha inativa. T: Tempo limite absoluto (AbsoluteTimeout). Se você estabelecer um limite de chamada usando a função de dialplan `TIMEOUT(absolute)`, assim que a chamada exceder o limite definido, ela será enviada para o ramal T. h: Desligar (Hangup). É chamado após o usuário desconectar a chamada. i: Inválido (Invalid). É acionado quando você chama um ramal inexistente no contexto. O uso desses ramais pode afetar o conteúdo dos registros CDR — especificamente, o dst que não contém o número discado. o: Operadora (Operator). É usado para ir para a operadora quando o usuário pressiona “0” durante o correio de voz. O uso desses ramais pode alterar o conteúdo dos registros de faturamento (CDR) — em particular, o campo dst não terá o número discado. Para contornar esse problema, você deve usar a opção g na aplicação dial() e considerar as funções resetcdr(w) e/ou nocdr()
 
 ## Variáveis
 
-No PBX Asterisk, as variáveis podem ser globais, específicas do canal e específicas do ambiente. Você pode usar a aplicação NoOP() para ver o conteúdo de uma variável no console. Ela pode usar uma variável global ou uma variável específica do canal como argumentos de aplicações. Uma variável pode ser referenciada como no exemplo a seguir, onde varname é o nome da variável.
+No PBX Asterisk, as variáveis podem ser globais, específicas do canal e específicas do ambiente. Você pode usar a aplicação NoOP() para ver o conteúdo de uma variável no console. Ela pode usar uma variável global ou uma variável específica do canal como argumentos de aplicação. Uma variável pode ser referenciada como no exemplo a seguir, onde varname é o nome da variável.
 
 ```
 ${varname}
@@ -491,13 +491,13 @@ set(Global(variable)=content)
 
 ### Variáveis específicas do canal
 
-Variáveis específicas do canal são configuradas usando a aplicação set(). Cada canal recebe seu próprio espaço de variáveis. Não há chance de colisões entre variáveis de diferentes canais. Uma variável específica do canal é destruída quando o canal é desligado. Algumas das variáveis mais comumente usadas são:
+Variáveis específicas do canal são configuradas usando a aplicação set(). Cada canal recebe seu próprio espaço de variável. Não há chance de colisões entre variáveis de canais diferentes. Uma variável específica do canal é destruída quando o canal é desligado. Algumas das variáveis mais comumente usadas são:
 
 - ${EXTEN} Ramal discado
 - ${CONTEXT} Contexto atual
 - ${CALLERID(name)}
 - ${CALLERID(num)}
-- ${CALLERID(all)} Caller ID atual
+- ${CALLERID(all)} Identificador de chamadas atual
 - ${PRIORITY} Prioridade atual
 
 Outras variáveis específicas do canal estão todas em maiúsculas. Você pode ver o conteúdo de várias variáveis usando a aplicação dumpchan(). Abaixo está um pequeno trecho de variáveis de dump-channel.
@@ -508,7 +508,7 @@ exten=9001,n,echo()
 exten=9001,n,hangup()
 ```
 
-Saída do Dumpchan:
+Saída do dumpchan:
 
 ```
 Dumping Info For Channel: PJSIP/4400-00000001:
@@ -552,7 +552,7 @@ Blocking_in=        (Not Blocking)
 Variables:
 ```
 
-O layout do campo acima é a saída do Asterisk 22 `DumpChan` (um nome de canal `PJSIP/...` real, os campos `CallerIDNum`/`ConnectedLineID` e as linhas `Raw*`/`Transcode`/`BridgeID` que os canais PJSIP preenchem). Ao contrário do driver antigo, um canal PJSIP não define automaticamente as variáveis de canal `SIPCALLID`/`SIPUSERAGENT`; os detalhes SIP equivalentes são lidos sob demanda com as funções de dialplan `PJSIP_HEADER()` e `CHANNEL()` — por exemplo, `${CHANNEL(pjsip,call-id)}`, `${PJSIP_HEADER(read,User-Agent)}` e `${CHANNEL(rtp,dest)}` para o endereço RTP remoto.
+O layout de campo acima é a saída do Asterisk 22 `DumpChan` (um nome de canal `PJSIP/...` real, os campos `CallerIDNum`/`ConnectedLineID` e as linhas `Raw*`/`Transcode`/`BridgeID` que os canais PJSIP preenchem). Ao contrário do driver antigo, um canal PJSIP não define automaticamente as variáveis de canal `SIPCALLID`/`SIPUSERAGENT`; os detalhes SIP equivalentes são lidos sob demanda com as funções de dialplan `PJSIP_HEADER()` e `CHANNEL()` — por exemplo, `${CHANNEL(pjsip,call-id)}`, `${PJSIP_HEADER(read,User-Agent)}` e `${CHANNEL(rtp,dest)}` para o endereço RTP remoto.
 
 ### Variáveis específicas do ambiente
 
@@ -567,8 +567,8 @@ Set(ENV(LANG))=en_US
 
 Algumas aplicações usam variáveis para entrada e saída de dados. Você pode definir variáveis antes de chamar a aplicação ou recuperar a variável após a execução da aplicação. Por exemplo: A aplicação Dial retorna as seguintes variáveis:
 
-- ${DIALEDTIME} -> Este é o tempo desde a discagem de um canal até ele ser desconectado.
-- ${ANSWEREDTIME} -> Esta é a quantidade de tempo para a chamada real.
+- ${DIALEDTIME} -> Este é o tempo desde a discagem de um canal até que ele seja desconectado.
+- ${ANSWEREDTIME} -> Este é o tempo decorrido para a chamada real.
 - ${DIALSTATUS} Este é o status da chamada: o CHANUNAVAIL o CONGESTION o NOANSWER o BUSY o ANSWER o CANCEL o DONTCALL o TORTURE
 - ${CAUSECODE} -> Mensagem de erro para a chamada.
 
@@ -723,7 +723,7 @@ Usaremos essas aplicações (acima) para criar um dialplan simples para dois PBX
 
 ### Answer()
 
-[Sinopse] Atende um canal se estiver tocando [Descrição] Answer([delay]): Se a chamada não tiver sido atendida, a aplicação a atenderá. Caso contrário, não tem efeito sobre a chamada. Se um atraso for especificado, o Asterisk aguardará o número de milissegundos especificado em ‘delay’ antes de atender a chamada.
+[Sinopse] Atende um canal se estiver tocando [Descrição] Answer([delay]): Se a chamada não tiver sido atendida, a aplicação a atenderá. Caso contrário, não tem efeito na chamada. Se um atraso for especificado, o Asterisk aguardará o número de milissegundos especificado em ‘delay’ antes de atender a chamada.
 
 ### Dial()
 
@@ -736,13 +736,13 @@ Dial(type/identifier,timeout,options, URL)
 Dial(Technology/resource[&Tech2/resource2...][|timeout][|options][|URL]):
 ```
 
-Esta aplicação fará chamadas para um ou mais canais especificados. Assim que um dos canais solicitados atender, o canal de origem será atendido — se ainda não tiver sido. Esses dois canais estarão então ativos em uma chamada em ponte. Todos os outros canais solicitados serão então desligados. A menos que um tempo limite seja especificado, a aplicação Dial aguardará indefinidamente até que um dos canais chamados atenda, o usuário desligue ou todos os canais chamados estejam ocupados ou indisponíveis. A execução do dialplan continuará se nenhum canal solicitado puder ser chamado ou se o tempo limite expirar. Esta aplicação define as seguintes variáveis de canal após a conclusão:
+Esta aplicação fará chamadas para um ou mais canais especificados. Assim que um dos canais solicitados atender, o canal de origem será atendido — se ainda não tiver sido atendido. Esses dois canais estarão então ativos em uma chamada em ponte. Todos os outros canais solicitados serão então desligados. A menos que um tempo limite seja especificado, a aplicação Dial aguardará indefinidamente até que um dos canais chamados atenda, o usuário desligue ou todos os canais chamados estejam ocupados ou indisponíveis. A execução do dialplan continuará se nenhum canal solicitado puder ser chamado ou se o tempo limite expirar. Esta aplicação define as seguintes variáveis de canal após a conclusão:
 
 - DIALEDTIME - Este é o tempo desde a discagem de um canal até o momento em que ele é desconectado.
-- ANSWEREDTIME - Esta é a quantidade de tempo para uma chamada real.
+- ANSWEREDTIME - Este é o tempo decorrido para uma chamada real.
 - DIALSTATUS - Este é o status da chamada: o CHANUNAVAIL o CONGESTION o NOANSWER o BUSY o ANSWER o CANCEL o DONTCALL o TORTURE
 
-Para os Modos de Privacidade e Triagem, a variável DIALSTATUS será definida como DONTCALL se a parte chamada optar por enviar a parte chamadora para o script 'Go Away'. A variável DIALSTATUS será definida como TORTURE se a parte chamada quiser enviar o chamador para o script 'torture'. Esta aplicação relatará o término normal se o canal de origem desligar ou se a chamada for conectada em ponte e qualquer uma das partes na ponte encerrar a chamada. A URL opcional será enviada para a parte chamada se o canal a suportar. Se a variável OUTBOUND_GROUP estiver definida, todos os canais pares criados por esta aplicação serão incluídos nesse grupo (como em
+Para os Modos de Privacidade e Triagem, a variável DIALSTATUS será definida como DONTCALL se a parte chamada optar por enviar a parte chamadora para o script 'Go Away'. A variável DIALSTATUS será definida como TORTURE se a parte chamada quiser enviar o chamador para o script 'torture'. Esta aplicação relatará o término normal se o canal de origem desligar ou se a chamada for colocada em ponte e qualquer uma das partes na ponte encerrar a chamada. A URL opcional será enviada para a parte chamada se o canal a suportar. Se a variável OUTBOUND_GROUP estiver definida, todos os canais peer criados por esta aplicação serão incluídos nesse grupo (como em
 
 ```
 Set(GROUP()=...).
@@ -754,9 +754,9 @@ A tabela a seguir resume algumas das opções usadas com mais frequência para a
 |--------|-------------|
 | `A(x)` | Reproduz um anúncio para a parte chamada, usando `x` como o arquivo. |
 | `C` | Redefine o CDR para esta chamada. |
-| `d` | Permite que o usuário chamador disque um ramal de 1 dígito enquanto aguarda a chamada ser atendida. Sai para esse ramal se ele existir no contexto atual, ou para o contexto definido na variável `EXITCONTEXT`, se existir. |
-| `D([called][:calling])` | Envia as strings DTMF especificadas após a parte chamada atender, mas antes da chamada ser conectada em ponte. A string `called` é enviada para a parte chamada e a string `calling` para a parte chamadora. Qualquer parâmetro pode ser usado sozinho. |
-| `f` | Força o Caller ID do canal chamador a ser definido como o ramal associado ao canal via um `hint` de dialplan. Útil onde a PSTN não permite um Caller ID arbitrário. |
+| `d` | Permite que o usuário chamador disque um ramal de 1 dígito enquanto aguarda a chamada ser atendida. Sai para esse ramal se ele existir no contexto atual, ou para o contexto definido na variável `EXITCONTEXT`, se ela existir. |
+| `D([called][:calling])` | Envia as strings DTMF especificadas após a parte chamada atender, mas antes que a chamada seja colocada em ponte. A string `called` é enviada para a parte chamada e a string `calling` para a parte chamadora. Qualquer parâmetro pode ser usado sozinho. |
+| `f` | Força o identificador de chamadas do canal chamador a ser definido como o ramal associado ao canal via um `hint` de dialplan. Útil onde a PSTN não permite um identificador de chamadas arbitrário. |
 | `g` | Prossegue com a execução do dialplan no ramal atual se o canal de destino desligar. |
 | `G(context^exten^pri)` | Se a chamada for atendida, transfere a parte chamadora para a prioridade especificada e a parte chamada para prioridade+1. Opcionalmente, um ramal (ou ramal e contexto) pode ser especificado; caso contrário, o ramal atual é usado. |
 | `h` | Permite que a parte chamada desligue enviando o dígito DTMF `*`. |
@@ -769,8 +769,8 @@ A tabela a seguir resume algumas das opções usadas com mais frequência para a
 | `T` | Permite que a parte chamadora transfira a parte chamada enviando a sequência DTMF definida em `features.conf`. |
 | `w` | Permite que a parte chamada habilite a gravação com um toque enviando a sequência DTMF definida em `features.conf`. |
 | `W` | Permite que a parte chamadora habilite a gravação com um toque enviando a sequência DTMF definida em `features.conf`. |
-| `k` | Permite que a parte chamada estacione a chamada enviando a sequência DTMF definida para estacionamento de chamada em `features.conf`. |
-| `K` | Permite que a parte chamadora estacione a chamada enviando a sequência DTMF definida para estacionamento de chamada em `features.conf`. |
+| `k` | Permite que a parte chamada estacione a chamada enviando a sequência DTMF definida para estacionamento de chamadas em `features.conf`. |
+| `K` | Permite que a parte chamadora estacione a chamada enviando a sequência DTMF definida para estacionamento de chamadas em `features.conf`. |
 
 A opção `L(x[:y][:z])` pode ser ajustada com as seguintes variáveis especiais:
 
@@ -802,7 +802,7 @@ Para construir um dialplan simples, você precisa tratar todas as chamadas de en
 
 ### Discagem entre ramais
 
-Para permitir a discagem entre ramais, poderíamos usar a variável de canal ${EXTEN}, que se refere ao ramal discado. Por exemplo, se o intervalo de ramais estiver entre 4000 e 4999 e todos os ramais usarem SIP, poderíamos adotar o seguinte comando:
+Para habilitar a discagem entre ramais, poderíamos usar a variável de canal ${EXTEN}, que se refere ao ramal discado. Por exemplo, se o intervalo de ramais estiver entre 4000 e 4999 e todos os ramais usarem SIP, poderíamos adotar o seguinte comando:
 
 ```
 [from-internal]
@@ -811,7 +811,7 @@ exten=_4XXX,1,Dial(PJSIP/${EXTEN})
 
 ### Discagem para um destino externo
 
-Para discar para um destino externo, você pode preceder o número discado com uma rota. Na América do Norte, é comum usar 9 seguido pelo número a ser discado externamente. Se você estiver usando um canal analógico ou digital para a PSTN, o comando deve ser semelhante ao seguinte: Se você quiser usar o tronco SIP em vez do DAHDI, use o canal `PJSIP/...@siptrunk`.
+Para discar para um destino externo, você pode preceder o número discado com uma rota. Na América do Norte, é comum usar 9 seguido pelo número a ser discado externamente. Se você estiver usando um canal analógico ou digital para a PSTN, o comando deve ser semelhante ao seguinte: Se você quiser usar o trunk SIP em vez do DAHDI, use o canal `PJSIP/...@siptrunk`.
 
 ```
 [from-internal]
@@ -820,7 +820,7 @@ or
 exten=_9NXXXXXX,1,Dial(PJSIP/${EXTEN:1}@siptrunk,20,tT)
 ```
 
-A linha acima permitirá que você disque 9 e o número desejado. No exemplo dado, você usará o primeiro canal DAHDI (DAHDI/1). Se você tiver várias linhas e esta estiver ocupada, a chamada não será completada. No entanto, você poderia usar a seguinte linha para escolher automaticamente o primeiro canal DAHDI disponível. Opcionalmente, você pode usar o tronco SIP em vez do DAHDI. Na forma PJSIP `Dial(PJSIP/number@siptrunk,...)`, o número discado é a parte do usuário e `siptrunk` é o endpoint configurado acima.
+A linha acima permitirá que você disque 9 e o número desejado. No exemplo dado, você usará o primeiro canal DAHDI (DAHDI/1). Se você tiver várias linhas e esta estiver ocupada, a chamada não será completada. No entanto, você poderia usar a seguinte linha para escolher automaticamente o primeiro canal DAHDI disponível. Opcionalmente, você pode usar o trunk SIP em vez do DAHDI. Na forma PJSIP `Dial(PJSIP/number@siptrunk,...)`, o número discado é a parte do usuário e `siptrunk` é o endpoint configurado acima.
 
 ```
 [from-internal]
@@ -845,7 +845,7 @@ exten=9,1,Dial(DAHDI/g1,20,tT)
 
 ### Recebendo uma chamada no ramal da operadora
 
-No exemplo a seguir, o ramal da operadora é 4000. A linha PSTN está conectada a uma interface FXO. No arquivo chan_dahdi.conf, o contexto especificado é from-pstn. Qualquer chamada vinda da PSTN será roteada para o contexto from-pstn no dialplan. Esta linha não possui discagem direta interna (DID); como tal, teremos que receber a chamada via ramal “s”. Se estiver recebendo do tronco SIP, use o contexto [from-sip].
+No exemplo a seguir, o ramal da operadora é 4000. A linha PSTN está conectada a uma interface FXO. No arquivo chan_dahdi.conf, o contexto especificado é from-pstn. Qualquer chamada vinda da PSTN será roteada para o contexto from-pstn no dialplan. Esta linha não possui DID (direct inward dialing); como tal, teremos que receber a chamada via ramal “s”. Se estiver recebendo do trunk SIP, use o contexto [from-sip].
 
 ```
 [globals]
@@ -858,7 +858,7 @@ exten = s,1,Dial(${OPERATOR},40,tT)
 exten = s,n,Hangup()
 ```
 
-### Recebendo uma chamada usando discagem direta interna (DID)
+### Recebendo uma chamada usando DID (direct inward dialing)
 
 Se você tiver uma linha digital, receberá o ramal discado. Quando este for o caso, você não precisa encaminhar a chamada para a operadora; em vez disso, você pode encaminhar a chamada diretamente para o destino. Suponha que seu intervalo DID seja de 3028550 a 3028599 e os últimos quatro números sejam passados no DID. A configuração seria semelhante ao exemplo a seguir:
 
@@ -881,16 +881,16 @@ exten => 0,n,Hangup()
 
 Neste exemplo, quando alguém disca para a operadora, o canal DAHDI/1 é tentado inicialmente. Se ninguém atender após 15 segundos (tempo limite), os canais DAHDI/1, DAHDI/2 e DAHDI/3 tocarão simultaneamente por mais 15 segundos.
 
-### Roteamento por Caller ID
+### Roteamento por identificador de chamadas (Caller ID)
 
-Neste exemplo, você pode dar tratamentos diferentes com base no Caller ID, o que pode ser útil para spammers de chamadas. Por exemplo:
+Neste exemplo, você poderia dar tratamentos diferentes com base no identificador de chamadas, o que poderia ser útil para spammers de chamadas. Por exemplo:
 
 ```
 exten => 8590/4832518888,1,Playback(I-have-moved-to-china)
 exten => 8590,1,Dial(DAHDI/1,20)
 ```
 
-Neste exemplo, adicionamos uma regra especial que, se o Caller ID for 4832518888, você reproduz uma mensagem do arquivo gravado anteriormente “I-have-moved-to-china”. Outras chamadas são aceitas como de costume.
+Neste exemplo, adicionamos uma regra especial que, se o identificador de chamadas for 4832518888, você reproduz uma mensagem do arquivo gravado anteriormente “I-have-moved-to-china”. Outras chamadas são aceitas como de costume.
 
 ### Usando variáveis no dialplan
 
@@ -922,7 +922,7 @@ exten => _record.,n,Playback(${EXTEN:6})
 exten => _record.,n,Hangup()
 ```
 
-Estas instruções permitem que você grave qualquer mensagem de um softphone. Exemplo: discando recordmenu do softphone. As instruções chamarão a gravação com a variável ${EXTEN:6} sem as primeiras seis letras. Em outras palavras, a instrução é equivalente a record(menu:gsm). Tudo o que você precisa fazer é discar record + nome_do_arquivo_a_ser_gravado, pressionar # para finalizar a gravação e aguardar para ouvir a gravação.
+Essas instruções permitem que você grave qualquer mensagem de um softphone. Exemplo: discando recordmenu do softphone As instruções chamarão a gravação com a variável ${EXTEN:6} sem as seis primeiras letras. Em outras palavras, a instrução é equivalente a record(menu:gsm). Tudo o que você precisa fazer é discar record + nome_do_arquivo_a_ser_gravado, pressionar # para finalizar a gravação e esperar para ouvir a gravação.
 
 ### Recebendo as chamadas em uma recepcionista digital
 
@@ -979,11 +979,11 @@ exten=>6004,1,Dial(IAX2/6004)
 
 Os ramais SIP usam `PJSIP/` e os ramais IAX usam `IAX2/` — ambos os drivers são fornecidos no Asterisk 22, embora o `chan_iax2` seja agora considerado legado e o SIP/PJSIP seja preferencial.
 
-No arquivo menu1.gsm, grave a mensagem “pressione o ramal ou aguarde a operadora”. Quando o usuário discar o número 6000, ele será enviado para o ramal 6000. Neste ponto, você deve ter uma compreensão clara do uso de várias aplicações, incluindo answer(), background(), goto(), hangup() e playback(). Se você não tiver uma compreensão clara, leia este capítulo novamente até se sentir confortável com o conteúdo. Você usará a aplicação background com muita frequência. Uma vez que você entenda o básico de ramais, prioridades e aplicações, será fácil criar um dialplan simples. Esses conceitos serão explorados com mais profundidade mais adiante no livro, e você verá que o dialplan se tornará mais poderoso.
+No arquivo menu1.gsm, grave a mensagem “pressione o ramal ou aguarde a operadora”. Quando o usuário discar o número 6000, ele será enviado para o ramal 6000. Neste ponto, você deve ter uma compreensão clara do uso de várias aplicações, incluindo answer(), background(), goto(), hangup() e playback(). Se você não tiver uma compreensão clara, leia este capítulo novamente até se sentir confortável com o conteúdo. Você usará a aplicação background com muita frequência. Depois de entender o básico de ramais, prioridades e aplicações, será fácil criar um dialplan simples. Esses conceitos serão explorados com mais profundidade mais adiante no livro, e você verá que o dialplan se tornará mais poderoso.
 
 ## Resumo
 
-Neste capítulo, você aprendeu que os arquivos de configuração são armazenados no diretório /etc/asterisk. Para usar o Asterisk, é necessário primeiro configurar os canais (por exemplo, pjsip, dahdi, iax). Existem três gramáticas diferentes para arquivos de configuração: grupo simples, herança de objeto e entidade complexa. O dialplan é criado no arquivo extensions.conf e é um conjunto de contextos e ramais. No dialplan, cada ramal aciona uma aplicação. Você aprendeu a usar as aplicações playback, background, dial, goto, hangup e answer.
+Neste capítulo, você aprendeu que os arquivos de configuração são armazenados no diretório /etc/asterisk. Para usar o Asterisk, é necessário primeiro configurar os canais (por exemplo, pjsip, dahdi, iax). Existem três gramáticas diferentes para arquivos de configuração: grupo simples, herança de objetos e entidade complexa. O dialplan é criado no arquivo extensions.conf e é um conjunto de contextos e ramais. No dialplan, cada ramal aciona uma aplicação. Você aprendeu a usar as aplicações playback, background, dial, goto, hangup e answer.
 
 ## Quiz
 
@@ -1024,12 +1024,12 @@ Neste capítulo, você aprendeu que os arquivos de configuração são armazenad
    - A. Limita a chamada a uma duração máxima.
    - B. Fornece música de espera para o chamador em vez do tom de retorno de chamada até que o canal atenda.
    - C. Envia dígitos DTMF após a parte chamada atender.
-   - D. Força o Caller ID usando uma dica (hint) de dialplan.
+   - D. Força o identificador de chamadas usando uma dica (hint) de dialplan.
 9. Na gramática de herança de opções usada por `chan_dahdi.conf`, você:
    - A. Define o objeto em uma única linha.
    - B. Define as opções primeiro e declara os objetos abaixo das opções definidas.
    - C. Define um contexto separado para cada objeto.
-10. Prioridades em um ramal devem ser numeradas consecutivamente (1, 2, 3, …) e não podem usar `n`.
+10. As prioridades em um ramal devem ser numeradas consecutivamente (1, 2, 3, …) e não podem usar `n`.
     - A. Verdadeiro
     - B. Falso
 

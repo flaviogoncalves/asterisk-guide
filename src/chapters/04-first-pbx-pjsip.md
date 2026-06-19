@@ -264,7 +264,7 @@ context=from-internal
 
 ## Configuring the SIP devices
 
-After defining the phones in the Asterisk configuration file, it is time to configure the phone itself. In this example, we will show how to configure a free soft-phone. The 1st edition used X-Lite from CounterPath; that product has been discontinued, so use any modern free SIP soft-phone (for example Zoiper, Linphone, or MicroSIP). Check your device’s manual to understand the parameters of your phone. Step 1: Configure the phone to use the extension 6000. Execute the installation program. After the execution, open the account/SIP settings and add a new SIP account. Fill in the required information.
+After defining the phones in the Asterisk configuration file, it is time to configure the phone itself. In this example, we will show how to configure a free soft-phone — the SipPulse Softphone (download it from https://www.sippulse.com/produtos/softphone). Check your device’s manual to understand the parameters of your phone. Step 1: Configure the phone to use the extension 6000. Execute the installation program. After the execution, open the account/SIP settings and add a new SIP account. Fill in the required information.
 
 ![The SipPulse Softphone account screen — enter the Server (your Asterisk IP or domain), Username, Password, and Display Name, then choose the Transport (UDP, TCP, or TLS).](../images/softphone/sipphone-account.png){width=35%}
 
@@ -274,7 +274,7 @@ Display Name: 6000  User Name: 6000  Password: #MySecret1#7  Authorization User 
 
 ## Configuring the IAX devices
 
-IAX2 is a legacy protocol (see the *Legacy channels* chapter), and the SipPulse Softphone is SIP-only, so it cannot register an IAX account. If you need to test IAX2, use a client that still supports it (for example Zoiper, which historically offered IAX). Create a new IAX account,
+IAX2 is a legacy protocol (see the *Legacy channels* chapter), and the SipPulse Softphone is SIP-only, so it cannot register an IAX account. If you need to test IAX2, use a soft-phone that still supports it. Create a new IAX account,
 
 3. Select new IAX account. 4. Insert the related options for the 6003 phone and optionally for the 6004. 5. Save the configuration and check if the phone is registered using iax2 show peers. Important: Use one account for SIP and another one for IAX. If you want to configure the system to ring both IAX and SIP at the same time, we will show you how to do so in the dial plan section.
 

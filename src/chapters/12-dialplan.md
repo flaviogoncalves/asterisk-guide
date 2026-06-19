@@ -616,7 +616,7 @@ This lab was tested using a SIP softphone. 1. Edit `pjsip.conf` and add `mailbox
 exten=9008,n,voicemail(b4401)
 ```
 
-3. Go to the CLI > console and reload. 4. Go to the X-Lite > Mouse Right Button > SIP Account Settings > Properties > Voicemail and check the box ‘check voicemail’. 5. Dial 9008 and leave a message. 6. Observe the message icon on the phone.
+3. Go to the CLI > console and reload. 4. In the SipPulse Softphone, open the SIP account settings and enable voicemail (message-waiting) checking for the account. 5. Dial 9008 and leave a message. 6. Observe the message icon on the phone.
 
 ## Using the directory application
 

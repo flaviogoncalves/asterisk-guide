@@ -14,7 +14,7 @@ Usage:
   python3 book/translate/translate.py --lang es --only 05-part2.md
   python3 book/translate/translate.py --lang pt --force    # ignore cache
 """
-import argparse, hashlib, json, os, re, sys, urllib.request, urllib.error
+import argparse, hashlib, json, os, re, socket, sys, time, urllib.request, urllib.error
 
 
 def mask_code(md):
@@ -93,14 +93,24 @@ def translate(model, key, text):
     body = {"contents": [{"parts": [{"text": text}]}],
             "generationConfig": {"temperature": 0.2, "maxOutputTokens": 65536}}
     url = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent" % model
-    req = urllib.request.Request(url, data=json.dumps(body).encode(),
-                                 headers={"Content-Type": "application/json",
-                                          "x-goog-api-key": key})
-    try:
-        resp = urllib.request.urlopen(req, timeout=300)
-    except urllib.error.HTTPError as e:
-        sys.exit("ERROR: Gemini HTTP %s: %s" % (e.code, e.read().decode()[:500]))
-    data = json.loads(resp.read())
+    # Retry transient failures (read timeouts, 429/5xx) so one hiccup doesn't kill a whole run.
+    data = None
+    for attempt in range(5):
+        req = urllib.request.Request(url, data=json.dumps(body).encode(),
+                                     headers={"Content-Type": "application/json",
+                                              "x-goog-api-key": key})
+        try:
+            resp = urllib.request.urlopen(req, timeout=300)
+            data = json.loads(resp.read())
+            break
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 500, 502, 503, 504) and attempt < 4:
+                time.sleep(5 * (attempt + 1)); continue
+            sys.exit("ERROR: Gemini HTTP %s: %s" % (e.code, e.read().decode()[:500]))
+        except (socket.timeout, urllib.error.URLError) as e:
+            if attempt < 4:
+                time.sleep(5 * (attempt + 1)); continue
+            sys.exit("ERROR: Gemini request failed after retries: %s" % e)
     try:
         parts = data["candidates"][0]["content"]["parts"]
         return "".join(p.get("text", "") for p in parts)
@@ -139,33 +149,30 @@ def main():
             print("  = %s (cached)" % f); skipped += 1; continue
         print("  → %s (%s)" % (f, LANG_NAMES[a.lang]))
         masked, blocks = mask_code(src)
-        translated = translate(a.model, key, prompt_for(LANG_NAMES[a.lang], glossary, masked))
-        # Every real code span is a 【Ci】 sentinel, so the masked translation must contain no
-        # code-fence markers — any ``` the model emitted is spurious (and an odd one breaks
-        # rendering). Strip every ``` occurrence (line-start or mid-line) before restoring, so
-        # the translated chapter has exactly the source's code blocks.
-        translated = translated.replace("```", "")
-        # The model occasionally repeats a 【Ci】 sentinel (printing a code block twice). Keep the
-        # first occurrence of each so every block restores exactly once.
-        _seen = set()
-        def _dedup(m):
-            tok = m.group(0)
-            if tok in _seen:
-                return ""
-            _seen.add(tok)
-            return tok
-        translated = re.sub(r"【C\d+】", _dedup, translated)
-        missing = [i for i in range(len(blocks)) if ("【C%d】" % i) not in translated]
-        if missing:
-            print("    ! WARNING: %d code block(s) dropped by the model in %s (re-run to retry)"
-                  % (len(missing), f))
-        restored = unmask_code(translated, blocks)
-        if "【C" in restored:                       # a sentinel was mangled — code at risk
-            print("    ! WARNING: unrestored code sentinel in %s (skipping cache)" % f)
-            open(dst, "w").write(restored.rstrip() + "\n")
-            continue                                # don't cache a bad result; re-run will retry
+        prompt = prompt_for(LANG_NAMES[a.lang], glossary, masked)
+        # Translate, with up to 3 attempts: the model sometimes drops or duplicates a 【Ci】
+        # sentinel (a code block missing/doubled). Retry until every block restores exactly once.
+        restored, missing = None, ["?"]
+        for attempt in range(3):
+            translated = translate(a.model, key, prompt)
+            # All real code is a sentinel, so any ``` the model emitted is spurious — strip it.
+            translated = translated.replace("```", "")
+            # Keep only the first occurrence of each sentinel (the model sometimes repeats one).
+            _seen = set()
+            translated = re.sub(r"【C\d+】",
+                                lambda m: "" if m.group(0) in _seen else (_seen.add(m.group(0)) or m.group(0)),
+                                translated)
+            missing = [i for i in range(len(blocks)) if ("【C%d】" % i) not in translated]
+            restored = unmask_code(translated, blocks)
+            if not missing and "【C" not in restored:
+                break
+            print("    … attempt %d dropped %d block(s) in %s — retrying" % (attempt + 1, len(missing), f))
         open(dst, "w").write(restored.rstrip() + "\n")
-        manifest[f] = h; done += 1
+        done += 1
+        if missing or "【C" in restored:
+            print("    ! WARNING: %s still imperfect after retries — NOT caching" % f)
+            continue
+        manifest[f] = h
         json.dump(manifest, open(manifest_path, "w"), indent=0)
     print("Done: %d translated, %d cached → %s" % (done, skipped, out))
 

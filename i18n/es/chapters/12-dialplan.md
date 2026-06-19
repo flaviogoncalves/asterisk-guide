@@ -8,14 +8,14 @@ Al finalizar este capítulo, usted debería ser capaz de:
 
 - Simplificar sus entradas de extensiones
 - Abordar la seguridad del dialplan y filtrar extensiones
-- Recibir llamadas usando un menú IVR
+- Recibir llamadas mediante un menú IVR
 - Usar subrutinas para evitar reescrituras innecesarias
-- Implementar algo de seguridad en el dialplan usando “Include”
+- Implementar cierta seguridad en el dialplan usando “Include”
 - Implementar el desvío de llamadas (follow-me) usando AsteriskDB
-- Implementar comportamiento fuera de horario en su PBX
+- Implementar un comportamiento fuera de horario en su PBX
 - Usar el comando switch para transferir a otra PBX
-- Implementar el administrador de privacidad
-- Implementar voicemail
+- Implementar el gestor de privacidad
+- Implementar el correo de voz (voicemail)
 - Implementar un directorio corporativo
 
 ## Simplificando su dialplan
@@ -29,7 +29,7 @@ same  =>      n,Dial(PJSIP/005C2B313E22)
 
 ## Seguridad del dialplan
 
-Se descubrió una vulnerabilidad en el dialplan de Asterisk que permite a un usuario inyectar un nuevo canal y marcar un número en su dialplan. Supongamos que usted tiene la siguiente línea en su servidor `exten=>_X.,1,Dial(PJSIP/${EXTEN})` y algún usuario malintencionado marcó el número `3000&DAHDI/1/011551123456789` en el softphone. El protocolo SIP, por defecto, acepta cualquier carácter alfanumérico, por lo que la extensión marcada activará en realidad dos llamadas: una para el canal PJSIP/3000 y la otra para el canal DAHDI/011551123456789, que es un número internacional. Por lo tanto, cualquier usuario con acceso a una extensión puede marcar a cualquier parte del mundo. La forma más fácil de evitar este comportamiento es filtrar los números antes de llamar a la aplicación dial. La función FILTER() es muy útil para esto. Ejemplo:
+Se descubrió una vulnerabilidad en el dialplan de Asterisk que permite a un usuario inyectar un nuevo canal y marcar un número en su dialplan. Supongamos que usted tiene la siguiente línea en su servidor `exten=>_X.,1,Dial(PJSIP/${EXTEN})` y un usuario malintencionado marcó el número `3000&DAHDI/1/011551123456789` en el softphone. El protocolo SIP, por defecto, acepta cualquier carácter alfanumérico, por lo que la extensión marcada activará en realidad dos llamadas: una para el canal PJSIP/3000 y la otra para el canal DAHDI/011551123456789, que es un número internacional. Por lo tanto, cualquier usuario con acceso a una extensión puede marcar a cualquier parte del mundo. La forma más sencilla de evitar este comportamiento es filtrar los números antes de llamar a la aplicación dial. La función FILTER() es muy útil para esto. Ejemplo:
 
 ```
 exten=>_X.,1,DIAL(PJSIP/${FILTER(0-9,${EXTEN})})
@@ -37,13 +37,13 @@ exten=>_X.,1,DIAL(PJSIP/${FILTER(0-9,${EXTEN})})
 
 La aplicación filter le permitirá filtrar todos los caracteres del número marcado excepto los números del 0 al 9. Puede encontrar más información en el archivo README-SERIOUSLY.bestpractices.txt disponible en Asterisk.
 
-## Recibir llamadas usando un menú IVR.
+## Recibir llamadas usando un menú IVR
 
-En la última sección, usted recibió todas las llamadas usando DID o reenviándolas a la operadora. Ahora aprenderá cómo implementar un menú IVR, así como crear un servicio de operadora automática. Antes de entrar en detalles, examinemos algunas aplicaciones nuevas. Ponemos la salida del comando show application a continuación simplemente para facilitar la lectura a los usuarios. Puede obtener estas descripciones usando show application application_name. 1 http://downloads.asterisk.org/pub/security/AST-2010-002.pdf
+En la sección anterior, usted recibió todas las llamadas usando DID o reenviándolas al operador. Ahora aprenderá cómo implementar un menú IVR, así como crear un servicio de operadora automática. Antes de entrar en detalles, examinemos algunas aplicaciones nuevas. Ponemos la salida del comando show application a continuación simplemente para facilitar la lectura. Puede obtener estas descripciones usando show application nombre_de_aplicacion. 1 http://downloads.asterisk.org/pub/security/AST-2010-002.pdf
 
 ### La aplicación Background()
 
-Esta aplicación reproducirá la lista de archivos proporcionada mientras espera a que el canal que llama marque una extensión. Para seguir esperando dígitos después de que esta aplicación haya terminado de reproducir los archivos, se debe usar la aplicación WaitExten. La opción langoverride especifica explícitamente qué idioma intentar usar para los archivos de sonido solicitados. Cualquier contexto especificado será el contexto del dialplan que esta aplicación usará al salir hacia una extensión marcada. Si uno de los archivos de sonido solicitados no existe, el procesamiento de la llamada terminará. Opciones:
+Esta aplicación reproducirá la lista de archivos proporcionada mientras espera que el canal que llama marque una extensión. Para seguir esperando dígitos después de que esta aplicación haya terminado de reproducir los archivos, se debe usar la aplicación WaitExten. La opción langoverride especifica explícitamente qué idioma intentar usar para los archivos de sonido solicitados. Cualquier contexto que se especifique será el contexto del dialplan que esta aplicación usará al salir a una extensión marcada. Si uno de los archivos de sonido solicitados no existe, el procesamiento de la llamada terminará. Opciones:
 
 - s - Hace que la reproducción del mensaje se omita si el canal no está en estado 'up' (es decir, aún no ha sido contestado). Si esto sucede, la aplicación regresará inmediatamente.
 - n - No contesta el canal antes de reproducir los archivos.
@@ -55,7 +55,7 @@ Esta aplicación graba desde el canal en un nombre de archivo determinado. Si el
 
 ![10-dialplan-advanced-features figure 1](../images/10-dialplan-advanced-features-img01.png)
 
-- 'format' es el formato del tipo de archivo a grabar (wav, gsm, etc).
+- 'format' es el formato del tipo de archivo a grabar (wav, gsm, etc.).
 - 'silence' es el número de segundos de silencio permitidos antes de regresar.
 - 'maxduration' es la duración máxima de grabación en segundos; si falta o es cero, no hay máximo.
 - 'options' puede contener cualquiera de las siguientes letras:
@@ -63,14 +63,14 @@ Esta aplicación graba desde el canal en un nombre de archivo determinado. Si el
     - `n` — no contesta, pero graba de todos modos si la línea aún no ha sido contestada
     - `q` — silencioso (no reproduce un tono de pitido)
     - `s` — omite la grabación si la línea aún no ha sido contestada
-    - `t` — usa la tecla de terminación alternativa `*` (DTMF) en lugar de la predeterminada `#`
-    - `x` — ignora todas las teclas de terminación (DTMF) y sigue grabando hasta colgar
+    - `t` — usa la tecla terminadora alternativa `*` (DTMF) en lugar de la predeterminada `#`
+    - `x` — ignora todas las teclas terminadoras (DTMF) y continúa grabando hasta colgar
 
 Si el nombre de archivo contiene %d, estos caracteres serán reemplazados por un número incrementado en uno cada vez que se grabe el archivo. Use core show file formats para ver los formatos disponibles en su sistema. El usuario puede presionar # para terminar la grabación y continuar con la siguiente prioridad. Si el usuario cuelga durante una grabación, todos los datos se perderán y la aplicación terminará.
 
 ### La aplicación Playback()
 
-Esta aplicación reproduce los nombres de archivo proporcionados (no incluya la extensión). Las opciones también pueden incluirse después de un símbolo de tubería (pipe). La opción 'skip' hace que la reproducción del mensaje se omita si el canal no está en estado 'up' (es decir, aún no ha sido contestado).
+Esta aplicación reproduce los nombres de archivo proporcionados (no incluya la extensión). Las opciones también pueden incluirse después de un símbolo de barra vertical (pipe). La opción 'skip' hace que la reproducción del mensaje se omita si el canal no está en estado 'up' (es decir, aún no ha sido contestado).
 
 ![10-dialplan-advanced-features figure 2](../images/10-dialplan-advanced-features-img02.png)
 
@@ -84,9 +84,9 @@ Si se especifica 'skip', la aplicación regresará inmediatamente si el canal no
 
 ### La aplicación Read()
 
-Esta aplicación lee un número predeterminado de dígitos de cadena, un cierto número de veces, desde el usuario hacia la variable dada.
+Esta aplicación lee un número predeterminado de dígitos de cadena, un cierto número de veces, del usuario hacia la variable dada.
 
-- filename -- archivo a reproducir antes de leer los dígitos o el tono con la opción i
+- filename -- archivo a reproducir antes de leer dígitos o tono con la opción i
 - maxdigits -- número máximo aceptable de dígitos. Deja de leer después de que se hayan ingresado maxdigits (sin requerir que el usuario presione la tecla #). El valor predeterminado es 0 - sin límite - para esperar a que el usuario presione la tecla #. Cualquier valor por debajo de 0 significa lo mismo. El valor máximo aceptado es 255.
 
 ![10-dialplan-advanced-features figure 4](../images/10-dialplan-advanced-features-img04.png)
@@ -98,22 +98,22 @@ Esta aplicación lee un número predeterminado de dígitos de cadena, un cierto 
     - `i` — reproduce filename como un tono de indicación desde su `indications.conf`
     - `n` — lee dígitos incluso si la línea no está activa
 - attempts -- si es mayor que 1, el número de intentos que se realizarán en caso de que no se ingresen datos
-- timeout -- Un número entero de segundos a esperar por una respuesta de dígito. Si es mayor que 0, ese valor anulará el tiempo de espera predeterminado.
+- timeout -- Un número entero de segundos para esperar una respuesta de dígito. Si es mayor que 0, ese valor anulará el tiempo de espera predeterminado.
 
 La aplicación read() debería desconectarse si la función falla o genera errores.
 
 ### La aplicación Gotoif()
 
-Esta aplicación hará que el canal que llama salte a la ubicación especificada en el dialplan según la evaluación de la condición dada. El canal continuará en labeliftrue si la condición es verdadera, o en 'labeliffalse' si la condición es falsa. Las etiquetas se especifican con la misma sintaxis que la utilizada dentro de la aplicación Goto. Si se omite la etiqueta elegida por la condición, no se realiza ningún salto; más bien, la ejecución continúa con la siguiente prioridad en el dialplan.
+Esta aplicación hará que el canal que llama salte a la ubicación especificada en el dialplan basándose en la evaluación de la condición dada. El canal continuará en labeliftrue si la condición es verdadera, o en 'labeliffalse' si la condición es falsa. Las etiquetas se especifican con la misma sintaxis que la utilizada dentro de la aplicación Goto. Si se omite la etiqueta elegida por la condición, no se realiza ningún salto; más bien, la ejecución continúa con la siguiente prioridad en el dialplan.
 
 ### Laboratorio: Construyendo un menú IVR paso a paso
 
-Creemos un menú IVR con la siguiente funcionalidad. Cuando se marca, el IVR reproduce un archivo de audio con el mensaje “Bienvenido a XYZ Corporation; presione 1 para ventas, 2 para soporte técnico, 3 para capacitación, o espere para hablar con un representante.” Los dígitos enrutan al llamante de la siguiente manera:
+Creemos un menú IVR con la siguiente funcionalidad. Cuando se marca, el IVR reproduce un archivo de audio con el mensaje “Bienvenido a XYZ Corporation; presione 1 para ventas, 2 para soporte técnico, 3 para capacitación, o espere para hablar con un representante”. Los dígitos enrutan a la persona que llama de la siguiente manera:
 
 - `1` — transferir a ventas (PJSIP/4001)
 - `2` — transferir a soporte técnico (PJSIP/4002)
 - `3` — transferir a capacitación (PJSIP/4003)
-- Ningún dígito presionado — transferir a la operadora (PJSIP/4000)
+- Ningún dígito presionado — transferir al operador (PJSIP/4000)
 
 **Paso 1 – Grabar los mensajes**
 
@@ -160,7 +160,7 @@ Puede enviar el procesamiento del dialplan a otro servidor usando el comando swi
 
 ## Orden de procesamiento del dialplan
 
-Cuando Asterisk recibe una llamada entrante, busca en el contexto definido por el canal. En algunos casos, si más de un patrón coincide con el número marcado, Asterisk no puede procesar la llamada de la manera exacta que usted piensa que debería. Puede ver el orden de coincidencia usando el comando CLI dialplan show. Ejemplo: Digamos que desea marcar 912 para enrutar a un tronco analógico (DAHDI/1) y todos los demás números que comienzan con 9 a otro tronco analógico (DAHDI/2). Usted escribiría algo como:
+Cuando Asterisk recibe una llamada entrante, busca en el contexto definido por el canal. En algunos casos, si más de un patrón coincide con el número marcado, Asterisk no puede procesar la llamada de la manera exacta que usted cree que debería. Puede ver el orden de coincidencia usando el comando CLI dialplan show. Ejemplo: Digamos que desea marcar 912 para enrutar a un trunk analógico (DAHDI/1) y todos los demás números que comienzan con 9 a otro trunk analógico (DAHDI/2). Usted escribiría algo como:
 
 ```
 [example]
@@ -172,7 +172,7 @@ Si dos patrones coinciden con una extensión, puede controlar qué extensión se
 
 ## La sentencia #INCLUDE
 
-¿Deberíamos usar un archivo grande o varios archivos? Puede usar la sentencia #include <filename> para incluir otros archivos en su extensions.conf. Por ejemplo, podríamos crear un users.conf para usuarios locales y services.conf para servicios especiales. Tenga cuidado de no confundir #include <filename> con el
+¿Deberíamos usar un archivo grande o varios archivos? Puede usar la sentencia #include <filename> para incluir otros archivos en su extensions.conf. Por ejemplo, podríamos crear un users.conf para usuarios locales y services.conf para servicios especiales. Tenga cuidado de no confundir #include <filename> con la
 
 ```
 include=>context statement.
@@ -190,7 +190,7 @@ El comando GOSUB ha estado disponible desde Asterisk 1.6 y admite el paso de arg
 
 ### Creando la subrutina
 
-La definición es muy similar. Mire la subrutina a continuación definida para voicemail con el nombre stdexten (elija el nombre que desee). Después de llamar al comando Dial con el primer argumento (nombre del canal), verificamos la ${DIALSTATUS} para enviar la lógica de la llamada al siguiente paso.
+La definición es muy similar. Mire la subrutina a continuación definida para voicemail con el nombre stdexten (elija el nombre que desee). Después de llamar al comando Dial con el primer argumento (nombre del canal), verificamos ${DIALSTATUS} para enviar la lógica de la llamada al siguiente paso.
 
 ```
 [stdexten]
@@ -219,9 +219,9 @@ exten=>6003,1,Gosub(stdexten,s,1(PJSIP/6003,${EXTEN}))
 
 ## Usando Asterisk DB
 
-Para implementar el desvío de llamadas y las listas negras, necesitamos alguna forma de almacenar y restaurar datos. Afortunadamente, Asterisk proporciona un mecanismo para almacenar y recuperar datos de una base de datos integrada llamada AstDB. En el Asterisk moderno (incluyendo Asterisk 22), AstDB está respaldada por **SQLite3** (el archivo `/var/lib/asterisk/astdb.sqlite3`); las versiones anteriores usaban Berkeley DB v1. Esto es similar a la base de datos del registro de Windows usando el concepto jerárquico de familia y claves. Los datos persisten entre reinicios de Asterisk.
+Para implementar el desvío de llamadas y las listas negras, necesitamos alguna forma de almacenar y restaurar datos. Afortunadamente, Asterisk proporciona un mecanismo para almacenar y recuperar datos de una base de datos incorporada llamada AstDB. En el Asterisk moderno (incluyendo Asterisk 22), AstDB está respaldado por **SQLite3** (el archivo `/var/lib/asterisk/astdb.sqlite3`); las versiones anteriores usaban Berkeley DB v1. Esto es similar a la base de datos del registro de Windows usando el concepto jerárquico de familia y claves. Los datos persisten entre reinicios de Asterisk.
 
-> **[Nota de la 2ª ed.]** Desde Asterisk 10, AstDB se almacena en SQLite3 (`astdb.sqlite3`), no en el archivo heredado Berkeley DB v1 utilizado por Asterisk 1.8 y versiones anteriores. La API de familia/clave no ha cambiado.
+> **[Nota de la 2.ª ed.]** Desde Asterisk 10, AstDB se almacena en SQLite3 (`astdb.sqlite3`), no en el archivo heredado Berkeley DB v1 utilizado por Asterisk 1.8 y versiones anteriores. La API de familia/clave no ha cambiado.
 
 ### Funciones, aplicaciones y comandos CLI
 
@@ -243,7 +243,7 @@ Algunas aplicaciones se pueden usar para manipular AstDB:
 - DB_DELETE(<family/key>) — función que devuelve y elimina una clave (la antigua aplicación `DBdel()` fue eliminada)
 - DBdeltree(<family>)
 
-> **[Nota de la 2ª ed.]** La aplicación `DBdel()` ya no existe en Asterisk 22. Elimine una sola clave con la función de dialplan `DB_DELETE()` — por ejemplo, `Set(x=${DB_DELETE(family/key)})` o, como una operación de escritura, `Set(DB_DELETE(family/key)=)`. `DBdeltree()` (eliminar una familia/subárbol completo) sigue siendo una aplicación.
+> **[Nota de la 2.ª ed.]** La aplicación `DBdel()` ya no existe en Asterisk 22. Elimine una sola clave con la función de dialplan `DB_DELETE()` — p. ej., `Set(x=${DB_DELETE(family/key)})` o, como operación de escritura, `Set(DB_DELETE(family/key)=)`. `DBdeltree()` (eliminar una familia/subárbol completo) sigue siendo una aplicación.
 
 Es posible usar comandos CLI para establecer y eliminar claves también:
 
@@ -278,7 +278,7 @@ Use el comando CLI database show para ver las familias, claves y valores agregad
 
 ![10-dialplan-advanced-features figure 10](../images/10-dialplan-advanced-features-img10.png)
 
-### Desvío de llamadas, lista negra, DND
+### Desvío de llamadas. Lista negra, DND
 
 La subrutina anterior verifica si la base de datos contiene los pares clave:valor correspondientes a CFIM, CFBS o DND, y luego los maneja adecuadamente. La subrutina follow llama a la rutina de marcado:
 
@@ -288,7 +288,7 @@ exten=_4XXX,1,gosub(stdexten,s,1(${EXTEN}))
 
 ## Usando una lista negra
 
-> **[Nota de la 2ª ed.]** La aplicación `LookupBlacklist()` fue **eliminada** (desapareció con el antiguo mecanismo de "salto de prioridad+101" mucho antes de Asterisk 22 — confirmado que no está registrada en el laboratorio 22.10.0). Implemente una lista negra en su lugar con las funciones `DB()`/`DB_EXISTS()` más `GotoIf`, por ejemplo:
+> **[Nota de la 2.ª ed.]** La aplicación `LookupBlacklist()` fue **eliminada** (desapareció con el antiguo mecanismo de "salto de prioridad+101" mucho antes de Asterisk 22 — confirmado que no está registrada en el laboratorio 22.10.0). Implemente una lista negra en su lugar con las funciones `DB()`/`DB_EXISTS()` más `GotoIf`, por ejemplo:
 >
 > ```
 > exten => s,1,GotoIf($[${DB_EXISTS(blacklist/${CALLERID(num)})}]?blocked,s,1)
@@ -298,7 +298,7 @@ exten=_4XXX,1,gosub(stdexten,s,1(${EXTEN}))
 >
 > El ejemplo a continuación se conserva para referencia histórica; la opción `j` y el salto de prioridad `n+101` ya no existen.
 
-Para crear una lista negra, usamos la aplicación LookupBlacklist(). La aplicación verifica el nombre/número en el identificador de llamadas. Si el número no se encuentra, la aplicación establece la variable $LOOKUPBLSTATUS en NOTFOUND. Si se encuentra el número, la aplicación establece la variable en FOUND. Puede usar la opción “j” en la aplicación para usar el comportamiento antiguo (1.0), saltando 101 posiciones si se encuentra el número/nombre. Ejemplo:
+Para crear una lista negra, usamos la aplicación LookupBlacklist(). La aplicación verifica el nombre/número en el identificador de llamadas (caller ID). Si no se encuentra el número, la aplicación establece la variable $LOOKUPBLSTATUS en NOTFOUND. Si se encuentra el número, la aplicación establece la variable en FOUND. Puede usar la opción “j” en la aplicación para usar el comportamiento antiguo (1.0), saltando 101 posiciones si se encuentra el número/nombre. Ejemplo:
 
 ```
 [incoming]
@@ -312,7 +312,7 @@ exten => s,2,Playback(blockedcall)
 exten => s,3,Hangup()
 ```
 
-Para insertar un número en la lista negra, podemos usar el mismo recurso que antes, usando *31* seguido de las extensiones a incluir en la lista negra. Para eliminar un número de la lista negra, debe usar #31# seguido del número a eliminar.
+Para insertar un número en la lista negra, podemos usar el mismo recurso que antes, usando *31* seguido de las extensiones que se incluirán en la lista negra. Para eliminar un número de la lista negra, debe usar #31# seguido del número que se eliminará.
 
 ```
 [apps]
@@ -334,7 +334,7 @@ Nota: Cualquier valor puede asociarse con la clave. La aplicación de lista negr
 CLI>database del blacklist <name/number>
 ```
 
-## Contextos basados en tiempo
+## Contextos basados en el tiempo
 
 En la siguiente figura, tenemos un dialplan con tres contextos. El contexto [incoming] es donde se reciben habitualmente las llamadas. Hemos incluido cuatro líneas que cambian el comportamiento dependiendo de la hora del sistema, como se ejemplifica a continuación:
 
@@ -342,15 +342,15 @@ En la siguiente figura, tenemos un dialplan con tres contextos. El contexto [inc
 include => context,<times>,<weekdays>,<mdays>,<months>
 ```
 
-> **[Nota de la 2ª ed.]** El Asterisk moderno (incl. 22) separa los campos de time-include con **comas**, no con tuberías. La forma de tubería heredada (`include => context|times|weekdays|mdays|months`) se analiza como un nombre de contexto literal simple y falla silenciosamente al aplicar cualquier condición de tiempo. Verificado en el laboratorio de Asterisk 22.10.0.
+> **[Nota de la 2.ª ed.]** El Asterisk moderno (incl. 22) separa los campos de time-include con **comas**, no con barras verticales. La forma heredada de barra vertical (`include => context|times|weekdays|mdays|months`) se analiza como un nombre de contexto literal simple y falla silenciosamente al aplicar cualquier condición de tiempo. Verificado en el laboratorio de Asterisk 22.10.0.
 
-Durante el horario laboral regular, el procesamiento será redirigido al mainmenu, donde probablemente llamará a un IVR para manejar la llamada entrante. Si la llamada ocurre fuera del horario laboral, llamará a la extensión de seguridad definida en la variable ${SECURITY}. Si la extensión de seguridad no responde la llamada, se enviará al voicemail de la operadora.
+Durante el horario laboral habitual, el procesamiento se redirigirá al mainmenu, donde probablemente llamará a un IVR para manejar la llamada entrante. Si la llamada ocurre fuera del horario laboral, llamará a la extensión de seguridad definida en la variable ${SECURITY}. Si la extensión de seguridad no responde la llamada, se enviará al correo de voz del operador.
 
 ![10-dialplan-advanced-features figure 11](../images/10-dialplan-advanced-features-img11.png)
 
 ![10-dialplan-advanced-features figure 12](../images/10-dialplan-advanced-features-img12.png)
 
-## Mensajes basados en tiempo usando gotoiftime()
+## Mensajes basados en el tiempo usando gotoiftime()
 
 La sintaxis de gotoiftime() se muestra a continuación.
 
@@ -358,19 +358,19 @@ La sintaxis de gotoiftime() se muestra a continuación.
 GotoIfTime(<timerange>,<daysofweek>,<daysofmonth>,<months>[,<timezone>]?[[context,]extension,]pri)
 ```
 
-> **[Nota de la 2ª ed.]** En Asterisk 22, el separador de campos es una **coma**, no una tubería (la forma de tubería fue desaprobada en Asterisk 1.6). La sintaxis documentada actual es `GotoIfTime(times,weekdays,mdays,months[,timezone]?[labeliftrue][:labeliffalse])`. Se admite un campo opcional `timezone`.
+> **[Nota de la 2.ª ed.]** En Asterisk 22, el separador de campos es una **coma**, no una barra vertical (la forma de barra vertical fue desaprobada en Asterisk 1.6). La sintaxis documentada actual es `GotoIfTime(times,weekdays,mdays,months[,timezone]?[labeliftrue][:labeliffalse])`. Se admite un campo opcional `timezone`.
 
-Esta aplicación puede reemplazar el contexto basado en tiempo y parece más fácil de entender y leer. Puede especificar el tiempo de la siguiente manera:
+Esta aplicación puede reemplazar el contexto basado en el tiempo y parece más fácil de entender y leer. Puede especificar el tiempo de la siguiente manera:
 
-- <timerange>=<hour>':'<minute>'-'<hour>':'<minute> |"*"
-- <daysofweek>=<dayname>|<dayname>'-'<dayname>|"*"
-- <dayname>="sun"|"mon"|"tue"|"wed"|"thu"|"fri"|"sat"
-- <daysofmonth>=<daynum>|<daynum>'-'<daynum> |"*"
-- <daynum>=número del 1 al 31
-- <hour>=número del 0 al 23
-- <minute>=número del 0 al 59
-- <months>=<monthname>|<monthname>'-'<monthname>|"*"
-- <monthname>="jan"|"feb"|"mar"|"apr"|"may"|"jun"|"jul"|"aug"|"sep"|"oct"|"nov"|"dec"
+- <timerange>=<hora>':'<minuto>'-'<hora>':'<minuto> |"*"
+- <diasdelasemana>=<nombre_dia>|<nombre_dia>'-'<nombre_dia>|"*"
+- <nombre_dia>="sun"|"mon"|"tue"|"wed"|"thu"|"fri"|"sat"
+- <diasdelmes>=<num_dia>|<num_dia>'-'<num_dia> |"*"
+- <num_dia>=número del 1 al 31
+- <hora>=número del 0 al 23
+- <minuto>=número del 0 al 59
+- <meses>=<nombre_mes>|<nombre_mes>'-'<nombre_mes>|"*"
+- <nombre_mes>="jan"|"feb"|"mar"|"apr"|"may"|"jun"|"jul"|"aug"|"sep"|"oct"|"nov"|"dec"
 
 Los nombres de los días y meses no distinguen entre mayúsculas y minúsculas.
 
@@ -382,7 +382,7 @@ La sentencia anterior transfiere el procesamiento a la extensión s en el contex
 
 ## Usando DISA para obtener un nuevo tono de marcado
 
-DISA, o “direct inward system access”, es un sistema que permite a los usuarios recibir un segundo tono de marcado. Permite a los usuarios marcar de nuevo a otro destino. A menudo es utilizado por técnicos cuando realizan llamadas de larga distancia para soporte técnico los fines de semana; en lugar de marcar desde sus hogares directamente al destino, llaman al número DISA de la oficina, reciben un tono de marcado y luego llaman al destino. Los cargos de larga distancia corren a cargo de la empresa en lugar del teléfono de casa.
+DISA, o “direct inward system access”, es un sistema que permite a los usuarios recibir un segundo tono de marcado. Permite a los usuarios marcar de nuevo a otro destino. A menudo es utilizado por técnicos cuando realizan llamadas de larga distancia para soporte técnico los fines de semana; en lugar de marcar desde sus hogares directamente al destino, llaman al número DISA de la oficina, reciben un tono de marcado y luego llaman al destino. Los cargos de larga distancia corren a cargo de la empresa en lugar del teléfono del hogar.
 
 ```
 DISA(passcode[,context])
@@ -395,13 +395,13 @@ Ejemplo:
 exten => s,1,DISA(no-password,default)
 ```
 
-Usando la sentencia anterior, el usuario marca a la PBX y, sin requerir ninguna contraseña, recibe un tono de marcado. Cualquier llamada que use DISA será procesada usando el contexto `default`. Los argumentos para esta aplicación incluyen una contraseña global o una contraseña individual dentro de un archivo. Si no se especifica ningún contexto, se asume el contexto `disa`. Si usa un archivo de contraseña, se debe especificar la ruta completa. También se puede especificar un identificador de llamadas para la marcación externa DISA. Ejemplo:
+Usando la sentencia anterior, el usuario marca la PBX y, sin requerir ninguna contraseña, recibe un tono de marcado. Cualquier llamada que use DISA será procesada usando el contexto `default`. Los argumentos para esta aplicación incluyen una contraseña global o una contraseña individual dentro de un archivo. Si no se especifica ningún contexto, se asume el contexto `disa`. Si usa un archivo de contraseña, se debe especificar la ruta completa. También se puede especificar un identificador de llamadas para la marcación externa DISA. Ejemplo:
 
 ```
 numeric-passcode,context,"Flavio" <4830258590>
 ```
 
-> **[Nota de la 2ª ed.]** Asterisk 22 usa comas como separadores de argumentos (la forma de tubería fue desaprobada en 1.6). La sintaxis completa es `DISA(passcode|filename[,context[,cid[,mailbox[@context][,options]]]])`, y el contexto predeterminado cuando no se da ninguno es `disa` (no "DISA"). Verificado con `core show application DISA` en el laboratorio de Asterisk 22.10.0.
+> **[Nota de la 2.ª ed.]** Asterisk 22 usa comas como separadores de argumentos (la forma de barra vertical fue desaprobada en 1.6). La sintaxis completa es `DISA(passcode|filename[,context[,cid[,mailbox[@context][,options]]]])`, y el contexto predeterminado cuando no se da ninguno es `disa` (no "DISA"). Verificado con `core show application DISA` en el laboratorio de Asterisk 22.10.0.
 
 ## Limitar llamadas simultáneas
 
@@ -418,16 +418,16 @@ exten=>_214X,n,hangup
 
 ## Voicemail
 
-Voicemail es un sistema de respuesta telefónica computarizado que graba mensajes de voz entrantes, guardándolos en el disco o enviándolos por correo electrónico. A veces tiene un directorio donde puede buscar buzones de voz por nombre. En el pasado, los sistemas de voicemail eran muy caros. Ahora, con la telefonía IP, el voicemail se está convirtiendo en una característica estándar.
+El correo de voz es un sistema de respuesta telefónica computarizado que graba mensajes de voz entrantes, guardándolos en el disco o enviándolos por correo electrónico. A veces tiene un directorio donde puede buscar buzones de voz por nombre. En el pasado, los sistemas de correo de voz eran muy caros. Ahora, con la telefonía IP, el correo de voz se está convirtiendo en una característica estándar.
 
-Para configurar el voicemail, debe seguir los siguientes pasos.
+Para configurar el correo de voz, debe seguir los siguientes pasos.
 
 **Paso 1: Edite `voicemail.conf` y establezca los parámetros generales.**
 
-- `format` — códec utilizado para grabar el mensaje (ej., wav49, wav, gsm)
+- `format` — códec utilizado para grabar el mensaje (p. ej., wav49, wav, gsm)
 - `serveremail` — de quién debería parecer que proviene la notificación por correo electrónico
 - `maxmsg` — número máximo de mensajes en el buzón; después de este umbral, los mensajes se descartan
-- `maxsecs` — duración máxima de un mensaje de voz, en segundos
+- `maxsecs` — duración máxima de un mensaje de correo de voz, en segundos
 - `minsecs` — duración mínima de un mensaje, en segundos; por debajo de este umbral, no se graba ningún mensaje
 - `maxsilence` — cuántos segundos de silencio tratar como el final del mensaje
 
@@ -444,13 +444,13 @@ mailboxID => pincode,fullname,email,pager-email,options
 Los campos son:
 
 - **MailboxID** — generalmente el número de extensión
-- **Pincode** — contraseña para acceder al sistema de voicemail
+- **Pincode** — contraseña para acceder al sistema de correo de voz
 - **Full name** — utilizado por la aplicación de directorio
-- **E-mail** — dirección para la notificación de voicemail
+- **E-mail** — dirección para la notificación de correo de voz
 - **Pager e-mail** — dirección para la notificación a través de una puerta de enlace SMS o buscapersonas
 - **Options** — opciones por buzón (las mismas opciones que en `[general]`, pero aplicadas a este buzón)
 
-Voicemail tiene varias opciones que controlan su comportamiento. Por ahora, nos ceñiremos a las opciones predeterminadas y nos concentraremos en la definición del buzón. Después de la sección `[general]` en el archivo, comienza a configurar los IDs de buzón, cada uno en su propio contexto. Ejemplo:
+El correo de voz tiene varias opciones que controlan su comportamiento. Por ahora, nos ceñiremos a las opciones predeterminadas y nos concentraremos en la definición del buzón. Después de la sección `[general]` en el archivo, comienza a configurar los ID de buzón, cada uno en su propio contexto. Ejemplo:
 
 ```
 [general]
@@ -462,13 +462,13 @@ Por favor, verifique las opciones avanzadas en el archivo `voicemail.conf`.
 
 **Paso 3: Configure el archivo `extensions.conf`.**
 
-A continuación, tiene las instrucciones para crear la subrutina y la llamada que implementan el voicemail en `extensions.conf`. Usamos el valor de la variable de canal `${DIALSTATUS}` para redirigir el flujo de la llamada al menú de voicemail adecuado.
+A continuación, tiene las instrucciones para crear la subrutina y la llamada que implementan el correo de voz en `extensions.conf`. Usamos el valor de la variable de canal `${DIALSTATUS}` para redirigir el flujo de llamadas al menú de correo de voz adecuado.
 
 ### Subrutina de Voicemail
 
 ## Usando la aplicación Voicemailmain()
 
-La aplicación voicemailmain() se utiliza para configurar el buzón de voz. Los usuarios pueden marcar la aplicación, grabar su saludo y escuchar su voicemail. Para llamar a la aplicación en el dialplan, use:
+La aplicación voicemailmain() se utiliza para configurar el buzón de correo de voz. Los usuarios pueden marcar la aplicación, grabar su saludo y escuchar su correo de voz. Para llamar a la aplicación en el dialplan, use:
 
 ```
 exten=>9000,1,VoiceMailMain()
@@ -520,27 +520,27 @@ options
     P: Mark message as 'PRIORITY'.
 ```
 
-En todos los casos, el archivo beep.gsm se reproducirá antes de que comience la grabación. Los mensajes de voicemail se almacenarán en el directorio inbox.
+En todos los casos, el archivo beep.gsm se reproducirá antes de que comience la grabación. Los mensajes de correo de voz se almacenarán en el directorio inbox.
 
 ```
 /var/spool/asterisk/voicemail/context/boxnumber/INBOX/
 ```
 
-Si un llamante presiona 0 (cero) durante el anuncio, será transferido a la extensión ‘o’ (out) en el contexto actual de voicemail. Esto se puede usar para salir a la operadora. Si durante la grabación el llamante presiona # o el límite de silencio se agota, la grabación se detiene y la llamada pasa a la siguiente prioridad. Asegúrese de manejar la llamada después de que se reproduzca el voicemail, como se muestra a continuación.
+Si una persona que llama presiona 0 (cero) durante el anuncio, se moverá a la extensión ‘o’ (out) en el contexto actual de voicemail. Esto se puede usar para salir al operador. Si durante la grabación la persona que llama presiona # o el límite de silencio se agota, la grabación se detiene y la llamada pasa a la siguiente prioridad. Asegúrese de manejar la llamada después de que se reproduzca el correo de voz, como se muestra a continuación.
 
 ```
 exten=>somewhere,5,Playback(Goodbye)
 exten=>somewhere,6,Hangup
 ```
 
-### Etiquetar mensajes de voicemail como urgentes
+### Etiquetar mensajes de correo de voz como urgentes
 
 Puede etiquetar algunos mensajes como “urgentes”. Hay dos métodos disponibles para esto:
 
 - Pase la opción ‘U’ en la aplicación voicemail()
 - Especifique review=yes en el archivo voicemail.conf. Si usa esta opción, el usuario podrá etiquetar el mensaje como urgente después de grabar las instrucciones de voz.
 
-## Enviar voicemail al correo electrónico
+## Enviar correo de voz a correo electrónico
 
 En algunos casos (como el mío), simplemente no usamos la aplicación voicemailmain() para leer el correo. Es más simple y práctico enviar todos los mensajes al correo electrónico con el audio adjunto. Usando los parámetros ‘attach’ y ‘delete’, puede enviar todos los correos al correo electrónico y eliminarlos del buzón.
 
@@ -549,7 +549,7 @@ attach=yes
 delete=yes
 ```
 
-Para enviar voicemail al correo electrónico, la aplicación de voicemail utiliza el agente de transferencia de mensajes (MTA), un componente de su sistema operativo. Debian usa Exim como MTA. La aplicación que envía el correo electrónico se define en el parámetro ‘mailcmd’.
+Para enviar el correo de voz al correo electrónico, la aplicación de correo de voz utiliza el agente de transferencia de mensajes (MTA), un componente de su sistema operativo. Debian usa Exim como MTA. La aplicación que envía el correo electrónico se define en el parámetro ‘mailcmd’.
 
 ```
 mailcmd =/usr/sbin/sendmail -t
@@ -561,7 +561,7 @@ En la distribución Debian de Linux, el MTA es Exim. Para configurar Exim en Deb
 dpkg-reconfigure exim4-config
 ```
 
-Puede elegir hacer que su MTA envíe un correo electrónico directamente a través de SMTP o un smarthost (generalmente el servidor de correo de su empresa). Verifique con su administrador de correo electrónico la mejor manera de enviar correos electrónicos desde el servidor Asterisk a su servidor de correo electrónico.
+Puede optar por hacer que su MTA envíe un correo electrónico directamente a través de SMTP o un smarthost (generalmente el servidor de correo de su empresa). Verifique con su administrador de correo electrónico la mejor manera de enviar correos electrónicos desde el servidor Asterisk a su servidor de correo electrónico.
 
 ## Personalizar el mensaje de correo electrónico
 
@@ -576,7 +576,7 @@ Puede controlar cómo se envían los mensajes configurando las siguientes variab
 - VM_CALLERID
 - VM_DATE
 
-El cuerpo y el asunto del correo electrónico se construyen a partir de una plantilla que usted establece en la sección `[general]` de `voicemail.conf`. Puede modificar tanto el cuerpo como el asunto, pero el límite de tamaño del mensaje es de 512 bytes. En la plantilla, `\n` inserta una nueva línea y `\t` inserta una tabulación.
+El cuerpo y el asunto del correo electrónico se crean a partir de una plantilla que usted configura en la sección `[general]` de `voicemail.conf`. Puede modificar tanto el cuerpo como el asunto, pero el límite de tamaño del mensaje es de 512 bytes. En la plantilla, `\n` inserta una nueva línea y `\t` inserta una tabulación.
 
 El ejemplo `emailsubject` a continuación es sencillo. El ejemplo `emailbody` es muy cercano al predeterminado; el predeterminado muestra solo el CIDNAME cuando no es nulo, de lo contrario el CIDNUM, o "an unknown caller" cuando ambos son nulos.
 
@@ -594,33 +594,33 @@ Hay un script de Perl en la distribución fuente llamado `vmail.cgi`, ubicado en
 make webvmail
 ```
 
-El objetivo `make webvmail` instala el script (setuid root) en el directorio CGI de su servidor web (`HTTP_CGIDIR`) y copia las imágenes de soporte de `images/*.gif` a `HTTP_DOCSDIR/_asterisk` (por defecto `/var/www/html/_asterisk`). Si esas rutas no coinciden con el diseño de su servidor web, edite las variables `HTTP_CGIDIR` y `HTTP_DOCSDIR` en el `Makefile` de nivel superior antes de ejecutar el objetivo.
+El objetivo `make webvmail` instala el script (setuid root) en el directorio CGI de su servidor web (`HTTP_CGIDIR`) y copia las imágenes de soporte desde `images/*.gif` a `HTTP_DOCSDIR/_asterisk` (por defecto `/var/www/html/_asterisk`). Si esas rutas no coinciden con el diseño de su servidor web, edite las variables `HTTP_CGIDIR` y `HTTP_DOCSDIR` en el `Makefile` de nivel superior antes de ejecutar el objetivo.
 
 ## Notificación de Voicemail
 
-Puede configurar el voicemail para enviar un mensaje de notificación a su teléfono cuando tenga un nuevo voicemail. En Asterisk 22, la indicación de mensaje en espera (MWI) funciona con teléfonos PJSIP y SIP, así como con teléfonos DAHDI. Para indicar un voicemail no escuchado, una luz indicadora puede parpadear o el teléfono puede reproducir un tono de obturador. Debe configurar el buzón en el archivo de configuración del canal correspondiente. Ejemplo: `pjsip.conf` (en la sección endpoint):
+Puede configurar el correo de voz para enviar un mensaje de notificación a su teléfono cuando tenga un nuevo correo de voz. En Asterisk 22, la indicación de mensaje en espera (MWI) funciona con teléfonos PJSIP y SIP, así como con teléfonos DAHDI. Para indicar un correo de voz no escuchado, una luz indicadora puede parpadear o el teléfono puede reproducir un tono de obturador. Debe configurar el buzón en el archivo de configuración del canal correspondiente. Ejemplo: `pjsip.conf` (en la sección endpoint):
 
 ```
 mailboxes=8590
 ```
 
-> **[Nota de la 2ª ed.]** En PJSIP, la sugerencia de buzón se establece con la opción `mailboxes` dentro de la sección `[endpoint]` de `pjsip.conf`, en lugar de `mailbox=` en `sip.conf`. Las suscripciones MWI son manejadas por `res_pjsip_mwi`. Verifique la sintaxis de configuración exacta para Asterisk 22.
+> **[Nota de la 2.ª ed.]** En PJSIP, la sugerencia de buzón se establece con la opción `mailboxes` dentro de la sección `[endpoint]` de `pjsip.conf`, en lugar de `mailbox=` en `sip.conf`. Las suscripciones MWI son manejadas por `res_pjsip_mwi`. Verifique la sintaxis de configuración exacta para Asterisk 22.
 
-![La interfaz web de Comedian Mail (`vmail.cgi`): el inicio de sesión de Asterisk Web-Voicemail — ingrese su buzón y contraseña para reproducir, guardar, reenviar o eliminar voicemail desde un navegador. Todavía se envía con Asterisk 22 y se instala con `make webvmail`.](../images/10-dialplan-advanced-features-img14.png)
+![La interfaz web de Comedian Mail (`vmail.cgi`): el inicio de sesión de Asterisk Web-Voicemail — ingrese su buzón y contraseña para reproducir, guardar, reenviar o eliminar el correo de voz desde un navegador. Todavía se envía con Asterisk 22 y se instala con `make webvmail`.](../images/10-dialplan-advanced-features-img14.png)
 
 ### Laboratorio: Notificación de mensajes en el teléfono
 
-Este laboratorio se probó usando un softphone SIP. 1. Edite `pjsip.conf` y agregue `mailboxes=4401` en la sección endpoint para el dispositivo llamado 4401. 2. Edite el extensions.conf y cree una extensión para grabar un voicemail en las extensiones 4401.
+Este laboratorio se probó usando un softphone SIP. 1. Edite `pjsip.conf` y agregue `mailboxes=4401` en la sección endpoint para el dispositivo llamado 4401. 2. Edite el extensions.conf y cree una extensión para grabar un correo de voz en las extensiones 4401.
 
 ```
 exten=9008,n,voicemail(b4401)
 ```
 
-3. Vaya a la consola CLI y recargue. 4. Vaya a X-Lite > Botón derecho del ratón > SIP Account Settings > Properties > Voicemail y marque la casilla ‘check voicemail’. 5. Marque 9008 y deje un mensaje. 6. Observe el icono de mensaje en el teléfono.
+3. Vaya a la consola CLI y recargue. 4. En el softphone SipPulse, abra la configuración de la cuenta SIP y habilite la verificación de correo de voz (message-waiting) para la cuenta. 5. Marque 9008 y deje un mensaje. 6. Observe el icono de mensaje en el teléfono.
 
 ## Usando la aplicación de directorio
 
-Esta aplicación le permite encontrar rápidamente un usuario para marcar. La lista de nombres y las extensiones correspondientes se recuperan del archivo de configuración de voicemail voicemail.conf. La sintaxis para la aplicación se puede mostrar usando core show application directory:
+Esta aplicación le permite encontrar rápidamente un usuario para marcar. La lista de nombres y las extensiones correspondientes se recuperan del archivo de configuración de correo de voz voicemail.conf. La sintaxis para la aplicación se puede mostrar usando core show application directory:
 
 ```
 -= Info about application 'Directory' =-
@@ -694,9 +694,9 @@ exten=9007,n,Hangup()
 
 ## Laboratorio: Poniéndolo todo junto
 
-Hasta ahora, ha aprendido varios conceptos de dialplan. Pongamos todas las aplicaciones, funciones y conceptos en un ejemplo de dialplan para que pueda entender cómo se usan juntos. Permítanos guiarlo a través de toda la configuración de la PBX para el escenario a continuación.
+Hasta ahora, ha aprendido varios conceptos de dialplan. Pongamos todas las aplicaciones, funciones y conceptos en un ejemplo de dialplan para que pueda entender cómo se usan juntos. Vamos a guiarlo a través de toda la configuración de la PBX para el escenario a continuación.
 
-- 4 troncos analógicos
+- 4 trunks analógicos
 - 16 extensiones basadas en SIP
 - 3 clases de servicio:
     - restrict (interno, local y 1-800)
@@ -705,9 +705,9 @@ Hasta ahora, ha aprendido varios conceptos de dialplan. Pongamos todas las aplic
 - Mensaje fuera de horario
 - Operadora automática
 
-### Paso 1 – Configuración de canales
+### Paso 1 – Configurando canales
 
-Troncos analógicos (chan_dahdi.conf) Primero, configuraremos los troncos analógicos en el archivo de configuración del canal DAHDI chan_dahdi.conf. En este caso, usaremos una tarjeta Digium T400P con 4 interfaces FXO. Supongamos que el controlador ya está cargado y el archivo de configuración del controlador (/etc/dahdi/system.conf) está configurado correctamente.
+Trunks analógicos (chan_dahdi.conf) Primero, configuraremos los trunks analógicos en el archivo de configuración del canal DAHDI chan_dahdi.conf. En este caso, usaremos una tarjeta T400P Digium con 4 interfaces FXO. Supongamos que el controlador ya está cargado y el archivo de configuración del controlador (/etc/dahdi/system.conf) está configurado correctamente.
 
 ![10-dialplan-advanced-features figure 16](../images/10-dialplan-advanced-features-img16.png)
 
@@ -719,13 +719,9 @@ group=1
 channel => 1-4
 ```
 
-Canales SIP (pjsip.conf) Hemos elegido la numeración del dialplan de 2000 a 2099. Se utilizarán dos códecs: G.729 y G.711 ulaw. El primero se utilizará para teléfonos que usan Asterisk a través de Internet o WAN, mientras que el segundo se utilizará para teléfonos que usan la red local. En `pjsip.conf`, arbitraremos qué dispositivos pertenecerán a cada clase de servicio (restrict, ld, ldi). Para reducir la vulnerabilidad a ataques de fuerza bruta, usaremos las direcciones MAC de los teléfonos como nombres de dispositivo. ¡Le aconsejo encarecidamente que use contraseñas seguras para evitar ataques de fuerza bruta!
+Canales SIP (pjsip.conf) Hemos elegido la numeración del dialplan de 2000 a 2099. Se utilizarán dos códecs: G.729 y G.711 ulaw. El primero se utilizará para teléfonos que usan Asterisk a través de Internet o WAN, mientras que el segundo se utilizará para teléfonos que usan la red local. En `pjsip.conf`, arbitraremos qué dispositivos pertenecerán a cada clase de servicio (restrict, ld, ldi). Para reducir la vulnerabilidad a ataques de fuerza bruta, usaremos las direcciones MAC de los teléfonos como nombres de dispositivo. ¡Recomiendo encarecidamente que use contraseñas seguras para evitar ataques de fuerza bruta!
 
-Definimos un transporte y tres plantillas reutilizables — una base de endpoint con los
-códecs compartidos, una autenticación userpass y un AOR de contacto único — luego adjuntamos cada dispositivo
-a las plantillas y anulamos solo lo que difiere (su contexto de clase de servicio y
-credenciales). `host=dynamic` se convierte en un AOR contra el que se registra el teléfono, y
-`directmedia` se convierte en `direct_media`:
+Definimos un transporte y tres plantillas reutilizables — una base de endpoint con los códecs compartidos, una autenticación userpass y un AOR de contacto único — luego adjuntamos cada dispositivo a las plantillas y anulamos solo lo que difiere (su contexto de clase de servicio y credenciales). `host=dynamic` se convierte en un AOR contra el cual se registra el teléfono, y `directmedia` se convierte en `direct_media`:
 
 ```ini
 ; pjsip.conf
@@ -783,7 +779,7 @@ password=#s3cr3t#
 
 ### Paso 2 – Configurar el dialplan
 
-Ahora comencemos a configurar el extensions.conf. Defina extensiones internas y marcación local
+Ahora comencemos a configurar el extensions.conf. Definir extensiones internas y marcación local
 
 ```
 [restrict]
@@ -794,7 +790,7 @@ exten=>_9XXXXXXX,1,Dial(DAHDI/g1/${EXTEN:1},20) ; local calls
 exten=>_91800.,1,Dial(DAHDI/g1/${EXTEN:1},20); 1-800
 ```
 
-Defina LD (larga distancia)
+Definir LD (larga distancia)
 
 ```
 [ld]
@@ -802,7 +798,7 @@ Include=>restrict
 exten=>_9NXXNXXXXXX,1,Dial(DAHDI/g1/${EXTEN:1},20)
 ```
 
-Defina llamadas internacionales
+Definir llamadas internacionales
 
 ```
 [ldi)
@@ -812,7 +808,7 @@ exten=>_901X.,1,Dial(DAHDI/g1/${EXTEN:1},20)
 
 ### Paso 3 - Recibir llamadas usando una operadora automática
 
-Para recibir llamadas, use dos contextos. El primero es para la operación en horario normal, donde la llamada será recibida por una operadora automática. El segundo es para fuera de horario, donde el llamante recibirá un mensaje como “ha llamado a la empresa XYZ, nuestro horario normal es de 08:00 AM a 06:00 PM; si conoce el número de extensión de destino puede intentar marcarlo ahora o colgar.” Menús: Horario normal, Fuera de horario En los menús a continuación, el sistema reproducirá un mensaje advirtiendo al llamante que la empresa fue contactada fuera del horario laboral regular, permitiendo al llamante marcar el número de extensión de destino (alguien puede estar trabajando fuera del horario laboral regular).
+Para recibir llamadas, use dos contextos. El primero es para la operación en horario normal, donde la llamada será recibida por una operadora automática. El segundo es para fuera de horario, donde la persona que llama recibirá un mensaje como “ha llamado a la empresa XYZ, nuestro horario normal es de 08:00 AM a 06:00 PM; si conoce el número de extensión de destino puede intentar marcarlo ahora o colgar”. Menús: Horario normal, Fuera de horario En los menús a continuación, el sistema reproducirá un mensaje advirtiendo a la persona que llama que se contactó a la empresa fuera del horario laboral habitual, permitiendo a la persona que llama marcar el número de extensión de destino (alguien puede estar trabajando fuera del horario laboral habitual).
 
 ```
 [incoming]
@@ -859,23 +855,23 @@ Con todas estas sentencias, la funcionalidad de su plan de marcado ya está list
 
 ## Resumen
 
-En este capítulo, ha aprendido cómo recibir llamadas usando un IVR o una operadora automática. Ha estudiado el concepto de inclusión de contextos e implementado algunos ejemplos. Se utilizaron subrutinas para evitar la escritura repetitiva, y la base de datos de Asterisk basada en el motor Berkley DB se utilizó para funciones que requieren almacenamiento de datos (ej., desvío de llamadas, no molestar, listas negras). Finalmente, ha aprendido cómo implementar el comportamiento fuera de horario e implementado un dialplan completo usando estos conceptos.
+En este capítulo, ha aprendido cómo recibir llamadas usando un IVR o una operadora automática. Ha estudiado el concepto de inclusión de contextos y ha implementado algunos ejemplos. Se utilizaron subrutinas para evitar la escritura repetitiva, y la base de datos de Asterisk basada en el motor Berkley DB se utilizó para funciones que requieren almacenamiento de datos (p. ej., desvío de llamadas, no molestar, listas negras). Finalmente, ha aprendido cómo implementar el comportamiento fuera de horario y ha implementado un dialplan completo utilizando estos conceptos.
 
 ## Cuestionario
 
 1. Una inclusión de contexto dependiente del tiempo usa la forma `include => context,<times>,<weekdays>,<mdays>,<months>`. ¿Qué hace `include => normalhours,08:00-18:00,mon-fri,*,*`?
-   - A. Ejecuta las extensiones de lunes a viernes, de 08:00 a 18:00
-   - B. Ejecuta las opciones todos los días en todos los meses
-   - C. Nada; el formato es inválido
-2. En el Asterisk moderno (incluyendo Asterisk 22), los campos de un `include =>` basado en tiempo y de `GotoIfTime()` están separados por qué carácter?
-   - A. La tubería `|`
+   - A. Ejecutar las extensiones de lunes a viernes, de 08:00 a 18:00
+   - B. Ejecutar las opciones todos los días en todos los meses
+   - C. Nada; el formato no es válido
+2. En el Asterisk moderno (incluyendo Asterisk 22), los campos de un `include =>` basado en el tiempo y de `GotoIfTime()` están separados por qué carácter?
+   - A. La barra vertical `|`
    - B. La coma `,`
    - C. El punto y coma `;`
    - D. La barra diagonal `/`
 3. Para marcar varios canales a la vez (haciéndolos sonar simultáneamente), los separa dentro de `Dial()` con el carácter ___.
-4. Un menú de voz que reproduce un mensaje mientras espera a que el llamante marque una extensión generalmente se crea con la aplicación ___.
+4. Un menú de voz que reproduce un mensaje mientras espera que la persona que llama marque una extensión generalmente se crea con la aplicación ___.
 5. Puede incluir el contenido de otro archivo dentro de `extensions.conf` usando la sentencia ___ (nota: esto es diferente de la sentencia de contexto `include =>`).
-6. En Asterisk 22, la base de datos integrada AstDB está respaldada por:
+6. En Asterisk 22, la base de datos AstDB incorporada está respaldada por:
    - A. Berkeley DB v1
    - B. MySQL
    - C. SQLite3
@@ -891,7 +887,7 @@ En este capítulo, ha aprendido cómo recibir llamadas usando un IVR o una opera
    - B. Goto(context,extension,priority)
    - C. Goto(extension,priority)
    - D. Goto(priority)
-10. Para eliminar una sola clave de AstDB en el dialplan de Asterisk 22, usted usa:
+10. Para eliminar una sola clave de AstDB en el dialplan de Asterisk 22, usa:
     - A. La aplicación `DBdel()`
     - B. La función `DB_DELETE()`
     - C. La aplicación `DBdeltree()`

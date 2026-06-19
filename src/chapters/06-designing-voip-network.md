@@ -111,13 +111,13 @@ The following table summarizes the differences among the session protocols.
 
 > **[2nd-ed note]** Consider refreshing this table to reflect current Asterisk 22 module names and support status.
 
-## Peers, Users, and Friends
+## One endpoint per device
 
-Three kinds of SIP and IAX clients exist. The first one is “user”. Users can make calls to an Asterisk server, but they cannot connect to receive calls from this server. The second one is a “peer”. You can make calls to a peer, but you will not receive calls from them. Usually a server or a device will require both concepts at the same time. A “friend” is a shortcut to a “user” + “peer”. A phone would probably fall into this category as it is needed to make and receive calls.
-
-![Peer, user, and friend from Asterisk's point of view: a "user" places calls to Asterisk, a "peer" receives calls from Asterisk, and a "friend" does both.](../images/06-voip-network-fig03.png)
-
-> **[2nd-ed note]** The peer/user/friend distinction is a `chan_sip` (`sip.conf`) concept. In PJSIP (`pjsip.conf`), this is replaced by the **endpoint** object, which handles both inbound and outbound calls. The peer/user separation no longer applies in Asterisk 22.
+In Asterisk 22 the PJSIP stack models every phone, trunk, or gateway as a single **endpoint**
+object in `pjsip.conf`. One endpoint both places and receives calls; its credentials live in an
+`auth` object, its registered address in an `aor`, and its network path in a `transport`. You
+configure one endpoint per device and attach the pieces it needs — there is no separate "user"
+versus "peer" role to reason about. (The full object model is covered in *SIP and PJSIP*.)
 
 ## Codecs and codec translation
 
@@ -326,7 +326,7 @@ In this chapter, you have learned that Asterisk treats VoIP using channels. It s
    - B. A video media format
    - C. Easy NAT and firewall traversal
    - D. Trunk mode to combine many Asterisk-to-Asterisk calls and amortize header overhead
-9. In the legacy chan_sip model, a "user" can receive calls from Asterisk.
+9. In Asterisk 22, a device is configured as a single PJSIP `endpoint` object that both places and receives calls — there is no separate "user" or "peer" role.
    - A. False
    - B. True
 10. Regarding codecs in Asterisk 22, check all the true statements:
@@ -336,4 +336,4 @@ In this chapter, you have learned that Asterisk treats VoIP using channels. It s
     - D. G.711 u-law is common in North America, while a-law is common in Europe and Latin America.
     - E. G.729 is light and uses very few CPU resources to encode and decode compared with G.711.
 
-**Answers:** 1 — A, B, C, D · 2 — B · 3 — B · 4 — B · 5 — B (Application — SIP is an application-layer protocol in the TCP/IP model the IETF uses) · 6 — B · 7 — C · 8 — A, C, D · 9 — A · 10 — A, B, C, D
+**Answers:** 1 — A, B, C, D · 2 — B · 3 — B · 4 — B · 5 — B (Application — SIP is an application-layer protocol in the TCP/IP model the IETF uses) · 6 — B · 7 — C · 8 — A, C, D · 9 — B · 10 — A, B, C, D

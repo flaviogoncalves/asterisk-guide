@@ -267,14 +267,14 @@ Option = Value
 The most important configuration object is the endpoint. The endpoint configuration has core functionality and has to be associated with an AOR and Transport section. Example:
 
 ```
-[xlite]
+[softphone]
 type=endpoint
 transport=transport-udp-main
 context=from-internal
 disallow=all
 allow=ulaw
-aors=xlite
-auth=xlite
+aors=softphone
+auth=softphone
 ```
 
 If you look at the example above, the endpoint is a kind of glue linking all sections together. It specifies a transport, the address of record and the authentication for a phone. Also defines the most important part, the context entry point in the dialplan.
@@ -284,7 +284,7 @@ If you look at the example above, the endpoint is a kind of glue linking all sec
 This object tells Asterisk where to contact the endpoint. It stores the contact addresses. It also allow the configuration of mailboxes. Example:
 
 ```
-[xlite]
+[softphone]
 type=aor
 max_contacts=2
 ```
@@ -294,10 +294,10 @@ max_contacts=2
 This section is responsible for inbound and outbound authentication. The documentation is found at the example file pjsip.conf. Example:
 
 ```
-[xlite]
+[softphone]
 type=auth
 auth_type=userpass
-username=xlite
+username=softphone
 password=#supersecret#
 ```
 
@@ -369,27 +369,27 @@ The graphic above means:
 
 ### Configuring a Softphone
 
-To configure a softphone you have to define many different sections. Below an example on how to configure a softphone.
+To configure a softphone you have to define many different sections. Below an example on how to configure a softphone. For the client side you can use the SipPulse Softphone (https://www.sippulse.com/produtos/softphone), which you can download and register against the endpoint below.
 
 ```
 [transport-udp-main]
 type=transport
 protocol=udp
 bind=0.0.0.0:5060
-[xlite]
+[softphone]
 type=endpoint
 transport=transport-udp-main
 context=from-internal
 disallow=all
 allow=ulaw
-aors=xlite
-auth=xlite
-[xlite]
+aors=softphone
+auth=softphone
+[softphone]
 type=auth
 auth_type=userpass
-username=xlite
+username=softphone
 password=#supersecret#
-[xlite]
+[softphone]
 type=aor
 max_contacts=2
 ```
@@ -607,11 +607,11 @@ endpoint/direct_media=no
 endpoint/force_rport=yes
 endpoint/rtp_symmetric=yes
 aor/qualify_frequency=15
-[xlite](phone_default)
-inbound_auth/username = xlite
+[alice](phone_default)
+inbound_auth/username = alice
 inbound_auth/password = supersecret
-[zoiper](phone_default)
-inbound_auth/username = zoiper
+[bob](phone_default)
+inbound_auth/username = bob
 inbound_auth/password = supersecret
 ```
 
@@ -644,15 +644,15 @@ A plain `reload` (or `core reload`) reloads all modules including PJSIP. (Note t
 
 #### pjsip show endpoints
 
-This command shows the endpoints available. In the picture below, we have a screenshot. You can see the address of the xlite softphone and see that is available.
+This command shows the endpoints available. In the picture below, we have a screenshot. You can see the address of the softphone endpoint and see that is available.
 
-![Output of `pjsip show endpoints` listing the blink, siptrunk, xlite, and zoiper endpoints with their AOR, auth, transport, and availability — the xlite contact is registered (Avail)](../images/07-sip-and-pjsip-fig15.png)
+![Output of `pjsip show endpoints` listing the blink, siptrunk, and softphone endpoints with their AOR, auth, transport, and availability — the softphone contact is registered (Avail)](../images/07-sip-and-pjsip-fig15.png)
 
 #### pjsip show endpoint <endpoint>
 
 With the command above, you can see each parameter of the endpoint. The list below was cut to less than half of the current parameters.
 
-![Output of `pjsip show endpoint xlite` showing the full parameter list for a single endpoint, from 100rel and allow=(ulaw) down through callerid and connected_line_method](../images/07-sip-and-pjsip-fig16.png)
+![Output of `pjsip show endpoint softphone` showing the full parameter list for a single endpoint, from 100rel and allow=(ulaw) down through callerid and connected_line_method](../images/07-sip-and-pjsip-fig16.png)
 
 #### pjsip show aors
 
@@ -668,11 +668,11 @@ The command below shows the registrations made by our own server.
 
 The command list is a little friendlier and show less data, but better structured. Listing endpoints:
 
-![Output of `pjsip list endpoints`: a compact one-line-per-endpoint listing (blink, siptrunk, xlite, zoiper) with their state and channel count](../images/07-sip-and-pjsip-fig18.png)
+![Output of `pjsip list endpoints`: a compact one-line-per-endpoint listing (blink, siptrunk, softphone) with their state and channel count](../images/07-sip-and-pjsip-fig18.png)
 
 Listing contacts:
 
-![Output of `pjsip list contacts` showing the siptrunk and xlite contact URIs with their hash and qualify status](../images/07-sip-and-pjsip-fig19.png)
+![Output of `pjsip list contacts` showing the siptrunk and softphone contact URIs with their hash and qualify status](../images/07-sip-and-pjsip-fig19.png)
 
 #### pjsip set logger on
 

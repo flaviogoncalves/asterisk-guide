@@ -291,7 +291,7 @@ backgroundSize: contain
 
 # Configuring the soft-phone
 
-X-Lite is discontinued — use any modern free SIP soft-phone (Zoiper, Linphone, MicroSIP).
+Use the SipPulse Softphone — a free SIP soft-phone (https://www.sippulse.com/produtos/softphone).
 
 **Account settings for 6000**
 

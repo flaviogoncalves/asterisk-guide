@@ -1,6 +1,6 @@
-# SIP & PJSIP in depth
+# SIP & PJSIP en profondeur
 
-SIP est le protocole ; PJSIP est la manière dont Asterisk 22 l'utilise. **PJSIP** (`chan_pjsip`, configuré via `pjsip.conf`) est le seul pilote de canal SIP dans Asterisk 22 LTS. Ce chapitre couvre les fondamentaux du protocole SIP (qui sont au niveau du protocole et restent valides à 100 %) ainsi que le modèle d'objet et la configuration PJSIP que vous utilisez au quotidien. Le pilote hérité retiré et un guide de migration sont traités dans le chapitre *Legacy channels*.
+SIP est le protocole ; PJSIP est la manière dont Asterisk 22 le parle. **PJSIP** (`chan_pjsip`, configuré via `pjsip.conf`) est le seul pilote de canal SIP dans Asterisk 22 LTS. Ce chapitre couvre les fondamentaux du protocole SIP (qui sont au niveau du protocole et restent valides à 100 %) ainsi que le modèle d'objet et la configuration PJSIP que vous utilisez au quotidien. L'ancien pilote retiré et un guide de migration sont traités dans le chapitre *Legacy channels*.
 
 ## Fondamentaux du protocole SIP
 
@@ -13,13 +13,13 @@ SIP est un protocole de signalisation composé des éléments suivants : User Ag
 - UAC (user agent client) – Le client ou terminal qui initialise la signalisation SIP.
 - UAS (user agent server) – Le serveur qui répond à une signalisation SIP provenant d'un UAC.
 - UA (user agent) – Le terminal SIP (téléphones ou passerelles contenant à la fois un UAC et un UAS).
-- Proxy Server – Reçoit les requêtes d'un UA et les transfère à d'autres SIP Proxies si la station concernée n'est pas sous leur administration.
+- Proxy Server – Reçoit les requêtes d'un UA et les transfère à d'autres SIP Proxies si la station particulière n'est pas sous leur administration.
 - Redirect Server – Reçoit les requêtes et les renvoie à l'UA, incluant les données de destination, au lieu de les transférer directement à la destination.
 - Location Server – Reçoit les requêtes d'un UA et met à jour la base de données de localisation avec ces informations.
 
-Habituellement, les serveurs proxy, de redirection et de localisation sont hébergés sur le même matériel et utilisent le même logiciel, que nous appelons le SIP proxy. Le SIP proxy est responsable de la maintenance de la base de données de localisation, de l'établissement de la connexion et de la terminaison de session.
+Habituellement, les serveurs proxy, de redirection et de localisation sont hébergés sur le même matériel et utilisent le même logiciel, que nous appelons le SIP proxy. Le SIP proxy est responsable de la maintenance de la base de données de localisation, de l'établissement de la connexion et de la terminaison de la session.
 
-![Les principaux composants SIP : user agents (UAC/UAS/UA), le serveur registrar/proxy/redirect, et une passerelle vers le PSTN, avec le flux média RTP circulant directement entre les endpoints](../images/07-sip-and-pjsip-fig01.png)
+![Les principaux composants SIP : user agents (UAC/UAS/UA), le serveur registrar/proxy/redirect, et une passerelle vers le PSTN, avec le média RTP circulant directement entre les endpoints](../images/07-sip-and-pjsip-fig01.png)
 
 #### Processus d'enregistrement SIP
 
@@ -27,31 +27,31 @@ Avant qu'un téléphone puisse recevoir des appels, il doit être enregistré da
 
 ![Enregistrement SIP : le téléphone envoie un REGISTER liant l'extension 8500 à son adresse IP, le registrar stocke le contact dans la base de données de localisation et répond avec un 200 OK](../images/07-sip-and-pjsip-fig02.png)
 
-#### Fonctionnement du proxy
+#### Opération de proxy
 
-Lorsqu'il fonctionne comme un SIP proxy, le serveur SIP reste au milieu de la signalisation et est capable de routage avancé et de facturation. Le flux média, basé sur le real time protocol (RTP), circule toujours directement entre les endpoints.
+Lorsqu'il fonctionne comme un SIP proxy, le serveur SIP reste au milieu de la signalisation et est capable de routage avancé et de facturation. Le flux média, basé sur le real time protocol (RTP), passe toujours directement entre les endpoints.
 
-![Fonctionnement du proxy : le SIP proxy reste dans le chemin de signalisation (INVITE/200 OK) et recherche l'appelé dans le serveur de localisation, tandis que le flux média RTP circule directement entre les deux endpoints](../images/07-sip-and-pjsip-fig03.png)
+![Opération de proxy : le SIP proxy reste dans le chemin de signalisation (INVITE/200 OK) et recherche l'appelé dans le serveur de localisation, tandis que le média RTP circule directement entre les deux endpoints](../images/07-sip-and-pjsip-fig03.png)
 
-#### Fonctionnement de la redirection
+#### Opération de redirection
 
-Lors d'une redirection, le serveur SIP envoie simplement un message (par exemple, 302 moved temporarily) à l'user agent et reste en dehors du chemin des nouveaux messages. C'est très léger en termes d'utilisation des ressources, mais vous n'avez aucun contrôle. La redirection est parfois utilisée dans les conceptions d'équilibrage de charge.
+Lors de la redirection, le serveur SIP envoie simplement un message (par exemple, 302 moved temporarily) à l'user agent et reste en dehors du chemin des nouveaux messages. C'est très léger en termes d'utilisation des ressources, mais vous n'avez aucun contrôle. La redirection est parfois utilisée dans les conceptions d'équilibrage de charge.
 
-![Fonctionnement de la redirection : le serveur de redirection répond à l'INVITE avec un 302 Moved Temporarily contenant le contact, puis s'écarte pendant que l'appelant renvoie l'INVITE/ACK directement vers la nouvelle destination](../images/07-sip-and-pjsip-fig04.png)
+![Opération de redirection : le serveur de redirection répond à l'INVITE avec un 302 Moved Temporarily contenant le contact, puis s'écarte pendant que l'appelant renvoie l'INVITE/ACK directement vers la nouvelle destination](../images/07-sip-and-pjsip-fig04.png)
 
 #### Comment Asterisk gère SIP
 
-Il est important de comprendre qu'Asterisk n'est ni un SIP proxy ni un SIP redirector. Asterisk peut jouer le rôle de registrar et de serveur de localisation ; cependant, il ne connecte que deux UAC à lui-même. Par conséquent, Asterisk est considéré comme un back-to-back user agent (B2BUA). En d'autres termes, il connecte deux canaux SIP, en les pontant ensemble. Asterisk possède un mécanisme de re-invite qui peut permettre aux canaux SIP de communiquer directement entre eux au lieu de passer par Asterisk. Sur un endpoint PJSIP, cela est contrôlé par le paramètre `direct_media`. Lors de l'utilisation de `direct_media=yes`, le flux RTP circule directement d'un endpoint à un autre, libérant ainsi des ressources serveur.
+Il est important de comprendre qu'Asterisk n'est ni un SIP proxy ni un SIP redirector. Asterisk peut jouer le rôle de registrar et de serveur de localisation ; cependant, il ne connecte que deux UAC à lui-même. Par conséquent, Asterisk est considéré comme un back-to-back user agent (B2BUA). En d'autres termes, il connecte deux canaux SIP, en les pontant ensemble. Asterisk possède un mécanisme de re-invite qui peut permettre aux canaux SIP de communiquer directement entre eux au lieu de passer par Asterisk. Sur un endpoint PJSIP, cela est contrôlé par le paramètre `direct_media`. Lors de l'utilisation de `direct_media=yes`, le flux RTP va directement d'un endpoint à un autre, libérant ainsi des ressources serveur.
 
-#### Fonctionnement SIP avec direct_media=yes
+#### Opération SIP avec direct_media=yes
 
-![Fonctionnement SIP avec directmedia=yes : la signalisation SIP transite par Asterisk tandis que l'audio RTP circule directement entre les deux téléphones, libérant des ressources serveur](../images/07-sip-and-pjsip-fig05.png)
+![Opération SIP avec directmedia=yes : la signalisation SIP passe par Asterisk tandis que l'audio RTP va directement entre les deux téléphones, libérant des ressources serveur](../images/07-sip-and-pjsip-fig05.png)
 
 Cependant, si vous devez transférer ou enregistrer l'appel en utilisant Asterisk, vous pouvez utiliser le paramètre `direct_media=no` pour forcer le flux RTP à passer par le serveur Asterisk.
 
-#### Fonctionnement SIP avec direct_media=no
+#### Opération SIP avec direct_media=no
 
-![Fonctionnement SIP avec directmedia=no : la signalisation SIP et l'audio RTP sont ancrés via Asterisk, lui permettant d'enregistrer, de transcoder ou de transférer l'appel](../images/07-sip-and-pjsip-fig06.png)
+![Opération SIP avec directmedia=no : la signalisation SIP et l'audio RTP sont ancrés via Asterisk, lui permettant d'enregistrer, de transcoder ou de transférer l'appel](../images/07-sip-and-pjsip-fig06.png)
 
 #### Messages SIP
 
@@ -72,10 +72,10 @@ Les messages SIP de base sont :
 Les réponses SIP sont au format texte et sont facilement lisibles (similaires aux messages HTTP). Les réponses les plus importantes sont :
 
 - 1XX – Messages d'information (100–trying, 180–ringing, 183–progress)
-- 2XX – Succès de la requête (200 – OK)
+- 2XX – Requête réussie et terminée (200 – OK)
 - 3XX – Redirection d'appel, la requête doit être dirigée vers un autre endroit (302 – moved temporarily, 305 – use proxy)
 - 4XX – Erreur (403 – Forbidden)
-- 5XX – Erreur serveur (500 – Internal Server Error; 501 – Not implemented)
+- 5XX – Erreur de serveur (500 – Internal Server Error; 501 – Not implemented)
 - 6XX – Échec global (606 – Not acceptable)
 
 Par exemple :
@@ -104,7 +104,7 @@ Le SDP a été défini à l'origine dans la RFC 2327 de l'IETF, désormais obsol
 
 - Protocole de transport (RTP/UDP/IP)
 - Type de média (texte, audio, vidéo)
-- Format média ou codec (vidéo H.261, audio g.711, etc.)
+- Format de média ou codec (vidéo H.261, audio g.711, etc.)
 - Informations nécessaires pour recevoir ces médias (adresses, ports, etc.)
 
 L'exemple suivant est une transcription d'un SDP décrivant un appel entre deux téléphones.
@@ -127,36 +127,36 @@ a=rtpmap:101 telephone-event/8000
 a=fmtp:101 0-11,16
 ```
 
-### Traversée NAT SIP
+### Traversée de NAT SIP
 
-Le Network Address Translation (NAT) est une fonctionnalité utilisée par la plupart des réseaux pour économiser les adresses IP Internet. Habituellement, une entreprise reçoit un petit bloc d'adresses IP, et les utilisateurs finaux reçoivent une adresse IP dynamiquement lorsqu'ils sont connectés à Internet. Le NAT résout le problème d'adressage en mappant les adresses internes vers des adresses externes. Il stocke un mappage des adresses internes vers externes dans sa mémoire. Ce mappage est valide pour une durée spécifique, après quoi il est supprimé. Le mappage utilise des paires IP:port pour les adresses internes et externes. Il existe quatre types de NAT :
+La Network Address Translation (NAT) est une fonctionnalité utilisée par la plupart des réseaux pour économiser des adresses IP Internet. Habituellement, une entreprise reçoit un petit bloc d'adresses IP, et les utilisateurs finaux reçoivent une adresse IP dynamiquement lorsqu'ils sont connectés à Internet. La NAT résout le problème d'adressage en mappant les adresses internes vers des adresses externes. Elle stocke un mappage des adresses internes vers externes dans sa mémoire. Ce mappage est valide pour une durée spécifique, après quoi il est supprimé. Le mappage utilise des paires IP:port pour les adresses internes et externes. Il existe quatre types de NAT :
 
 - Full Cone
 - Restricted Cone
 - Port Restricted Cone
 - Symmetric
 
-La théorie NAT ci-dessous — les quatre types de NAT, le problème de l'en-tête Contact, les keep-alives et le forçage du média via le serveur — est au niveau du protocole et s'applique à toute implémentation SIP. La manière dont vous configurez chaque comportement sur Asterisk 22 (PJSIP) est traitée plus loin dans ce chapitre sous *Nat traversal on res_pjsip*.
+La théorie de la NAT ci-dessous — les quatre types de NAT, le problème de l'en-tête Contact, les keep-alives et le forçage du média via le serveur — est au niveau du protocole et s'applique à toute implémentation SIP. La manière de configurer chaque comportement sur Asterisk 22 (PJSIP) est traitée plus loin dans ce chapitre sous *Nat traversal on res_pjsip*.
 
 #### Full Cone
 
-Le premier NAT, le full cone, représente un mappage statique d'une paire IP:port externe vers une paire IP:port interne. N'importe quel ordinateur externe peut s'y connecter en utilisant la paire IP:port externe. C'est le cas des pare-feu non persistants implémentés avec l'utilisation de filtres.
+La première NAT, full cone, représente un mappage statique d'une paire IP:port externe vers une paire IP:port interne. N'importe quel ordinateur externe peut s'y connecter en utilisant la paire IP:port externe. C'est le cas dans les pare-feu non persistants implémentés avec l'utilisation de filtres.
 
 ![Full Cone NAT : l'hôte interne (10.0.0.1:8000) est mappé statiquement vers la paire externe 200.180.4.168:1234, donc n'importe quel ordinateur externe peut envoyer des paquets à cette paire et atteindre l'hôte interne](../images/07-sip-and-pjsip-fig11.png)
 
 #### Restricted Cone
 
-Dans le scénario du restricted cone, la paire IP:port externe n'est ouverte que lorsque l'ordinateur interne envoie des données vers une adresse extérieure. Cependant, le NAT restricted cone bloque tous les paquets entrants provenant d'une adresse différente. En d'autres termes, l'ordinateur interne doit envoyer des données à un ordinateur externe avant de pouvoir recevoir des données en retour.
+Dans le scénario de la restricted cone, la paire IP:port externe n'est ouverte que lorsque l'ordinateur interne envoie des données vers une adresse extérieure. Cependant, la NAT restricted cone bloque tous les paquets entrants provenant d'une adresse différente. En d'autres termes, l'ordinateur interne doit envoyer des données à un ordinateur externe avant de pouvoir en recevoir en retour.
 
 #### Port Restricted Cone
 
-Le pare-feu port restricted cone est presque identique au restricted cone. La seule différence est que, maintenant, le paquet entrant doit provenir exactement de la même IP et du même port que le paquet envoyé.
+Le pare-feu port restricted cone est presque identique à la restricted cone. La seule différence est que, maintenant, le paquet entrant doit provenir exactement de la même IP et du même port que le paquet envoyé.
 
 #### Symmetric
 
-Le dernier type de NAT est appelé symétrique. Il diffère des trois premiers en ce qu'un mappage spécifique est effectué pour chaque adresse externe. Seules des adresses externes spécifiques sont autorisées à revenir par le mappage NAT. Il n'est pas possible de prédire la paire IP:port externe qui sera utilisée par le périphérique NAT. Les trois autres types de NAT permettent l'utilisation d'un serveur externe pour découvrir l'adresse IP externe pour la communication. Avec le NAT symétrique, même si vous pouvez vous connecter à un serveur externe, l'adresse découverte ne peut être utilisée pour aucun autre périphérique que ce serveur.
+Le dernier type de NAT est appelé symmetric. Il diffère des trois premiers en ce qu'un mappage spécifique est effectué pour chaque adresse externe. Seules des adresses externes spécifiques sont autorisées à revenir par le mappage NAT. Il n'est pas possible de prédire la paire IP:port externe qui sera utilisée par le périphérique NAT. Les trois autres types de NAT permettent l'utilisation d'un serveur externe pour découvrir l'adresse IP externe pour la communication. Avec la NAT symmetric, même si vous pouvez vous connecter à un serveur externe, l'adresse découverte ne peut être utilisée pour aucun autre périphérique à l'exception de ce serveur.
 
-![Symmetric NAT : un port source externe différent est alloué pour chaque destination, donc le mappage découvert vers un serveur ne peut pas être réutilisé par un autre hôte, ce qui rompt la traversée basée sur STUN](../images/07-sip-and-pjsip-fig12.png)
+![Symmetric NAT : un port source externe différent est alloué pour chaque destination, donc le mappage découvert vers un serveur ne peut pas être réutilisé par un autre hôte, ce qui brise la traversée basée sur STUN](../images/07-sip-and-pjsip-fig12.png)
 
 #### Tableau des pare-feu NAT
 
@@ -171,15 +171,15 @@ Le tableau suivant résume les quatre types de NAT.
 
 #### Signalisation SIP et RTP sur NAT
 
-Certains des plus gros problèmes de traversée NAT sont que vous devez résoudre deux problèmes : la signalisation SIP et l'audio (RTP). La plupart des problèmes d'audio unidirectionnel sont liés au NAT. Une chose intéressante à propos de SIP est que, lorsqu'un UAC envoie un paquet, il intègre l'adresse IP dans le champ d'en-tête SIP « Contact ». Habituellement, il s'agit d'une adresse interne (RFC1918) ; les réponses à ce paquet ne peuvent pas être routées sur Internet vers l'UAC. Les correctifs conceptuels sont toujours les mêmes :
+Certains des plus gros problèmes de traversée NAT sont que vous devez résoudre deux problèmes : la signalisation SIP et l'audio (RTP). La plupart des problèmes d'audio unidirectionnel sont liés à la NAT. Une chose intéressante à propos de SIP est que, lorsqu'un UAC envoie un paquet, il intègre l'adresse IP dans le champ d'en-tête SIP « Contact ». Habituellement, il s'agit d'une adresse interne (RFC1918) ; les réponses à ce paquet ne peuvent pas être routées sur Internet vers l'UAC. Les correctifs conceptuels sont toujours les mêmes :
 
 - **Ignorer l'adresse Contact/Via et répondre là d'où le paquet provient réellement.** C'est le comportement défini dans la RFC 3581 (`rport`). Sur PJSIP, c'est `force_rport=yes`, et `rewrite_contact=yes` réécrit le contact stocké vers l'adresse source.
 - **Renvoyer le média vers l'adresse d'où le RTP est réellement arrivé** (RTP symétrique, historiquement appelé *comedia*). Sur PJSIP, c'est `rtp_symmetric=yes`.
-- **Maintenir le mappage NAT ouvert.** Si le mappage expire, Asterisk ne peut plus envoyer d'INVITE à l'UAC — le téléphone peut passer des appels mais pas en recevoir. L'envoi périodique d'OPTIONS (un *qualify*) maintient le trou ouvert. Sur PJSIP, c'est `qualify_frequency=` sur l'AOR.
+- **Maintenir le mappage NAT ouvert.** Si le mappage expire, Asterisk ne peut plus envoyer d'INVITE à l'UAC — le téléphone peut passer des appels mais ne peut pas en recevoir. L'envoi périodique d'OPTIONS (un *qualify*) maintient le trou ouvert. Sur PJSIP, c'est `qualify_frequency=` sur l'AOR.
 
-Si le NAT de l'utilisateur est de type symétrique, il n'est pas possible d'envoyer des paquets d'un UAC à un autre directement ; dans ce cas, vous devez forcer le RTP via Asterisk avec `direct_media=no`. Ces configurations sont appropriées pour la plupart des cas. Il est possible d'optimiser le trafic en utilisant des techniques avancées comme le Simple Traversal of UDP over NAT (STUN), qui est utile avec le full cone, le restricted cone et le port restricted cone, ainsi que l'Application Layer Gateway (ALG). Malheureusement, la plupart des pare-feu aujourd'hui — même les routeurs DSL/câble domestiques — sont symétriques, rendant STUN inutilisable. L'ALG pourrait résoudre le problème, mais il n'est pas pris en charge, pas implémenté ou bogué dans la plupart des cas.
+Si la NAT de l'utilisateur est de type symmetric, il n'est pas possible d'envoyer des paquets d'un UAC à un autre directement ; dans ce cas, vous devez forcer le RTP via Asterisk avec `direct_media=no`. Ces configurations sont appropriées pour la plupart des cas. Il est possible d'optimiser le trafic en utilisant des techniques avancées comme Simple Traversal of UDP over NAT (STUN), qui est utile avec les NAT full cone, restricted cone et port restricted cone, ainsi que l'Application Layer Gateway (ALG). Malheureusement, la plupart des pare-feu aujourd'hui — même les routeurs DSL/câble domestiques — sont symmetric, rendant STUN inutilisable. L'ALG pourrait résoudre le problème, mais il n'est pas supporté, pas implémenté ou bogué dans la plupart des cas.
 
-#### Asterisk derrière NAT
+#### Asterisk derrière une NAT
 
 Parfois, le serveur Asterisk lui-même est implémenté derrière un pare-feu avec NAT — une situation très courante lors d'un déploiement dans le cloud. Dans ce cas, il est nécessaire d'effectuer une configuration supplémentaire afin qu'Asterisk annonce son adresse **publique** dans les en-têtes SIP et SDP au lieu de son adresse privée.
 
@@ -202,9 +202,9 @@ rtpstart=10000
 rtpend=20000
 ```
 
-La configuration PJSIP complète et fonctionnelle pour un serveur Asterisk derrière NAT est donnée plus loin dans ce chapitre sous *Asterisk Server behind NAT*.
+La configuration PJSIP complète et fonctionnelle pour un serveur Asterisk derrière une NAT est donnée plus loin dans ce chapitre sous *Asterisk Server behind NAT*.
 
-### Limitations SIP
+### Limitations de SIP
 
 Asterisk utilise le flux RTP entrant pour synchroniser le flux sortant. Si le flux entrant est interrompu (suppression de silence), la musique d'attente sera coupée. En d'autres termes, vous ne devriez pas utiliser la suppression de silence dans les téléphones ou chez les fournisseurs avec Asterisk.
 
@@ -214,19 +214,19 @@ PJSIP est le canal SIP dans Asterisk. Il a été introduit pour la première foi
 
 ### Pourquoi utiliser PJSIP
 
-PJSIP a été une refonte complète de la manière dont Asterisk utilise SIP, et il vaut la peine de comprendre les fonctionnalités qui en ont fait le standard.
+PJSIP a été une refonte complète de la manière dont Asterisk parle SIP, et il vaut la peine de comprendre les fonctionnalités qui en ont fait le standard.
 
 #### Fonctionnalités
 
-Le canal prend en charge de nombreuses fonctionnalités, dont certaines méritent d'être mentionnées ici :
+Le canal supporte de nombreuses fonctionnalités, certaines méritent d'être mentionnées ici :
 
 - Enregistrements multiples : Vous pouvez utiliser plus d'un téléphone connecté à la même Address of Record. En d'autres termes, vous pouvez connecter deux téléphones au même endpoint.
-- Interface de programmation d'application (API) conviviale : L'API est modulaire et facile à étendre, construite à partir de nombreux petits modules coopérants plutôt qu'un seul gros bloc de code.
+- Interface de programmation d'application (API) conviviale. L'API est modulaire et facile à étendre, construite à partir de nombreux petits modules coopérants plutôt que d'un gros bloc de code.
 - Transports multiples : Vous pouvez écouter sur plusieurs adresses, ports et transports lors de l'utilisation de PJSIP. Vous n'êtes pas limité à une seule adresse de liaison pour tous vos appareils. PJSIP est très flexible.
 
 #### Une note sur la configuration
 
-La configuration PJSIP est plus verbeuse : elle nécessite un peu plus d'efforts et plus de lignes de configuration, car chaque appareil est décrit par plusieurs objets liés au lieu d'un seul bloc peer. Cette structure supplémentaire est ce qui donne à PJSIP sa flexibilité, et l'assistant de configuration (traité plus loin) permet de garder le provisionnement quotidien court.
+La configuration PJSIP est plus verbeuse : elle demande un peu plus d'efforts et plus de lignes de configuration, car chaque appareil est décrit par plusieurs objets liés au lieu d'un seul bloc peer. Cette structure supplémentaire est ce qui donne à PJSIP sa flexibilité, et l'assistant de configuration (traité plus loin) permet de garder le provisionnement quotidien court.
 
 ### Modules PJSIP
 
@@ -262,19 +262,19 @@ Option = Value
 Option = Value
 ```
 
-#### Section End point
+#### Section endpoint
 
 L'objet de configuration le plus important est l'endpoint. La configuration de l'endpoint possède des fonctionnalités de base et doit être associée à une section AOR et Transport. Exemple :
 
 ```
-[xlite]
+[softphone]
 type=endpoint
 transport=transport-udp-main
 context=from-internal
 disallow=all
 allow=ulaw
-aors=xlite
-auth=xlite
+aors=softphone
+auth=softphone
 ```
 
 Si vous regardez l'exemple ci-dessus, l'endpoint est une sorte de colle reliant toutes les sections ensemble. Il spécifie un transport, l'address of record et l'authentification pour un téléphone. Il définit également la partie la plus importante, le point d'entrée du contexte dans le dialplan.
@@ -284,20 +284,20 @@ Si vous regardez l'exemple ci-dessus, l'endpoint est une sorte de colle reliant 
 Cet objet indique à Asterisk où contacter l'endpoint. Il stocke les adresses de contact. Il permet également la configuration des boîtes vocales. Exemple :
 
 ```
-[xlite]
+[softphone]
 type=aor
 max_contacts=2
 ```
 
-#### Authentication
+#### Authentification
 
 Cette section est responsable de l'authentification entrante et sortante. La documentation se trouve dans le fichier d'exemple pjsip.conf. Exemple :
 
 ```
-[xlite]
+[softphone]
 type=auth
 auth_type=userpass
-username=xlite
+username=softphone
 password=#supersecret#
 ```
 
@@ -312,7 +312,7 @@ protocol=udp
 bind=0.0.0.0:5060
 ```
 
-#### Registration
+#### Enregistrement
 
 Cet objet est utilisé pour configurer un enregistrement sortant. Exemple :
 
@@ -367,29 +367,29 @@ Le graphique ci-dessus signifie :
 - REGISTRATION/TRANSPORT zéro à plusieurs vers au moins un
 - AOR/CONTACT plusieurs à plusieurs, ACL, DOMAIN_ALIAS n'ont pas de configurations de relation
 
-### Configuration d'un Softphone
+### Configuration d'un softphone
 
-Pour configurer un softphone, vous devez définir de nombreuses sections différentes. Voici un exemple sur la façon de configurer un softphone.
+Pour configurer un softphone, vous devez définir de nombreuses sections différentes. Ci-dessous un exemple sur la façon de configurer un softphone. Pour le côté client, vous pouvez utiliser le SipPulse Softphone (https://www.sippulse.com/produtos/softphone), que vous pouvez télécharger et enregistrer auprès de l'endpoint ci-dessous.
 
 ```
 [transport-udp-main]
 type=transport
 protocol=udp
 bind=0.0.0.0:5060
-[xlite]
+[softphone]
 type=endpoint
 transport=transport-udp-main
 context=from-internal
 disallow=all
 allow=ulaw
-aors=xlite
-auth=xlite
-[xlite]
+aors=softphone
+auth=softphone
+[softphone]
 type=auth
 auth_type=userpass
-username=xlite
+username=softphone
 password=#supersecret#
-[xlite]
+[softphone]
 type=aor
 max_contacts=2
 ```
@@ -430,17 +430,17 @@ endpoint=siptrunk
 match=sip.flagonc.com
 ```
 
-### Traversée NAT sur res_pjsip
+### Traversée de NAT sur res_pjsip
 
-Le Network Address Translation a été créé il y a longtemps pour faire face à la pénurie d'adresses IP version 4. Beaucoup de gens utilisent également le NAT comme fonctionnalité de sécurité masquant les adresses internes d'un réseau par rapport à l'Internet public. Parfois, vous devrez gérer la traversée NAT. Dans certains cas, le serveur peut être derrière un NAT, comme lorsque vous déployez le serveur dans le cloud. Souvent, si vous déployez dans le cloud, vos utilisateurs seront également derrière un routeur NAT. Pour organiser les choses, nous allons diviser cela en deux parties. La première est le serveur Asterisk derrière NAT, comme dans un déploiement cloud. Dans la deuxième section, nous couvrirons comment prendre en charge les clients derrière NAT en utilisant res_pjsip.
+La Network Address Translation a été créée il y a longtemps comme un moyen de faire face à la pénurie d'adresses IP version 4. Beaucoup de gens utilisent également la NAT comme une fonctionnalité de sécurité masquant les adresses internes d'un réseau vis-à-vis de l'Internet public. Parfois, vous devrez gérer la traversée de NAT. Dans certains cas, le serveur peut être derrière une NAT, comme lorsque vous déployez le serveur dans le cloud. Souvent, si vous déployez dans le cloud, vos utilisateurs seront également derrière un routeur NAT. Pour organiser les choses, nous diviserons cela en deux parties. La première est le serveur Asterisk derrière une NAT, comme dans un déploiement cloud. Dans la deuxième section, nous couvrirons comment supporter les clients derrière une NAT en utilisant res_pjsip.
 
-#### Serveur Asterisk derrière NAT
+#### Serveur Asterisk derrière une NAT
 
-Lorsque le serveur Asterisk est derrière un NAT, vous devez informer les adresses locales externes et internes dans la section transport. Nous aurons les directives suivantes.
+Lorsque le serveur Asterisk est derrière une NAT, vous devez indiquer les adresses locales externes et internes dans la section transport. Nous aurons les directives suivantes.
 
 ##### direct_media
 
-Le média circule-t-il directement de pair à pair ou via le serveur ? Pour le NAT, il devrait circuler via le serveur. Pour le NAT, sélectionnez no. Exemple :
+Le média circule-t-il directement de pair à pair ou via le serveur ? Pour la NAT, il devrait circuler via le serveur. Pour la NAT, sélectionnez no. Exemple :
 
 ```
 direct_media=no
@@ -471,13 +471,13 @@ local_net=172.16.30.0/24
 local_net=127.0.0.1/32
 ```
 
-#### Exemple complet de transport pour un serveur Asterisk derrière NAT
+#### Exemple complet de transport pour un serveur Asterisk derrière une NAT
 
-Pour utiliser un serveur Asterisk derrière NAT, vous devez effectuer deux étapes. Premièrement, définir un transport derrière NAT. Deuxièmement, associer ce transport à l'endpoint.
+Pour utiliser un serveur Asterisk derrière une NAT, vous devez effectuer deux étapes. Premièrement, définir un transport derrière une NAT. Deuxièmement, associer ce transport à l'endpoint.
 
-##### Création du transport derrière NAT
+##### Création du transport derrière une NAT
 
-Pour créer le transport derrière NAT dans le fichier pjsip.conf, créez une section comme ci-dessous.
+Pour créer le transport derrière une NAT dans le fichier pjsip.conf, créez une section comme ci-dessous.
 
 ```
 [tnat]
@@ -514,13 +514,13 @@ client_uri=sip:23456789@flagonc.com
 contact_user=9999
 ```
 
-#### Utilisation d'Asterisk avec des clients derrière NAT
+#### Utilisation d'Asterisk avec des clients derrière une NAT
 
-Pour utiliser des téléphones derrière NAT, vous devez configurer des paramètres supplémentaires par endpoint.
+Pour utiliser des téléphones derrière une NAT, vous devez configurer des paramètres supplémentaires par endpoint.
 
 ##### direct_media
 
-Le média circule-t-il directement de pair à pair ou via le serveur ? Pour le NAT, il devrait circuler via le serveur. Exemple :
+Le média circule-t-il directement de pair à pair ou via le serveur ? Pour la NAT, il devrait circuler via le serveur. Exemple :
 
 ```
 direct_media=no
@@ -528,7 +528,7 @@ direct_media=no
 
 ##### rtp_symmetric
 
-C'est ce que nous appelons comedia. Au lieu de se fier à l'adresse définie dans cet en-tête SDP comme d'habitude dans SIP, utilisez l'adresse d'où vous recevez le premier paquet RTP et renvoyez depuis la même adresse. Exemple :
+C'est ce que nous appelons comedia. Au lieu de se fier à l'adresse définie dans cet en-tête SDP comme d'habitude en SIP, utilisez l'adresse d'où vous recevez le premier paquet RTP et renvoyez depuis la même adresse. Exemple :
 
 ```
 rtp_symmetric=yes
@@ -536,7 +536,7 @@ rtp_symmetric=yes
 
 ##### force_rport
 
-C'est le comportement défini dans la RFC 3581. Plutôt que d'utiliser l'adresse dans l'en-tête VIA, renvoyez les réponses d'où proviennent les requêtes. Exemple :
+C'est le comportement défini dans la RFC3581. Plutôt que d'utiliser l'adresse dans l'en-tête VIA, renvoyez les réponses là d'où proviennent les requêtes. Exemple :
 
 ```
 force_rport=yes
@@ -544,11 +544,11 @@ force_rport=yes
 
 ##### qualify_frequency
 
-Ce paramètre doit être appliqué à l'AOR (pas à l'endpoint). Il y a aussi la dernière étape, configurer l'option qualify. Vous devriez toujours avoir des paquets pingant la destination pour maintenir le mappage NAT ouvert. Ceci est défini dans la section AOR. Exemple :
+Ce réglage doit être appliqué à l'AOR (pas à l'endpoint). Il y a aussi la dernière étape, configurer l'option qualify. Vous devriez toujours avoir quelques paquets pingant la destination pour maintenir le mappage NAT ouvert. Ceci est défini dans la section AOR. Exemple :
 
 - qualify_frequency=15
 
-Exemple complet d'un endpoint où le serveur et le client sont derrière NAT
+Exemple complet d'un endpoint où le serveur et le client sont derrière une NAT
 
 ```
 [6000]
@@ -567,7 +567,7 @@ qualify_frequency=15
 
 ### Nommage des canaux
 
-Comme d'habitude, l'un des aspects importants d'un canal est son nommage et PJSIP a quelques détails intéressants. Vous composez un endpoint PJSIP avec la technologie `PJSIP/` :
+Comme d'habitude, l'un des aspects importants d'un canal est son nommage, et PJSIP a quelques détails intéressants. Vous composez un endpoint PJSIP avec la technologie `PJSIP/` :
 
 ```
 exten=>6000,1,Dial(PJSIP/6000,20,tT)
@@ -593,7 +593,7 @@ exten=>9011.,Dial(PJSIP/${EXTEN:1}@siptrunk
 
 ### Assistant de configuration PJSIP
 
-PJSIP est puissant mais verbeux à configurer : beaucoup de sections différentes et de modèles qui peuvent être déroutants au début. La bonne nouvelle est l'assistant de configuration PJSIP. En définissant chaque canal en quelques lignes, il vous permet de créer des modèles et de simplifier la configuration de nouveaux appareils. Utilisez le fichier pjsip_wizard.conf pour configurer. Vous devez toujours définir les sections transport et global dans le fichier pjsip.conf. Personnellement, je préfère utiliser l'assistant juste pour les téléphones, pour les trunks SIP, le nombre n'est généralement pas grand et vous pouvez configurer directement dans pjsip. Le plus grand avantage de l'assistant est la possibilité d'utiliser des modèles et de créer des téléphones rapidement.
+PJSIP est puissant mais verbeux à configurer : beaucoup de sections différentes et des modèles qui peuvent être déroutants au début. La bonne nouvelle est l'assistant de configuration PJSIP. En définissant chaque canal en quelques lignes, il vous permet de créer des modèles et de simplifier la configuration de nouveaux appareils. Utilisez le fichier pjsip_wizard.conf pour configurer. Vous devez toujours définir les sections transport et global dans le fichier pjsip.conf. Personnellement, je préfère utiliser l'assistant juste pour les téléphones ; pour les trunks SIP, le nombre n'est généralement pas grand et vous pouvez configurer directement dans pjsip. Le plus grand avantage de l'assistant est la possibilité d'utiliser des modèles et de créer des téléphones rapidement.
 
 ```
 [phone_default](!)
@@ -607,17 +607,17 @@ endpoint/direct_media=no
 endpoint/force_rport=yes
 endpoint/rtp_symmetric=yes
 aor/qualify_frequency=15
-[xlite](phone_default)
-inbound_auth/username = xlite
+[alice](phone_default)
+inbound_auth/username = alice
 inbound_auth/password = supersecret
-[zoiper](phone_default)
-inbound_auth/username = zoiper
+[bob](phone_default)
+inbound_auth/username = bob
 inbound_auth/password = supersecret
 ```
 
 ### Chargement et déchargement de PJSIP
 
-PJSIP est le seul canal SIP dans Asterisk 22, et ses modules sont chargés par défaut. Dans de rares cas, vous voudrez peut-être toujours contrôler le chargement des modules depuis le fichier modules.conf — par exemple, pour désactiver PJSIP sur un serveur qui n'utilise que IAX2 ou DAHDI.
+PJSIP est le seul canal SIP dans Asterisk 22, et ses modules sont chargés par défaut. Dans de rares cas, vous pourriez toujours vouloir contrôler le chargement des modules depuis le fichier modules.conf — par exemple, pour désactiver PJSIP sur un serveur qui utilise uniquement IAX2 ou DAHDI.
 
 #### Pour désactiver PJSIP
 
@@ -644,15 +644,15 @@ Un simple `reload` (ou `core reload`) recharge tous les modules, y compris PJSIP
 
 #### pjsip show endpoints
 
-Cette commande affiche les endpoints disponibles. Dans l'image ci-dessous, nous avons une capture d'écran. Vous pouvez voir l'adresse du softphone xlite et voir qu'il est disponible.
+Cette commande affiche les endpoints disponibles. Dans l'image ci-dessous, nous avons une capture d'écran. Vous pouvez voir l'adresse de l'endpoint softphone et voir qu'il est disponible.
 
-![Sortie de `pjsip show endpoints` listant les endpoints blink, siptrunk, xlite et zoiper avec leur AOR, auth, transport et disponibilité — le contact xlite est enregistré (Avail)](../images/07-sip-and-pjsip-fig15.png)
+![Sortie de `pjsip show endpoints` listant les endpoints blink, siptrunk et softphone avec leur AOR, auth, transport et disponibilité — le contact softphone est enregistré (Avail)](../images/07-sip-and-pjsip-fig15.png)
 
 #### pjsip show endpoint <endpoint>
 
 Avec la commande ci-dessus, vous pouvez voir chaque paramètre de l'endpoint. La liste ci-dessous a été coupée à moins de la moitié des paramètres actuels.
 
-![Sortie de `pjsip show endpoint xlite` montrant la liste complète des paramètres pour un seul endpoint, de 100rel et allow=(ulaw) jusqu'à callerid et connected_line_method](../images/07-sip-and-pjsip-fig16.png)
+![Sortie de `pjsip show endpoint softphone` montrant la liste complète des paramètres pour un seul endpoint, de 100rel et allow=(ulaw) jusqu'à callerid et connected_line_method](../images/07-sip-and-pjsip-fig16.png)
 
 #### pjsip show aors
 
@@ -668,11 +668,11 @@ La commande ci-dessous montre les enregistrements effectués par notre propre se
 
 La commande list est un peu plus conviviale et affiche moins de données, mais mieux structurées. Liste des endpoints :
 
-![Sortie de `pjsip list endpoints` : une liste compacte d'une ligne par endpoint (blink, siptrunk, xlite, zoiper) avec leur état et le nombre de canaux](../images/07-sip-and-pjsip-fig18.png)
+![Sortie de `pjsip list endpoints` : une liste compacte d'un endpoint par ligne (blink, siptrunk, softphone) avec leur état et le nombre de canaux](../images/07-sip-and-pjsip-fig18.png)
 
 Liste des contacts :
 
-![Sortie de `pjsip list contacts` montrant les URI de contact siptrunk et xlite avec leur hash et leur statut de qualification](../images/07-sip-and-pjsip-fig19.png)
+![Sortie de `pjsip list contacts` montrant les URI de contact siptrunk et softphone avec leur hash et leur statut de qualify](../images/07-sip-and-pjsip-fig19.png)
 
 #### pjsip set logger on
 
@@ -693,7 +693,7 @@ Un excellent ajout à PJSIP est le concept d'historique. Vous pouvez capturer et
 
 Maintenant, vous pouvez afficher l'historique :
 
-![Sortie de `pjsip show history` : un tableau numéroté de messages SIP capturés — REGISTER, 401 Unauthorized, REGISTER, 200 OK — avec horodatages, direction et adresse](../images/07-sip-and-pjsip-fig21.png)
+![Sortie de `pjsip show history` : un tableau numéroté des messages SIP capturés — REGISTER, 401 Unauthorized, REGISTER, 200 OK — avec horodatages, direction et adresse](../images/07-sip-and-pjsip-fig21.png)
 
 Ensuite, pour voir une requête ou une réponse spécifique, affichez l'élément de l'historique :
 
@@ -720,13 +720,13 @@ Très facile, n'est-ce pas ? Vous pouvez également effacer l'historique quand v
    - C. Un back-to-back user agent (B2BUA) qui ponte deux canaux SIP
    - D. Un équilibreur de charge SIP sans état
 
-3. Quelle méthode SIP est utilisée par un téléphone pour indiquer au registrar son adresse IP actuelle afin qu'il puisse recevoir des appels ultérieurement ?
+3. Quelle méthode SIP est utilisée par un téléphone pour indiquer au registrar son adresse IP actuelle afin qu'il puisse recevoir des appels plus tard ?
    - A. INVITE
    - B. OPTIONS
    - C. SUBSCRIBE
    - D. REGISTER
 
-4. Vrai ou Faux : Dans Asterisk 22, `chan_sip` et `sip.conf` sont toujours disponibles en tant que secours hérité aux côtés de PJSIP.
+4. Vrai ou Faux : Dans Asterisk 22, `chan_sip` et `sip.conf` sont toujours disponibles comme solution de repli héritée aux côtés de PJSIP.
 
 5. Avec quels objets de configuration un endpoint doit-il être associé pour qu'Asterisk connaisse le socket d'écoute à utiliser et où envoyer les appels pour cet appareil ? (Choisissez toutes les réponses qui s'appliquent.)
    - A. `type=transport`
@@ -734,7 +734,7 @@ Très facile, n'est-ce pas ? Vous pouvez également effacer l'historique quand v
    - C. `type=identify`
    - D. `type=registration`
 
-6. Dans un objet PJSIP `aor`, quel paramètre maintient le mappage NAT ouvert en qualifiant périodiquement le contact, et quelle est son unité ?
+6. Dans un objet PJSIP `aor`, quel réglage maintient le mappage NAT ouvert en qualifiant périodiquement le contact, et quelle est son unité ?
    - A. `qualify=yes` (booléen)
    - B. `qualify_frequency` (secondes)
    - C. `rtp_timeout` (millisecondes)
@@ -754,7 +754,7 @@ Très facile, n'est-ce pas ? Vous pouvez également effacer l'historique quand v
    - C. `pjsip debug on`
    - D. `sip show registry`
 
-10. Sur un endpoint PJSIP qui dessert un téléphone derrière un NAT symétrique, quelle paire de paramètres permet à Asterisk de répondre à l'adresse source de la requête (RFC 3581) et de renvoyer le média là d'où le RTP arrive réellement ?
+10. Sur un endpoint PJSIP qui dessert un téléphone derrière une NAT symétrique, quelle paire de réglages fait qu'Asterisk répond à l'adresse source de la requête (RFC 3581) et renvoie le média là d'où le RTP arrive réellement ?
     - A. `direct_media=yes` et `srvlookup=yes`
     - B. `force_rport=yes` et `rtp_symmetric=yes`
     - C. `allowguest=yes` et `insecure=invite`

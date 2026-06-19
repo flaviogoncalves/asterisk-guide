@@ -1,10 +1,10 @@
 # Migration von chan_sip zu PJSIP: ein Kochbuch
 
-Wenn Sie dies mit einem Asterisk 13, 16 oder 18 System lesen, das noch im Produktivbetrieb ist, haben Sie eine Frist. `chan_sip` — der ursprüngliche SIP-Kanaltreiber, der über `sip.conf` konfiguriert wurde — wurde **in Asterisk 17 als veraltet markiert, in Asterisk 19 aus dem Standard-Build entfernt und in Asterisk 21 vollständig gelöscht**. Er existiert in Asterisk 22 LTS nicht mehr. Es gibt kein Flag, um ihn wieder zu aktivieren, kein `noload`, um dies zu umgehen, und kein Paket zur Installation. Der einzige SIP-Kanaltreiber in Asterisk 22 ist **PJSIP** (`res_pjsip` plus `chan_pjsip`), konfiguriert über `pjsip.conf`.
+Wenn Sie dies mit einem Asterisk 13, 16 oder 18 System lesen, das noch in Produktion ist, haben Sie eine Deadline. `chan_sip` — der ursprüngliche SIP-Kanaltreiber, der über `sip.conf` konfiguriert wurde — wurde **in Asterisk 17 als veraltet markiert, in Asterisk 19 aus dem Standard-Build entfernt und in Asterisk 21 vollständig gelöscht**. Er existiert in Asterisk 22 LTS nicht mehr. Es gibt kein Flag, um ihn wieder zu aktivieren, kein `noload`, um dies zu umgehen, und kein Paket, das man installieren könnte. Der einzige SIP-Kanaltreiber in Asterisk 22 ist **PJSIP** (`res_pjsip` plus `chan_pjsip`), konfiguriert über `pjsip.conf`.
 
-Ein Upgrade auf Asterisk 22 ist daher für die meisten Standorte ebenso ein *SIP-Migrationsprojekt* wie ein Versionssprung. Die gute Nachricht ist, dass sich das Protokoll auf der Leitung nicht ändert — ein Telefon, das sich gestern registriert und angerufen hat, wird dies auch morgen tun — und Asterisk liefert ein Konvertierungstool mit, das die ersten 80 % der Übersetzung für Sie erledigt. Dieses Kapitel ist ein praktisches Kochbuch: die Konzeptzuordnung, das Konvertierungsskript, direkte `sip.conf` → `pjsip.conf` Übersetzungen für die Fälle, die Sie tatsächlich haben, die Änderungen am dialplan und der CLI, die mit dem Umzug einhergehen, die Migration von realtime (Datenbank) sowie eine Checkliste und die Fallstricke, die Anwender oft treffen.
+Ein Upgrade auf Asterisk 22 ist daher für die meisten Standorte ebenso ein *SIP-Migrationsprojekt* wie ein Versionssprung. Die gute Nachricht ist, dass sich das Protokoll auf der Leitung nicht ändert — ein Telefon, das gestern registriert war und Anrufe tätigte, wird dies auch morgen tun — und Asterisk liefert ein Konvertierungstool mit, das die ersten 80 % der Übersetzung für Sie erledigt. Dieses Kapitel ist ein praktisches Kochbuch: die Konzeptzuordnung, das Konvertierungsskript, direkte `sip.conf` → `pjsip.conf` Übersetzungen für die Fälle, die Sie tatsächlich haben, die Änderungen am dialplan und der CLI, die mit dem Umzug einhergehen, die realtime (Datenbank) Migration sowie eine Checkliste und die Fallstricke, die Anwendern Probleme bereiten.
 
-Alles hier wurde anhand des Asterisk 22.10.0-Labors des Buches verifiziert. Das tiefgreifende Legacy-Material zu `chan_sip` selbst — und eine vollständige End-to-End-Konvertierung eines Multi-Device `sip.conf` — finden Sie im Kapitel *Legacy channels*; dieses Kapitel ist die fokussierte, rezeptartige Ergänzung dazu.
+Alles hier wurde anhand des Asterisk 22.10.0-Labors des Buches verifiziert. Das tiefgreifende Legacy-Material zu `chan_sip` selbst — und eine vollständige End-to-End-Konvertierung eines Multi-Device `sip.conf` — finden Sie im Kapitel *Legacy channels*; dieses Kapitel ist die fokussierte, rezeptartige Begleitung dazu.
 
 ## Ziele
 
@@ -15,14 +15,14 @@ Am Ende dieses Kapitels sollten Sie in der Lage sein:
   (endpoint + aor + auth + identify + transport + registration)
 - Das `sip_to_pjsip.py` Konvertierungsskript auszuführen und dessen Ausgabe kritisch zu prüfen
 - Die gängigen Gerätetypen (registrierendes Telefon, eingehender trunk, ausgehende Registrierung) von `sip.conf` zu `pjsip.conf` manuell zu übersetzen
-- NAT-, Medien-, DTMF-, codec- und Authentifizierungseinstellungen Option für Option zu migrieren
+- NAT-, Medien-, DTMF-, Codec- und Authentifizierungseinstellungen Option für Option zu migrieren
 - Den dialplan (`SIP/` → `PJSIP/`) und die CLI (`sip show` → `pjsip show`) zu aktualisieren
 - Eine realtime/ARA-Bereitstellung von `sippeers`/`sipregs` auf die Sorcery `ps_*` Tabellen zu migrieren
 - Eine Migrationscheckliste abzuarbeiten und die klassischen Fallstricke zu vermeiden
 
 ## Warum überhaupt migrieren
 
-`chan_sip` hat Asterisk fast zwei Jahrzehnte lang gedient, trug aber architektonische Altlasten mit sich: ein monolithisches Modul, einen einzigen Konfigurationsblock pro Gerät, schwache Unterstützung für mehrere Transportschichten und einen SIP-Stack, der hinter den RFCs zurückgeblieben war. **PJSIP** — basierend auf dem ausgereiften pjproject-Stack von Teluu und eingeführt in Asterisk 12 — war der komplette Neuanfang als Ersatz. Mit Asterisk 21 hat das Asterisk-Projekt die Arbeit abgeschlossen und `chan_sip` aus dem Quellcode entfernt.
+`chan_sip` diente Asterisk fast zwei Jahrzehnte lang, trug aber architektonische Altlasten mit sich: ein monolithisches Modul, einen einzigen Konfigurationsblock pro Gerät, schwache Unterstützung für mehrere Transporte und einen SIP-Stack, der hinter den RFCs zurückgeblieben war. **PJSIP** — basierend auf dem ausgereiften pjproject-Stack von Teluu und eingeführt in Asterisk 12 — war der vollständige Ersatz von Grund auf. Mit Asterisk 21 hat das Asterisk-Projekt die Arbeit abgeschlossen und `chan_sip` aus dem Quellcode entfernt.
 
 Sie können die Situation auf jedem Asterisk 22 System bestätigen:
 
@@ -39,20 +39,20 @@ chan_pjsip.so                  PJSIP Channel Driver     0          Running     c
 
 `chan_sip` gibt *0 modules loaded* zurück — es ist schlicht nicht vorhanden. Es gibt nichts, *zu* dem man migrieren könnte, außer PJSIP, daher ist die einzige wirkliche Frage das *Wie*, nicht das *Ob*.
 
-## Die konzeptionelle Zuordnung: Es gibt keinen einzelnen "peer"
+## Die konzeptionelle Zuordnung: Es gibt keinen einzelnen "Peer"
 
-Der mentale Wandel, der jeden stolpern lässt, der von `sip.conf` kommt, ist dieser: **PJSIP hat kein `[peer]`.** In `sip.conf` beschrieb ein eingeklammerter Block — ein `peer`, ein `user` oder ein `friend` — *alles* über ein Gerät: seine Zugangsdaten, wo es zu erreichen ist, seine codecs, sein NAT-Verhalten, seinen dialplan context. PJSIP bricht diesen einzelnen Block bewusst in mehrere kleinere, zweckgebundene Objekte auf, die jeweils mit einem `type=` markiert sind und *sich gegenseitig beim Namen referenzieren*:
+Der mentale Wandel, der jeden stolpern lässt, der von `sip.conf` kommt, ist dieser: **PJSIP hat keinen `[peer]`.** In `sip.conf` beschrieb ein eingeklammerter Block — ein `peer`, ein `user` oder ein `friend` — *alles* über ein Gerät: seine Anmeldedaten, wo es zu erreichen ist, seine Codecs, sein NAT-Verhalten, seinen dialplan context. PJSIP bricht diesen einzelnen Block bewusst in mehrere kleinere, zweckgebundene Objekte auf, die jeweils mit einem `type=` markiert sind und *sich gegenseitig beim Namen referenzieren*:
 
 | PJSIP-Objekt (`type=`) | Verantwortung |
 | --- | --- |
-| `endpoint` | Die Identität des Geräts für die Anrufbehandlung: codecs, context, DTMF, Medien, NAT und Verweise auf seine `auth`/`aors`/`transport` |
+| `endpoint` | Die Identität des Geräts für die Anrufbehandlung: Codecs, context, DTMF, Medien, NAT und Referenzen auf seine `auth`/`aors`/`transport` |
 | `aor` (Address of Record) | *Wo* das Gerät zu erreichen ist — registrierte oder statische Kontakte, `max_contacts`, qualify |
-| `auth` | Zugangsdaten (Benutzername/Passwort) für eingehende und/oder ausgehende Authentifizierung |
+| `auth` | Anmeldedaten (Benutzername/Passwort) für eingehende und/oder ausgehende Authentifizierung |
 | `identify` | Abgleich einer eingehenden Anfrage mit einem endpoint anhand der **Quell-IP** anstelle des `From` Benutzers |
 | `transport` | Der/die Listening-Socket(s): Protokoll, Bind-Adresse/Port, NAT/externe Adressen |
-| `registration` | Eine **ausgehende** REGISTER-Anfrage von Asterisk an einen Provider |
+| `registration` | Eine **ausgehende** REGISTER-Anfrage von Asterisk an einen Anbieter |
 
-Die Unterscheidung zwischen `friend`/`peer`/`user` verschwindet vollständig — in PJSIP ist alles ein `endpoint`. Ein einzelner `sip.conf` friend wird daher typischerweise zu drei Objekten (`endpoint` + `auth` + `aor`), die einen Namen teilen und aufeinander verweisen:
+Die Unterscheidung `friend`/`peer`/`user` verschwindet vollständig — in PJSIP ist alles ein `endpoint`. Ein einzelner `sip.conf` friend wird daher typischerweise zu drei Objekten (`endpoint` + `auth` + `aor`), die einen Namen teilen und aufeinander verweisen:
 
 ```
                 sip.conf                              pjsip.conf
@@ -69,7 +69,7 @@ Die Unterscheidung zwischen `friend`/`peer`/`user` verschwindet vollständig —
                                           └───────────┘
 ```
 
-Der endpoint ist das Bindeglied. Er benennt ein `transport` (oder erbt den Standard), ein `auth` Objekt und einen oder mehrere `aors`. Das Objektmodell wird in *SIP & PJSIP in depth* ausführlich behandelt; hier benötigen wir es nur als Ziel jeder Übersetzung.
+Der endpoint ist der Klebstoff. Er benennt einen `transport` (oder erbt den Standard), ein `auth` Objekt und einen oder mehrere `aors`. Das Objektmodell wird in *SIP & PJSIP in depth* ausführlich behandelt; hier benötigen wir es nur als Ziel jeder Übersetzung.
 
 ## Das `sip_to_pjsip.py` Konvertierungstool
 
@@ -99,11 +99,11 @@ Seine einzigen wirklichen Optionen sind:
 -q, --quiet             don't print messages to stdout
 ```
 
-Es liest die Eingabe, gibt `Converting to PJSIP...` aus und schreibt die Ausgabedatei. Intern durchläuft es jeden `sip.conf` Abschnitt und erstellt pro Gerät die passenden `endpoint`, `auth`, `aor`, `registration` und (wo es sie ableiten kann) `transport` Objekte, wobei die Optionszuordnungen aus dem nächsten Abschnitt automatisch angewendet werden.
+Es liest die Eingabe, gibt `Converting to PJSIP...` aus und schreibt die Ausgabedatei. Intern durchläuft es jeden `sip.conf` Abschnitt und gibt pro Gerät die passenden `endpoint`, `auth`, `aor`, `registration` und (wo es sie ableiten kann) `transport` Objekte aus, wobei die Optionszuordnungen im nächsten Abschnitt automatisch angewendet werden.
 
 ### Was es tut — und seine Grenzen
 
-Betrachten Sie die Ausgabe als **ersten Entwurf, nicht als fertige Datei.** Das Skript ist ehrlich bezüglich seiner eigenen Lücken: Alles, was es nicht sauber zuordnen kann, wird in einen deutlich gekennzeichneten Block am Anfang der Ausgabedatei geschrieben:
+Betrachten Sie die Ausgabe als **ersten Entwurf, nicht als fertige Datei.** Das Skript ist ehrlich bezüglich seiner eigenen Lücken: Alles, was es nicht sauber zuordnen kann, wird in einen deutlich abgegrenzten Block am Anfang der Ausgabedatei geschrieben:
 
 ```
 ;--
@@ -112,7 +112,7 @@ Non mapped elements start
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [general]
 bindport = 5060
-[zoiper]
+[softphone]
 qualify = yes
 ...
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -121,18 +121,18 @@ Non mapped elements end
 --;
 ```
 
-Beachten Sie in diesem realen Fragment, dass `qualify = yes` von einem `sip.conf` Peer im Block *non-mapped* gelandet ist — da PJSIP die Qualifizierung auf dem **aor** mit `qualify_frequency` (Sekunden) durchführt, nicht als boolescher Wert auf dem Gerät, überlässt das Skript es Ihnen, dies bewusst einzustellen. Die praktischen Einschränkungen, die Sie einplanen sollten:
+Beachten Sie in diesem realen Fragment, dass `qualify = yes` von einem `sip.conf` Peer im *nicht zugeordneten* Block landete — da PJSIP auf dem **aor** mit `qualify_frequency` (Sekunden) qualifiziert, nicht mit einem booleschen Wert auf dem Gerät, überlässt das Skript es Ihnen, dies bewusst einzustellen. Die praktischen Einschränkungen, die Sie einplanen sollten:
 
-- **Transportschichten werden geraten, nicht entworfen.** Das Skript erstellt einen einfachen `transport-udp` aus `bindport`/`bindaddr`, aber es kann Ihre TLS-Zertifikate, Ihre TCP-Anforderungen oder Ihr Multi-Bind-Layout nicht kennen. Überprüfen und schreiben Sie den Transport neu.
-- **NAT und externe Adressen erfordern einen Menschen.** `externaddr`/`localnet` werden möglicherweise nicht sauber übernommen; bestätigen Sie `external_media_address`, `external_signaling_address` und `local_net` auf dem Transport manuell.
+- **Transporte werden geraten, nicht entworfen.** Das Skript gibt einen einfachen `transport-udp` aus `bindport`/`bindaddr` aus, aber es kann Ihre TLS-Zertifikate, Ihre TCP-Anforderungen oder Ihr Multi-Bind-Layout nicht kennen. Überprüfen und schreiben Sie den Transport neu.
+- **NAT und externe Adressen benötigen einen Menschen.** `externaddr`/`localnet` überleben möglicherweise nicht sauber; bestätigen Sie `external_media_address`, `external_signaling_address` und `local_net` auf dem Transport manuell.
 - **`qualify`, benutzerdefinierte Timer und eine Handvoll Optionen landen in "non-mapped".** Lesen Sie diesen Block von oben nach unten und entscheiden Sie für jeden Punkt.
 - **Codec-Listen, Kontexte und Sicherheit müssen überprüft werden.** Verifizieren Sie `disallow`/`allow`, den dialplan `context` und stellen Sie sicher, dass kein Gerät unbeabsichtigt offen gelassen wurde.
 
-Der Arbeitsablauf ist daher: Führen Sie das Skript in eine *Scratch*-Datei aus, vergleichen und überprüfen Sie diese, fügen Sie die guten Teile in Ihre echte `pjsip.conf` ein und testen Sie dann ausgiebig vor dem Produktivbetrieb.
+Der Arbeitsablauf ist daher: Führen Sie das Skript in eine *Scratch*-Datei aus, vergleichen (diff) und überprüfen Sie diese, fügen Sie die guten Teile in Ihre echte `pjsip.conf` ein und testen Sie dann ausgiebig vor der Produktion.
 
 ## Direkte Übersetzungen
 
-Dies sind die Rezepte. `sip.conf` auf der linken Seite, das verifizierte `pjsip.conf` Äquivalent auf der rechten Seite (hier für die Seitenbreite gestapelt). Jeder Optionsname und Wert auf der rechten Seite wurde mit dem Asterisk 22 Labor anhand von `config show help res_pjsip ...` überprüft.
+Dies sind die Rezepte. `sip.conf` links, das verifizierte `pjsip.conf` Äquivalent rechts (hier für die Seitenbreite gestapelt). Jeder Optionsname und Wert auf der rechten Seite wurde mit dem Asterisk 22 Labor mit `config show help res_pjsip ...` überprüft.
 
 ### Ein registrierendes Telefon (`host=dynamic`)
 
@@ -178,11 +178,11 @@ max_contacts=1
 qualify_frequency=60
 ```
 
-Wichtige Schritte: `host=dynamic` wird zu einem `aor` mit `max_contacts` (das Gerät führt ein REGISTER aus, um seinen Kontakt einzutragen); `secret=` wird zu `password=` innerhalb eines `type=auth`; `qualify=yes` wird zu `qualify_frequency=60` (Sekunden) auf dem **aor**, nicht auf dem endpoint. Setzen Sie `max_contacts` nur dann auf einen Wert größer als 1, wenn Sie wirklich dasselbe Konto auf mehreren Geräten gleichzeitig nutzen möchten.
+Wichtige Schritte: `host=dynamic` wird zu einem `aor` mit `max_contacts` (das Gerät führt ein REGISTER aus, um seinen Kontakt einzutragen); `secret=` wird zu `password=` innerhalb eines `type=auth`; `qualify=yes` wird zu `qualify_frequency=60` (Sekunden) auf dem **aor**, nicht dem endpoint. Setzen Sie `max_contacts` nur dann auf über 1, wenn Sie wirklich dasselbe Konto auf mehreren Geräten gleichzeitig haben möchten.
 
 ### Ein eingehender trunk (`host=<ip>` / `type=peer`)
 
-Ein Provider, der Ihnen Anrufe von einer bekannten IP-Adresse sendet. Hier findet keine Registrierung statt — Sie authentifizieren den *Datenverkehr des Anbieters anhand seiner Quell-IP* unter Verwendung von `identify`.
+Ein Anbieter, der Ihnen Anrufe von einer bekannten IP-Adresse sendet. Hier gibt es keine Registrierung — Sie authentifizieren den *Datenverkehr des Anbieters anhand seiner Quell-IP* unter Verwendung von `identify`.
 
 **Legacy `sip.conf`:**
 
@@ -215,11 +215,11 @@ endpoint=itsp-in
 match=203.0.113.10
 ```
 
-Die entscheidende Übersetzung ist **`insecure=invite` → `identify`**. In `chan_sip` wies `insecure=invite` Asterisk an: "Fordere bei eingehenden INVITEs von diesem Peer keine Authentifizierung an." PJSIP erreicht denselben Effekt, indem es die *Quell-IP mit dem endpoint abgleicht* mittels `type=identify`/`match=`, was sowohl expliziter als auch sicherer ist. Der statische `host=` wird zu einem permanenten `contact=` auf dem `aor`, sodass Sie auch *nach außen* zum Provider wählen können. `match=` akzeptiert eine IP, einen CIDR-Bereich oder einen Hostnamen (der zum Zeitpunkt des Konfigurationsladens aufgelöst wird — laden Sie neu, wenn sich die IP des Providers ändert).
+Die entscheidende Übersetzung ist **`insecure=invite` → `identify`**. In `chan_sip` sagte `insecure=invite` zu Asterisk: "Fordere keine Authentifizierung für eingehende INVITEs von diesem Peer an." PJSIP erreicht denselben Effekt, indem es *die Quell-IP mit dem endpoint abgleicht* mittels `type=identify`/`match=`, was sowohl expliziter als auch sicherer ist. Der statische `host=` wird zu einem permanenten `contact=` auf dem `aor`, sodass Sie auch *ausgehend* zum Anbieter wählen können. `match=` akzeptiert eine IP, einen CIDR-Bereich oder einen Hostnamen (der zum Zeitpunkt des Konfigurationsladens aufgelöst wird — laden Sie neu, wenn sich die IP des Anbieters ändert).
 
 ### Eine ausgehende Registrierung (`register =>`)
 
-Wenn der Provider möchte, dass *Sie* sich bei *ihm* anmelden, verwendete `chan_sip` eine einzelne `register =>` Zeile in `[general]`. PJSIP ersetzt dies durch ein dediziertes `type=registration` Objekt plus ein `outbound_auth`.
+Wenn der Anbieter möchte, dass *Sie* sich bei *ihm* anmelden, verwendete `chan_sip` eine einzelne `register =>` Zeile in `[general]`. PJSIP ersetzt dies durch ein dediziertes `type=registration` Objekt plus ein `outbound_auth`.
 
 **Legacy `sip.conf`:**
 
@@ -271,7 +271,7 @@ contact_user=9999
 retry_interval=60
 ```
 
-Ordnen Sie die `register =>` Felder eins zu eins zu: Die `1020:supersecret` Zugangsdaten werden zum `auth` Objekt (referenziert als `outbound_auth`); `@sip.example.com:5600` wird zum `server_uri`; das `/9999` Suffix — der Benutzerteil, an den der Provider eingehende Anrufe sendet — wird zu `contact_user=9999`. `defaultuser`/`fromuser` und `fromdomain` werden zu `from_user` und `from_domain` auf dem endpoint. Beachten Sie, dass `outbound_auth` *zweimal* erscheint: Die Registrierung verwendet es für das REGISTER, der endpoint verwendet es, um die `407` Herausforderung bei ausgehenden INVITEs zu beantworten.
+Ordnen Sie die `register =>` Felder eins zu eins zu: Die `1020:supersecret` Anmeldedaten werden zum `auth` Objekt (referenziert als `outbound_auth`); `@sip.example.com:5600` wird zum `server_uri`; das `/9999` Suffix — der Benutzerteil, an den der Anbieter eingehende Anrufe liefert — wird zu `contact_user=9999`. `defaultuser`/`fromuser` und `fromdomain` werden zu `from_user` und `from_domain` auf dem endpoint. Beachten Sie, dass `outbound_auth` *zweimal* erscheint: Die Registrierung verwendet es für das REGISTER, der endpoint verwendet es, um die `407` Herausforderung bei ausgehenden INVITEs zu beantworten.
 
 ## Migrationsreferenz Option für Option
 
@@ -285,21 +285,21 @@ Wenn Sie manuell übersetzen (oder die Ausgabe des Skripts prüfen), ist diese T
 | `register => u:p@host/ext` | `type=registration` + `outbound_auth` | registration |
 | `secret=` | `password=` | auth |
 | `username=` / `defaultuser=` | `username=` | auth |
-| `secret=` (auth method) | `auth_type=digest` | auth |
+| `secret=` (Auth-Methode) | `auth_type=digest` | auth |
 | `nat=force_rport,comedia` | `force_rport=yes` + `rewrite_contact=yes` + `rtp_symmetric=yes` | endpoint |
 | `directmedia=yes/no` | `direct_media=yes/no` | endpoint |
 | `dtmfmode=rfc2833` | `dtmf_mode=rfc4733` | endpoint |
 | `disallow=` / `allow=` | `disallow=` / `allow=` (gleiche Syntax) | endpoint |
 | `context=` | `context=` | endpoint |
 | `qualify=yes` | `qualify_frequency=<seconds>` | aor |
-| `insecure=invite` | auth weglassen; `type=identify` + `match=` nutzen | identify |
+| `insecure=invite` | Auth weglassen; `type=identify` + `match=` verwenden | identify |
 | `fromuser=` / `fromdomain=` | `from_user=` / `from_domain=` | endpoint |
 | `externaddr=` / `externip=` | `external_media_address=` + `external_signaling_address=` | transport |
 | `localnet=` | `local_net=` | transport |
 
 ### Ein Hinweis zu `secret` → `auth` und `auth_type`
 
-`chan_sip`s `secret=` wird zum `password=` Feld eines `type=auth` Objekts. Die **Authentifizierungsmethode** wird mit `auth_type` festgelegt. Verwenden Sie `auth_type=digest`. Die älteren Werte `userpass` und `md5` funktionieren zwar noch, sind aber **veraltet und werden stillschweigend in `digest` konvertiert** — direkt aus dem Labor verifiziert:
+`chan_sip`s `secret=` wird zum `password=` Feld eines `type=auth` Objekts. Die **Authentifizierungsmethode** wird mit `auth_type` eingestellt. Verwenden Sie `auth_type=digest`. Die älteren Werte `userpass` und `md5` funktionieren zwar noch, sind aber **veraltet und werden stillschweigend in `digest` konvertiert** — direkt aus dem Labor verifiziert:
 
 ```
 *CLI> config show help res_pjsip auth auth_type
@@ -310,11 +310,11 @@ Wenn Sie manuell übersetzen (oder die Ausgabe des Skripts prüfen), ist diese T
     digest - If selected, the 'password' ... parameters must be provided.
 ```
 
-Sie werden `auth_type=userpass` in älteren Konfigurationen und in der Ausgabe des Konvertierungsskripts (sowie in früheren Kapiteln dieses Buches) sehen. Es ist harmlos, aber schreiben Sie `digest` in alles Neue.
+Sie werden `auth_type=userpass` in älteren Konfigurationen und in der Ausgabe des Konvertierungsskripts (und in früheren Kapiteln dieses Buches) sehen. Es ist harmlos, aber schreiben Sie `digest` in alles Neue.
 
 ### NAT, Medien und DTMF im Detail
 
-Diese drei Punkte sind der Grund für die meisten Tickets nach der Migration vom Typ "es registriert sich, hat aber keinen Ton". Die `chan_sip` Kurzform `nat=force_rport,comedia` packte drei Verhaltensweisen in eine Option; PJSIP trennt sie, damit Sie über jede einzeln nachdenken können:
+Diese drei sind der Grund für die meisten Tickets nach der Migration vom Typ "es registriert sich, hat aber keinen Ton". Die `chan_sip` Kurzform `nat=force_rport,comedia` packte drei Verhaltensweisen in eine Option; PJSIP teilt sie auf, damit Sie über jede einzeln nachdenken können:
 
 ```
 ; sip.conf:  nat=force_rport,comedia
@@ -324,11 +324,11 @@ rewrite_contact=yes    ; rewrite the stored Contact to the real source address
 rtp_symmetric=yes      ; send RTP back where it actually came from (comedia)
 ```
 
-Für **Medien** wird `directmedia` zu `direct_media` (der Unterstrich ist die gesamte Änderung); behalten Sie `direct_media=no` bei, wann immer der Anruf auf Asterisk verankert werden muss — über NAT hinweg oder zum Aufzeichnen/Transkodieren/Weiterleiten. Für **DTMF** wurde die RFC neu nummeriert: `chan_sip`s `dtmfmode=rfc2833` ist PJSIPs `dtmf_mode=rfc4733` (derselbe Out-of-Band telephone-event Mechanismus, aktuelle RFC-Nummer). Das Labor bestätigt, dass die gültigen `dtmf_mode` Werte `rfc4733`, `inband`, `info`, `auto` und `auto_info` sind, mit dem Standardwert `rfc4733`.
+Für **Medien** wird `directmedia` zu `direct_media` (der Unterstrich ist die gesamte Änderung); behalten Sie `direct_media=no` bei, wann immer der Anruf auf Asterisk verankert werden muss — über NAT hinweg oder zum Aufzeichnen/Transkodieren/Weiterleiten. Für **DTMF** wurde das RFC neu nummeriert: `chan_sip`s `dtmfmode=rfc2833` ist PJSIPs `dtmf_mode=rfc4733` (derselbe Out-of-Band telephone-event Mechanismus, aktuelle RFC-Nummer). Das Labor bestätigt, dass die gültigen `dtmf_mode` Werte `rfc4733`, `inband`, `info`, `auto` und `auto_info` sind, mit dem Standard `rfc4733`.
 
-Für **codecs** ändert sich nichts: `disallow=all` gefolgt von `allow=ulaw` (usw.) verwendet die identische Syntax auf dem PJSIP endpoint.
+Für **Codecs** ändert sich nichts: `disallow=all` gefolgt von `allow=ulaw` (etc.) verwendet die identische Syntax auf dem PJSIP endpoint.
 
-## Änderungen an dialplan und CLI
+## Dialplan- und CLI-Änderungen
 
 Die Migration endet nicht bei `pjsip.conf`. Zwei Dinge im täglichen Gebrauch ändern sich.
 
@@ -344,7 +344,7 @@ exten => 2000,1,Dial(SIP/2000,30,tT)
 exten => 2000,1,Dial(PJSIP/2000,30,tT)
 ```
 
-Trunk-Wählstrings folgen demselben Muster — `Dial(SIP/${EXTEN}@itsp)` wird zu `Dial(PJSIP/${EXTEN}@itsp)`. PJSIP fügt auch die `PJSIP_DIAL_CONTACTS()` Funktion hinzu, um jeden Kontakt, der an eine AOR gebunden ist, gleichzeitig anzurufen, sowie die `PJSIP_HEADER()` / `PJSIP_MEDIA_OFFER()` dialplan-Funktionen; durchsuchen Sie Ihren dialplan nach `SIP/`, `SIPPEER`, `SIPCHANINFO` und `CHANNEL(...)` SIP-Verweisen und übersetzen Sie jeden.
+Trunk-Wählstrings folgen demselben Muster — `Dial(SIP/${EXTEN}@itsp)` wird zu `Dial(PJSIP/${EXTEN}@itsp)`. PJSIP fügt auch die `PJSIP_DIAL_CONTACTS()` Funktion hinzu, um jeden Kontakt, der an eine AOR gebunden ist, gleichzeitig anzurufen, sowie die `PJSIP_HEADER()` / `PJSIP_MEDIA_OFFER()` dialplan-Funktionen; durchsuchen Sie Ihren dialplan nach `SIP/`, `SIPPEER`, `SIPCHANINFO` und `CHANNEL(...)` SIP-Referenzen und übersetzen Sie jede.
 
 ### CLI: `sip show ...` → `pjsip show ...`
 
@@ -378,42 +378,42 @@ Die konzeptionelle Aufteilung ist dieselbe wie beim Flat-File-Fall: Eine `sippee
 Zwei Dinge machen dies handhabbar:
 
 - **Das Schema wird für Sie generiert.** Asterisk liefert Alembic-Migrationen unter `contrib/ast-db-manage/` mit, die jede `ps_*` Tabelle erstellen. Führen Sie `alembic upgrade head` gegen die `config` Datenbank aus, um das aktuelle PJSIP-Schema zu erstellen, anstatt DDL manuell zu schreiben.
-- **Es gibt ein SQL-Konvertierungsskript.** Neben `sip_to_pjsip.py` befindet sich **`sip_to_pjsql.py`** im selben `contrib/scripts/sip_to_pjsip/` Verzeichnis; es verwendet dieselbe `convert()` Logik, gibt aber eine `pjsip.sql` Datei mit `INSERT` Anweisungen für die `ps_*` Tabellen aus, anstatt eine Flat-File-Konfiguration. Wie beim Flat-File-Tool gilt: Überprüfen Sie die Ausgabe, bevor Sie sie laden.
+- **Es gibt ein SQL-Konvertierungsskript.** Neben `sip_to_pjsip.py` befindet sich **`sip_to_pjsql.py`** im selben `contrib/scripts/sip_to_pjsip/` Verzeichnis; es verwendet dieselbe `convert()` Logik wieder, gibt aber eine `pjsip.sql` Datei mit `INSERT` Anweisungen für die `ps_*` Tabellen aus, anstatt eine Flat-File-Konfiguration. Wie beim Flat-File-Tool gilt: Überprüfen Sie die Ausgabe, bevor Sie sie laden.
 
-Zeigen Sie schließlich mit `sorcery.conf` auf Ihre Datenbank, damit PJSIP endpoints, aors, auths und Kontakte aus den `ps_*` Tabellen liest (via `res_config_odbc` / `res_pjsip_realtime`), genau wie `extconfig.conf` einst `sippeers` für `chan_sip` auf die Datenbank verwies. Die Realtime-Mechanik wird im Kapitel *Realtime* behandelt; der migrationsspezifische Punkt ist einfach, *welche Tabellen auf welche abgebildet werden*.
+Zeigen Sie schließlich mit `sorcery.conf` auf Ihre Datenbank, damit PJSIP endpoints, aors, auths und Kontakte aus den `ps_*` Tabellen liest (via `res_config_odbc` / `res_pjsip_realtime`), genau wie `extconfig.conf` einst `sippeers` für `chan_sip` auf die Datenbank verwies. Die Realtime-Mechanik wird im Kapitel *Realtime* behandelt; der migrationsspezifische Punkt ist einfach, *welche Tabellen welchen zugeordnet sind*.
 
 ## Migrationscheckliste
 
-Eine pragmatische Reihenfolge der Operationen für eine produktive Umstellung:
+Eine pragmatische Reihenfolge der Operationen für eine Produktionsumstellung:
 
-1. **Inventur.** Listen Sie jedes Gerät, jeden trunk und jedes `register =>` in `sip.conf` (oder jede `sippeers`/`sipregs` Zeile) auf. Notieren Sie benutzerdefinierte NAT-, codec- und DTMF-Einstellungen.
-2. **Führen Sie den Konverter in eine Scratch-Datei aus.** `sip_to_pjsip.py sip.conf pjsip_generated.conf`. Zeigen Sie **nicht** auf Ihre aktive `pjsip.conf`.
-3. **Lesen Sie den Block "Non mapped elements"** am Anfang der Ausgabe und lösen Sie jede Zeile auf — insbesondere `qualify`, Timer und alles, was mit NAT zu tun hat.
-4. **Entwerfen Sie die Transportschicht(en) manuell.** Ein Transport pro IP/Port; fügen Sie TLS/TCP nach Bedarf hinzu; setzen Sie `external_*_address` und `local_net` für Cloud/NAT-Boxen.
-5. **Überprüfen Sie die Authentifizierung.** Bestätigen Sie `auth_type=digest`, Benutzernamen und Passwörter auf jedem `auth` Objekt.
-6. **Überprüfen Sie NAT/Medien/DTMF.** `force_rport`/`rewrite_contact`/`rtp_symmetric`, `direct_media`, `dtmf_mode=rfc4733` pro endpoint nach Bedarf.
+1. **Inventur.** Listen Sie jedes Gerät, jeden trunk und jedes `register =>` in `sip.conf` (oder jede `sippeers`/`sipregs` Zeile) auf. Notieren Sie benutzerdefinierte NAT-, Codec- und DTMF-Einstellungen.
+2. **Führen Sie den Konverter in eine Scratch-Datei aus.** `sip_to_pjsip.py sip.conf pjsip_generated.conf`. Zeigen Sie **nicht** auf Ihre Live-`pjsip.conf`.
+3. **Lesen Sie den "Non mapped elements" Block** am Anfang der Ausgabe und lösen Sie jede Zeile auf — insbesondere `qualify`, Timer und alles, was mit NAT zu tun hat.
+4. **Entwerfen Sie den/die Transport(e) manuell.** Ein Transport pro IP/Port; fügen Sie TLS/TCP nach Bedarf hinzu; setzen Sie `external_*_address` und `local_net` für Cloud/NAT-Boxen.
+5. **Verifizieren Sie die Authentifizierung.** Bestätigen Sie `auth_type=digest`, Benutzernamen und Passwörter auf jedem `auth` Objekt.
+6. **Verifizieren Sie NAT/Medien/DTMF.** `force_rport`/`rewrite_contact`/`rtp_symmetric`, `direct_media`, `dtmf_mode=rfc4733` pro endpoint wie erforderlich.
 7. **Aktualisieren Sie den dialplan.** `SIP/` → `PJSIP/` überall; überprüfen Sie `SIP*` Funktionen und Kanalvariablen.
-8. **Aktualisieren Sie Skripte und Überwachung.** Jedes Tool oder jeder AMI-Consumer, der die Ausgabe von `sip show ...` geparst hat, muss auf `pjsip show ...` / PJSIP AMI-Aktionen umgestellt werden.
+8. **Aktualisieren Sie Skripte und Überwachung.** Jedes Tool oder jeder AMI-Consumer, der die `sip show ...` Ausgabe geparst hat, muss auf `pjsip show ...` / PJSIP AMI-Aktionen umgestellt werden.
 9. **Neu laden und verifizieren.** `module reload res_pjsip.so`, dann `pjsip show endpoints`, `pjsip show registrations`, `pjsip show identifies`.
 10. **Testen Sie mit dem Paket-Logger.** `pjsip set logger on`; führen Sie eine Registrierung, einen eingehenden Anruf und einen ausgehenden Anruf durch und lesen Sie den SIP-Austausch von Anfang bis Ende.
 
 ## Häufige Fallstricke
 
-- **`alwaysauthreject` ist jetzt eingebaut — suchen Sie nicht danach.** `chan_sip` benötigte `alwaysauthreject=yes`, damit nicht durch unterschiedliche Antworten auf falsche Benutzernamen durchsickerte, welche extensions existierten. PJSIP tut das Sicherere von Design her: Es verrät niemals, ob ein endpoint existiert. Es gibt keine `alwaysauthreject` Option zum Einstellen. Der zugehörige Schutz — das Drosseln nicht identifizierter Absender — ist die globale `unidentified_request_count` / `unidentified_request_period`, die standardmäßig aktiviert ist.
+- **`alwaysauthreject` ist jetzt eingebaut — suchen Sie nicht danach.** `chan_sip` benötigte `alwaysauthreject=yes`, damit nicht durch unterschiedliche Antworten auf falsche Benutzernamen durchsickerte, welche Nebenstellen existierten. PJSIP tut das Sichere von Design aus: Es verrät niemals, ob ein endpoint existiert. Es gibt keine `alwaysauthreject` Option zum Einstellen. Der zugehörige Schutz — das Drosseln nicht identifizierter Absender — ist das globale `unidentified_request_count` / `unidentified_request_period`, das standardmäßig aktiviert ist.
 
-- **`insecure=invite` ist keine PJSIP-Option — verwenden Sie `identify`.** Es gibt kein `insecure=` in `pjsip.conf`. Der Weg, unauthentifizierte INVITEs von einem bekannten Provider zu akzeptieren, besteht darin, den *endpoint anhand der Quell-IP zu identifizieren* mit `type=identify` / `match=`. Gleichen Sie so eng wie möglich ab (spezifische Host-IPs, keine weiten CIDRs) und sichern Sie dies mit einem `type=acl` ab — ein IP-abgeglichener trunk ohne Authentifizierung ist ein Ziel für Gebührenbetrug.
+- **`insecure=invite` ist keine PJSIP-Option — verwenden Sie `identify`.** Es gibt kein `insecure=` in `pjsip.conf`. Der Weg, unauthentifizierte INVITEs von einem bekannten Anbieter zu akzeptieren, besteht darin, *den endpoint anhand der Quell-IP zu identifizieren* mit `type=identify` / `match=`. Gleichen Sie so eng wie möglich ab (spezifische Host-IPs, keine weiten CIDRs) und sichern Sie dies mit einem `type=acl` ab — ein IP-abgeglichener trunk ohne Authentifizierung ist ein Ziel für Gebührenbetrug.
 
-- **Ein Transport pro IP/Port.** Sie können nicht zwei Transportschichten an dieselbe IP:Port binden, und Sie können nicht mehrere TCP- oder TLS-Transportschichten derselben IP-Version binden. Das Konvertierungsskript erstellt möglicherweise einen Transport, der mit einem bereits vorhandenen kollidiert — konsolidieren Sie dies zu einer einzigen, bewusst entworfenen Transportschicht.
+- **Ein Transport pro IP/Port.** Sie können nicht zwei Transporte an dieselbe IP:Port binden, und Sie können nicht mehrere TCP- oder TLS-Transporte derselben IP-Version binden. Das Konvertierungsskript gibt möglicherweise einen Transport aus, der mit einem bereits vorhandenen kollidiert — konsolidieren Sie dies zu einer einzigen, bewusst entworfenen Transportschicht.
 
-- **`qualify=yes` lässt sich nicht in einen booleschen Wert übersetzen.** Er gehört auf den **aor** als `qualify_frequency=<seconds>`. Der Konverter verschiebt `qualify=yes` in den "non-mapped" Block, genau weil es keinen äquivalenten booleschen Wert auf dem endpoint gibt.
+- **`qualify=yes` übersetzt nicht in einen booleschen Wert.** Er gehört auf den **aor** als `qualify_frequency=<seconds>`. Der Konverter wirft `qualify=yes` in den nicht zugeordneten Block, gerade weil es keinen äquivalenten booleschen Wert auf dem endpoint gibt.
 
-- **`secret=` ist keine endpoint-Option.** Zugangsdaten leben nur in einem `type=auth` Objekt, auf das der endpoint *verweist* (`auth=` für eingehend, `outbound_auth=` für ausgehend). Ein Passwort auf den endpoint zu setzen, bewirkt nichts.
+- **`secret=` ist keine endpoint-Option.** Anmeldedaten leben nur in einem `type=auth` Objekt, auf das der endpoint *verweist* (`auth=` für eingehend, `outbound_auth=` für ausgehend). Ein Passwort auf den endpoint zu setzen, bewirkt nichts.
 
-- **Die CLI und alle Scraping-Skripte brechen stillschweigend.** `sip show ...` gibt "No such command" zurück, nicht unbedingt einen Fehler, den Ihre Überwachung abfängt. Prüfen Sie jeden Cronjob, Nagios-Check und AMI-Client auf `sip ` Befehle vor der Umstellung.
+- **Die CLI und alle Scraping-Skripte brechen stillschweigend.** `sip show ...` gibt "No such command" zurück, nicht unbedingt einen Fehler, den Ihre Überwachung abfangen wird. Prüfen Sie jeden Cron-Job, Nagios-Check und AMI-Client auf `sip ` Befehle vor der Umstellung.
 
 ## Zusammenfassung
 
-Die Migration auf Asterisk 22 bedeutet, von `chan_sip` wegzumigrieren, da der Treiber in Asterisk 21 entfernt wurde und PJSIP der einzige verbleibende SIP-Kanal ist. Der Kern der Arbeit besteht darin, jeden `sip.conf` `peer`/`user`/`friend` — der alles in einen Block packte — als eine Reihe zusammenarbeitender PJSIP-Objekte auszudrücken: ein `endpoint` plus ein `auth`, ein `aor` und, je nach Gerät, ein `identify` (eingehender trunk), ein `registration` (ausgehende Anmeldung) und ein gemeinsamer `transport`. Das `sip_to_pjsip.py` Skript in `contrib/scripts/sip_to_pjsip/` erledigt die Hauptübersetzung und markiert ehrlich, was es nicht zuordnen kann, in einem "Non mapped elements" Block, aber seine Ausgabe ist ein erster Entwurf: Entwerfen Sie Transport, NAT und Sicherheit manuell und testen Sie vor dem Produktivbetrieb. Aktualisieren Sie rund um die Konfiguration den dialplan (`SIP/` → `PJSIP/`) sowie Ihre Finger und Skripte (`sip show` → `pjsip show`, `sip set debug` → `pjsip set logger`). Realtime-Bereitstellungen ziehen von `sippeers`/`sipregs` auf die Sorcery `ps_endpoints`/`ps_aors`/`ps_auths`/`ps_contacts` Tabellen um, wobei `sip_to_pjsql.py` und das `contrib/ast-db-manage` Schema helfen. Achten Sie auf die Fallstricke — `alwaysauthreject` ist eingebaut, `insecure=invite` wird zu `identify`, `qualify=yes` wird zu `qualify_frequency` und ein Transport pro IP/Port — und die Umstellung ist eher mechanisch als mysteriös.
+Die Migration auf Asterisk 22 bedeutet, von `chan_sip` wegzumigrieren, da der Treiber in Asterisk 21 entfernt wurde und PJSIP der einzige verbleibende SIP-Kanal ist. Der Kern der Arbeit besteht darin, jeden `sip.conf` `peer`/`user`/`friend` — der alles in einen Block packte — als eine Reihe zusammenarbeitender PJSIP-Objekte auszudrücken: einen `endpoint` plus einen `auth`, einen `aor` und, je nach Gerät, einen `identify` (eingehender trunk), einen `registration` (ausgehende Anmeldung) und einen geteilten `transport`. Das `sip_to_pjsip.py` Skript in `contrib/scripts/sip_to_pjsip/` erledigt die Hauptübersetzung und markiert ehrlich, was es nicht zuordnen kann, in einem "Non mapped elements" Block, aber seine Ausgabe ist ein erster Entwurf: Entwerfen Sie Transport, NAT und Sicherheit manuell und testen Sie vor der Produktion. Aktualisieren Sie rund um die Konfiguration den dialplan (`SIP/` → `PJSIP/`) sowie Ihre Finger und Skripte (`sip show` → `pjsip show`, `sip set debug` → `pjsip set logger`). Realtime-Bereitstellungen bewegen sich von `sippeers`/`sipregs` zu den Sorcery `ps_endpoints`/`ps_aors`/`ps_auths`/`ps_contacts` Tabellen, mit `sip_to_pjsql.py` und dem `contrib/ast-db-manage` Schema als Hilfe. Achten Sie auf die Fallstricke — `alwaysauthreject` ist eingebaut, `insecure=invite` wird zu `identify`, `qualify=yes` wird zu `qualify_frequency` und ein Transport pro IP/Port — und die Umstellung ist eher mechanisch als mysteriös.
 
 ## Quiz
 
@@ -423,15 +423,15 @@ Die Migration auf Asterisk 22 bedeutet, von `chan_sip` wegzumigrieren, da der Tr
    - C. PJSIP ist der Standard, aber `chan_sip` kann mit `modules.conf` geladen werden
    - D. `chan_sip` funktioniert in Asterisk 22 nur mit TLS
 
-2. Ein einzelner `sip.conf` `type=friend` Block wird meistens zu welcher Gruppe von PJSIP-Objekten?
+2. Ein einzelner `sip.conf` `type=friend` Block wird meistens zu welcher Menge von PJSIP-Objekten?
    - A. Ein einzelner `type=peer`
    - B. Nur `type=endpoint`
    - C. `type=endpoint` + `type=auth` + `type=aor`
    - D. `type=transport` + `type=registration`
 
-3. In `sip.conf` wird `host=dynamic` (das Gerät registriert seinen eigenen Standort) abgebildet auf:
+3. In `sip.conf` wird `host=dynamic` (das Gerät registriert seinen eigenen Standort) zugeordnet zu:
    - A. `type=identify` mit `match=dynamic`
-   - B. ein `type=aor` mit `max_contacts` (das Gerät führt ein REGISTER aus)
+   - B. einem `type=aor` mit `max_contacts` (das Gerät führt ein REGISTER aus)
    - C. `direct_media=yes` auf dem endpoint
    - D. `type=registration`
 
@@ -461,13 +461,13 @@ Die Migration auf Asterisk 22 bedeutet, von `chan_sip` wegzumigrieren, da der Tr
    - C. `auth_type=md5`; `digest` ist veraltet
    - D. `auth_type=plaintext`; `digest` wurde entfernt
 
-9. Ein `chan_sip` Provider-Peer mit `insecure=invite` (akzeptiere unauthentifizierte INVITEs von einer bekannten IP) wird auf PJSIP migriert mittels:
+9. Ein `chan_sip` Provider-Peer mit `insecure=invite` (akzeptiere unauthentifizierte INVITEs von einer bekannten IP) wird zu PJSIP migriert mittels:
    - A. `insecure=invite` auf dem endpoint
    - B. `allowguest=yes` in `[global]`
-   - C. ein `type=identify` Objekt mit `match=<provider IP>`
+   - C. einem `type=identify` Objekt mit `match=<provider IP>`
    - D. `auth_type=anonymous`
 
-10. Bei einer Realtime-Migration wird die `chan_sip` `sippeers` Tabelle ersetzt durch welche PJSIP/Sorcery-Tabellen?
+10. Bei einer Realtime-Migration wird die `chan_sip` `sippeers` Tabelle durch welche PJSIP/Sorcery-Tabellen ersetzt?
     - A. Eine einzelne `pjsip_peers` Tabelle
     - B. `ps_endpoints`, `ps_aors` und `ps_auths`
     - C. `sipregs` und `voicemail`

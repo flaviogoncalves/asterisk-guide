@@ -219,7 +219,7 @@ Non mapped elements start
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 [general]
 bindport = 5060
-[zoiper]
+[softphone]
 qualify = yes
 ...
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

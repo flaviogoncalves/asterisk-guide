@@ -507,7 +507,7 @@ This web of objects looks complex at first — but it is exactly what makes PJSI
 
 # Configuring a softphone
 
-Each device is described by four related objects — note they **share the same section name** but differ by `type`.
+Each device is described by four related objects — note they **share the same section name** but differ by `type`. On the client, register the **SipPulse Softphone** (<https://www.sippulse.com/produtos/softphone>) against this endpoint.
 
 <div grid="~ cols-2 gap-6">
 <div>
@@ -518,27 +518,27 @@ type=transport
 protocol=udp
 bind=0.0.0.0:5060
 
-[xlite]
+[softphone]
 type=endpoint
 transport=transport-udp-main
 context=from-internal
 disallow=all
 allow=ulaw
-aors=xlite
-auth=xlite
+aors=softphone
+auth=softphone
 ```
 
 </div>
 <div>
 
 ```ini
-[xlite]
+[softphone]
 type=auth
 auth_type=digest
-username=xlite
+username=softphone
 password=#supersecret#
 
-[xlite]
+[softphone]
 type=aor
 max_contacts=2
 ```
@@ -636,8 +636,8 @@ endpoint/context = from-internal
 endpoint/direct_media = no
 aor/qualify_frequency = 15
 
-[xlite](phone_default)
-inbound_auth/username = xlite
+[alice](phone_default)
+inbound_auth/username = alice
 inbound_auth/password = supersecret
 ```
 
@@ -703,14 +703,14 @@ backgroundSize: contain
     Transport:  <TransportId........>  <Type>  <cos>  <tos>  <BindAddress....>
 ===========================================================================
 
- Endpoint:  xlite                                Not in use    0 of inf
-     InAuth:  xlite/xlite
-        Aor:  xlite                                              2
-      Contact:  xlite/sip:xlite@192.168.1.116:... e8e29c5f10 Avail  21.482
+ Endpoint:  softphone                            Not in use    0 of inf
+     InAuth:  softphone/softphone
+        Aor:  softphone                                          2
+      Contact:  softphone/sip:softphone@192.168.1.116:... e8e29c5f10 Avail  21.482
 ```
 
 <div class="text-sm mt-2 opacity-80">
-The <code>xlite</code> contact is registered — <strong>Avail</strong>.
+The <code>softphone</code> contact is registered — <strong>Avail</strong>.
 </div>
 
 ---
@@ -720,9 +720,9 @@ The <code>xlite</code> contact is registered — <strong>Avail</strong>.
 <div grid="~ cols-2 gap-4">
 <div>
 
-**`pjsip show endpoint xlite`** — the full parameter list for a single endpoint.
+**`pjsip show endpoint softphone`** — the full parameter list for a single endpoint.
 
-![pjsip show endpoint xlite](/images/07-sip-and-pjsip-fig16.png)
+![pjsip show endpoint softphone](/images/07-sip-and-pjsip-fig16.png)
 
 </div>
 <div>
