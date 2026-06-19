@@ -25,7 +25,6 @@ In the new Real Time architecture, all database-specific code was moved to chann
 - STATIC: Used to set up a static configuration when a module is loaded.
 - REALTIME: Used to search objects during a call or another event.
 
-316 | Capítulo 1 | Introdução ao Asterisk
 
 - UPDATE: Used to update objects.
 
@@ -93,7 +92,6 @@ extconfig.conf file format:
 ;queue_members => odbc,asterisk
 ```
 
-318 | Capítulo 1 | Introdução ao Asterisk
 
 ### Static configuration section
 
@@ -226,7 +224,6 @@ You can also use the real-time system to create the dial plan. ARA uses the `swi
 
 ![Building a dial plan with Asterisk Real Time: extensions.conf uses a `switch => realtime` statement to pull extension rows (context, exten, priority, app, data) from a database table instead of from the text file.](../images/18-realtime-fig02.png)
 
-320 | Capítulo 1 | Introdução ao Asterisk
 
 ```
 [local]
@@ -292,7 +289,7 @@ Below are two screenshots of the utility log in screen and the table screen. Use
 
 > **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
 
-322 | Capítulo 1 | Introdução ao Asterisk Step 5: Database is already configure for ODBC (since the CDR lab)
+Step 5: Database is already configure for ODBC (since the CDR lab)
 
 ## Lab: Configuring and testing ARA
 
@@ -352,7 +349,7 @@ mysql -u asterisk -p
 
 Enter password:
 
-324 | Capítulo 1 | Introdução ao Asterisk --> Use asterisk when asked. Use phpadmin to include an extension in the database. If you prefer, use the following commands instead in the MySQL client interface.
+Use asterisk when asked. Use phpadmin to include an extension in the database. If you prefer, use the following commands instead in the MySQL client interface.
 
 ```
 use astdb;

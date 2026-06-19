@@ -109,11 +109,11 @@ Beyond the firewall and Fail2Ban, Asterisk 22's PJSIP stack provides several con
 - **Anonymous handling is built in.** PJSIP does not reveal whether a username exists when authentication fails. To accept anonymous calls at all you must explicitly create an endpoint named `anonymous` and use `type=identify` sections (matching on source IP) to map known peers to endpoints. If you do not want anonymous calls, simply do not create an `anonymous` endpoint, and unmatched requests are challenged/rejected.
 - **ACLs.** Restrict who can reach an endpoint with `/etc/asterisk/acl.conf` named ACLs, referenced from the endpoint with `acl=` (signalling/source ACL) and `contact_acl=` (restricts the contact/registration address). You can also set permit/deny directly on the endpoint.
 - **`qualify`.** Set `qualify_frequency` (and `qualify_timeout`) on the AOR so Asterisk actively monitors reachability of registered contacts and prunes dead ones.
-- **PJSIP transport rate limiting / DoS protection.** On the `type=transport` you can cap concurrent TCP/TLS clients with `max_clients`, and enable kernel-level options through the transport `option` flags. Combine this with the firewall rules to blunt connection-flood attacks.
+- **PJSIP transport hardening / DoS protection.** The `type=transport` does not expose a per-transport client cap, so connection-flood protection comes from the firewall (the iptables/Fail2Ban rules in this chapter) rather than a PJSIP option. What the transport *does* give you is TCP keep-alive tuning (`tcp_keepalive_enable`, `tcp_keepalive_idle_time`, `tcp_keepalive_interval_time`, `tcp_keepalive_probe_count`) to reap dead/half-open connections, and `local_net`/`external_*` settings for correct NAT handling. Combine these with the firewall rules to blunt connection-flood attacks.
 - **TLS + SRTP for media.** Encrypt signalling with a TLS transport and media with `media_encryption=sdes` (or `dtls` for WebRTC) on the endpoint — covered later in this chapter.
 - **AMI/ARI access control.** Restrict the Asterisk Manager Interface (`manager.conf`) and ARI (`ari.conf` / `http.conf`) to localhost or a trusted management network, use strong unique secrets, bind the HTTP server to a private interface, and never expose these to the Internet.
 
-> **[2nd-ed note]** Verify the exact PJSIP transport option names (`max_clients`, `option`/`tos`/`cos`, and any flood-control settings) and the `type=identify` / `acl` / `contact_acl` syntax against the Asterisk 22 PJSIP configuration reference for the build under test before print.
+> **[2nd-ed note]** Verify the exact PJSIP transport option names (the `tcp_keepalive_*` family, `tos`/`cos`, `local_net`) and the `type=identify` / `acl` / `contact_acl` syntax against the Asterisk 22 PJSIP configuration reference for the build under test before print. Note that `res_pjsip` transports do **not** have a `max_clients` option in Asterisk 22.
 
 ### Removing unnecessary ports
 
@@ -135,13 +135,11 @@ To remove the unnecessary ports, disable the modules you don't use. Edit the fil
 
 ```
 ; res_pjsip / res_pjproject / chan_pjsip are REQUIRED in Asterisk 22 — keep them loaded
-noload => chan_mgcp.so
 noload => chan_iax2.so
 noload => chan_unistim.so
-noload => chan_skinny.so
 ```
 
-With the instructions above, I have removed all unnecessary channels keeping only PJSIP. You can choose whatever protocol modules you want, just remove the unused ones. The result is shown in the screenshot below — only the SIP port (5060) bound by your PJSIP transport is now exposed inbound.
+(In Asterisk 22 you no longer need to noload `chan_mgcp` or `chan_skinny` — those drivers were *removed* in Asterisk 21 and are not part of a stock 22 build.) With the instructions above, I have removed all unnecessary channels keeping only PJSIP. You can choose whatever protocol modules you want, just remove the unused ones. The result is shown in the screenshot below — only the SIP port (5060) bound by your PJSIP transport is now exposed inbound.
 
 ![netstat output after disabling the unused modules: only UDP port 5060 remains bound by Asterisk](../images/19-security-fig06.png)
 
@@ -212,7 +210,7 @@ In Asterisk 22, PJSIP reports failed authentications and other security events t
 security => security
 ```
 
-then run `module reload logger` (or `logger reload`) from the CLI. This produces `/var/log/asterisk/security` with lines such as `SecurityEvent="InvalidPassword"`, `ChallengeFailed`, and `InvalidAccountID`, each carrying the `RemoteAddress=` of the offender.
+then run `module reload logger` (or `logger reload`) from the CLI. This produces `/var/log/asterisk/security` with lines such as `SecurityEvent="InvalidPassword"`, `ChallengeResponseFailed`, and `InvalidAccountID`, each carrying the `RemoteAddress=` of the offender.
 
 2. Point the `asterisk` jail at that file (`logpath = /var/log/asterisk/security`) and use a filter that parses the security-event format and the `res_pjsip` failed-auth events.
 
@@ -332,10 +330,8 @@ Now let’s learn how to configure PJSIP for TLS. PJSIP is the only SIP channel 
 
 ```
 ; res_pjsip / res_pjproject / chan_pjsip must be loaded (do NOT noload them)
-noload => chan_mgcp.so
 noload => chan_iax2.so
 noload => chan_unistim.so
-noload => chan_skinny.so
 ```
 
 Step 2: Configure PJSIP to support TLS. Add a section for TLS transport in the file /etc/asterisk/pjsip.conf
