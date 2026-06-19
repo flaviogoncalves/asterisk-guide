@@ -83,7 +83,7 @@ Another Asterisk breakthrough is its powerful dial plan. In traditional PBXs, ev
 
 ### Open-source running on top of Linux
 
-One of the greatest features of Asterisk is its community. Several resources are available, including the Asterisk wiki (www.voip-info.org <http://www.voip-info.org>), e-mail distribution lists, and forums. As Asterisk becomes increasingly adopted, any bugs found and fixed quickly. Asterisk is probably the most tested PBX software in the world. From versions 1.0 to 1.2, more than 3,000 changes and bugs in the source code were corrected, thereby ensuring a code that is both stable and almost error free.
+One of the greatest features of Asterisk is its community. Several resources are available, including the official Asterisk documentation (docs.asterisk.org), the community-maintained VoIP-Info wiki (www.voip-info.org <http://www.voip-info.org>), e-mail distribution lists, and forums. As Asterisk becomes increasingly adopted, any bugs found and fixed quickly. Asterisk is probably the most tested PBX software in the world. From versions 1.0 to 1.2, more than 3,000 changes and bugs in the source code were corrected, thereby ensuring a code that is both stable and almost error free.
 
 ### Asterisk architecture limitations
 
