@@ -118,6 +118,23 @@ def translate(model, key, text):
         sys.exit("ERROR: unexpected Gemini response: %s" % json.dumps(data)[:500])
 
 
+def translate_block(text, lang_name, glossary, model, key, attempts=3):
+    """Mask code → translate → restore, retrying drops/dupes. Returns (restored_text, ok)."""
+    masked, blocks = mask_code(text)
+    prompt = prompt_for(lang_name, glossary, masked)
+    restored = None
+    for _ in range(attempts):
+        t = translate(model, key, prompt).replace("```", "")  # spurious fences are not real code
+        seen = set()                                          # drop repeated sentinels (keep first)
+        t = re.sub(r"【C\d+】",
+                   lambda m: "" if m.group(0) in seen else (seen.add(m.group(0)) or m.group(0)), t)
+        missing = [i for i in range(len(blocks)) if ("【C%d】" % i) not in t]
+        restored = unmask_code(t, blocks)
+        if not missing and "【C" not in restored:
+            return restored, True
+    return restored, False
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--lang", required=True, choices=list(LANG_NAMES))
@@ -148,29 +165,22 @@ def main():
         if not a.force and manifest.get(f) == h and os.path.isfile(dst):
             print("  = %s (cached)" % f); skipped += 1; continue
         print("  → %s (%s)" % (f, LANG_NAMES[a.lang]))
-        masked, blocks = mask_code(src)
-        prompt = prompt_for(LANG_NAMES[a.lang], glossary, masked)
-        # Translate, with up to 3 attempts: the model sometimes drops or duplicates a 【Ci】
-        # sentinel (a code block missing/doubled). Retry until every block restores exactly once.
-        restored, missing = None, ["?"]
-        for attempt in range(3):
-            translated = translate(a.model, key, prompt)
-            # All real code is a sentinel, so any ``` the model emitted is spurious — strip it.
-            translated = translated.replace("```", "")
-            # Keep only the first occurrence of each sentinel (the model sometimes repeats one).
-            _seen = set()
-            translated = re.sub(r"【C\d+】",
-                                lambda m: "" if m.group(0) in _seen else (_seen.add(m.group(0)) or m.group(0)),
-                                translated)
-            missing = [i for i in range(len(blocks)) if ("【C%d】" % i) not in translated]
-            restored = unmask_code(translated, blocks)
-            if not missing and "【C" not in restored:
-                break
-            print("    … attempt %d dropped %d block(s) in %s — retrying" % (attempt + 1, len(missing), f))
+        restored, ok = translate_block(src, LANG_NAMES[a.lang], glossary, a.model, key)
+        if not ok:
+            # The model deterministically dropped a code block in the whole chapter. Fall back to
+            # translating it section by section (`## …`) — the smaller chunks restore reliably.
+            print("    … whole-chapter dropped a block; falling back to per-section translation")
+            parts = [p for p in re.split(r"(?m)(?=^## )", src) if p.strip()]
+            chunks, ok = [], True
+            for p in parts:
+                r, ok2 = translate_block(p, LANG_NAMES[a.lang], glossary, a.model, key)
+                chunks.append(r.strip()); ok = ok and ok2
+            restored = "\n\n".join(chunks)
+            ok = ok and "【C" not in restored
         open(dst, "w").write(restored.rstrip() + "\n")
         done += 1
-        if missing or "【C" in restored:
-            print("    ! WARNING: %s still imperfect after retries — NOT caching" % f)
+        if not ok:
+            print("    ! WARNING: %s still imperfect after fallback — NOT caching" % f)
             continue
         manifest[f] = h
         json.dump(manifest, open(manifest_path, "w"), indent=0)

@@ -104,9 +104,24 @@ a self-signed certificate is fine — you accept it once in the browser. In
 production use a real certificate (for example Let's Encrypt) whose name matches
 the host the browser connects to, otherwise the browser will refuse the WebSocket.
 
-> **[2nd-ed note]** The lab ships `lab/make-certs.sh`, which generates a self-signed
-> cert with `CN=localhost`. For a public deployment, document the Let's Encrypt flow
-> and point `tlscertfile`/`tlsprivatekey` at the issued files.
+For the lab, `lab/make-certs.sh` generates a self-signed certificate with
+`CN=localhost` (plus `localhost`/`127.0.0.1` SANs) and writes it to
+`asterisk/etc/keys/`. For a public deployment, obtain a real certificate instead — for
+example with Let's Encrypt:
+
+```
+certbot certonly --standalone -d voip.example.com
+```
+
+Then point `http.conf` at the issued files and reload `res_http_websocket`:
+
+```
+tlscertfile=/etc/letsencrypt/live/voip.example.com/fullchain.pem
+tlsprivatekey=/etc/letsencrypt/live/voip.example.com/privkey.pem
+```
+
+Make sure the certificate name matches the host the browser connects to, and renew it
+(certbot's timer does this automatically) before it expires, or the WebSocket will fail.
 
 This certificate is **not** the same as the DTLS certificate used to encrypt the
 media — Asterisk generates that one automatically, as we will see.
@@ -130,11 +145,11 @@ Transport:  transport-udp             udp      0      0  0.0.0.0:5060
 Transport:  transport-wss             wss      0      0  0.0.0.0:5060
 ```
 
-> **[2nd-ed note]** The `wss` transport prints a `0.0.0.0:5060` bind address even
-> though the actual WebSocket is served by the HTTP server on port 8089. This is
-> expected: the `wss` transport is a thin shim over `res_http_websocket`; the `bind`
-> line on it is effectively cosmetic. Worth a sentence in the final text so readers
-> are not confused by the port.
+Do not be misled by the `0.0.0.0:5060` shown for the `wss` transport — the WebSocket
+is **not** served on port 5060. WebRTC signaling is served by the HTTP server you
+configured in Step 1 (port 8089 for `wss`). The PJSIP `wss` transport is a thin shim
+over `res_http_websocket`, so the `bind` address printed for it is cosmetic and can be
+ignored; the port that matters is `tlsbindaddr` in `http.conf`.
 
 ## Step 3 — the WebRTC endpoint
 
@@ -215,8 +230,40 @@ The browser is configured with its own ICE servers in JavaScript (the
 `RTCPeerConnection` `iceServers` list). For a purely internal deployment you can skip
 STUN/TURN entirely.
 
-> **[2nd-ed note]** Verify whether to recommend a self-hosted coturn for production
-> (most real deployments need TURN). Add a short coturn config example if so.
+`turnaddr` takes an optional port (default `3478`); `turnusername` and `turnpassword`
+authenticate to the relay. STUN only helps a peer *discover* its public address — when
+both ends sit behind symmetric NAT or a restrictive firewall, direct media is
+impossible and a TURN relay is the only thing that makes audio flow.
+
+**Production recommendation:** a public STUN server (such as Google's) is fine for
+address discovery, but do **not** rely on public TURN for real traffic — TURN relays
+all of your media, so you want it under your control. Run your own
+[coturn](https://github.com/coturn/coturn) server. A minimal `/etc/turnserver.conf`
+with long-term credentials looks like:
+
+```
+listening-port=3478
+fingerprint
+lt-cred-mech
+user=asterisk:Strong-TURN-secret
+realm=voip.example.com
+external-ip=203.0.113.10
+```
+
+Then point Asterisk at it in `rtp.conf`:
+
+```
+[general]
+icesupport=yes
+stunaddr=stun.l.google.com:19302
+turnaddr=turn.example.com:3478
+turnusername=asterisk
+turnpassword=Strong-TURN-secret
+```
+
+Give the browser the same TURN server in its `iceServers` list so both legs can relay.
+For production with users on mobile networks or behind corporate firewalls, a
+self-hosted coturn is effectively mandatory.
 
 ## Step 5 — the browser client
 

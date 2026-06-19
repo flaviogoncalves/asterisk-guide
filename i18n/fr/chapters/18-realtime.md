@@ -7,16 +7,16 @@ Comme vous le savez, la configuration d'Asterisk s'effectue via l'utilisation de
 - La difficulté de coder une interface de provisionnement en utilisant des fichiers texte
 - Aucune possibilité d'intégration avec des bases de données existantes
 
-ARA ou Asterisk Realtime, comme on l'appelle, a été créé par Anthony Minessale II, Mark Spencer et Constantine Filin, et a été conçu pour permettre une intégration transparente avec les bases de données SQL. Une interface LDAP est également disponible. Ce système est aussi connu sous le nom d'Asterisk External Configuration et est configuré dans /etc/asterisk/extconfig.conf. Vous pouvez mapper des fichiers de configuration vers des tables dans une base de données (configuration statique) et utiliser des entrées en temps réel pour la création dynamique d'objets sans avoir besoin de recharger Asterisk.
+ARA ou Asterisk Realtime, tel qu'il est connu, a été créé par Anthony Minessale II, Mark Spencer et Constantine Filin et a été conçu pour permettre une intégration transparente avec des bases de données SQL. Une interface LDAP est également disponible. Ce système est aussi appelé Asterisk External Configuration et est configuré dans /etc/asterisk/extconfig.conf. Vous pouvez mapper des fichiers de configuration vers des tables dans une base de données (configuration statique) et utiliser des entrées en temps réel pour la création dynamique d'objets sans avoir besoin de recharger Asterisk.
 
 ## Objectifs
 
 À la fin de ce chapitre, le lecteur devrait être capable de :
 
 - Comprendre les avantages et les limites d'Asterisk Real Time.
-- Utiliser ODBC avec ARA.
-- Compiler et installer ARA en utilisant ODBC.
-- Tester le système dans un environnement de laboratoire.
+- Utiliser ODBC pour ARA
+- Compiler et installer ARA en utilisant ODBC
+- Tester le système dans un environnement de laboratoire
 
 ## Comment fonctionne Asterisk Real Time ?
 
@@ -28,11 +28,11 @@ Dans la nouvelle architecture Real Time, tout le code spécifique aux bases de d
 
 - UPDATE : Utilisée pour mettre à jour des objets.
 
-Sur Asterisk 22, les endpoints SIP sont gérés par la pile **PJSIP** (`res_pjsip`), qui est construite sur le modèle d'objet **Sorcery**. Avec l'assistant `realtime`, Sorcery charge chaque objet PJSIP depuis la base de données à la demande, et ces objets existent alors comme des objets PJSIP configurés ordinaires — et non comme les pairs realtime éphémères que l'ancien pilote SIP rejetait après chaque appel. Comme ce sont de vrais objets, le franchissement de NAT, le qualify et l'indication de message en attente (MWI) fonctionnent normalement pour les endpoints realtime. (Sorcery peut également être configuré pour mettre en cache des objets en mémoire via un assistant `memory_cache`, mais cela est optionnel et distinct du chargement realtime.) Lorsque vous modifiez un objet dans la base de données, le changement est pris en compte lors de la recherche suivante ; vous n'avez pas besoin de recharger après chaque modification. (Le modèle realtime retiré `chan_sip`, avec ses familles `sippeers`/`sipusers`, n'est couvert que dans le chapitre *Legacy Channels*.)
+Sur Asterisk 22, les endpoints SIP sont gérés par la pile **PJSIP** (`res_pjsip`), qui est construite sur le modèle d'objet **Sorcery**. Avec l'assistant `realtime`, Sorcery charge chaque objet PJSIP depuis la base de données à la demande, et ces objets existent alors comme des objets PJSIP configurés ordinaires — et non comme les pairs realtime éphémères que l'ancien pilote SIP rejetait après chaque appel. Comme ce sont de vrais objets, le franchissement de NAT, le qualify et l'indication d'attente de message (MWI) fonctionnent normalement pour les endpoints realtime. (Sorcery peut également être configuré pour mettre en cache des objets en mémoire via un assistant `memory_cache`, mais cela est optionnel et distinct du chargement realtime.) Lorsque vous modifiez un objet dans la base de données, le changement est pris en compte lors de la recherche suivante ; vous n'avez pas besoin de recharger après chaque modification. (L'ancien modèle realtime `chan_sip`, avec ses familles `sippeers`/`sipusers`, n'est couvert que dans le chapitre *Legacy Channels*.)
 
 ## Configuration d'Asterisk Real Time
 
-Pour ce laboratoire, nous supposerons que vous avez déjà installé ODBC depuis le chapitre sur les CDR. ARA est configuré dans le fichier texte extconfig.conf, où deux sections sont facilement identifiables. La première est la section des fichiers de configuration statiques, où vous pouvez remplacer les fichiers de configuration texte par des tables de base de données. La seconde section est le moteur de configuration realtime, où vous configurez les tables de base de données pour les objets dynamiques (pairs/utilisateurs). Il n'est pas inhabituel d'utiliser des fichiers texte pour la configuration statique et la base de données pour les entrées dynamiques. Dans ce cas, la première section reste inchangée.
+Pour ce laboratoire, nous supposerons que vous avez déjà installé ODBC depuis le chapitre sur les CDR. ARA est configuré dans le fichier texte extconfig.conf, où deux sections sont facilement identifiables. La première est la section des fichiers de configuration statiques, où vous pouvez remplacer les fichiers de configuration texte par des tables de base de données. La seconde section est le moteur de configuration realtime, où vous configurez les tables de base de données pour les objets dynamiques (pairs/utilisateurs). Il n'est pas rare d'utiliser des fichiers texte pour la configuration statique et la base de données pour les entrées dynamiques. Dans ce cas, la première section reste inchangée.
 
 ```
 extconfig.conf file format:
@@ -95,7 +95,7 @@ extconfig.conf file format:
 
 ### Section de configuration statique
 
-La section de configuration statique est l'endroit où vous stockez l'équivalent des fichiers de configuration dans la base de données. Ces configurations sont lues lors du chargement d'Asterisk. Certains modules relisent la base de données lorsque vous effectuez un rechargement. Voici des exemples de configuration statique :
+La section de configuration statique est l'endroit où vous stockez l'équivalent des fichiers de configuration dans la base de données. Ces configurations sont lues lors du chargement d'Asterisk. Certains modules relisent la base de données lorsque vous rechargez. Voici des exemples de configuration statique :
 
 ```
 <conf filename> => <driver>,<databasename>[,table_name]
@@ -104,13 +104,13 @@ pjsip.conf => odbc,asteriskdb,pjsip_conf
 iax.conf => ldap,MyBaseDN,iax
 ```
 
-Le mappage de fichiers statiques est surtout utile pour les fichiers de configuration qui n'ont pas d'équivalent realtime par objet. Pour PJSIP, préférez les familles realtime par objet (`ps_endpoints`, `ps_aors`, etc.) décrites plus loin dans ce chapitre plutôt que de mapper l'ensemble du `pjsip.conf` comme un fichier statique.
+Le mappage de fichiers statiques est surtout utile pour les fichiers de configuration qui n'ont pas d'équivalent realtime par objet. Pour PJSIP, préférez les familles realtime par objet (`ps_endpoints`, `ps_aors`, etc.) décrites plus loin dans ce chapitre plutôt que de mapper l'ensemble de `pjsip.conf` comme un fichier statique.
 
-Trois exemples sont décrits ci-dessus. Dans le premier, vous liez queues.conf à une table queues dans la base de données asteriskdb. Dans le deuxième exemple, vous liez pjsip.conf à la table pjsip_conf dans la base de données asteriskdb définie dans la configuration odbc. Dans le dernier exemple, vous liez iax.conf à un annuaire LDAP. MyBaseDN est le DN de base à interroger. Dans l'exemple précédent, l'application app_queue.so est chargée tandis que le pilote MySQL interroge la base de données et obtient les informations requises.
+Trois exemples sont décrits ci-dessus. Dans le premier, vous liez queues.conf à une table queues dans la base de données asteriskdb. Dans le deuxième exemple, vous liez pjsip.conf à la table pjsip_conf dans la base de données asteriskdb définie dans la configuration odbc. Dans le dernier exemple, vous liez iax.conf à un annuaire LDAP. MyBaseDN est le DN de base à rechercher. Dans l'exemple précédent, l'application app_queue.so est chargée tandis que le pilote MySQL interroge la base de données et obtient les informations requises.
 
 ### Section de configuration Real Time
 
-La configuration temps réel (deuxième partie du fichier extconfig.conf) est l'endroit où la partie de la configuration à charger est configurée, mise à jour et déchargée en temps réel. Avec le temps réel, il n'est pas nécessaire de recharger les configurations. La syntaxe temps réel suit ce modèle :
+La configuration en temps réel (deuxième partie du fichier extconfig.conf) est l'endroit où la partie de la configuration à charger est configurée, mise à jour et déchargée en temps réel. Avec le temps réel, il n'est pas nécessaire de recharger les configurations. La syntaxe temps réel suit ce modèle :
 
 ```
 <family name> => <driver>,<database name>[,table_name]
@@ -153,7 +153,7 @@ ps_domain_aliases => odbc,asterisk
 ps_endpoint_id_ips => odbc,asterisk
 ```
 
-Deuxièmement, indiquez à Sorcery d'utiliser l'assistant `realtime` pour ces types d'objets dans `sorcery.conf`. Le nom du mappage (ici `res_pjsip`) est le module dont vous déplacez les objets, et la valeur de droite pointe vers la famille que vous avez définie dans `extconfig.conf` :
+Deuxièmement, demandez à Sorcery d'utiliser l'assistant `realtime` pour ces types d'objets dans `sorcery.conf`. Le nom du mappage (ici `res_pjsip`) est le module dont vous déplacez les objets, et la valeur de droite pointe vers la famille que vous avez définie dans `extconfig.conf` :
 
 ```
 [res_pjsip]
@@ -171,7 +171,7 @@ Vous pouvez mélanger des objets statiques et realtime. Si vous omettez un type 
 
 ### Création du schéma realtime PJSIP avec Alembic
 
-Asterisk fournit des migrations de base de données pour tous ses schémas realtime sous `contrib/ast-db-manage`. C'est la méthode prise en charge pour créer (et mettre à jour la version) des tables PJSIP — vous n'écrivez plus manuellement les définitions de table `ps_*`. L'ensemble de migration `config` contient les tables PJSIP/Sorcery.
+Asterisk fournit des migrations de base de données pour tous ses schémas realtime sous `contrib/ast-db-manage`. C'est la méthode prise en charge pour créer (et mettre à jour la version) des tables PJSIP — vous ne rédigez plus manuellement les définitions de table `ps_*`. L'ensemble de migration `config` contient les tables PJSIP/Sorcery.
 
 ```
 cd /usr/src/asterisk-22.x/contrib/ast-db-manage
@@ -181,7 +181,7 @@ cp config.ini.sample config.ini
 alembic -c config.ini upgrade head
 ```
 
-Cela crée `ps_endpoints`, `ps_aors`, `ps_auths`, `ps_contacts` et les autres tables PJSIP avec les colonnes correctes pour la version d'Asterisk en cours d'exécution. (Alembic nécessite le paquet Python `alembic` ainsi qu'un pilote SQLAlchemy tel que `pymysql` pour MySQL/MariaDB ou `psycopg2` pour PostgreSQL.)
+Cela crée `ps_endpoints`, `ps_aors`, `ps_auths`, `ps_contacts` et les autres tables PJSIP avec les colonnes correctes pour la version d'Asterisk en cours d'exécution. (Alembic nécessite le paquet Python `alembic` plus un pilote SQLAlchemy tel que `pymysql` pour MySQL/MariaDB ou `psycopg2` pour PostgreSQL.)
 
 Un endpoint realtime minimal consiste alors en une ligne dans chacune des trois tables — par exemple l'endpoint `6010` :
 
@@ -214,7 +214,7 @@ auth=4000
 aors=4000
 ```
 
-est stocké sous forme d'une ligne répartie sur trois tables. La ligne `ps_endpoints` contient `id=4000, context=from-internal, disallow=all, allow=ulaw, auth=4000, aors=4000` ; la ligne `ps_auths` contient `id=4000, auth_type=userpass, username=4000, password=supersecret` ; et la ligne `ps_aors` contient `id=4000, max_contacts=1`. Vous n'avez besoin de remplir que les colonnes que vous utilisez réellement — toute colonne laissée NULL revient à la valeur par défaut de l'option. Si vous souhaitez, par exemple, le paramètre `callerid` sur un endpoint, remplissez la colonne `callerid` de `ps_endpoints` (le nom de la colonne est le même que le nom de l'option `pjsip.conf`).
+est stocké sous forme d'une ligne répartie sur trois tables. La ligne `ps_endpoints` contient `id=4000, context=from-internal, disallow=all, allow=ulaw, auth=4000, aors=4000` ; la ligne `ps_auths` contient `id=4000, auth_type=userpass, username=4000, password=supersecret` ; et la ligne `ps_aors` contient `id=4000, max_contacts=1`. Vous n'avez besoin de remplir que les colonnes que vous utilisez réellement — toute colonne laissée à NULL revient à la valeur par défaut de l'option. Si vous souhaitez, par exemple, le paramètre `callerid` sur un endpoint, remplissez la colonne `callerid` de `ps_endpoints` (le nom de la colonne est le même que le nom de l'option `pjsip.conf`).
 
 Une table de messagerie vocale suit le même principe. Ses colonnes correspondent aux champs `voicemail.conf` :
 
@@ -222,9 +222,9 @@ Une table de messagerie vocale suit le même principe. Ses colonnes corresponden
 |----------|---------|---------|----------|-------|----------|
 | 1 | 4000 | default | 4000 | john@doe.com | John Doe |
 
-Le `uniqueid` doit être unique pour chaque utilisateur de messagerie vocale et peut être en auto-incrémentation. Il n'a pas besoin d'avoir de relation avec la mailbox ou le context.
+Le `uniqueid` doit être unique pour chaque utilisateur de messagerie vocale et peut être en auto-incrémentation. Il n'a pas besoin d'avoir de relation avec la boîte aux lettres ou le contexte.
 
-### Construction d'un dialplan utilisant Asterisk Real Time
+### Construction d'un dialplan en utilisant Asterisk Real Time
 
 Vous pouvez également utiliser le système temps réel pour créer le dialplan. ARA utilise l'instruction `switch` pour inclure les extensions temps réel dans le dialplan normal contenu dans le fichier extensions.conf. La table d'extension devrait ressembler à celle ci-dessous :
 
@@ -249,7 +249,7 @@ ou
 switch => realtime/from-internal@extensions
 ```
 
-## Lab : Installation et création des tables de base de données
+## Laboratoire : Installation et création des tables de base de données
 
 Dans ce laboratoire, nous allons préparer la base de données pour recevoir les paramètres d'Asterisk. Nous préparerons uniquement les tables REALTIME. La configuration statique sera laissée aux fichiers de configuration texte (sympa, n'est-ce pas ?). La création de table dans MySQL suit.
 
@@ -267,7 +267,7 @@ mysql –u astdb –p
 
 Lorsque le mot de passe est demandé, tapez supersecret.
 
-Étape 3 : Créez les tables nécessaires. Les fichiers de schéma statiques hérités sont toujours fournis sous `contrib/realtime/` (par exemple `/usr/src/asterisk-22.x/contrib/realtime/mysql`), mais sur Asterisk 22, la méthode recommandée et correcte pour construire les tables realtime — en particulier les tables PJSIP `ps_*` — consiste à utiliser les migrations **Alembic** sous `contrib/ast-db-manage` (voir la section "Création du schéma realtime PJSIP avec Alembic" ci-dessus).
+Étape 3 : Créez les tables nécessaires. Les anciens fichiers de schéma statiques sont toujours fournis sous `contrib/realtime/` (par exemple `/usr/src/asterisk-22.x/contrib/realtime/mysql`), mais sur Asterisk 22, la méthode recommandée et correcte pour construire les tables realtime — en particulier les tables PJSIP `ps_*` — est l'utilisation des migrations **Alembic** sous `contrib/ast-db-manage` (voir la section "Création du schéma realtime PJSIP avec Alembic" ci-dessus).
 
 ```
 cd /usr/src/asterisk-22.x/contrib/ast-db-manage
@@ -288,7 +288,7 @@ mysql>use astdb;
 mysql>show tables;
 ```
 
-Vous devriez voir les tables PJSIP `ps_*` (créées par la migration Alembic `config`), ainsi que les tables realtime `voicemail`, `extensions` et autres :
+Vous devriez voir les tables PJSIP `ps_*` (créées par la migration Alembic `config`), ainsi que les tables `voicemail`, `extensions` et d'autres tables realtime :
 
 ```
 mysql> show tables;
@@ -311,17 +311,23 @@ mysql> show tables;
 
 Étape 5 : La base de données est déjà configurée pour ODBC (depuis le laboratoire CDR), donc aucune configuration ODBC supplémentaire n'est nécessaire ici.
 
-Étape 6 : Installez phpMyAdmin pour gérer les tâches de base de données.
+Étape 6 : Inspectez et remplissez les tables depuis le client MySQL. Vous n'avez pas besoin d'un outil graphique tel que phpMyAdmin — chaque étape de ce chapitre est du SQL simple, copiable et exécutable depuis la ligne de commande `mysql`. Connectez-vous à la base de données `astdb` (utilisez `supersecret` lorsque demandé) :
 
 ```
-apt-get install phpmyadmin
+mysql -u astdb -p astdb
 ```
 
-Vous trouverez ci-dessous deux captures d'écran de l'écran de connexion de l'utilitaire et de l'écran des tables. Utilisez astdb/supersecret comme nom et mot de passe.
+Vous pouvez confirmer les colonnes d'une table à tout moment avec `DESCRIBE`, par exemple :
 
-> **[Note 2e éd.]** Remplacez par une capture d'écran actuelle d'administration de base de données (phpMyAdmin/Adminer), ou convertissez ces étapes en SQL brut (CREATE TABLE/INSERT).
+```
+mysql> DESCRIBE ps_endpoints;
+mysql> DESCRIBE ps_auths;
+mysql> DESCRIBE ps_aors;
+```
 
-## Lab : Configuration et test d'ARA
+Ces tables ont été créées par la migration Alembic `config`, donc leurs colonnes correspondent déjà aux noms d'options `pjsip.conf` pour la version d'Asterisk en cours d'exécution — vous ne remplissez que les colonnes dont vous avez besoin.
+
+## Laboratoire : Configuration et test d'ARA
 
 Dans ce laboratoire, nous allons modifier la configuration extconfig.conf pour refléter notre configuration de base de données et nos tables.
 
@@ -345,33 +351,25 @@ extensions => odbc,cdr,extensions
 
 Notez les familles `ps_endpoints`, `ps_aors`, `ps_auths` et `ps_contacts` ci-dessus ; avec les mappages `sorcery.conf` correspondants (voir la section "PJSIP Realtime (Sorcery)"), elles permettent à PJSIP de lire ses comptes depuis la base de données. Les familles `voicemail` et `extensions` complètent l'exemple.
 
-Étape 2 : Test d'extension Real Time. En utilisant phpMyAdmin, créez un nouvel endpoint `6010` en insérant une ligne dans chacune des tables `ps_auths`, `ps_aors` et `ps_endpoints`, puis essayez d'enregistrer cet endpoint avec un softphone.
+Étape 2 : Test d'extension Real Time. Créez un nouvel endpoint `6010` en insérant une ligne dans chacune des tables `ps_auths`, `ps_aors` et `ps_endpoints`, puis essayez d'enregistrer cet endpoint avec un softphone. Exécutez le SQL suivant dans le client `mysql` (`mysql -u astdb -p astdb`) :
 
-```
--- ps_auths
-id=6010-auth, auth_type=userpass, username=6010, password=supersecret
--- ps_aors
-id=6010, max_contacts=1
--- ps_endpoints
-id=6010, transport=transport-udp, aors=6010, auth=6010-auth
-```
+```sql
+INSERT INTO ps_auths (id, auth_type, username, password)
+VALUES ('6010-auth', 'userpass', '6010', 'supersecret');
 
-> **[Note 2e éd.]** Remplacez par une capture d'écran actuelle d'administration de base de données (phpMyAdmin/Adminer), ou convertissez ces étapes en SQL brut (CREATE TABLE/INSERT).
+INSERT INTO ps_aors (id, max_contacts)
+VALUES ('6010', 1);
 
-Les paramètres de compte restants sont répartis entre les objets PJSIP. Le contexte, les codecs, le mode DTMF et la gestion des médias résident sur l'endpoint ; l'enregistrement dynamique réside sur l'AOR :
-
-```
--- ps_endpoints columns for 6010
-context=from-internal
-disallow=all
-allow=ulaw
-dtmf_mode=rfc4733
-direct_media=no
--- ps_aors: dynamic registration is implicit; the AOR accepts
---          registrations and the contact is written to ps_contacts
+INSERT INTO ps_endpoints
+  (id, transport, aors, auth, context, disallow, allow, dtmf_mode, direct_media)
+VALUES
+  ('6010', 'transport-udp', '6010', '6010-auth', 'from-internal',
+   'all', 'ulaw', 'rfc4733', 'no');
 ```
 
-Dans PJSIP, le mode DTMF RFC 2833 / RFC 4733 est nommé `rfc4733` (`dtmf_mode=rfc4733`, la valeur par défaut). Il n'y a pas de drapeau "dynamique" séparé pour l'enregistrement : un AOR accepte les REGISTER dynamiques tant qu'il autorise au moins un contact (`max_contacts` supérieur à zéro), et chaque emplacement enregistré est écrit dans `ps_contacts`.
+Les trois lignes décrivent ensemble un compte SIP. Les paramètres de compte restants sont répartis entre les objets PJSIP : le contexte, les codecs, le mode DTMF et la gestion des médias résident sur l'endpoint (les six dernières colonnes ci-dessus) ; l'enregistrement dynamique réside sur l'AOR. Il n'y a pas de drapeau "dynamique" séparé — un AOR accepte les REGISTER dynamiques tant que `max_contacts` est supérieur à zéro, et chaque emplacement enregistré est écrit dans `ps_contacts`.
+
+Dans PJSIP, le mode DTMF hors bande RFC 2833 / RFC 4733 est nommé `rfc4733`, et `dtmf_mode=rfc4733` est la valeur par défaut — donc la colonne `dtmf_mode` ci-dessus est optionnelle et montrée uniquement pour plus de clarté.
 
 Étape 3 : Essayez d'enregistrer le nouveau téléphone avec un softphone en utilisant le nom d'utilisateur `6010` et le mot de passe `supersecret`. Confirmez l'enregistrement sur la CLI Asterisk :
 
@@ -388,12 +386,12 @@ mysql -u astdb -p
 
 Entrez le mot de passe :
 
-Utilisez supersecret lorsque demandé. Utilisez phpMyAdmin pour inclure une extension dans la base de données. Si vous préférez, utilisez plutôt les commandes suivantes dans l'interface client MySQL.
+Utilisez supersecret lorsque demandé, puis insérez la ligne d'extension depuis le client MySQL :
 
-```
-use astdb;
-insert into extensions(id, context, exten, priority, app, appdata) VALUES
-('1','test', '6007','1','Dial','PJSIP/bria');
+```sql
+USE astdb;
+INSERT INTO extensions (id, context, exten, priority, app, appdata)
+VALUES ('1', 'test', '6007', '1', 'Dial', 'PJSIP/bria');
 ```
 
 Étape 5 : Incluez Asterisk Real Time dans le dialplan. Dans le contexte `default` :
@@ -414,7 +412,7 @@ asterisk-server*CLI>extensions reload
 
 ## Résumé
 
-Dans ce chapitre, vous avez appris qu'Asterisk Real Time vous permet de placer vos configurations dans une base de données. Asterisk fournit des pilotes realtime natifs pour ODBC (qui atteint toute base de données supportée par UnixODBC, y compris MySQL/MariaDB et SQLite), MySQL et PostgreSQL, ainsi qu'un pilote realtime LDAP pour les backends d'annuaire. La configuration est divisée en statique et temps réel. La configuration statique remplace les fichiers de configuration, tandis que la configuration temps réel crée des objets dynamiques qui ne sont chargés que lorsqu'un appel ou un autre événement lié se produit. Nous avons conclu avec un laboratoire pratique sur la façon d'installer et de configurer ARA.
+Dans ce chapitre, vous avez appris qu'Asterisk Real Time vous permet de placer vos configurations dans une base de données. Asterisk fournit des pilotes realtime natifs pour ODBC (qui atteint toute base de données supportée par UnixODBC, y compris MySQL/MariaDB et SQLite), MySQL et PostgreSQL, ainsi qu'un pilote realtime LDAP pour les backends d'annuaire. La configuration est divisée en statique et temps réel. La configuration statique remplace les fichiers de configuration, tandis que la configuration temps réel crée des objets dynamiques qui ne sont chargés que lorsqu'un appel ou un autre événement connexe se produit. Nous avons conclu avec un laboratoire pratique sur la façon d'installer et de configurer ARA.
 
 ## Quiz
 
@@ -426,15 +424,15 @@ Dans ce chapitre, vous avez appris qu'Asterisk Real Time vous permet de placer v
    - B. pjsip.conf
    - C. res_odbc.conf
    - D. extconfig.conf
-3. Le fichier `extconfig.conf` configure les tables utilisées par le Realtime. Il possède deux sections distinctes (cochez-en deux) :
+3. Le fichier `extconfig.conf` configure les tables utilisées par Realtime. Il possède deux sections distinctes (cochez deux) :
    - A. Configuration statique
    - B. Configuration Realtime
    - C. Routes sortantes
    - D. Adresses IP et ports de base de données
-4. Dans la configuration statique, une fois que les objets sont chargés depuis la base de données, ils sont conservés dans la mémoire d'Asterisk et rafraîchis uniquement au démarrage ou au rechargement.
+4. En configuration statique, une fois que les objets sont chargés depuis la base de données, ils sont conservés dans la mémoire d'Asterisk et rafraîchis uniquement au démarrage ou au rechargement.
    - A. Vrai
    - B. Faux
-5. PJSIP realtime (Sorcery) supporte pleinement `qualify` et le MWI pour les endpoints realtime, car Sorcery les charge comme des objets PJSIP configurés ordinaires plutôt que de les rejeter après chaque appel comme le faisaient les anciens pairs SIP realtime.
+5. PJSIP realtime (Sorcery) supporte pleinement `qualify` et MWI pour les endpoints realtime, car Sorcery les charge comme des objets PJSIP configurés ordinaires plutôt que de les rejeter après chaque appel comme le faisaient les anciens pairs SIP realtime.
    - A. Vrai
    - B. Faux
 6. Dans PJSIP realtime, quelles tables contiennent les endpoints et leurs contacts enregistrés ?
@@ -445,16 +443,16 @@ Dans ce chapitre, vous avez appris qu'Asterisk Real Time vous permet de placer v
 7. Vous pouvez toujours utiliser des fichiers de configuration texte même après avoir activé ARA.
    - A. Vrai
    - B. Faux
-8. phpMyAdmin est obligatoire lorsque vous utilisez le Realtime.
+8. phpMyAdmin est obligatoire lorsque vous utilisez Realtime.
    - A. Vrai
    - B. Faux
-9. La base de données doit être créée avec chaque champ existant dans le fichier de configuration.
+9. La base de données doit être créée avec chaque champ qui existe dans le fichier de configuration.
    - A. Vrai
    - B. Faux
-10. Sur Asterisk 22, quelle est la méthode recommandée et correcte pour créer les tables realtime PJSIP (`ps_endpoints`, `ps_aors`, `ps_auths`, `ps_contacts`) ?
-    - A. Écrire manuellement les instructions `CREATE TABLE` pour chaque table `ps_*`
-    - B. Importer le `mysql_config.sql` hérité depuis `contrib/realtime/`
+10. Sur Asterisk 22, quelle est la méthode recommandée et correcte pour créer les tables PJSIP realtime (`ps_endpoints`, `ps_aors`, `ps_auths`, `ps_contacts`) ?
+    - A. Rédiger manuellement les instructions `CREATE TABLE` pour chaque table `ps_*`
+    - B. Importer l'ancien `mysql_config.sql` depuis `contrib/realtime/`
     - C. Exécuter les migrations Alembic `config` sous `contrib/ast-db-manage` (`alembic -c config.ini upgrade head`)
-    - D. Les tables sont créées automatiquement lors du premier démarrage d'Asterisk
+    - D. Les tables sont créées automatiquement la première fois qu'Asterisk démarre
 
 **Réponses :** 1 — A · 2 — C · 3 — A, B · 4 — A · 5 — A · 6 — A · 7 — A · 8 — B · 9 — B · 10 — C

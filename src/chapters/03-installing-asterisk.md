@@ -2,7 +2,7 @@
 
 In the first chapter, we learned a bit about how Asterisk is useful in the telephony environment. In this chapter, we will cover how to download and install Asterisk. Before starting, it is essential to learn how to compile and install it. The compilation process may seem weird for traditional Microsoft™ Windows™ users, but it is fairly common in the Linux™ environment. One can get an optimized code for your hardware when compiling Asterisk, which is what we will do here. Asterisk runs in several operating systems, but we chose to keep things easy and start with only one of them: Linux. We chose Debian as the Linux™ distribution because the dependencies are easy to install and the distribution is stable, with a low footprint. If you want to use another distribution, please change the name of the dependencies accordingly.
 
-> **[2nd-ed note]** This edition targets **Asterisk 22 LTS** (released 2024, full support through 2028-10-16). Asterisk 22 is the current long-term support release. Note that Digium was acquired by **Sangoma** (2018), and Asterisk is now sponsored by Sangoma — references to "Digium" throughout this chapter refer to the legacy brand for historical hardware.
+This edition targets **Asterisk 22 LTS** (released 2024-10-16; full support through 2028-10-16, security fixes through 2029-10-16). Asterisk 22 is the current long-term support release. Note that Digium was acquired by **Sangoma** in 2018, and Asterisk is now sponsored by Sangoma — references to "Digium" throughout this chapter refer to the legacy brand for historical hardware.
 
 ## Objectives
 
@@ -92,7 +92,7 @@ apt-get install build-essential git wget openssl libssl-dev libxml2-dev \
   libcurl4-openssl-dev pkg-config autoconf
 ```
 
-> **[2nd-ed note]** The original list referenced `subversion`, `libnewt-dev`, and `libncurses5-dev`. Asterisk source is now hosted on Git (subversion is no longer needed), and modern Debian/Ubuntu ship `libncurses-dev` rather than the versioned `libncurses5-dev`. Prefer `./contrib/scripts/install_prereq install` over a hand-maintained list.
+Note that Asterisk source is now hosted on Git, so `subversion` is no longer needed, and modern Debian/Ubuntu ship `libncurses-dev` rather than the versioned `libncurses5-dev`. Prefer `./contrib/scripts/install_prereq install` over a hand-maintained list, since the script always tracks the correct package names for your distribution.
 
 ### DAHDI
 
@@ -165,9 +165,9 @@ Re-initialize your computer and verify the correct loading of the drivers.
 
 ## Which version to choose
 
-As a rule of thumb, you should use the version with the required features. Asterisk follows a release model of alternating LTS (long-term support) and standard releases. At the time of this edition, **Asterisk 22 is the current LTS release** (released 2024, supported through 2028), which makes it the best one to choose now. Asterisk 20 is the previous LTS, and version 16 (used in the first edition) is end-of-life. For production systems, always pick an LTS release.
+As a rule of thumb, you should use the version with the required features. Asterisk follows a release model of alternating LTS (long-term support) and standard releases. At the time of this edition, **Asterisk 22 is the current LTS release** (released October 2024; the latest point release is 22.10.0), which makes it the best one to choose now. Asterisk 20 is the previous LTS, and version 16 (used in the first edition) is end-of-life. For production systems, always pick an LTS release.
 
-> **[2nd-ed note]** Verify the exact current point release at downloads.asterisk.org before going to print. As of this writing the 22 branch is the active LTS.
+> **[2nd-ed note]** Author/print-time check only: confirm the latest 22.x point release at downloads.asterisk.org and update the version string above if a newer one has shipped.
 
 ## Compiling Asterisk
 
@@ -222,7 +222,7 @@ ldconfig
 
 After making your selections, choose **Save & Exit** and continue with `make`.
 
-> **[2nd-ed note]** Insert a fresh `make menuselect` screenshot captured from Asterisk 22 (the 1st-edition screenshot showed chan_sip/chan_skinny/chan_mgcp, which no longer exist). The Channel Drivers screen should show chan_pjsip and no chan_sip.
+> **[2nd-ed note]** Author action: replace the 1st-edition `make menuselect` screenshot with a fresh Asterisk 22 capture whose Channel Drivers screen shows chan_pjsip and no chan_sip/chan_skinny/chan_mgcp.
 
 ## Starting and stopping Asterisk
 
@@ -252,7 +252,7 @@ systemctl enable asterisk     # start automatically at boot
 
 Once Asterisk is running as a service, attach to its CLI with `asterisk -r` (connect) or `asterisk -rvvv` (connect with verbose output).
 
-> **[2nd-ed note]** On older systems Asterisk was started via the legacy SysV init script (`/etc/init.d/asterisk`) and the **safe_asterisk** wrapper, which restarted Asterisk automatically if it crashed. With systemd, automatic restart is handled by the unit file's `Restart=` directive, so `safe_asterisk` is generally no longer needed. The legacy init/`safe_asterisk` approach still works but is deprecated on systemd-based distributions.
+On older systems Asterisk was started via the legacy SysV init script (`/etc/init.d/asterisk`) and the **safe_asterisk** wrapper, which restarted Asterisk automatically if it crashed. With systemd, automatic restart is handled by the unit file's `Restart=` directive, so `safe_asterisk` is generally no longer needed. The legacy init/`safe_asterisk` approach still works but is deprecated on systemd-based distributions.
 
 ### Asterisk runtime options
 

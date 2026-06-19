@@ -59,14 +59,16 @@ CDR storage can be achieved in several ways. The most important way is CSV text 
 ### Storage drivers available
 
 - cdr_csv – Comma Separated Value text files
+- cdr_custom – Customizable comma-separated-value text files
 - cdr_adaptive_odbc – Adaptive ODBC backend (preferred for database storage)
 - cdr_odbc – unixODBC supported databases (legacy; cdr_adaptive_odbc preferred)
 - cdr_pgsql – Postgres databases
-- cdr_mysql – MySQL databases (**deprecated**; use cdr_adaptive_odbc + MySQL ODBC driver instead)
-- cdr_freetds – Sybase and MSSQL databases
+- cdr_tds (cdr_freetds) – Sybase and MSSQL databases via FreeTDS
 - cdr_manager – CDR to Manager Interface
 - cdr_radius – CDR radius interface
 - cdr_sqlite3_custom – SQLite3 custom CDR module
+
+The `cdr_addon_mysql` (cdr_mysql) module that older guides recommended was removed in Asterisk 19, so there is no native MySQL CDR driver on Asterisk 22. To write CDRs to MySQL/MariaDB, use `cdr_adaptive_odbc` together with a MySQL ODBC driver — the approach used in this chapter.
 
 CDR recording is done to all active modules loaded in the file /etc/asterisk/modules.conf. If the parameter autoload=yes is set, all modules are loaded. To check which cdr_drivers are currently loaded in the system use the command below:
 
@@ -114,8 +116,6 @@ Now we have only cdr_csv and cdr_adaptive_odbc loaded.
 
 ## Installing and configuring ODBC on Ubuntu 22.04
 
-> **[2nd-ed note]** Original steps targeted Ubuntu 18.04 and MySQL Connector/ODBC 8.0.14. Steps below are updated for Ubuntu 22.04 LTS; adjust package versions and download URLs to match the current MySQL Connector/ODBC release from dev.mysql.com.
-
 I always regret to publish detailed instructions in the book. They will change sometimes sooner than the book is published. Versions change, modules change, so try to adapt the command here to your own situation. Most of the time minor changes are enough to reproduce the installation. Pay attention on the steps even experienced Linux users will find hard to install the ODBC drivers.
 
 Step 1 - Install the required packages:
@@ -147,9 +147,7 @@ cd /usr/src/asterisk-22.*/contrib/scripts/realtime/mysql
 mysql -u root -p astdb <mysql_cdr.sql
 ```
 
-Step 4: Download the MySQL ODBC connector from Oracle. Check your operating system using: `lsb_release -a`. For Ubuntu 22.04 (x86_64), visit https://dev.mysql.com/downloads/connector/odbc/ and choose the current 8.x or 9.x release for Ubuntu 22.04.
-
-> **[2nd-ed note]** Verify the exact download URL and filename at dev.mysql.com; the version number and Ubuntu suffix will differ from the 1st edition. The example below uses a placeholder version.
+Step 4: Download the MySQL ODBC connector from Oracle. Check your operating system using: `lsb_release -a`. For Ubuntu 22.04 (x86_64), visit https://dev.mysql.com/downloads/connector/odbc/ and choose the current 8.x or 9.x release for Ubuntu 22.04. The exact filename and version number change over time, so set `VER` (below) to whatever the current Linux glibc build is called.
 
 ```
 cd /usr/src
@@ -275,7 +273,7 @@ Disables CDR recording for the current channel, so no CDR is written to the file
 Set(CDR_PROP(disable)=1)
 ```
 
-> **[2nd-ed note]** The original text used the `NoCDR()` application. `NoCDR` was deprecated and then removed in Asterisk 21; use `Set(CDR_PROP(disable)=1)` instead.
+The `NoCDR()` application that previous editions used for this was removed in Asterisk 21; on Asterisk 22 you disable a channel's CDR with `Set(CDR_PROP(disable)=1)` instead.
 
 ### ResetCDR()
 
@@ -285,7 +283,7 @@ Resets the Call Data Record: the `start` time (and, if answered, the `answer` ti
 
 This command sets a user field in the CDR. When using `cdr_adaptive_odbc`, the user field is automatically stored if a `userfield` column exists in the CDR table — no source recompilation needed. For CSV text files, you have to edit the source code (cdr_csv.c) and recompile Asterisk if you want to use user fields.
 
-> **[2nd-ed note]** The original text referenced `cdr_addon_mysql` and `cdr_mysql.conf`. The `cdr_mysql` module is deprecated in Asterisk 22; the recommended path is `cdr_adaptive_odbc` with a MySQL ODBC driver, which supports user fields natively via the adaptive column mapping.
+Earlier editions stored CDRs in MySQL with the `cdr_addon_mysql` module (`cdr_mysql.conf`). That module was removed in Asterisk 19, so it is not available on Asterisk 22. The supported path is now `cdr_adaptive_odbc` with a MySQL ODBC driver, which stores the user field — and any other custom column — natively through its adaptive column mapping.
 
 ### AppendCDRUserField(Value)
 
@@ -295,30 +293,29 @@ Append data to the user field on the CDR.
 
 ## User authentication
 
-Some companies bill the calls to their employees. In Asterisk you can set an authentication scheme that enables you to bill the authenticated user on the CDR. This authentication can be done using a password passed as a parameter to the Authenticate application—a password file, indicated by a / (slash) before the parameter or a Asterisk database (dbput/dbget). Format:
+Some companies bill the calls to their employees. In Asterisk you can set an authentication scheme that enables you to bill the authenticated user on the CDR. This authentication can be done using a password passed as a parameter to the Authenticate application—a password file, indicated by a / (slash) before the parameter, or an Asterisk database key (using the `d` option). Format:
 
 ```
-Authenticate(password[|options])
-Authenticate(/passwdfile|[|options])
-Authenticate(</db-keyfamily|d>options)
+Authenticate(password[,options[,maxdigits[,prompt]]])
+Authenticate(/passwdfile[,options])
 ```
 
 Options:
 
-- a – Sets the account code as the password.
-- d – Interprets the parameter as a Asterisk DB key
-- r – Removes the key after successful authentication (only with ´d´ option)
-- j – Jumps to priority n+101 for invalid authentication
+- a – Sets the channel's account code to the password entered.
+- d – Interprets the given path as an Asterisk DB key rather than a literal file.
+- m – Interprets the path as a file of `accountcode:passwordhash` lines.
+- r – Removes the database key after successful authentication (valid with `d` only).
 
-Example: (International Calls)
+If the caller fails all three attempts, the channel is hung up; dialplan execution does not continue, so handle the failure path on the line after `Authenticate()`. Example (International Calls):
 
 ```
-exten=_9011.,1,Authenticate(/password|daj)
-exten=_9011.,2,Dial(DAHDI/g1/${EXTEN:1},20,tT)
-exten=_9011.,3,Hangup()
-exten=_9011.,102,Playback(unauthorized)
-exten=_9011.,103,Hangup()
+exten=_9011.,1,Authenticate(/password,d)
+ same=>n,Dial(DAHDI/g1/${EXTEN:1},20,tT)
+ same=>n,Hangup()
 ```
+
+The old `j` option (jump to priority n+101 on failure) and the `+101` priority convention were removed from Asterisk long ago; a failed `Authenticate()` simply hangs up.
 
 To insert the password in a DB key from the console:
 
@@ -331,17 +328,15 @@ CLI> database put senha 123456 1
 This application does the same as authenticate, but uses the voicemail configuration file for the password.
 
 ```
-VMAuthenticate([mailbox][@context][|options])
+VMAuthenticate([mailbox][@context][,options])
 ```
 
-If a mailbox is specified, only the mailbox password will be considered valid. If the mailbox is not specified, a channel variable AUTH_MAILBOX will be set with the authenticated mailbox. If the option ´s´ (silent) is set, no prompt will be executed. Example: (International Calls)
+If a mailbox is specified, only that mailbox's password will be considered valid. If the mailbox is not specified, the channel variable `${AUTH_MAILBOX}` will be set with the authenticated mailbox. If the `s` option is set, the initial prompts are skipped. Example (International Calls):
 
 ```
-exten=_9011.,1,VMAuthenticate(${CALLERID(num)}@local|ajs)
-exten=_9011.,2,Dial(DAHDI/g1/${EXTEN:1},20,tT)
-exten=_9011.,3,Hangup()
-exten=_9011.,102,Playback(unauthorized)
-exten=_9011.,103,Hangup()
+exten=_9011.,1,VMAuthenticate(${CALLERID(num)}@local,s)
+ same=>n,Dial(DAHDI/g1/${EXTEN:1},20,tT)
+ same=>n,Hangup()
 ```
 
 ## Channel Event Logging (CEL)
@@ -350,7 +345,7 @@ CDR records provide one summary row per call. For more detailed event tracking �
 
 CEL complements CDR rather than replacing it: CDR remains the standard for billing summaries, while CEL gives granular per-event data useful for fraud detection, quality monitoring, and advanced reporting.
 
-> **[2nd-ed note]** Consider adding a short CEL subsection or a forward reference to an advanced billing chapter if the syllabus covers it. The `cel.conf` configuration pattern mirrors `cdr.conf`.
+The `cel.conf` configuration pattern mirrors `cdr.conf`: you enable the event types you want in the `[general]` section of `cel.conf`, then configure each storage back-end in its own file — `cel_custom.conf` for CSV, `cel_odbc.conf` for an ODBC database (the same `res_odbc.conf` connection used for CDRs). You can confirm whether CEL is active with `cel show status` on the CLI.
 
 ## Summary
 

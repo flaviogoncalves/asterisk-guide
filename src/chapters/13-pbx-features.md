@@ -57,7 +57,7 @@ Some of the features presented in this chapter are configured in the features.co
 
 ![The `[featuremap]` section of features.conf, with the default DTMF feature codes](../images/13-pbx-features-fig02.png)
 
-> **[2nd-ed note]** As of Asterisk 12+, call parking was moved out of `features.conf`/`app_features` into its own module `res_parking` with configuration in `res_parking.conf`. The parking-lot block below (parkext, parkpos, context, parkingtime, etc.) lives in `res_parking.conf` and is shown using the syntax from the Asterisk 22 `res_parking.conf.sample`. The `[featuremap]` section (the DTMF feature codes, including `parkcall`) remains in `features.conf`.
+Since Asterisk 12, call parking was moved out of `features.conf` into its own module, `res_parking`, with configuration in `res_parking.conf`. The parking-lot block below (`parkext`, `parkpos`, `context`, `parkingtime`, and so on) lives in `res_parking.conf`. The `[featuremap]` section (the DTMF feature codes, including `parkcall`) remains in `features.conf`.
 
 The parking-lot options live in `res_parking.conf`. A parking lot named `default` always exists, even if it is not present in the configuration file. The excerpt below is taken from the Asterisk 22 `res_parking.conf.sample`:
 
@@ -93,8 +93,6 @@ The DTMF feature codes (including one-step `parkcall`) remain in the `[featurema
 option in the Dial() or Queue() app call!
 ;disconnect => *0               ; Disconnect  (default is *) -- Make sure to set the H and/or h option
 in the Dial() or Queue() app call!
-;automon => *1                  ; One Touch Record a.k.a. Touch Monitor -- Make sure to set the W
-and/or w option in the Dial() or Queue() app call!
 ;atxfer => *2                   ; Attended transfer  -- Make sure to set the T and/or t option in the
 Dial() or Queue()  app call!
 ;parkcall => #72        ; Park call (one step parking)  -- Make sure to set the K and/or k option in
@@ -111,7 +109,7 @@ Call transfer can be implemented by the phone, by ATA, or by Asterisk itself. Re
 
 ### Configuration task list
 
-1. If the phone is SIP based, make sure that the option directmedia is equal to no or use a t or T option in the dial() application
+1. For a PJSIP endpoint, make sure the option `direct_media` is set to `no` (so the media flows through Asterisk and the feature codes are detected), or use a `t`/`T` option in the `Dial()` application
 
 ## Call parking
 
@@ -133,7 +131,7 @@ Step 2: Test the call parking feature by dialing #700. Notes:
 
 - The parking extension won’t be shown in the dialplan show CLI command.
 - It is necessary to reload the parking module after changing the parking configuration file: `module reload res_parking.so`. For features.conf changes, `module reload features.so`.
-- To park a call, you need to transfer to #700. Verify the options t and T in the dial() application.
+- To park a call, you need to transfer to #700. Verify the `t` and `T` options in the `Dial()` application.
 
 ## Call pickup
 
@@ -158,21 +156,23 @@ pickup_group=1,2
 ```
 
 
-Step 2: Change the call-pickup feature number (optional).
+Step 2: Change the call-pickup feature number (optional). This is set in the `[general]` section of `features.conf`, not in `pjsip.conf`:
 
 ```
-pickupexten=*8; Configures the call pickup extension
+; features.conf
+[general]
+pickupexten = *8   ; Configures the call pickup extension (default is *8)
 ```
 
 ## Conference (call conference)
 
 There are different ways to implement a conference on Asterisk. The first option is simply to use the three-way conference capability of the phone. By using this feature in the phone you do not require any support in the server itself. However, when you want a conference with more than 3 people, you should run a conference room. Asterisk's modern conference application is ConfBridge (`app_confbridge`).
 
-ConfBridge supports HD voice conferences and video conferencing. There are some limitations for videoconference such as no transcoding — all participants have to use the same codec and profile. The videoconference uses a follow-the-talker mode, displaying the image of the last person to speak. You may easily configure new DTMF menus in ConfBridge.
+ConfBridge supports HD voice conferences and video conferencing. There are some limitations for video conferencing such as no transcoding — all participants have to use the same codec and profile. The video conference uses a follow-the-talker mode, displaying the image of the last person to speak. You may easily configure new DTMF menus in ConfBridge.
 
-> **[2nd-ed note]** MeetMe (`app_meetme`) was **deprecated in Asterisk 19** and was scheduled for removal in Asterisk 21, but that removal was paused (at the request of the ViciDial project). The module source still ships with Asterisk 22, but it requires DAHDI and is **not built by the default Asterisk 22 build** — a standard install has no `app_meetme.so` and the `MeetMe()` application is unavailable. All new conference room deployments must use ConfBridge. The MeetMe section below is retained for historical reference only.
+ConfBridge replaces the old MeetMe application, which was deprecated in Asterisk 19 and removed in Asterisk 21. Unlike MeetMe, ConfBridge does **not** require DAHDI or a hardware timing source: it relies on Asterisk's built-in timing interface (`res_timing_timerfd` on Linux, or `res_timing_pthread`), so no `dahdi_dummy` module is needed. If you are migrating from an older system that used `MeetMe()` and `meetme.conf`, replace those with `ConfBridge()` and `confbridge.conf` as described below.
 
-### Confbridge
+### ConfBridge
 
 To start a conference room, the syntax is listed below.
 
@@ -184,7 +184,9 @@ To get a complete description of the command you can use core show application c
 
 ![Output of `core show application confbridge`, showing the synopsis, syntax, and the bridge_profile, user_profile, and menu arguments](../images/13-pbx-features-fig06.png)
 
-As you can see above there are three important sections: Bridge_profile: You define the profile in the file confbridge.conf. There you may select the maximum number of participants, recording, video_mode and many other bridge parameters.
+> **[2nd-ed note]** A ConfBridge diagram would help here: show several SIP endpoints joining a single named conference (e.g. `101`) through `ConfBridge()`, with one participant flagged as admin, and a callout that the mixing/timing is handled by `res_confbridge` + the built-in `res_timing_*` timer (no DAHDI).
+
+As you can see above there are three important arguments, each mapping to a section type in `confbridge.conf`. **bridge_profile** (a `type=bridge` section): here you select the maximum number of participants (`max_members`), recording (`record_conference`), `video_mode`, and many other bridge-wide parameters.
 
 It doesn’t make sense to reproduce the entire example file here, so let me give you a simple example on how to configure a bridge_profile in the file confbridge.conf.
 
@@ -195,7 +197,7 @@ max_members=10
 record_conference=yes
 ```
 
-User_profile: Here you define options that are specific per user such as the user is an administrator or not. Music on hold and many other options can be set per user. Example:
+**user_profile** (a `type=user` section): here you define options that are specific per user, such as whether the user is an administrator (`admin=yes`), whether they start muted (`startmuted=yes`), music on hold, and many other per-user options. Example:
 
 ```
 [admin_user]
@@ -203,7 +205,7 @@ type=user
 admin=yes
 ```
 
-Menu: In the menu section you may define you keyboard mapping for the application where to toggle mute and unmute. Check the file confbridge.conf to see the options. Example:
+**menu** (a `type=menu` section): here you define the keypad (DTMF) mapping for the conference — for example which key toggles mute, adjusts volume, or leaves the conference. Check the `confbridge.conf.sample` file to see all available actions. Example:
 
 ```
 [my_menu]
@@ -229,144 +231,42 @@ exten => 1,n,Set(CONFBRIDGE(user,marked)=yes)
 exten => 1,n,ConfBridge(sales)
 ```
 
-## Meetme (Legacy — deprecated, not built by default in Asterisk 22)
+### ConfBridge admin commands and migrating from MeetMe
 
-> **[2nd-ed note]** `app_meetme` was deprecated in Asterisk 19. Its planned removal in Asterisk 21 was paused, so the source still ships in Asterisk 22, but the module is not built by the default Asterisk 22 build (it depends on DAHDI). A standard Asterisk 22 install therefore has no `MeetMe()` application. The content below is kept for historical reference and for readers upgrading from older systems. **For new installations, use ConfBridge (see above).** The DAHDI dependency and `dahdi_dummy` module are not required for ConfBridge.
+If you are coming from MeetMe, the admin functions you used through `MeetMeAdmin()` and the `a` (admin) option are now expressed through the **admin user profile** (`admin=yes`) plus the **menu** actions. An administrator who joins with an admin profile and a menu containing admin actions can lock the room, kick users, and mute participants live from the keypad. The relevant menu actions in `confbridge.conf` are:
 
-Alternatively, in older Asterisk versions you could use the meetme() application. Meetme is a conference bridge that is very simple to use. Remember, meetme was deprecated in Asterisk 19 and depends on the DAHDI module for synchronization.
+- `admin_kick_last` -- kick the last user who joined
+- `admin_toggle_mute_participants` -- mute/unmute all non-admin participants
+- `toggle_mute` -- mute/unmute yourself
+- `participant_count` -- announce the number of participants
+- `leave_conference` -- leave the bridge and continue in the dialplan
 
-![MeetMe conference types — single-speaker, password-protected, and dynamic conferences — all requiring a Zaptel/DAHDI timing source](../images/13-pbx-features-fig07.png)
+These replace the MeetMe `MeetMe()` option flags (`a`, `A`, `m`, `M`, `l`, `x`, …) and the `MeetMeAdmin()` commands (`k`, `K`, `L`, `M`, `N`, …). There is no `meetme.conf` in Asterisk 22; all conference configuration lives in `confbridge.conf`, and changes are applied with `module reload res_confbridge.so`.
 
-### The meetme() application
+### ConfBridge example
 
-Using the meetme show CLI command, you can obtain the description above. To use meetme, you need to compile the DAHDI drivers and have at least one DAHDI kernel module loaded. If you don’t have at least one DAHDI card installed, load the dahdi_dummy kernel module to provide a timing source. Description:
-
-![The MeetMe() application: syntax `MeetMe([confno][,[options][,pin]])` and its main option flags](../images/13-pbx-features-fig08.png)
-
-The meetme() application gets the user into a specified meetme conference. If the conference number is omitted, the user will be prompted to enter one. The user can leave the conference by hanging up or—if the p option is specified—by pressing #. Please note: The DAHDI kernel modules and at least one hardware driver (or dahdi_dummy) must be present for conferencing to operate properly. In addition, the chan_dahdi channel driver must be loaded for the i and r options to operate at all.
-
-> **[2nd-ed note]** The option-flag and admin-command lists that follow describe the legacy `app_meetme` interface and reflect historical `MeetMe()`/`MeetMeAdmin()` documentation. Because `app_meetme` is not built by the default Asterisk 22 install, these flags cannot be confirmed against a running Asterisk 22 system; they are reproduced for readers maintaining older deployments. On Asterisk 22, use ConfBridge and the `CONFBRIDGE()` dialplan function instead.
-
-The option string may contain zero or one or more of the following characters:
-
-- 'a' -- sets admin mode
-- 'A' -- sets marked mode
-- 'b' – runs the AGI script specified in ${MEETME_AGI_BACKGROUND}Default: conf- background.agi (Note: This does not work with non-DAHDI channels in the same conference)
-- 'c' -- announces user(s) count upon joining a conference
-- 'd' -- dynamically adds conference
-- 'D' -- dynamically adds conference, prompting for a PIN
-- 'e' -- selects an empty conference
-- 'E' -- selects an empty pinless conference
-- 'i' -- announces a user joining/leaving with review
-- 'I' -- announces a user joining/leaving without review
-- 'l' -- sets listen only mode (Listen only, no talking)
-- 'm' -- sets initially muted
-- 'M' -- enables music on hold when the conference has a single caller
-- 'o' -- sets talker optimization, which treats talkers who aren't speaking as being muted, meaning (a) no encode is done on transmission and (b) received audio that is not registered as talking is omitted, causing no buildup in background noise
-- 'p' -- allows users to exit the conference by pressing '#'
-- 'P' -- always prompts for the pin even if it is specified
-- 'q' -- quiet mode (don't play enter/leave sounds)
-- 'r' -- Records conference (records as ${MEETME_RECORDINGFILE}using format ${MEETME_RECORDINGFORMAT}). Default filename is meetme-conf-rec- ${CONFNO}-${UNIQUEID} and the default format is wav.
-- 's' -- Presents menu (user or admin) when '*' is received ('send' to menu)
-- 't' -- sets talk only mode. (Talk only, no listening)
-- 'T' -- sets talker detection (sent to manager interface and meetme list)
-- 'w[(<secs>)]' -- waits until the marked user enters the conference
-- 'x' -- closes the conference when the last marked user exits
-- 'X' -- allows the user to exit the conference by entering a valid single digit extension ${MEETME_EXIT_CONTEXT} or the current context if that variable is not defined.
-- '1' -- does not play message when the first person enters
-
-### Meetme configuration file
-
-This file is used to configure the application meetme. For example:
+To create a conference room reachable at extension 500, in `extensions.conf`:
 
 ```
-;
-; Configuration file for MeetMe simple conference rooms for Asterisk of course.
-;
-; This configuration file is read every time you call app meetme()
-[general]
-;audiobuffers=32        ; The number of 20ms audio buffers to be used
-                        ; when feeding audio frames from non-DAHDI channels
-                        ; into the conference; larger numbers will allow
-                        ; for the conference to 'de-jitter' audio that arrives
-                        ; at different timing than the conference's timing
-                        ; source, but can also allow for latency in hearing
-                        ; the audio from the speaker. Minimum value is 2,
-                        ; maximum value is 32.
-;
-[rooms]
-;
-; Usage is conf => confno[,pin][,adminpin]
-;
-conf=>9000
-conf=>9001,123456
+exten => 500,1,Answer()
+ same => n,ConfBridge(101,default_bridge,default_user,sample_user_menu)
 ```
 
-It is not necessary to use either reload or restart to make Asterisk see the changes in the meetme.conf file.
-
-### Meetme-related applications
-
-The meetme() application has two other support applications.
-
-```
-MeetMeCount(confno[|var])
-```
-
-This plays the number of users in the conference. If a variable is specified, it does not play the message but sets the number of users to it.
-
-```
-MeetMeAdmin(confno,command,[user]):
-```
-
-Run the admin command for a conference:
-
-- 'e' -- Ejects the last user that joined
-- 'k' -- Kicks one user out of the conference
-- 'K' -- Kicks all users out of the conference
-- 'l' -- Unlocks the conference
-- 'L' -- Locks the conference
-- 'm' -- Unmutes one user
-- 'M' -- Mutes one user
-- 'n' -- Unmutes all users in the conference
-- 'N' -- Mutes all non-admin users in the conference
-- 'r' -- Resets one user's volume settings
-- 'R' -- Resets all users’ volume settings
-- 's' -- Lowers entire conference speaking volume
-- 'S' -- Increases entire conference speaking volume
-- 't' -- Lowers one user's talk volume
-- 'T' -- Lowers all users’ talk volume
-- 'u' -- Lowers one user's listen volume
-- 'U' -- Lowers all users’ listen volume
-- 'v' -- Lowers entire conference listening volume
-- 'V' -- Increases entire conference listening volume
-
-### Meetme configuration task list
-
-Follow the steps below to configure the meetme conferencing application. Step 1: Choose the extension for the Meetme room (required) Step 2: Edit the meetme.conf file to configure the passwords (optional)
-
-### Examples
-
-Example #1: Simple meetme room 1. In the extensions.conf file, create the conference room 101
-
-```
-exten=>500,1,MeetMe(101,,123456)
-```
-
-2. In the meetme.conf file, establish the password for room 101. Important Note: The meetme() application needs a timer to work. If you don’t have digium hardware installed and configured, use dahdi_dummy as a timing source.
+The first caller to dial 500 creates conference `101`; subsequent callers join it. Profiles and menus referenced here (`default_bridge`, `default_user`, `sample_user_menu`) are defined in `confbridge.conf`. To require a PIN, set `pin=` in the user profile; to make a participant a conference administrator, give them a user profile with `admin=yes`.
 
 ## Call Recording
 
-There are several ways to record a call in Asterisk. You can use the mixmonitor() application to easily record calls.
+There are several ways to record a call in Asterisk. You can use the `MixMonitor()` application to easily record calls. (The older `Monitor` application, which recorded two separate files, was removed; use `MixMonitor` instead.)
 
-### Using the mixmonitor application
+### Using the MixMonitor application
 
-The mixmonitor application records the audio in the current channel to the specified file. If the filename is an absolute path, it uses that path. Otherwise, it creates the file in the configured monitoring directory from asterisk.conf.
+The `MixMonitor` application records the audio in the current channel to the specified file. If the filename is an absolute path, it uses that path. Otherwise, it creates the file in the configured monitoring directory from asterisk.conf.
 
 ![The MixMonitor() application: records and mixes the audio of a channel to a file, with options for append, bridged-only, and volume adjustment](../images/13-pbx-features-fig09.png)
 
-### Mixmonitor()
+### MixMonitor()
 
-Record a call and mix the audio during the recording [Description] MixMonitor(<file>.<ext>[|<options>[|<command>]]) Records the audio on the current channel to the specified file. options: a- Append to the file instead of overwriting it. b-Only save audio to the file while the channel is bridged. Note: does not include conferences. v(<x>) - Adjust the heard volume by a factor of <x> V(<x>) - Adjust the spoken volume by a factor of <x> W(<x>) - Adjust both heard and spoken volumes Valid options:
+Record a call and mix the audio during the recording. Syntax: `MixMonitor(filename.extension[,options[,command]])`. Records the audio on the current channel to the specified file. Valid options:
 
 - a - Appends to the file instead of overwriting it.
 - b - Only saves audio to the file while the channel is bridged.
@@ -376,24 +276,20 @@ Record a call and mix the audio during the recording [Description] MixMonitor(<f
 - W(<x>) - Adjusts both audible and spoken volumes by a factor of <x> (ranging from -4 to 4)
 - <command> will be executed when the recording is over. Any strings matching ^{X} will be unescaped to ${X} and all variables will be evaluated at that time. The variable MIXMONITOR_FILENAME will contain the filename used to record.
 
-An interesting resource is automon, which allows you to simply dial *1 to immediately start recording. Example:
+An interesting resource is the one-touch recording feature `automixmon`, which lets a party dial a DTMF code (default `*3`) during a call to immediately start (and toggle off) recording. It is built on MixMonitor, so it writes a single mixed file. Example:
 
 ```
-exten=>_4XXX,1,Set(DYNAMIC_FEATURES=automon)
-exten=>_4XXX,2,Dial(PJSIP/${EXTEN},20,jtTwW);wW enables the recording.
+exten => _4XXX,1,Set(DYNAMIC_FEATURES=automixmon)
+ same => n,Dial(PJSIP/${EXTEN},20,jtTXx) ; X and x enable one-touch MixMonitor recording
 ```
 
-The audio channels are incoming (IN) and outgoing (OUT) and are separated into two distinct files in the directory /var/spool/asterisk/monitor. Both files can be mixed using the sox application.
-
-```
-debian#soxmix *in.wav *out.wav output.wav
-```
+The `X` and `x` options enable the one-touch MixMonitor feature for the caller and callee respectively. Because MixMonitor records a single mixed file, there is no need to combine separate IN/OUT files afterward (the old `automon`/`Monitor` approach, which produced two files for `soxmix`, was removed along with the `Monitor` application).
 
 If you don’t want to use Set() before the Dial() application, you can set this in the globals section:
 
 ```
 [globals]
-DYNAMIC_FEATURES=>automon
+DYNAMIC_FEATURES=automixmon
 ```
 
 ### Music on hold
@@ -476,18 +372,18 @@ mode=files
 directory=/var/lib/asterisk/moh
 ```
 
-In the dial plan, you can hear the MOH using the following example:
+In the dial plan, you can start music on hold on a channel with `StartMusicOnHold` (and stop it with `StopMusicOnHold`):
 
 ```
-Exten=>100,1,SetMusicOnHold(default)
-Exten=>100,2,Dial(DAHDI/2)
+exten => 100,1,StartMusicOnHold(default)
+ same => n,Dial(PJSIP/2)
 ```
 
-To configure the file extensions.conf to test the MOH:
+To play music on hold for a fixed time as a quick test, use the `MusicOnHold` application with a duration (in seconds):
 
 ```
 [local]
-exten => 6601,1,WaitMusicOnHold(30)
+exten => 6601,1,MusicOnHold(default,30)
 ```
 
 ## Application Maps
@@ -518,10 +414,10 @@ Application maps allow you to add new features by using the `[applicationmap]` s
    - A. True
    - B. False
 8. To pick up a call from a specific call group, you must be in the matching ___ group.
-9. You can record a call with the MixMonitor() application or the one-touch (automon) feature. By default, automon uses the ___ DTMF sequence.
+9. You can record a call with the MixMonitor() application or the one-touch recording (`automixmon`) feature. By default, `automixmon` uses the ___ DTMF sequence.
    - A. *1
    - B. *2
-   - C. #3
+   - C. *3
    - D. #1
 10. In ConfBridge, which `confbridge.conf` user-profile option makes a participant join muted (they can hear the conference but cannot be heard until unmuted)?
     - A. startmuted=yes
@@ -529,4 +425,4 @@ Application maps allow you to add new features by using the `[applicationmap]` s
     - C. muteall=yes
     - D. quiet=yes
 
-**Answers:** 1 — B, C · 2 — pickup group; `chan_dahdi.conf` · 3 — blind; attended · 4 — B · 5 — ConfBridge() · 6 — A · 7 — B · 8 — pickup · 9 — A · 10 — A
+**Answers:** 1 — B, C · 2 — pickup group; `chan_dahdi.conf` · 3 — blind; attended · 4 — B · 5 — ConfBridge() · 6 — A · 7 — B · 8 — pickup · 9 — C · 10 — A

@@ -71,11 +71,7 @@ improve call quality. A few protocol specifics:
 - **IAX2** is unusual: it multiplexes both signaling and media over a single UDP port
   (4569), which simplifies NAT and firewall traversal.
 
-> **[2nd-ed note]** The 1st-edition figure here mapped SIP/H.323 onto the OSI *session*
-> layer and the codecs onto the *presentation* layer. That mapping was a long-standing
-> source of controversy — the IETF uses the TCP/IP model, in which SIP is an
-> application-layer protocol — so the figure has been replaced by the table above.
-> Commission a redrawn figure based on the TCP/IP stack if a visual is desired.
+> **[author]** Optional: commission a redrawn figure of the TCP/IP stack above if a visual is wanted; the table is otherwise self-contained.
 
 ## How to choose a protocol
 
@@ -101,15 +97,13 @@ H.323 is largely being used in VoIP. It is one of the first VoIP protocols and i
 
 The following table summarizes the differences among the session protocols.
 
-| Protocol | Standard body | Used for |
-|----------|---------------|----------|
-| SIP | IETF standard | SIP phones; connecting to SIP service providers |
-| IAX2 | RFC 5456 (Informational) | Asterisk-to-Asterisk trunks; IAX2 phones; IAX service providers |
-| H.323 | ITU standard | H.323 phones and gateways (can use an external gatekeeper, cannot be one) |
-| MGCP | IETF/ITU | MGCP phones (no provider/gateway support) |
-| SCCP | Cisco proprietary | Cisco phones |
-
-> **[2nd-ed note]** Consider refreshing this table to reflect current Asterisk 22 module names and support status.
+| Protocol | Standard body | Asterisk 22 module / status | Used for |
+|----------|---------------|-----------------------------|----------|
+| SIP | IETF standard | `chan_pjsip` (core; the only SIP driver — `chan_sip` was removed in Asterisk 21) | SIP phones; connecting to SIP service providers |
+| IAX2 | RFC 5456 (Informational) | `chan_iax2` (core; still shipped, considered legacy) | Asterisk-to-Asterisk trunks; IAX2 phones; IAX service providers |
+| H.323 | ITU standard | `chan_ooh323` (external community add-on, not in the base build) | H.323 phones and gateways (can use an external gatekeeper, cannot be one) |
+| MGCP | IETF/ITU | `chan_mgcp` removed in Asterisk 21 — no longer available | (legacy MGCP phones) |
+| SCCP (Skinny) | Cisco proprietary | `chan_skinny` removed in Asterisk 21 — no longer available | (legacy Cisco phones) |
 
 ## One endpoint per device
 
@@ -153,19 +147,20 @@ Codec selection depends on several options, such as:
 
 The following table compares the most popular codecs. The quality of these codecs is considered “toll”—in other words, similar to PSTN.
 
-| Codec | G.711 | G.729A | iLBC | GSM 06.10 |
-|---|---|---|---|---|
-| Sample interval | 20 ms | 30 ms | 30 ms | RTE/LTP |
-| Bandwidth (Kbps) | 64 | 8 | 13.33 | 13 |
-| Cost (per channel) | Free | ~USD 10.00 | Free | Free |
-| Resistance to frame erasure¹ | None | 3% | 5% | 3% |
-| Complexity (MIPS)² | ~0.35 | ~13 | ~18 | ~5 |
+| Codec | G.711 (ulaw/alaw) | G.722 | Opus | G.729A | iLBC | GSM 06.10 |
+|---|---|---|---|---|---|---|
+| Audio band | Narrowband | Wideband (HD) | Narrow→fullband | Narrowband | Narrowband | Narrowband |
+| Bandwidth (Kbps) | 64 | 64 | 6–510 (variable) | 8 | 13.33 | 13 |
+| Asterisk 22 module | `codec_ulaw`/`codec_alaw` (core) | `codec_g722` (core) | `codec_opus` (external) | `codec_g729` (external) | `codec_ilbc` (core) | `codec_gsm` (core) |
+| Cost (per channel) | Free | Free | Free (binary download) | License purchase required¹ | Free | Free |
+| Resistance to frame erasure² | None | Low | Excellent (built-in FEC/PLC) | ~3% | ~5% | ~3% |
+| Relative CPU cost | Very low | Low | Moderate–high | High | High | Low |
 
-¹ Resistance to packet loss refers to the rate at which the MOS drops to about 0.5 below the peak quality for the specific codec.
+The PSTN baseline is **G.711** — it is the reference for "toll" quality and transcodes for free inside Asterisk. **G.722** delivers wideband (HD) voice at the same 64 Kbps and is a good LAN/internal choice. **Opus** is the modern default for WebRTC and capable SIP endpoints: it adapts its bitrate, has built-in forward error correction, and resists packet loss well; it ships as the external `codec_opus` binary (free to download). **G.729** stays useful on low-bandwidth WAN trunks, but lawful use requires either Sangoma's licensed `codec_g729` (free to download, per-channel license to use) or the open-source **bcg729** implementation as an alternative.
 
-² Complexity refers to the quantity, in millions of instructions per second, spent to code and decode the codec using a reference design on a Texas Instruments DSP (TMS320C54x). A direct relationship exists between processor frequency and MIPS, but it is not possible to draw a precise relationship among such diverse hardware platforms. Use this table just for comparison.
+¹ Sangoma's `codec_g729` binary is free to download but requires a purchased per-channel license to use lawfully. The open-source `bcg729` is a license-free alternative.
 
-> **[2nd-ed note]** Rebuild this comparison table for the 2nd edition: add Opus (free `codec_opus`) and G.722 (wideband, 64 Kbps); keep G.711 ulaw/alaw as the PSTN baseline. For G.729, note the licensing reality — Sangoma's `codec_g729` is free to download but requires a per-channel license; the open-source `bcg729` is an alternative.
+² Resistance to frame erasure refers to how well perceived quality (MOS) holds up under packet loss. The exact crossover point varies with packetization and network conditions; use this column for relative comparison, not as a precise figure.
 
 **Codec recommendations for Asterisk 22:**
 

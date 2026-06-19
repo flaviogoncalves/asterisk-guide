@@ -1,31 +1,31 @@
-# Call Queues
+# Colas de llamadas
 
-Las colas de llamadas, también conocidas como ACD (Automatic Call Distribution o Distribución Automática de Llamadas), son cada vez más importantes para responder a las llamadas de los clientes de manera eficiente. Un distribuidor automático de llamadas puede ayudar a reducir costos, aumentar el servicio y mejorar las ventas, ya que los distribuidores de llamadas afectan la forma en que funciona su negocio, no por unos pocos días, sino por muchos años. En un entorno de centro de llamadas, el factor número uno es la gente; ellos son el recurso más costoso. Se requiere tiempo, dinero y paciencia para contratar, capacitar y motivar a los agentes. Con un ACD, puede maximizar la productividad de los agentes dimensionando con precisión la cantidad de agentes requeridos, controlando a los buenos y malos asistentes, y analizando el flujo de llamadas.
+Las colas de llamadas, también conocidas como ACD (Distribución Automática de Llamadas), son cada vez más importantes para responder a las llamadas de los clientes de manera eficiente. Un distribuidor automático de llamadas puede ayudar a reducir costos, aumentar el servicio y mejorar las ventas, ya que los distribuidores de llamadas afectan la forma en que funciona su negocio, no por unos pocos días, sino por muchos años. En un entorno de centro de llamadas, el factor número uno son las personas; son el recurso más costoso. Se requiere tiempo, dinero y paciencia para contratar, capacitar y motivar a los agentes. Con un ACD, puede maximizar la productividad de los agentes dimensionando con precisión el número de agentes requeridos, controlando a los buenos y malos asistentes, y analizando el flujo de llamadas.
 
 ## Objetivos
 
-Al final de este capítulo, debería ser capaz de:
+Al final de este capítulo, usted debería ser capaz de:
 
-- Entender por qué y cómo utilizar las colas de llamadas
-- Entender la teoría básica de las colas de llamadas
+- Comprender por qué y cómo utilizar las colas de llamadas
+- Comprender la teoría básica de las colas de llamadas
 - Instalar y configurar el sistema de colas
 
 ## ¿Cómo funcionan las colas?
 
-Las colas de llamadas no son exactamente una novedad. Cuando tiene un flujo alto de llamadas entrantes, es difícil distribuir las llamadas de manera adecuada. Usar una estrategia de grupo donde el teléfono suena simultáneamente en todos los agentes no parece funcionar, a menos que solo tenga unos pocos agentes. Sin embargo, una cola de llamadas solo entregará llamadas a un único agente disponible a la vez y pondrá al cliente en espera con música cuando no haya agentes disponibles. La cola funciona reteniendo la llamada mientras busca un agente desocupado para responderla. Uno de los mayores beneficios de la cola es evitar la pérdida de llamadas mientras se brinda la posibilidad de generar estadísticas.
+Las colas de llamadas no son exactamente una novedad. Cuando tiene un flujo alto de llamadas entrantes, es difícil distribuir las llamadas adecuadamente. Usar una estrategia de grupo donde el teléfono suena simultáneamente en todos los agentes no parece funcionar, a menos que solo tenga unos pocos agentes. Sin embargo, una cola de llamadas solo entregará llamadas a un único agente disponible cada vez y pondrá al cliente en espera con música cuando no haya agentes disponibles. La cola funciona reteniendo la llamada mientras busca un agente desocupado para responderla. Uno de los mayores beneficios de la cola es evitar perder llamadas mientras se brinda la posibilidad de generar estadísticas.
 
-![Una cola de llamadas: las llamadas entrantes 1-800 entran en la cola y una estrategia ACD (ringall, rrmemory, leastrecent, priority y otras) las distribuye a los agentes disponibles](../images/14-queues-fig01.png)
+![Una cola de llamadas: las llamadas entrantes 1-800 entran en la cola y una estrategia de ACD (ringall, rrmemory, leastrecent, priority y otras) las distribuye a los agentes disponibles](../images/14-queues-fig01.png)
 
 Por lo general, una cola de llamadas funciona así:
 
 - Los agentes inician sesión en la cola.
 - Las llamadas entrantes se ponen en cola.
-- Se utiliza una estrategia de encolado para distribuir las llamadas y enviarlas a los agentes.
+- Se utiliza una estrategia de colas para distribuir las llamadas y enviarlas a los agentes.
 - Se reproduce música en espera mientras el llamante espera.
 - Se pueden realizar anuncios a los llamantes, notificándoles el tiempo de espera.
 - El agente responde la llamada y se generan estadísticas.
 
-La aplicación principal de las colas es el servicio al cliente. Al usar colas, evita perder llamadas cuando sus agentes están ocupados. Puede agregar nuevos agentes a la cola si descubre que la cantidad de llamantes en la cola está creciendo. Otra ventaja de las colas es que ahora puede obtener estadísticas como la tasa de abandono de llamadas, la duración promedio de las llamadas y el objetivo de respuesta de llamadas. Estas estadísticas le ayudarán a determinar cuántos agentes utilizar para brindar un mejor servicio a su cliente.
+La aplicación principal de las colas es el servicio al cliente. Al usar colas, evita perder llamadas cuando sus agentes están ocupados. Puede agregar nuevos agentes a la cola si descubre que el número de llamantes en la cola está creciendo. Otra ventaja de las colas es que ahora puede tener estadísticas como la tasa de abandono de llamadas, la duración promedio de las llamadas y el objetivo de respuesta de llamadas. Estas estadísticas le ayudarán a determinar cuántos agentes utilizar para brindar un mejor servicio a su cliente.
 
 ### Arquitectura ACD
 
@@ -41,7 +41,7 @@ Las colas se definen en el archivo de configuración queues.conf. Los agentes so
 autofill=yes
 ```
 
-El comportamiento antiguo de la cola era de tipo serial. La cola esperaba a que se despachara una llamada antes de enviar la siguiente llamada al siguiente agente. Si un agente tardaba 15 segundos en responder una llamada, las otras llamadas en la cola tenían que esperar hasta que esa llamada fuera respondida. Para colas de alto volumen, este comportamiento era ineficiente. El nuevo comportamiento autofill=yes no espera hasta que se responda una llamada, sino que funciona en paralelo. Puede grabar las llamadas en la cola usando la opción mixmonitor. En este modo, las llamadas se graban y mezclan al mismo tiempo.
+El comportamiento antiguo para la cola era de tipo serial. La cola esperaba a que una llamada fuera despachada antes de enviar la siguiente llamada al siguiente agente. Si un agente tardaba 15 segundos en responder una llamada, las otras llamadas en la cola tenían que esperar hasta que esa llamada fuera respondida. Para colas de alto volumen, este comportamiento era ineficiente. El nuevo comportamiento autofill=yes no espera hasta que se responda una llamada, sino que funciona en paralelo. Puede grabar las llamadas en la cola usando la opción mixmonitor. En este modo, las llamadas se graban y mezclan al mismo tiempo.
 
 ### Archivo de configuración de colas
 
@@ -103,11 +103,11 @@ Las llamadas se distribuyen entre los miembros de acuerdo con una de estas estra
 - fewestcalls: Distribuye al miembro con menos llamadas.
 - random: Hace sonar una interfaz aleatoria.
 - wrandom: Hace sonar una interfaz aleatoria, pero utiliza la penalización del miembro como peso al calcular su métrica.
-- rrmemory: Utiliza round robin con memoria; recuerda dónde se quedó con la llamada en la última pasada.
+- rrmemory: Utiliza round robin con memoria; recuerda dónde quedó con la llamada en la última pasada.
 - rrordered: Igual que rrmemory, excepto que se conserva el orden de los miembros de la cola del archivo de configuración.
 - linear: Hace sonar a los miembros en el orden en que aparecen en queues.conf; para miembros dinámicos, en el orden en que fueron agregados.
 
-> **[Nota de la 2.ª ed.]** La estrategia `roundrobin` fue reemplazada por `rrmemory` en las primeras versiones de Asterisk y ya no está disponible. Elimínela de la lista de estrategias si aparecía en el texto de la edición anterior. Todas las estrategias enumeradas anteriormente están confirmadas como presentes en Asterisk 22.
+La estrategia antigua `roundrobin` fue obsoleta en Asterisk 1.4 y eliminada; ya no existe en Asterisk 22. Use `rrmemory` (o `rrordered`) en su lugar. Las estrategias anteriores son el conjunto completo aceptado por la opción `strategy` en el `queues.conf` de Asterisk 22.
 
 ## Agentes
 
@@ -117,7 +117,7 @@ Los agentes se implementan como canales proxy. Se pueden usar dentro de las cola
 
 ### Grupos de agentes
 
-Puede optar por utilizar grupos de agentes. Esta función no tiene en cuenta las estrategias ACD. Probablemente preferirá listar a todos los agentes individualmente. Si desea transferir a un grupo de agentes, usted
+Puede optar por utilizar grupos de agentes. Esta función no tiene en cuenta las estrategias de ACD. Probablemente preferirá listar a todos los agentes individualmente. Si desea transferir a un grupo de agentes, usted
 
 ```
 can use queues.conf:
@@ -128,9 +128,9 @@ use agent groups.
 
 ### El archivo de configuración para agentes
 
-Los agentes se definen en el archivo agents.conf. A continuación, se muestra un ejemplo funcional del archivo.
+Los agentes se definen en el archivo agents.conf. A continuación se muestra un ejemplo funcional del archivo.
 
-![Un ejemplo funcional del archivo agents.conf: una sección general con persistentagents, una sección de agentes con los parámetros predeterminados (autologoff, ackcall, endcall, wrapuptime, musiconhold) y dos definiciones de agentes (300 y 301)](../images/14-queues-fig06.png)
+![Un ejemplo funcional del archivo agents.conf: una sección general con persistentagents, una sección de agentes con los parámetros predeterminados (autologoff, ackcall, endcall, wrapuptime, musiconhold) y dos definiciones de agente (300 y 301)](../images/14-queues-fig06.png)
 
 ## Aplicaciones relacionadas con ACD
 
@@ -138,7 +138,7 @@ El sistema de colas de Asterisk pone a disposición varias aplicaciones para imp
 
 ### La aplicación queue()
 
-Esta aplicación encola las llamadas entrantes en una cola de llamadas particular según lo definido en queues.conf. La cadena de opciones puede contener cero o más de los siguientes caracteres: Además de transferir la llamada, una llamada puede ser estacionada y luego recogida por otro usuario. La URL opcional se enviará a la parte llamada si el canal lo admite. El parámetro AGI opcional configurará un script AGI para que se ejecute en el canal de la parte que llama una vez que estén conectados a un miembro de la cola. El tiempo de espera hará que la cola falle después de un número específico de segundos, verificado entre cada ciclo de tiempo de espera y reintento. Esta aplicación establece la variable de estado QUEUE al finalizar:
+Esta aplicación pone en cola las llamadas entrantes en una cola de llamadas particular según lo definido en queues.conf. La cadena de opciones puede contener cero o más de los siguientes caracteres: Además de transferir la llamada, una llamada puede ser estacionada y luego recogida por otro usuario. La URL opcional se enviará a la parte llamada si el canal lo admite. El parámetro AGI opcional configurará un script AGI para que se ejecute en el canal de la parte que llama una vez que estén conectados a un miembro de la cola. El tiempo de espera hará que la cola falle después de un número específico de segundos, verificado entre cada ciclo de tiempo de espera y reintento. Esta aplicación establece la variable de estado QUEUE al finalizar:
 
 ![La aplicación queue(): su sintaxis `Queue(queuename[|options[|URL][|announceoverride][|timeout][|AGI]])` y las opciones de una sola letra disponibles (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
 
@@ -289,7 +289,7 @@ exten => 9000,2,AgentLogin()
 
 ### Configurar la grabación de colas
 
-Las llamadas pueden grabarse utilizando la aplicación MixMonitor de Asterisk. (La aplicación independiente Monitor fue eliminada en Asterisk 22, y la opción `monitor-type` de queues.conf ahora solo acepta MixMonitor). La grabación se puede habilitar desde dentro de la aplicación de cola, comenzando cuando la llamada es realmente respondida. Solo se graban las llamadas exitosas y no se realizan grabaciones mientras las personas escuchan música en espera (MOH). Para habilitar la monitorización, simplemente especifique monitor-format. Esta función está deshabilitada de otro modo. Puede establecer el nombre de archivo para la grabación usando Set (MONITOR_FILENAME=<filename>); de lo contrario
+Las llamadas pueden grabarse utilizando la aplicación MixMonitor de Asterisk. (La aplicación independiente Monitor fue eliminada en Asterisk 22, y la opción `monitor-type` de queues.conf ahora solo acepta MixMonitor.) La grabación se puede habilitar desde dentro de la aplicación de cola, comenzando cuando la llamada es realmente respondida. Solo se graban las llamadas exitosas, y no se realizan grabaciones mientras las personas escuchan MOH. Para habilitar la monitorización, simplemente especifique monitor-format. Esta función está desactivada de otro modo. Puede establecer el nombre de archivo para la grabación usando Set (MONITOR_FILENAME=<filename>); de lo contrario
 
 ```
 it will use MONITOR_FILENAME=${UNIQUEID}.
@@ -305,9 +305,9 @@ monitor-join = yes
 
 ## Operación de cola
 
-Los siguientes ejemplos explican cómo usar la cola. Paso 1: Inicio de sesión del agente Ejemplo: Un agente en la cola de telemarketing levanta el teléfono y marca #9000. El agente escucha un mensaje de inicio de sesión no válido y se le solicita su nombre y contraseña. La cola de auditoría sigue el mismo procedimiento. Paso 2: Cola Una vez en la cola, el agente escuchará MOH, si está definida. Cuando entra una llamada a la cola de telemarketing, el agente escuchará un pitido y se conectará a esa llamada. Paso 3: Finalización de la llamada Cuando el agente termina la llamada, él/ella puede:
+Los siguientes ejemplos explican cómo usar la cola. Paso 1: Inicio de sesión del agente Ejemplo: Un agente en la cola de telemarketing levanta el teléfono y marca #9000. El agente escucha un mensaje de inicio de sesión no válido y se le solicita su nombre y contraseña. La cola de auditoría sigue el mismo procedimiento. Paso 2: Cola Una vez en la cola, el agente escuchará MOH, si está definido. Cuando entra una llamada a la cola de telemarketing, el agente escuchará un pitido y se conectará a esa llamada. Paso 3: Finalización de la llamada Cuando el agente termina la llamada, él/ella puede:
 
-- Presionar '*' para desconectarse y permanecer en la cola.
+- Presionar ‘*’ para desconectar y permanecer en la cola.
 - Desconectar el teléfono, desconectándose así de la cola.
 - Presionar #8000 para transferir la llamada para auditoría.
 
@@ -317,7 +317,7 @@ El sistema de colas de Asterisk tiene algunas características avanzadas para pr
 
 ### Menú de usuario
 
-Puede definir un menú para un usuario mientras espera en la cola usando extensiones de un solo dígito. Para habilitar esta opción, defina un context en la configuración de la cola queues.conf.
+Puede definir un menú para un usuario mientras espera en la cola usando extensiones de un solo dígito. Para habilitar esta opción, defina un context en la configuración de cola queues.conf.
 
 ### Penalización
 
@@ -331,7 +331,7 @@ member=300,10,Uber the new guy
 
 ### Prioridad
 
-Las colas operan en modo FIFO (primero en entrar, primero en salir). Si desea dar prioridad a clientes especiales (platino, oro), puede configurar prioridades diferenciadas. Para clientes platino u oro:
+Las colas operan en modo FIFO (primero en entrar, primero en salir). Si desea dar prioridad a clientes especiales (platino, oro) puede configurar prioridades diferenciadas. Para clientes platino u oro:
 
 ```
 exten=>111,1,Playback(welcome)
@@ -349,9 +349,9 @@ exten=>112,3,Queue(customerservice)
 
 ## La aplicación agentcallbacklogin() ha sido eliminada
 
-La aplicación `agentcallbacklogin()` fue declarada obsoleta por Digium en Asterisk 1.4 (julio de 2006) y ya no está disponible en Asterisk 22. El enfoque recomendado es utilizar `AddQueueMember()` con una interfaz PJSIP para agregar dinámicamente miembros de estilo devolución de llamada a una cola. El documento `queues-with-callback-members.txt` se incluyó en directorios antiguos de Asterisk `/doc` para orientación sobre la migración.
+La aplicación `agentcallbacklogin()` fue obsoleta por Digium en Asterisk 1.4 (julio de 2006) y ya no está disponible en Asterisk 22. El enfoque recomendado es usar `AddQueueMember()` con una interfaz PJSIP para agregar dinámicamente miembros de estilo devolución de llamada a una cola. El documento `queues-with-callback-members.txt` se incluyó en directorios de Asterisk antiguos `/doc` para obtener orientación sobre la migración.
 
-> **[Nota de la 2.ª ed.]** Verifique si el controlador de canal `chan_agent` (app_agent_pool) sigue siendo el mecanismo preferido para el comportamiento de devolución de llamada del agente en Asterisk 22, o si los miembros PJSIP directos con `AddQueueMember()`/`RemoveQueueMember()` son ahora el patrón estándar.
+El antiguo controlador de canal `chan_agent` también fue eliminado; su funcionalidad fue reescrita como el módulo `app_agent_pool`, que es lo que proporciona `AgentLogin()`, `AgentRequest()` y la función de dialplan `AGENT()` en Asterisk 22 (estos todavía están presentes — `app_agent_pool.so` se envía con una compilación estándar de 22). Para los centros de llamadas modernos, sin embargo, el patrón estándar es omitir los canales de agente por completo y agregar el dispositivo PJSIP del agente directamente a la cola con `AddQueueMember()`/`RemoveQueueMember()` (estáticamente en `queues.conf`, o dinámicamente desde el dialplan o AMI). Esto es más simple, se integra limpiamente con el estado del dispositivo PJSIP y es el enfoque utilizado a lo largo de este capítulo.
 
 ## Estadísticas de cola
 
@@ -375,12 +375,12 @@ Todos los eventos de las colas se registran en /var/log/asterisk/queue_log. El f
 - RINGNOANSWER(ringtime)
 - SYSCOMPAT
 
-Puede crear su propia utilidad para procesar estos eventos o utilizar un paquete de estadísticas listo para usar. Hemos probado dos utilidades en voip.school:
+Puede crear su propia utilidad para procesar estos eventos o utilizar un paquete de estadísticas listo para usar:
 
-- Qlog analyzer (http://www.micpc.com/qloganalyzer/) – Excelente paquete de código abierto
-- Queue metrics (http://queuemetrics.com/) – Uno de los paquetes más completos para estadísticas de cola
+- **QueueMetrics** (<https://www.queuemetrics.com/>) – un paquete comercial, mantenido activamente, que analiza `queue_log` y sigue siendo una de las herramientas de informes más completas para los centros de llamadas de Asterisk.
+- **Cree el suyo propio** – debido a que el formato `queue_log` anterior es estable y está bien documentado, es sencillo analizarlo con un pequeño script (Python, etc.) y enviar los eventos a una base de datos o panel de control.
 
-> **[Nota de la 2.ª ed.]** Verifique que ambas herramientas de estadísticas de terceros anteriores sigan siendo mantenidas y compatibles con el formato queue_log de Asterisk 22. Considere agregar una referencia a la Asterisk REST Interface (ARI) como una alternativa moderna para crear integraciones personalizadas de informes de cola.
+Para un enfoque más basado en eventos que el seguimiento de `queue_log`, la **Interfaz REST de Asterisk (ARI)** y las acciones de **AMI** `QueueSummary`/`QueueStatus` le permiten crear paneles de control de colas en vivo e integraciones personalizadas contra el estado de la cola en tiempo real en lugar de analizar registros después de los hechos. ARI es la superficie de integración moderna y compatible para este tipo de trabajo en Asterisk 22.
 
 ## Resumen
 
@@ -402,27 +402,27 @@ En este capítulo ha aprendido cómo usar un ACD, su arquitectura y cómo config
    - C. linear
    - D. fewestcalls
 4. Cuando el agente termina una llamada en el ejemplo de telemarketing, ¿qué acciones puede tomar (elija todas las que correspondan)?
-   - A. Presionar `*` para desconectarse y permanecer en la cola
+   - A. Presionar `*` para desconectar y permanecer en la cola
    - B. Colgar el teléfono y desconectarse de la cola
    - C. Presionar `#8000` para transferir la llamada para auditoría
    - D. Presionar `#` para cerrar sesión en todas las colas inmediatamente
 5. ¿Qué dos tareas son *obligatorias* para obtener una cola funcional (elija todas las que correspondan)?
    - A. Crear la cola
    - B. Crear los agentes
-   - C. Configurar parámetros de agente
-   - D. Configurar grabación
+   - C. Configurar los parámetros del agente
+   - D. Configurar la grabación
    - E. Poner la cola en el dialplan
 6. En una cola de llamadas puede ofrecer un menú de un solo dígito que el llamante puede marcar mientras espera. Esto se habilita definiendo un(a) ___ en la sección `queues.conf` de la cola:
    - A. agent
    - B. menu
    - C. context
    - D. application
-7. Las aplicaciones de soporte `AddQueueMember()` y `RemoveQueueMember()` se utilizan en el ___ para agregar o eliminar miembros en tiempo de ejecución:
-   - A. dial plan
-   - B. command-line interface
+7. Las aplicaciones de soporte `AddQueueMember()` y `RemoveQueueMember()` se utilizan en el ___ para agregar o eliminar miembros en tiempo ejecución:
+   - A. dialplan
+   - B. interfaz de línea de comandos
    - C. queues.conf
    - D. agents.conf
-8. Dado que chan_sip fue eliminado en Asterisk 21, un miembro de cola estático debe hacer referencia a un canal como ___ en lugar de `SIP/1001`.
+8. Dado que chan_sip se eliminó en Asterisk 21, un miembro de cola estático debe hacer referencia a un canal como ___ en lugar de `SIP/1001`.
 9. El parámetro `wrapuptime` es el tiempo mínimo después de que un agente desconecta una llamada antes de que la cola envíe a ese agente una nueva llamada.
    - A. True
    - B. False
@@ -430,4 +430,4 @@ En este capítulo ha aprendido cómo usar un ACD, su arquitectura y cómo config
     - A. True
     - B. False
 
-**Respuestas:** 1 — A, C, D, E, F (roundrobin fue reemplazado por rrmemory y ya no existe) · 2 — `monitor-format` (la grabación desde la cola se habilita especificando `monitor-format`; `monitor-type` selecciona MixMonitor frente a Monitor) · 3 — C (linear) · 4 — A, B, C (`*` desconecta y permanece; `#` no es una tecla para cerrar sesión en todo) · 5 — A, E · 6 — C (la opción `context`) · 7 — A (el dial plan) · 8 — `PJSIP/1001` (cualquier interfaz `PJSIP/`) · 9 — True · 10 — True
+**Respuestas:** 1 — A, C, D, E, F (roundrobin fue reemplazado por rrmemory y ya no existe) · 2 — `monitor-format` (la grabación desde la cola se habilita especificando `monitor-format`; `monitor-type` selecciona MixMonitor vs Monitor) · 3 — C (linear) · 4 — A, B, C (`*` desconecta y permanece; `#` no es una tecla de cierre de sesión total) · 5 — A, E · 6 — C (la opción `context`) · 7 — A (el dialplan) · 8 — `PJSIP/1001` (cualquier interfaz `PJSIP/`) · 9 — True · 10 — True

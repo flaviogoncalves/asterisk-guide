@@ -1,4 +1,4 @@
-# Call Queues
+# Files d'attente d'appels
 
 Les files d'attente d'appels, également connues sous le nom d'ACD (Automatic Call Distribution), deviennent de plus en plus importantes pour répondre efficacement aux appels des clients. Un distributeur automatique d'appels peut aider à réduire les coûts, à améliorer le service et à augmenter les ventes, car les distributeurs d'appels influencent le fonctionnement de votre entreprise — non pas pour quelques jours, mais pour de nombreuses années. Dans un environnement de centre d'appels, le facteur numéro un est l'humain ; ce sont les ressources les plus coûteuses. Il faut du temps, de l'argent et de la patience pour embaucher, former et motiver les agents. Avec un ACD, vous pouvez maximiser la productivité des agents en dimensionnant précisément le nombre d'agents requis, en contrôlant les bons et les mauvais employés, et en analysant le flux d'appels.
 
@@ -12,18 +12,18 @@ Les files d'attente d'appels, également connues sous le nom d'ACD (Automatic Ca
 
 ## Comment fonctionnent les files d'attente ?
 
-Les files d'attente d'appels ne sont pas exactement une nouveauté. Lorsque vous avez un flux important d'appels entrants, il est difficile de distribuer les appels de manière appropriée. Utiliser une stratégie de groupe où le téléphone sonne simultanément chez tous les agents ne semble pas fonctionner, à moins que vous n'ayez que quelques agents. Cependant, une file d'attente d'appels ne délivrera les appels qu'à un seul agent disponible à la fois et mettra le client en attente avec de la musique lorsqu'aucun agent n'est disponible. La file d'attente fonctionne en retenant l'appel tout en trouvant un agent inoccupé pour y répondre. L'un des plus grands avantages de la file d'attente est d'éviter de perdre des appels tout en offrant la possibilité de générer des statistiques.
+Les files d'attente d'appels ne sont pas exactement une nouveauté. Lorsque vous avez un flux important d'appels entrants, il est difficile de distribuer les appels de manière appropriée. L'utilisation d'une stratégie de groupe où le téléphone sonne simultanément chez tous les agents ne semble pas fonctionner, à moins que vous n'ayez que quelques agents. Cependant, une file d'attente d'appels ne délivrera les appels qu'à un seul agent disponible à la fois et mettra le client en attente avec de la musique lorsqu'aucun agent n'est disponible. La file d'attente fonctionne en retenant l'appel tout en trouvant un agent inoccupé pour y répondre. L'un des plus grands avantages de la file d'attente est d'éviter de perdre des appels tout en offrant la possibilité de générer des statistiques.
 
 ![Une file d'attente d'appels : les appels entrants 1-800 entrent dans la file d'attente et une stratégie ACD (ringall, rrmemory, leastrecent, priority, et autres) les distribue aux agents disponibles](../images/14-queues-fig01.png)
 
-Habituellement, une file d'attente d'appels fonctionne comme ceci :
+Habituellement, une file d'attente d'appels fonctionne comme suit :
 
 - Les agents se connectent à la file d'attente.
 - Les appels entrants sont mis en file d'attente.
 - Une stratégie de mise en file d'attente pour distribuer les appels est utilisée pour envoyer les appels aux agents.
 - La musique d'attente est jouée pendant que l'appelant attend.
 - Des annonces peuvent être faites aux appelants, les informant du temps d'attente.
-- L'appel est répondu par l'agent et des statistiques sont générées.
+- L'appel est pris par l'agent et des statistiques sont générées.
 
 L'application principale des files d'attente est le service client. En utilisant des files d'attente, vous évitez de perdre des appels lorsque vos agents sont occupés. Vous pouvez ajouter de nouveaux agents à la file d'attente si vous constatez que le nombre d'appelants dans la file augmente. Un autre avantage des files d'attente est que vous pouvez désormais obtenir des statistiques telles que le taux d'abandon d'appels, la durée moyenne des appels et l'objectif de réponse aux appels. Ces statistiques vous aideront à déterminer combien d'agents utiliser pour fournir un meilleur service à vos clients.
 
@@ -31,17 +31,17 @@ L'application principale des files d'attente est le service client. En utilisant
 
 L'architecture ACD est formée par des files d'attente et des agents. Un agent peut être dans deux files d'attente en même temps. Une file d'attente peut avoir des agents, des canaux et des groupes d'agents.
 
-![Architecture ACD : chaque file d'attente (Service Client, Ventes Internes) est alimentée par un numéro de téléphone et délivre les appels aux agents, qui sont à leur tour liés à des canaux physiques](../images/14-queues-fig02.png)
+![Architecture ACD : chaque file d'attente (Service Client, Ventes Internes) est alimentée par un numéro de téléphone et délivre des appels aux agents, qui sont à leur tour liés à des canaux physiques](../images/14-queues-fig02.png)
 
-## Queues
+## Files d'attente
 
-Les files d'attente sont définies dans le fichier de configuration queues.conf. Les agents sont des employés qui se connectent et sont membres des files d'attente. Les agents sont définis dans le fichier agents.conf. Le système de file d'attente a considérablement évolué au fil de nombreuses versions, rendant le fichier de configuration étendu. Nous expliquerons certains des paramètres majeurs. Paramètres généraux
+Les files d'attente sont définies dans le fichier de configuration queues.conf. Les agents sont des employés qui se connectent et sont membres des files d'attente. Les agents sont définis dans le fichier agents.conf. Le système de file d'attente s'est considérablement développé au fil de nombreuses versions, rendant le fichier de configuration étendu. Nous expliquerons certains des paramètres majeurs. Paramètres généraux
 
 ```
 autofill=yes
 ```
 
-L'ancien comportement de la file d'attente était de type série. La file d'attente attendait qu'un appel soit traité avant d'envoyer l'appel suivant à l'agent suivant. Si un agent met 15 secondes à répondre à un appel, les autres appels dans la file d'attente devaient attendre que cet appel soit répondu. Pour les files d'attente à haut volume, ce comportement était inefficace. Le nouveau comportement autofill=yes n'attend pas qu'un appel soit répondu, mais fonctionne plutôt en parallèle. Vous pouvez enregistrer les appels dans la file d'attente en utilisant l'option mixmonitor. Dans ce mode, les appels sont enregistrés et mixés en même temps.
+L'ancien comportement de la file d'attente était de type série. La file d'attente attendait qu'un appel soit traité avant d'envoyer l'appel suivant à l'agent suivant. Si un agent met 15 secondes à répondre à un appel, les autres appels dans la file d'attente devaient attendre que cet appel soit traité. Pour les files d'attente à haut volume, ce comportement était inefficace. Le nouveau comportement autofill=yes n'attend pas qu'un appel soit traité, mais fonctionne plutôt en parallèle. Vous pouvez enregistrer les appels dans la file d'attente en utilisant l'option mixmonitor. Dans ce mode, les appels sont enregistrés et mixés en même temps.
 
 ### Fichier de configuration des files d'attente
 
@@ -93,7 +93,6 @@ agent => 301,301
 
 Les membres sont des canaux actifs répondant à la file d'attente. Les membres peuvent être des canaux directs (PJSIP, DAHDI) ou des agents qui se connectent avant de recevoir des appels.
 
-
 ### Stratégies
 
 Les appels sont distribués parmi les membres selon l'une de ces stratégies :
@@ -107,7 +106,7 @@ Les appels sont distribués parmi les membres selon l'une de ces stratégies :
 - rrordered : Identique à rrmemory, sauf que l'ordre des membres de la file d'attente du fichier de configuration est préservé.
 - linear : Fait sonner les membres dans l'ordre où ils sont listés dans queues.conf ; pour les membres dynamiques, dans l'ordre où ils ont été ajoutés.
 
-> **[Note de la 2e éd.]** La stratégie `roundrobin` a été remplacée par `rrmemory` dans les premières versions d'Asterisk et n'est plus disponible. Supprimez-la de la liste des stratégies si elle apparaissait dans le texte de l'édition précédente. Toutes les stratégies listées ci-dessus sont confirmées comme étant présentes dans Asterisk 22.
+L'ancienne stratégie `roundrobin` a été dépréciée dans Asterisk 1.4 et supprimée ; elle n'existe plus dans Asterisk 22. Utilisez `rrmemory` (ou `rrordered`) à la place. Les stratégies ci-dessus constituent l'ensemble complet accepté par l'option `strategy` dans Asterisk 22 `queues.conf`.
 
 ## Agents
 
@@ -128,17 +127,17 @@ use agent groups.
 
 ### Le fichier de configuration pour les agents
 
-Les agents sont définis dans le fichier agents.conf. Ci-dessous un exemple fonctionnel du fichier.
+Les agents sont définis dans le fichier agents.conf. Voici un exemple fonctionnel du fichier.
 
-![Un exemple fonctionnel du fichier agents.conf : une section générale avec persistentagents, une section agents avec les paramètres par défaut (autologoff, ackcall, endcall, wrapuptime, musiconhold), et deux définitions d'agent (300 et 301)](../images/14-queues-fig06.png)
+![Un exemple fonctionnel du fichier agents.conf : une section générale avec persistentagents, une section agents avec les paramètres par défaut (autologoff, ackcall, endcall, wrapuptime, musiconhold), et deux définitions d'agents (300 et 301)](../images/14-queues-fig06.png)
 
 ## Applications liées à l'ACD
 
-Le système de file d'attente d'Asterisk met plusieurs applications à disposition pour implémenter les files d'attente dans le dialplan. Ci-dessous, nous en présentons quelques-unes.
+Le système de file d'attente Asterisk met plusieurs applications à disposition pour implémenter les files d'attente dans le dialplan. Ci-dessous, nous en présentons quelques-unes.
 
 ### L'application queue()
 
-Cette application met les appels entrants dans une file d'attente d'appels particulière telle que définie dans queues.conf. La chaîne d'options peut contenir zéro ou plusieurs des caractères suivants : En plus de transférer l'appel, un appel peut être mis en attente puis récupéré par un autre utilisateur. L'URL optionnelle sera envoyée à la partie appelée si le canal le supporte. Le paramètre AGI optionnel configurera un script AGI à exécuter sur le canal de la partie appelante une fois qu'ils sont connectés à un membre de la file d'attente. Le timeout fera échouer la file d'attente après un nombre spécifié de secondes, vérifié entre chaque cycle de timeout et de nouvelle tentative. Cette application définit la variable de statut QUEUE lors de la complétion :
+Cette application met les appels entrants dans une file d'attente d'appels particulière telle que définie dans queues.conf. La chaîne d'options peut contenir zéro ou plusieurs des caractères suivants : En plus de transférer l'appel, un appel peut être mis en attente puis récupéré par un autre utilisateur. L'URL optionnelle sera envoyée à la partie appelée si le canal le supporte. Le paramètre AGI optionnel configurera un script AGI à exécuter sur le canal de la partie appelante une fois qu'elle est connectée à un membre de la file d'attente. Le timeout fera échouer la file d'attente après un nombre spécifié de secondes, vérifié entre chaque cycle de timeout et de nouvelle tentative. Cette application définit la variable de statut QUEUE lors de la complétion :
 
 ![L'application queue() : sa syntaxe `Queue(queuename[|options[|URL][|announceoverride][|timeout][|AGI]])` et les options à une lettre disponibles (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
 
@@ -151,7 +150,7 @@ Cette application met les appels entrants dans une file d'attente d'appels parti
 
 ### L'application agentlogin()
 
-Cette application demande à l'agent de se connecter au système. Elle renvoie toujours -1. Pendant qu'il est connecté, l'agent recevant des appels entendra un bip lorsqu'un nouvel appel arrive. L'agent peut rejeter l'appel en appuyant sur la touche *.
+Cette application demande à l'agent de se connecter au système. Elle renvoie toujours -1. Une fois connecté, l'agent recevant des appels entendra un bip lorsqu'un nouvel appel arrive. L'agent peut rejeter l'appel en appuyant sur la touche *.
 
 ![L'application agentlogin() : sa syntaxe `AgentLogin([AgentNo][|options])` et l'option `s` pour une connexion silencieuse qui n'annonce pas la confirmation de connexion](../images/14-queues-fig08.png)
 
@@ -181,9 +180,9 @@ Certaines applications et commandes de console sont capables d'aider au travail 
 
 La figure ci-dessous résume les tâches majeures pour créer un système de file d'attente fonctionnel.
 
-![Les tâches de configuration ACD : (1) créer la file d'attente (requis), (2) définir les paramètres de l'agent (optionnel), (3) créer les agents (optionnel), (4) mettre la file d'attente dans le dialplan (requis), (5) configurer l'enregistrement de l'agent (optionnel), et (6) vérifier avec agent show all et queue show (optionnel)](../images/14-queues-fig10.png)
+![Les tâches de configuration ACD : (1) créer la file d'attente d'appels (requis), (2) définir les paramètres d'agent (optionnel), (3) créer les agents (optionnel), (4) mettre la file d'attente dans le dialplan (requis), (5) configurer l'enregistrement des agents (optionnel), et (6) vérifier avec agent show all et queue show (optionnel)](../images/14-queues-fig10.png)
 
-Étape 1 : Créer la file d'attente Dans le fichier queues.conf :
+Étape 1 : Créer la file d'attente d'appels Dans le fichier queues.conf :
 
 ```
 [telemarketing]
@@ -206,7 +205,7 @@ member => Agent/600
 member => Agent/601
 ```
 
-Étape 2 : Définir les paramètres de l'agent Dans le fichier agents.conf :
+Étape 2 : Définir les paramètres d'agent Dans le fichier agents.conf :
 
 ```
 debian:/etc/asterisk# cat agents.conf
@@ -289,7 +288,7 @@ exten => 9000,2,AgentLogin()
 
 ### Configurer l'enregistrement de la file d'attente
 
-Les appels peuvent être enregistrés en utilisant l'application MixMonitor d'Asterisk. (L'application autonome Monitor a été supprimée dans Asterisk 22, et l'option `monitor-type` de queues.conf n'accepte désormais que MixMonitor.) L'enregistrement peut être activé depuis l'application de file d'attente, commençant lorsque l'appel est réellement décroché. Seuls les appels réussis sont enregistrés, et aucun enregistrement n'est effectué pendant que les personnes écoutent la MOH. Pour activer le monitoring, spécifiez simplement monitor-format. Cette fonctionnalité est sinon désactivée. Vous pouvez définir le nom de fichier pour l'enregistrement en utilisant Set (MONITOR_FILENAME=<filename>) ; sinon
+Les appels peuvent être enregistrés en utilisant l'application MixMonitor d'Asterisk. (L'application autonome Monitor a été supprimée dans Asterisk 22, et l'option queues.conf `monitor-type` n'accepte désormais que MixMonitor.) L'enregistrement peut être activé depuis l'application de file d'attente, commençant lorsque l'appel est réellement pris. Seuls les appels réussis sont enregistrés, et aucun enregistrement n'est effectué pendant que les personnes écoutent la musique d'attente. Pour activer le monitoring, spécifiez simplement monitor-format. Cette fonctionnalité est sinon désactivée. Vous pouvez définir le nom de fichier pour l'enregistrement en utilisant Set (MONITOR_FILENAME=<filename>) ; sinon
 
 ```
 it will use MONITOR_FILENAME=${UNIQUEID}.
@@ -305,19 +304,19 @@ monitor-join = yes
 
 ## Opération de la file d'attente
 
-Les exemples suivants expliquent comment utiliser la file d'attente. Étape 1 : Connexion de l'agent Exemple : Un agent dans la file d'attente de télémarketing décroche le téléphone et compose le #9000. L'agent entend un message de connexion invalide et doit fournir son nom et son mot de passe. La file d'attente d'audit suit la même procédure. Étape 2 : File d'attente Une fois dans la file d'attente, l'agent entendra la MOH, si elle est définie. Lorsqu'un appel arrive dans la file d'attente de télémarketing, l'agent entendra un bip et sera connecté à cet appel. Étape 3 : Fin de l'appel Lorsque l'agent termine l'appel, il/elle peut :
+Les exemples suivants expliquent comment utiliser la file d'attente. Étape 1 : Connexion de l'agent Exemple : Un agent dans la file d'attente de télémarketing décroche le téléphone et compose le #9000. L'agent entend un message de connexion invalide et est invité à donner son nom et son mot de passe. La file d'attente d'audit suit la même procédure. Étape 2 : File d'attente Une fois dans la file d'attente, l'agent entendra la musique d'attente, si elle est définie. Lorsqu'un appel arrive dans la file d'attente de télémarketing, l'agent entendra un bip et sera connecté à cet appel. Étape 3 : Fin d'appel Lorsque l'agent termine l'appel, il/elle peut :
 
-- Appuyer sur '*' pour se déconnecter et rester dans la file d'attente.
+- Appuyer sur ‘*’ pour se déconnecter et rester dans la file d'attente.
 - Déconnecter le téléphone, se déconnectant ainsi de la file d'attente.
-- Appuyer sur #8000 pour transférer l'appel pour l'audit.
+- Appuyer sur #8000 pour transférer l'appel pour audit.
 
 ## Ressources avancées
 
-Le système de file d'attente d'Asterisk possède des fonctionnalités avancées pour prioriser certains clients et agents ainsi que pour activer un menu utilisateur.
+Le système de file d'attente Asterisk possède des fonctionnalités avancées pour prioriser certains clients et agents ainsi que pour activer un menu utilisateur.
 
 ### Menu utilisateur
 
-Vous pouvez définir un menu pour un utilisateur en attente dans la file d'attente en utilisant des extensions à un chiffre. Pour activer cette option, définissez un context dans la configuration de la file d'attente queues.conf.
+Vous pouvez définir un menu pour un utilisateur en attente dans la file d'attente en utilisant des extensions à un chiffre. Pour activer cette option, définissez un contexte dans la configuration de la file d'attente queues.conf.
 
 ### Pénalité
 
@@ -331,7 +330,7 @@ member=300,10,Uber the new guy
 
 ### Priorité
 
-Les files d'attente fonctionnent en mode FIFO (premier entré, premier sorti). Si vous voulez donner la priorité à des clients spéciaux (platine, or), vous pouvez configurer des priorités différenciées. Pour les clients platine ou or :
+Les files d'attente fonctionnent en mode FIFO (premier entré, premier sorti). Si vous souhaitez donner la priorité à des clients spéciaux (platine, or), vous pouvez configurer des priorités différenciées. Pour les clients platine ou or :
 
 ```
 exten=>111,1,Playback(welcome)
@@ -351,11 +350,11 @@ exten=>112,3,Queue(customerservice)
 
 L'application `agentcallbacklogin()` a été dépréciée par Digium dans Asterisk 1.4 (juillet 2006) et n'est plus disponible dans Asterisk 22. L'approche recommandée est d'utiliser `AddQueueMember()` avec une interface PJSIP pour ajouter dynamiquement des membres de type rappel à une file d'attente. Le document `queues-with-callback-members.txt` était inclus dans les anciens répertoires Asterisk `/doc` pour guider la migration.
 
-> **[Note de la 2e éd.]** Vérifiez si le pilote de canal `chan_agent` (app_agent_pool) est toujours le mécanisme préféré pour le comportement de rappel d'agent dans Asterisk 22, ou si les membres PJSIP directs avec `AddQueueMember()`/`RemoveQueueMember()` sont désormais le modèle standard.
+L'ancien pilote de canal `chan_agent` a également été supprimé ; sa fonctionnalité a été réécrite en tant que module `app_agent_pool`, qui est ce qui fournit `AgentLogin()`, `AgentRequest()` et la fonction de dialplan `AGENT()` dans Asterisk 22 (ceux-ci sont toujours présents — `app_agent_pool.so` est fourni avec une version standard 22). Pour les centres d'appels modernes, cependant, le modèle standard consiste à ignorer complètement les canaux d'agent et à ajouter le périphérique PJSIP de l'agent directement à la file d'attente avec `AddQueueMember()`/`RemoveQueueMember()` (statiquement dans `queues.conf`, ou dynamiquement depuis le dialplan ou AMI). C'est plus simple, s'intègre proprement avec l'état du périphérique PJSIP, et est l'approche utilisée tout au long de ce chapitre.
 
 ## Statistiques de file d'attente
 
-Tous les événements des files d'attente sont enregistrés dans /var/log/asterisk/queue_log. Le format du journal de file d'attente est publié dans le document queuelog.txt dans le répertoire /doc de la documentation Asterisk. Voici quelques-uns des événements les plus importants enregistrés.
+Tous les événements des files d'attente sont consignés dans /var/log/asterisk/queue_log. Le format du journal de file d'attente est publié dans le document queuelog.txt dans le répertoire /doc de la documentation Asterisk. Voici quelques-uns des événements les plus importants consignés.
 
 - ABANDON(position|origposition|waittime)
 - AGENTDUMP
@@ -375,16 +374,16 @@ Tous les événements des files d'attente sont enregistrés dans /var/log/asteri
 - RINGNOANSWER(ringtime)
 - SYSCOMPAT
 
-Vous pouvez construire votre propre utilitaire pour traiter ces événements ou utiliser un package de statistiques prêt à l'emploi. Nous avons testé deux utilitaires sur voip.school :
+Vous pouvez construire votre propre utilitaire pour traiter ces événements ou utiliser un package de statistiques prêt à l'emploi :
 
-- Qlog analyzer (http://www.micpc.com/qloganalyzer/) – Excellent package open source
-- Queue metrics (http://queuemetrics.com/) – L'un des packages les plus complets pour les statistiques de file d'attente
+- **QueueMetrics** (<https://www.queuemetrics.com/>) – un package commercial, activement maintenu, qui analyse `queue_log` et reste l'un des outils de reporting les plus complets pour les centres d'appels Asterisk.
+- **Faites le vôtre** – parce que le format `queue_log` ci-dessus est stable et bien documenté, il est simple de l'analyser avec un petit script (Python, etc.) et d'envoyer les événements dans une base de données ou un tableau de bord.
 
-> **[Note de la 2e éd.]** Vérifiez que les deux outils de statistiques tiers ci-dessus sont toujours maintenus et compatibles avec le format queue_log d'Asterisk 22. Envisagez d'ajouter une référence à l'Asterisk REST Interface (ARI) comme alternative moderne pour construire des intégrations de rapports de file d'attente personnalisées.
+Pour une approche plus axée sur les événements que le suivi de `queue_log`, l'**Asterisk REST Interface (ARI)** et les actions AMI `QueueSummary`/`QueueStatus` vous permettent de construire des tableaux de bord de file d'attente en direct et des intégrations personnalisées basées sur l'état de la file d'attente en temps réel plutôt que sur l'analyse de journaux après coup. ARI est l'interface d'intégration moderne et supportée pour ce type de travail dans Asterisk 22.
 
 ## Résumé
 
-Dans ce chapitre, vous avez appris à utiliser un ACD, son architecture et comment le configurer. Certaines fonctionnalités avancées telles que les priorités et les pénalités ont également été présentées.
+Dans ce chapitre, vous avez appris comment utiliser un ACD, son architecture et comment le configurer. Certaines fonctionnalités avancées telles que les priorités et les pénalités ont également été présentées.
 
 ## Quiz
 
@@ -396,7 +395,7 @@ Dans ce chapitre, vous avez appris à utiliser un ACD, son architecture et comme
    - E. rrmemory
    - F. linear
 2. Vous pouvez enregistrer une conversation entre un agent et un client depuis la file d'attente en définissant l'option ___ dans le fichier `queues.conf`.
-3. Quel `strategy` fait sonner les membres dans l'ordre exact où ils sont listés dans `queues.conf` ?
+3. Laquelle des options `strategy` fait sonner les membres dans l'ordre exact où ils sont listés dans `queues.conf` ?
    - A. random
    - B. wrandom
    - C. linear
@@ -404,15 +403,15 @@ Dans ce chapitre, vous avez appris à utiliser un ACD, son architecture et comme
 4. Lorsque l'agent termine un appel dans l'exemple de télémarketing, quelles actions peut-il entreprendre (choisissez toutes les réponses qui s'appliquent) ?
    - A. Appuyer sur `*` pour se déconnecter et rester dans la file d'attente
    - B. Raccrocher le téléphone et se déconnecter de la file d'attente
-   - C. Appuyer sur `#8000` pour transférer l'appel pour l'audit
+   - C. Appuyer sur `#8000` pour transférer l'appel pour audit
    - D. Appuyer sur `#` pour se déconnecter immédiatement de toutes les files d'attente
 5. Quelles sont les deux tâches *requises* pour obtenir une file d'attente fonctionnelle (choisissez toutes les réponses qui s'appliquent) ?
    - A. Créer la file d'attente
    - B. Créer les agents
-   - C. Configurer les paramètres de l'agent
+   - C. Configurer les paramètres d'agent
    - D. Configurer l'enregistrement
    - E. Mettre la file d'attente dans le dialplan
-6. Dans une file d'attente d'appels, vous pouvez offrir un menu à un chiffre que l'appelant peut composer pendant l'attente. Ceci est activé en définissant un(e) ___ dans la section `queues.conf` de la file d'attente :
+6. Dans une file d'attente d'appels, vous pouvez proposer un menu à un chiffre que l'appelant peut composer pendant qu'il attend. Ceci est activé en définissant un(e) ___ dans la section `queues.conf` de la file d'attente :
    - A. agent
    - B. menu
    - C. context
@@ -424,10 +423,10 @@ Dans ce chapitre, vous avez appris à utiliser un ACD, son architecture et comme
    - D. agents.conf
 8. Puisque chan_sip a été supprimé dans Asterisk 21, un membre de file d'attente statique doit référencer un canal tel que ___ plutôt que `SIP/1001`.
 9. Le paramètre `wrapuptime` est le temps minimum après qu'un agent déconnecte un appel avant que la file d'attente n'envoie un nouvel appel à cet agent.
-   - A. True
-   - B. False
+   - A. Vrai
+   - B. Faux
 10. Un appelant peut obtenir une position plus élevée dans la même file d'attente en définissant la variable de canal `QUEUE_PRIO` avant d'appeler `Queue()`.
-    - A. True
-    - B. False
+    - A. Vrai
+    - B. Faux
 
-**Réponses :** 1 — A, C, D, E, F (roundrobin a été remplacé par rrmemory et n'existe plus) · 2 — `monitor-format` (l'enregistrement depuis la file d'attente est activé en spécifiant `monitor-format` ; `monitor-type` sélectionne MixMonitor vs Monitor) · 3 — C (linear) · 4 — A, B, C (`*` déconnecte et reste ; `#` n'est pas une touche de déconnexion globale) · 5 — A, E · 6 — C (l'option `context`) · 7 — A (le dial plan) · 8 — `PJSIP/1001` (n'importe quelle interface `PJSIP/`) · 9 — True · 10 — True
+**Réponses :** 1 — A, C, D, E, F (roundrobin a été remplacé par rrmemory et n'existe plus) · 2 — `monitor-format` (l'enregistrement depuis la file d'attente est activé en spécifiant `monitor-format` ; `monitor-type` sélectionne MixMonitor vs Monitor) · 3 — C (linear) · 4 — A, B, C (`*` déconnecte et reste ; `#` n'est pas une touche de déconnexion globale) · 5 — A, E · 6 — C (l'option `context`) · 7 — A (le dial plan) · 8 — `PJSIP/1001` (n'importe quelle interface `PJSIP/`) · 9 — Vrai · 10 — Vrai

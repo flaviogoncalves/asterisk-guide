@@ -6,7 +6,7 @@ In a 2026 pure-VoIP world, the channel types in this chapter are increasingly ra
 
 > **[2nd-ed note]** Update front-matter dates/ISBN for the 2nd edition before publication.
 
-> **[2nd-ed note — deployment context]** As of Asterisk 22, DAHDI and analog telephony cards remain fully supported and DAHDI still builds against current kernels. However, the majority of new deployments are pure VoIP (SIP trunks, PJSIP). Analog/TDM hardware is now a niche choice, mainly found in legacy environments, rural PSTN connectivity, or regulated markets. The content below is still accurate for those scenarios.
+As of Asterisk 22, DAHDI and analog telephony cards remain fully supported, and DAHDI still builds against current kernels. The majority of new deployments are nonetheless pure VoIP (SIP trunks, PJSIP), so analog/TDM hardware is now a niche choice — found mainly in legacy environments, rural PSTN connectivity, or regulated markets. Everything below still applies to those scenarios.
 
 There are several ways to connect the public switched telephone network (PSTN). The best way depends on how the telephone company makes this connection available in your area. The simplest way is to use an analog line, similar to the line you use at home. In this section, we will show you how to configure analog cards from Sangoma™ (formerly Digium™) and Xorcom™.
 
@@ -356,7 +356,7 @@ It is important to understand that you will have to insert the instruction fxotu
 
 Most echo cancellation algorithms operate by generating multiple copies of the received signal, in which each one is delayed by a specific amount of time. The number of taps of the filter determines the size of the echo delay that needs to be cancelled. These delayed copies are then adjusted and subtracted from the received signal. The trick is to adjust only the delayed signal to remove the echo without using too many CPU cycles. From the users’ perspective, it is important to choose an appropriate echo cancellation algorithm. The default is MG2; however, two other options are available: the High Performance Echo Cancellation (HPEC) from Sangoma (formerly Digium) and the open-source echo cancellation (OSLEC) developed by David Rowe.
 
-> **[2nd-ed note]** The OSLEC project page (http://www.rowetel.com/ucasterisk/oslec.html) may no longer be current; verify availability and kernel integration status for modern kernels before referencing it. To change the echo cancellation algorithm, change the parameter echo_can to /etc/dahdi/system.conf. For example:
+OSLEC (https://www.rowetel.com/?page_id=454) has been merged into the Linux kernel — it lives in the kernel's `drivers/staging/echo` area — and DAHDI is built against it rather than shipping a separate download. To change the echo cancellation algorithm, set the `echo_can` parameter in `/etc/dahdi/system.conf`. For example:
 
 ```
 echo_can=oslec
@@ -455,7 +455,7 @@ DAHDI/g1  - First available channel in group 1
 
 ## Digital channels (E1/T1/PRI / TDM)
 
-> **[2nd-ed note]** As of Asterisk 22, DAHDI and libpri remain fully supported, but TDM digital trunks (E1/T1/ISDN PRI) are increasingly replaced by SIP trunks in new deployments. This chapter remains fully applicable where TDM connectivity is required; readers in greenfield environments may prefer SIP trunking (Chapter 3) for similar channel density.
+As of Asterisk 22, DAHDI and libpri remain fully supported, but TDM digital trunks (E1/T1/ISDN PRI) are increasingly replaced by SIP trunks in new deployments. This section remains fully applicable where TDM connectivity is required; in greenfield environments, SIP trunking (Chapter 3) usually delivers the same channel density without telephony hardware.
 
 Digital channels are extremely common, so you will need to learn how to implement these channels if you want to focus on large customers. When the number of channels is high—usually more than 8—it is fairly common to use digital interfaces such as T1/E1/J1. T1 is very common in the US, whereas E1 is common in Europe and J1 in Japan. These types of channels allow for a good density of circuits—24 per T1 channel and 30 for E1 channels. In Latin America, China, and Africa, it is common to use a type of channel associated signaling (CAS) known as MFC/R2. This chapter will examine how to implement MFC/R2 using the library OpenR2. In the US and Europe, Integrated Services Digital Networks (ISDN) PRI is the most common signaling. The chapter will also discuss ISDN Basic Rate Interface (BRI), which is very common in Europe in mid-range applications. All examples in the book concentrate on DAHDI channels. Some cards are implemented using proprietary channels, so please check with your manufacturer for further details on how to configure your specific card.
 
@@ -532,7 +532,8 @@ There are several types of bus on your PC. It is very important that you have th
 - 32/64 bits PCI 3.3V, basically found in servers o Sangoma (formerly Digium) TE410, TE412, TE210, TE212, TE120, TE122, B410, TDM2400, TDM800, TDM410, and TC400
 - PCI Express found on desktops and servers o Sangoma (formerly Digium) TE420, TE220, TE121, AEX2400, and AEX800 o Sangoma A101, A102, and A104
 
-> **[2nd-ed note]** Sangoma acquired Digium in 2018. Digium-branded cards are now sold and supported under the Sangoma brand. Verify current model availability on the Sangoma website (www.sangoma.com) as some older SKUs may be discontinued.
+These card families originated at Digium, which Sangoma acquired in 2018; they are now sold and supported under the Sangoma brand. Many of the older SKUs listed here have been discontinued, so confirm current model availability at www.sangoma.com before purchasing.
+
 - MiniPCI found on embedded systems o OpenVOX A100M(FXO), B100M(ISDN BRI), B200M(ISDN BRI), and B400M(ISDN BRI)
 - USB 2.0 found in most modern PCs. Solutions based on USB allow a great density of analog and digital channels. This bus supports 480 Mbps, and each voice channel occupies 64 Kbps. When using USB hubs, it is possible to get densities up to a thousand analog ports in a single port. o Xorcom Astribank (FXS, FXO, E1-ISDN, E1-R2)
 - Etherne t. The biggest advantage of Ethernet is to allow the card to be connected by more than one server. High availability solutions are usually the core application for these devices. The strength of this solution is the use of servers without free PCI slots or blade servers. o Redfone FoneBridge (up to four E1 circuits)
@@ -1307,17 +1308,15 @@ The following sequence illustrates a call originating from an Asterisk’s exten
 
 The project initiated by Moises Silva was inspired on the Unicall channel driver written by Steve Underwood. The OpenR2 library is currently the most stable software solution for Asterisk. With this solution, we may use any digital card compatible with DAHDI. Previously, only proprietary solutions were available for MFC/R2, one of the best I have used is the one made available by Khomp, www.khomp.com.br. In Asterisk 22, MFC/R2 support via libopenR2 is built in when the library is present at compile time — no external patch is required. The steps below show the historical manual installation for reference; on modern systems, install `libopenr2-dev` from your distribution's package manager before running `./configure`, then enable `chan_dahdi` in `make menuselect`.
 
-> **[2nd-ed note]** The patched Asterisk 1.4 tree from the 1st edition is obsolete; for Asterisk 22, MFC/R2 support via libopenr2 is integrated in the main source tree, and the steps below now use the current Git repositories instead of the retired `svn.digium.com`. Consider condensing these historical build steps for the final edition.
+The steps below build openr2 and Asterisk from their current Git repositories. They are kept as a reference for sites that build from source; on a modern distribution you can usually skip them entirely by installing the `libopenr2-dev` package and a packaged Asterisk 22 build, since `chan_dahdi` compiles R2 support directly against libopenr2 with no external patch.
 
-Step 1: Check the patches for the version of Asterisk you want to install.
+Step 1: Install the build tooling you need.
 
 ```
 apt-get install git
 ```
 
-Step2: Download the modified Asterisk code with the patch installed.
-
-> **[2nd-ed note]** The original Asterisk 1.4 SVN patch tree has been replaced below by the current Git repositories. On Asterisk 22 the MFC/R2 patch is unnecessary — `chan_dahdi` builds R2 support directly against libopenr2 — so you only need the openr2 library plus a normal Asterisk build.
+Step 2: Clone the openr2 library and the Asterisk source. No special patched tree is needed on Asterisk 22 — a stock checkout builds R2 support as long as libopenr2 is present.
 
 ```
 cd /usr/src
@@ -1692,7 +1691,7 @@ DAHDI/g1  - First available channel in group 1
 
 In this chapter, we will learn about the Inter-Asterisk eXchange (IAX) protocol, including its strengths and weaknesses. Details such as trunk mode and the interconnection of two Asterisk servers will also be covered. All references in this document correspond to IAX version 2. The IAX protocol provides media transport and signaling for voice and video. IAX is very innovative; it saves bandwidth in trunk mode and is much simpler than SIP when you need to traverse NAT. The primary use for IAX nowadays is to interconnect Asterisk servers. IAX was created primarily for voice, but it can also accommodate video and other multimedia streams. IAX was inspired from other VoIP protocols, such as SIP and MGCP. Instead of using two separate protocols for signaling and media, IAX unified them to make a unique protocol. IAX does not use RTP for media transport; instead, it embeds the media in the same UDP connection.
 
-> **[2nd-ed note — Status in Asterisk 22]** `chan_iax2` is still included and fully supported in Asterisk 22 LTS, so everything in this chapter remains valid. However, IAX2 is now a legacy protocol and sees relatively little new deployment. The VoIP industry has largely converged on SIP (via `chan_pjsip` in Asterisk 22) for both provider trunking and server interconnection. IAX2's primary remaining selling point is its **single-port NAT traversal**: all signaling and media flow over a single UDP port (4569 by default), which greatly simplifies firewall and NAT configuration compared to SIP + RTP. If you are building a new Asterisk-to-Asterisk trunk and NAT is not a concern, PJSIP trunks are the recommended modern approach. IAX2 is kept here because it is still a valid choice, especially in environments where only one UDP port can be opened through a firewall.
+**Status in Asterisk 22.** `chan_iax2` is still included and fully supported in Asterisk 22 LTS, so everything in this section remains valid. IAX2 is, however, a legacy protocol that sees relatively little new deployment: the industry has largely converged on SIP (via `chan_pjsip` in Asterisk 22) for both provider trunking and server interconnection. IAX2's main remaining advantage is its single-port design — all signaling and media flow over a single UDP port (4569 by default), which simplifies firewall and NAT configuration compared to SIP plus its separate RTP streams. For a new Asterisk-to-Asterisk trunk where NAT is not a concern, a PJSIP trunk is the recommended modern approach; IAX2 is covered here because it remains a valid choice, especially where only one UDP port can be opened through a firewall.
 
 ### Objectives
 
@@ -1871,7 +1870,7 @@ A few VoIP providers support IAX. You can easily find an IAX provider by searchi
 
 ![A customer's Asterisk connected to a VoIP provider over an IAX trunk across the Internet: a single trunk carries all calls to and from the provider.](../images/10-legacy-fig14.png)
 
-> **[2nd-ed note]** The number of IAX-capable commercial VoIP providers has declined significantly since Asterisk 16. Most providers now offer SIP/PJSIP trunks exclusively. Before choosing an IAX provider, confirm they actively maintain their IAX infrastructure. For new provider integrations, a PJSIP trunk is the recommended alternative.
+The number of IAX-capable commercial VoIP providers has declined sharply over the past several Asterisk releases; most providers now offer SIP/PJSIP trunks exclusively. Before committing to an IAX provider, confirm they actively maintain their IAX infrastructure. For a new provider integration, a PJSIP trunk (Chapter 3) is the recommended alternative.
 
 #### Connecting to a provider using IAX
 
@@ -2112,7 +2111,7 @@ It is possible to use IAX with strong authentication using asymmetric RSA keys. 
 Step 1: Generate the RSA keys in the branch server
 
 ```
-astkeygen –n
+astgenkey -n
 ```
 
 When asked, use the key name branch. We have used the parameter –n to avoid passing a passphrase whenever Asterisk reinitializes. If you want to improve the security, don’t use the –n and start Asterisk with asterisk -i Step 2: Copy the keys to the directory /var/lib/asterisk/keys
@@ -2175,7 +2174,7 @@ exten=>_22XX,2,hangup
 Step 1: Generate the RSA keys in the HQ server
 
 ```
-astkeygen –n
+astgenkey -n
 ```
 
 When asked use the key name hq. Step 2: Copy the keys to the directory /var/lib/asterisk/keys

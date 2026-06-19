@@ -107,7 +107,7 @@ Calls are distributed among members according to one of these strategies:
 - rrordered: Same as rrmemory, except the queue member order from the config file is preserved.
 - linear: Rings members in the order they are listed in queues.conf; for dynamic members, in the order they were added.
 
-> **[2nd-ed note]** The `roundrobin` strategy was replaced by `rrmemory` in early Asterisk releases and is no longer available. Remove it from the strategy list if it appeared in earlier edition text. All strategies listed above are confirmed present in Asterisk 22.
+The older `roundrobin` strategy was deprecated back in Asterisk 1.4 and removed; it no longer exists in Asterisk 22. Use `rrmemory` (or `rrordered`) instead. The strategies above are the complete set accepted by the `strategy` option in the Asterisk 22 `queues.conf`.
 
 ## Agents
 
@@ -351,7 +351,7 @@ exten=>112,3,Queue(customerservice)
 
 The application `agentcallbacklogin()` was deprecated by Digium in Asterisk 1.4 (July 2006) and is no longer available in Asterisk 22. The recommended approach is to use `AddQueueMember()` with a PJSIP interface to dynamically add callback-style members to a queue. The document `queues-with-callback-members.txt` was included in older Asterisk `/doc` directories for migration guidance.
 
-> **[2nd-ed note]** Verify whether the `chan_agent` channel driver (app_agent_pool) is still the preferred mechanism for agent callback behavior in Asterisk 22, or whether direct PJSIP members with `AddQueueMember()`/`RemoveQueueMember()` is now the standard pattern.
+The old `chan_agent` channel driver was likewise removed; its functionality was rewritten as the `app_agent_pool` module, which is what provides `AgentLogin()`, `AgentRequest()` and the `AGENT()` dialplan function in Asterisk 22 (these are still present — `app_agent_pool.so` ships with a stock 22 build). For modern call centers, however, the standard pattern is to skip agent channels entirely and add the agent's PJSIP device directly to the queue with `AddQueueMember()`/`RemoveQueueMember()` (statically in `queues.conf`, or dynamically from the dialplan or AMI). This is simpler, integrates cleanly with PJSIP device state, and is the approach used throughout this chapter.
 
 ## Queue statistics
 
@@ -375,12 +375,12 @@ All events from queues are logged to /var/log/asterisk/queue_log. The format of 
 - RINGNOANSWER(ringtime)
 - SYSCOMPAT
 
-You can build your own utility to process these events or use a ready-to-run statistics package. We have tested two utilities at voip.school:
+You can build your own utility to process these events or use a ready-to-run statistics package:
 
-- Qlog analyzer (http://www.micpc.com/qloganalyzer/) – Excellent open source package
-- Queue metrics (http://queuemetrics.com/) – One of the most complete packages for queue stats
+- **QueueMetrics** (<https://www.queuemetrics.com/>) – a commercial, actively maintained package that parses `queue_log` and remains one of the most complete reporting tools for Asterisk call centers.
+- **Roll your own** – because the `queue_log` format above is stable and well documented, it is straightforward to parse it with a small script (Python, etc.) and feed the events into a database or dashboard.
 
-> **[2nd-ed note]** Verify that both third-party statistics tools above are still maintained and compatible with Asterisk 22 queue_log format. Consider adding a reference to the Asterisk REST Interface (ARI) as a modern alternative for building custom queue reporting integrations.
+For a more event-driven approach than tailing `queue_log`, the **Asterisk REST Interface (ARI)** and the **AMI** `QueueSummary`/`QueueStatus` actions let you build live queue dashboards and custom integrations against real-time queue state rather than after-the-fact log parsing. ARI is the modern, supported integration surface for this kind of work in Asterisk 22.
 
 ## Summary
 

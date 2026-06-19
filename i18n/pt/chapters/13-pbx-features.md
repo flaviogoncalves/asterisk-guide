@@ -1,6 +1,6 @@
 # Usando recursos de PBX
 
-Em sistemas SIP, a maioria dos recursos de telefonia é implementada no endpoint. Existe uma variedade de telefones SIP e fabricantes, e a interoperabilidade não é garantida. A equipe de desenvolvimento do Asterisk fez um trabalho incrível ao implementar a maioria dos recursos no próprio PBX, tornando o Asterisk quase independente do endpoint. No entanto, às vezes você encontrará a mesma função sendo executada tanto pelo telefone quanto pelo próprio Asterisk. A integração do telefone e do PBX é a próxima fronteira em usabilidade e onde os sistemas proprietários estão focando agora. Neste capítulo, você aprenderá como usar a maioria desses recursos.
+Em sistemas SIP, a maioria dos recursos de telefonia é implementada no endpoint. Existe uma variedade de telefones SIP e fabricantes, e a interoperabilidade não é garantida. A equipe de desenvolvimento do Asterisk fez um trabalho incrível ao implementar a maioria dos recursos no próprio PBX, tornando o Asterisk quase independente do endpoint. No entanto, às vezes você encontrará a mesma função sendo realizada tanto pelo telefone quanto pelo próprio Asterisk. A integração do telefone com o PBX é a próxima fronteira em usabilidade e onde os sistemas proprietários estão focando agora. Neste capítulo, você aprenderá como usar a maioria desses recursos.
 
 ## Objetivos
 
@@ -11,7 +11,7 @@ Ao final deste capítulo, você será capaz de entender e usar:
 - Transferência de chamadas (Call Transfer)
 - Conferência de chamadas (ConfBridge)
 - Gravação de chamadas (Call Recording)
-- Música de espera (Music on hold)
+- Música em espera (Music on hold)
 
 ## Onde os recursos são implementados
 
@@ -21,7 +21,7 @@ Primeiro e mais importante, é importante entender quando os recursos do PBX est
 
 Estes recursos são implementados no PBX pelo código do Asterisk:
 
-- Música de espera
+- Música em espera
 - Estacionamento de chamadas
 - Captura de chamadas
 - Gravação de chamadas
@@ -32,10 +32,10 @@ Estes recursos são implementados no PBX pelo código do Asterisk:
 
 Estes recursos precisam ser programados no dialplan do Asterisk (extensions.conf):
 
-- Encaminhamento de chamada ocupada
-- Encaminhamento de chamada imediato
-- Encaminhamento de chamada não atendida
-- Filtragem de chamadas (blacklist)
+- Encaminhamento de chamadas ocupadas
+- Encaminhamento imediato de chamadas
+- Encaminhamento de chamadas não atendidas
+- Filtragem de chamadas (lista negra)
 - Não perturbe
 - Rediscagem
 
@@ -55,9 +55,9 @@ Estes recursos são implementados pelo firmware do telefone:
 
 Alguns dos recursos apresentados neste capítulo são configurados no arquivo de configuração features.conf. É possível alterar o comportamento de alguns recursos modificando este arquivo. Incluímos o trecho relevante abaixo. Nas próximas seções deste capítulo, descreveremos cada recurso. Trecho do arquivo de exemplo (Asterisk 22)
 
-![A seção `[featuremap]` do features.conf, com os códigos de recurso DTMF padrão](../images/13-pbx-features-fig02.png)
+![A seção `[featuremap]` do features.conf, com os códigos de recursos DTMF padrão](../images/13-pbx-features-fig02.png)
 
-> **[Nota da 2ª ed.]** A partir do Asterisk 12+, o estacionamento de chamadas foi movido de `features.conf`/`app_features` para seu próprio módulo `res_parking` com configuração em `res_parking.conf`. O bloco parking-lot abaixo (parkext, parkpos, context, parkingtime, etc.) reside em `res_parking.conf` e é mostrado usando a sintaxe do Asterisk 22 `res_parking.conf.sample`. A seção `[featuremap]` (os códigos de recurso DTMF, incluindo `parkcall`) permanece em `features.conf`.
+Desde o Asterisk 12, o estacionamento de chamadas foi movido de `features.conf` para seu próprio módulo, `res_parking`, com configuração em `res_parking.conf`. O bloco parking-lot abaixo (`parkext`, `parkpos`, `context`, `parkingtime` e assim por diante) reside em `res_parking.conf`. A seção `[featuremap]` (os códigos de recursos DTMF, incluindo `parkcall`) permanece em `features.conf`.
 
 As opções de parking-lot residem em `res_parking.conf`. Um estacionamento chamado `default` sempre existe, mesmo que não esteja presente no arquivo de configuração. O trecho abaixo foi retirado do Asterisk 22 `res_parking.conf.sample`:
 
@@ -84,7 +84,7 @@ context => parkedcalls          ; Which context parked calls and the default par
 ;parkedmusicclass = default    ; MOH class to use for the parked channel
 ```
 
-Os códigos de recurso DTMF (incluindo o de um passo `parkcall`) permanecem na seção `[featuremap]` de `features.conf`:
+Os códigos de recursos DTMF (incluindo o `parkcall` de um passo) permanecem na seção `[featuremap]` do `features.conf`:
 
 ```
 ; features.conf
@@ -93,8 +93,6 @@ Os códigos de recurso DTMF (incluindo o de um passo `parkcall`) permanecem na s
 option in the Dial() or Queue() app call!
 ;disconnect => *0               ; Disconnect  (default is *) -- Make sure to set the H and/or h option
 in the Dial() or Queue() app call!
-;automon => *1                  ; One Touch Record a.k.a. Touch Monitor -- Make sure to set the W
-and/or w option in the Dial() or Queue() app call!
 ;atxfer => *2                   ; Attended transfer  -- Make sure to set the T and/or t option in the
 Dial() or Queue()  app call!
 ;parkcall => #72        ; Park call (one step parking)  -- Make sure to set the K and/or k option in
@@ -105,25 +103,25 @@ and/or x option in the Dial() or Queue() app call!
 
 ## Transferência de chamadas
 
-A transferência de chamadas pode ser implementada pelo telefone, por ATA ou pelo próprio Asterisk. Consulte o manual do seu telefone para entender como as chamadas são transferidas. Se o seu telefone não suportar transferência de chamadas, você pode usar o Asterisk para realizar esta tarefa. A transferência de chamadas é implementada de duas maneiras diferentes. A primeira maneira é usar o recurso de transferência cega: disque # seguido pelo número para o qual a chamada será transferida. Às vezes, você usará o recurso de transferência do seu telefone IP ou softphone IP. Você pode alterar o caractere de transferência editando o parâmetro blindxfer no arquivo features.conf. Você pode habilitar a transferência assistida no Asterisk removendo o ; antes do parâmetro atxfer no arquivo features.conf. Durante uma conversa, você pressionaria *2. O Asterisk dirá "transfer" e lhe dará um tom de discagem. O chamador é enviado para a música de espera. Depois de falar com a pessoa de destino e desligar o telefone, o sistema faz a ponte entre o chamador e o destino.
+A transferência de chamadas pode ser implementada pelo telefone, por um ATA ou pelo próprio Asterisk. Consulte o manual do seu telefone para entender como as chamadas são transferidas. Se o seu telefone não suportar transferência de chamadas, você pode usar o Asterisk para realizar essa tarefa. A transferência de chamadas é implementada de duas maneiras diferentes. A primeira maneira é usar o recurso de transferência cega: disque # seguido pelo número para o qual a chamada será transferida. Às vezes, você usará o recurso de transferência do seu telefone IP ou softphone IP. Você pode alterar o caractere de transferência editando o parâmetro blindxfer no arquivo features.conf. Você pode habilitar a transferência assistida no Asterisk removendo o ; antes do parâmetro atxfer no arquivo features.conf. Durante uma conversa, você pressionaria *2. O Asterisk dirá “transfer” e lhe dará um tom de discagem. O chamador é enviado para a música em espera. Depois de falar com a pessoa de destino e desligar o telefone, o sistema faz a ponte entre o chamador e o destino.
 
 ![Transferência de chamadas: os passos para uma transferência cega (pressione # durante a chamada) e uma transferência assistida (pressione *2)](../images/13-pbx-features-fig03.png)
 
 ### Lista de tarefas de configuração
 
-1. Se o telefone for baseado em SIP, certifique-se de que a opção directmedia seja igual a no ou use uma opção t ou T na aplicação dial()
+1. Para um endpoint PJSIP, certifique-se de que a opção `direct_media` esteja definida como `no` (para que a mídia flua através do Asterisk e os códigos de recursos sejam detectados), ou use uma opção `t`/`T` na aplicação `Dial()`
 
 ## Estacionamento de chamadas
 
-Este recurso é usado para estacionar uma chamada. Isso ajuda, por exemplo, quando você está atendendo a uma chamada telefônica fora da sua sala e deseja transferir a chamada de volta para sua mesa. Você pode realizar isso estacionando a chamada em um ramal. Assim que chegar à sua mesa, basta discar o número do ramal de estacionamento para recuperar a chamada.
+Este recurso é usado para estacionar uma chamada. Isso ajuda, por exemplo, quando você está atendendo uma chamada telefônica fora da sua sala e deseja transferir a chamada de volta para sua mesa. Você pode realizar isso estacionando a chamada em uma extensão. Assim que chegar à sua mesa, basta discar o número da extensão de estacionamento para recuperar a chamada.
 
 ![Estacionamento de chamadas: disque 700 para estacionar uma chamada no primeiro slot livre (701–720); o Asterisk anuncia o slot, que você disca de qualquer telefone para recuperar a chamada](../images/13-pbx-features-fig04.png)
 
-Por padrão, o ramal 700 é usado para estacionar uma chamada. No meio de uma conversa, pressione # para transferir a chamada para o ramal 700. Agora o Asterisk anunciará seu ramal de estacionamento, como 701 ou 702. Desligue o telefone e o chamador será colocado em espera. Vá até o telefone da sua mesa e disque o ramal de estacionamento anunciado para recuperar a chamada. Se o chamador ficar estacionado por muito tempo, o recurso de timeout será acionado e o ramal original discado tocará novamente.
+Por padrão, a extensão 700 é usada para estacionar uma chamada. No meio de uma conversa, pressione # para transferir a chamada para a extensão 700. Agora o Asterisk anunciará sua extensão de estacionamento, como 701 ou 702. Desligue o telefone e o chamador será colocado em espera. Vá até o telefone da sua mesa e disque a extensão de estacionamento anunciada para recuperar a chamada. Se o chamador ficar estacionado por muito tempo, o recurso de timeout será acionado e a extensão discada originalmente tocará novamente.
 
 ### Lista de tarefas de configuração
 
-Siga os passos abaixo para habilitar o estacionamento de chamadas. Passo 1: Torne o estacionamento acessível a partir do seu dialplan (obrigatório). O `context` do estacionamento padrão é `parkedcalls` (definido em `res_parking.conf`). Inclua esse context no contexto a partir do qual seus telefones discam, em `extensions.conf`:
+Siga os passos abaixo para habilitar o estacionamento de chamadas. Passo 1: Torne o estacionamento acessível a partir do seu dialplan (obrigatório). O `context` do estacionamento padrão é `parkedcalls` (definido em `res_parking.conf`). Inclua esse contexto no contexto a partir do qual seus telefones discam, em `extensions.conf`:
 
 ```
 include => parkedcalls
@@ -131,13 +129,13 @@ include => parkedcalls
 
 Passo 2: Teste o recurso de estacionamento de chamadas discando #700. Notas:
 
-- O ramal de estacionamento não será mostrado no comando CLI dialplan show.
+- A extensão de estacionamento não será mostrada no comando CLI dialplan show.
 - É necessário recarregar o módulo de estacionamento após alterar o arquivo de configuração de estacionamento: `module reload res_parking.so`. Para alterações no features.conf, `module reload features.so`.
-- Para estacionar uma chamada, você precisa transferir para #700. Verifique as opções t e T na aplicação dial().
+- Para estacionar uma chamada, você precisa transferir para #700. Verifique as opções `t` e `T` na aplicação `Dial()`.
 
 ## Captura de chamadas
 
-A captura de chamadas permite que você capture uma chamada de um colega no mesmo grupo de chamada. Isso ajudaria a evitar, por exemplo, ter que se levantar para atender a uma chamada que está tocando para outra pessoa na sua sala, mas que não está presente. Ao discar *8, você pode capturar uma chamada dentro do seu grupo de chamada. Este número pode ser modificado no
+A captura de chamadas permite que você capture uma chamada de um colega no mesmo grupo de chamadas. Isso ajudaria a evitar, por exemplo, ter que se levantar para atender uma chamada que está tocando para outra pessoa na sua sala, mas que não está presente. Discando *8, você pode capturar uma chamada dentro do seu grupo de chamadas. Este número pode ser modificado no
 
 ```
 features.conf file.
@@ -147,7 +145,7 @@ features.conf file.
 
 ### Lista de tarefas de configuração
 
-Siga os passos abaixo para configurar o recurso de captura de chamadas. Passo 1: Configure um grupo de chamada para seus ramais. Isso é feito no arquivo de configuração do canal (pjsip.conf, iax.conf, chan_dahdi.conf). Para endpoints PJSIP, defina `call_group` e `pickup_group` na seção endpoint de `pjsip.conf` (pjsip.conf usa nomes de opção em snake_case). Esta tarefa é obrigatória.
+Siga os passos abaixo para configurar o recurso de captura de chamadas. Passo 1: Configure um grupo de chamadas para suas extensões. Isso é feito no arquivo de configuração do canal (pjsip.conf, iax.conf, chan_dahdi.conf). Para endpoints PJSIP, defina `call_group` e `pickup_group` na seção de endpoint do `pjsip.conf` (pjsip.conf usa nomes de opções em snake_case). Esta tarefa é obrigatória.
 
 Para PJSIP (pjsip.conf):
 ```
@@ -158,21 +156,23 @@ pickup_group=1,2
 ```
 
 
-Passo 2: Altere o número do recurso de captura de chamadas (opcional).
+Passo 2: Altere o número do recurso de captura de chamadas (opcional). Isso é definido na seção `[general]` do `features.conf`, não em `pjsip.conf`:
 
 ```
-pickupexten=*8; Configures the call pickup extension
+; features.conf
+[general]
+pickupexten = *8   ; Configures the call pickup extension (default is *8)
 ```
 
 ## Conferência (conferência de chamadas)
 
-Existem diferentes maneiras de implementar uma conferência no Asterisk. A primeira opção é simplesmente usar a capacidade de conferência de três vias do telefone. Ao usar este recurso no telefone, você não precisa de nenhum suporte no próprio servidor. No entanto, quando você deseja uma conferência com mais de 3 pessoas, você deve executar uma sala de conferência. A aplicação de conferência moderna do Asterisk é a ConfBridge (`app_confbridge`).
+Existem diferentes maneiras de implementar uma conferência no Asterisk. A primeira opção é simplesmente usar a capacidade de conferência de três vias do telefone. Ao usar esse recurso no telefone, você não precisa de nenhum suporte no próprio servidor. No entanto, quando você deseja uma conferência com mais de 3 pessoas, você deve executar uma sala de conferência. A aplicação de conferência moderna do Asterisk é a ConfBridge (`app_confbridge`).
 
-O ConfBridge suporta conferências de voz HD e videoconferência. Existem algumas limitações para videoconferência, como a ausência de transcodificação — todos os participantes devem usar o mesmo codec e perfil. A videoconferência usa um modo "follow-the-talker", exibindo a imagem da última pessoa a falar. Você pode configurar facilmente novos menus DTMF no ConfBridge.
+O ConfBridge suporta conferências de voz HD e videoconferência. Existem algumas limitações para videoconferência, como a ausência de transcodificação — todos os participantes precisam usar o mesmo codec e perfil. A videoconferência usa um modo "follow-the-talker" (seguir o falante), exibindo a imagem da última pessoa a falar. Você pode configurar facilmente novos menus DTMF no ConfBridge.
 
-> **[Nota da 2ª ed.]** O MeetMe (`app_meetme`) foi **descontinuado no Asterisk 19** e estava programado para remoção no Asterisk 21, mas essa remoção foi pausada (a pedido do projeto ViciDial). O código-fonte do módulo ainda é enviado com o Asterisk 22, mas ele requer DAHDI e **não é compilado na compilação padrão do Asterisk 22** — uma instalação padrão não possui `app_meetme.so` e a aplicação `MeetMe()` está indisponível. Todas as novas implementações de salas de conferência devem usar o ConfBridge. A seção MeetMe abaixo é mantida apenas para referência histórica.
+O ConfBridge substitui a antiga aplicação MeetMe, que foi descontinuada no Asterisk 19 e removida no Asterisk 21. Ao contrário do MeetMe, o ConfBridge **não** requer DAHDI ou uma fonte de temporização de hardware: ele depende da interface de temporização integrada do Asterisk (`res_timing_timerfd` no Linux, ou `res_timing_pthread`), portanto, nenhum módulo `dahdi_dummy` é necessário. Se você estiver migrando de um sistema mais antigo que usava `MeetMe()` e `meetme.conf`, substitua-os por `ConfBridge()` e `confbridge.conf` conforme descrito abaixo.
 
-### Confbridge
+### ConfBridge
 
 Para iniciar uma sala de conferência, a sintaxe está listada abaixo.
 
@@ -184,9 +184,11 @@ Para obter uma descrição completa do comando, você pode usar core show applic
 
 ![Saída de `core show application confbridge`, mostrando a sinopse, sintaxe e os argumentos bridge_profile, user_profile e menu](../images/13-pbx-features-fig06.png)
 
-Como você pode ver acima, existem três seções importantes: Bridge_profile: Você define o perfil no arquivo confbridge.conf. Lá você pode selecionar o número máximo de participantes, gravação, video_mode e muitos outros parâmetros de bridge.
+> **[Nota da 2ª ed.]** Um diagrama do ConfBridge ajudaria aqui: mostrar vários endpoints SIP entrando em uma única conferência nomeada (por exemplo, `101`) através de `ConfBridge()`, com um participante marcado como admin, e uma nota de que a mixagem/temporização é tratada por `res_confbridge` + o temporizador embutido `res_timing_*` (sem DAHDI).
 
-Não faz sentido reproduzir o arquivo de exemplo completo aqui, então deixe-me dar um exemplo simples de como configurar um bridge_profile no arquivo confbridge.conf.
+Como você pode ver acima, existem três argumentos importantes, cada um mapeando para um tipo de seção em `confbridge.conf`. **bridge_profile** (uma seção `type=bridge`): aqui você seleciona o número máximo de participantes (`max_members`), gravação (`record_conference`), `video_mode` e muitos outros parâmetros de toda a ponte.
+
+Não faz sentido reproduzir o arquivo de exemplo inteiro aqui, então deixe-me dar um exemplo simples de como configurar um bridge_profile no arquivo confbridge.conf.
 
 ```
 [default_bridge]
@@ -195,7 +197,7 @@ max_members=10
 record_conference=yes
 ```
 
-User_profile: Aqui você define opções que são específicas por usuário, como se o usuário é um administrador ou não. Música de espera e muitas outras opções podem ser definidas por usuário. Exemplo:
+**user_profile** (uma seção `type=user`): aqui você define opções que são específicas por usuário, como se o usuário é um administrador (`admin=yes`), se eles começam no mudo (`startmuted=yes`), música em espera e muitas outras opções por usuário. Exemplo:
 
 ```
 [admin_user]
@@ -203,7 +205,7 @@ type=user
 admin=yes
 ```
 
-Menu: Na seção menu, você pode definir seu mapeamento de teclado para a aplicação, onde alternar entre mudo e não mudo. Verifique o arquivo confbridge.conf para ver as opções. Exemplo:
+**menu** (uma seção `type=menu`): aqui você define o mapeamento do teclado (DTMF) para a conferência — por exemplo, qual tecla alterna o mudo, ajusta o volume ou sai da conferência. Verifique o arquivo `confbridge.conf.sample` para ver todas as ações disponíveis. Exemplo:
 
 ```
 [my_menu]
@@ -219,7 +221,7 @@ type=menu
 
 #### Funções do Confbridge
 
-As opções da bridge de conferência podem ser passadas dinamicamente no dialplan usando a função CONFBRIDGE(). Veja os exemplos abaixo:
+As opções da ponte de conferência podem ser passadas dinamicamente no dialplan usando a função CONFBRIDGE(). Veja os exemplos abaixo:
 
 ```
 exten => 1,1,Answer()
@@ -229,178 +231,72 @@ exten => 1,n,Set(CONFBRIDGE(user,marked)=yes)
 exten => 1,n,ConfBridge(sales)
 ```
 
-## Meetme (Legado — descontinuado, não compilado por padrão no Asterisk 22)
+### Comandos de administrador do ConfBridge e migração do MeetMe
 
-> **[Nota da 2ª ed.]** `app_meetme` foi descontinuado no Asterisk 19. Sua remoção planejada no Asterisk 21 foi pausada, então o código-fonte ainda é enviado no Asterisk 22, mas o módulo não é compilado na compilação padrão do Asterisk 22 (ele depende do DAHDI). Portanto, uma instalação padrão do Asterisk 22 não possui a aplicação `MeetMe()`. O conteúdo abaixo é mantido para referência histórica e para leitores que estão atualizando sistemas mais antigos. **Para novas instalações, use o ConfBridge (veja acima).** A dependência DAHDI e o módulo `dahdi_dummy` não são necessários para o ConfBridge.
+Se você vem do MeetMe, as funções de administrador que você usava através de `MeetMeAdmin()` e a opção `a` (admin) agora são expressas através do **perfil de usuário administrador** (`admin=yes`) mais as ações de **menu**. Um administrador que entra com um perfil de administrador e um menu contendo ações de administrador pode bloquear a sala, expulsar usuários e silenciar participantes ao vivo pelo teclado. As ações de menu relevantes em `confbridge.conf` são:
 
-Alternativamente, em versões mais antigas do Asterisk, você poderia usar a aplicação meetme(). Meetme é uma bridge de conferência muito simples de usar. Lembre-se, o meetme foi descontinuado no Asterisk 19 e depende do módulo DAHDI para sincronização.
+- `admin_kick_last` -- expulsar o último usuário que entrou
+- `admin_toggle_mute_participants` -- silenciar/ativar todos os participantes não administradores
+- `toggle_mute` -- silenciar/ativar você mesmo
+- `participant_count` -- anunciar o número de participantes
+- `leave_conference` -- sair da ponte e continuar no dialplan
 
-![Tipos de conferência MeetMe — conferências de alto-falante único, protegidas por senha e dinâmicas — todas exigindo uma fonte de temporização Zaptel/DAHDI](../images/13-pbx-features-fig07.png)
+Estes substituem as flags de opção do MeetMe `MeetMe()` (`a`, `A`, `m`, `M`, `l`, `x`, …) e os comandos `MeetMeAdmin()` (`k`, `K`, `L`, `M`, `N`, …). Não existe `meetme.conf` no Asterisk 22; toda a configuração da conferência reside em `confbridge.conf`, e as alterações são aplicadas com `module reload res_confbridge.so`.
 
-### A aplicação meetme()
+### Exemplo de ConfBridge
 
-Usando o comando CLI meetme show, você pode obter a descrição acima. Para usar o meetme, você precisa compilar os drivers DAHDI e ter pelo menos um módulo de kernel DAHDI carregado. Se você não tiver pelo menos uma placa DAHDI instalada, carregue o módulo de kernel dahdi_dummy para fornecer uma fonte de temporização. Descrição:
-
-![A aplicação MeetMe(): sintaxe `MeetMe([confno][,[options][,pin]])` e suas principais flags de opção](../images/13-pbx-features-fig08.png)
-
-A aplicação meetme() coloca o usuário em uma conferência meetme especificada. Se o número da conferência for omitido, o usuário será solicitado a inserir um. O usuário pode sair da conferência desligando ou — se a opção p for especificada — pressionando #. Observe: Os módulos de kernel DAHDI e pelo menos um driver de hardware (ou dahdi_dummy) devem estar presentes para que a conferência funcione corretamente. Além disso, o driver de canal chan_dahdi deve estar carregado para que as opções i e r funcionem.
-
-> **[Nota da 2ª ed.]** As listas de flags de opção e comandos de administrador que seguem descrevem a interface legada `app_meetme` e refletem a documentação histórica de `MeetMe()`/`MeetMeAdmin()`. Como `app_meetme` não é compilado na instalação padrão do Asterisk 22, essas flags não podem ser confirmadas em um sistema Asterisk 22 em execução; elas são reproduzidas para leitores que mantêm implementações mais antigas. No Asterisk 22, use o ConfBridge e a função de dialplan `CONFBRIDGE()`.
-
-A string de opção pode conter zero ou uma ou mais das seguintes letras:
-
-- 'a' -- define o modo administrador
-- 'A' -- define o modo marcado
-- 'b' – executa o script AGI especificado em ${MEETME_AGI_BACKGROUND}Padrão: conf-background.agi (Nota: Isso não funciona com canais não-DAHDI na mesma conferência)
-- 'c' -- anuncia a contagem de usuário(s) ao entrar em uma conferência
-- 'd' -- adiciona conferência dinamicamente
-- 'D' -- adiciona conferência dinamicamente, solicitando um PIN
-- 'e' -- seleciona uma conferência vazia
-- 'E' -- seleciona uma conferência vazia sem PIN
-- 'i' -- anuncia um usuário entrando/saindo com revisão
-- 'I' -- anuncia um usuário entrando/saindo sem revisão
-- 'l' -- define o modo apenas escuta (Listen only, sem falar)
-- 'm' -- define inicialmente mudo
-- 'M' -- habilita música de espera quando a conferência tem um único chamador
-- 'o' -- define a otimização de falante, que trata os falantes que não estão falando como mudos, significando (a) nenhuma codificação é feita na transmissão e (b) o áudio recebido que não é registrado como falando é omitido, não causando acúmulo de ruído de fundo
-- 'p' -- permite que os usuários saiam da conferência pressionando '#'
-- 'P' -- sempre solicita o PIN, mesmo que seja especificado
-- 'q' -- modo silencioso (não toca sons de entrada/saída)
-- 'r' -- Grava a conferência (grava como ${MEETME_RECORDINGFILE}usando o formato ${MEETME_RECORDINGFORMAT}). O nome de arquivo padrão é meetme-conf-rec-${CONFNO}-${UNIQUEID} e o formato padrão é wav.
-- 's' -- Apresenta menu (usuário ou administrador) quando '*' é recebido ('send' para o menu)
-- 't' -- define o modo apenas fala. (Talk only, sem ouvir)
-- 'T' -- define a detecção de falante (enviado para a interface do gerenciador e lista meetme)
-- 'w[(<secs>)]' -- aguarda até que o usuário marcado entre na conferência
-- 'x' -- fecha a conferência quando o último usuário marcado sai
-- 'X' -- permite que o usuário saia da conferência inserindo um ramal de um dígito válido ${MEETME_EXIT_CONTEXT} ou o contexto atual se essa variável não estiver definida.
-- '1' -- não toca mensagem quando a primeira pessoa entra
-
-### Arquivo de configuração Meetme
-
-Este arquivo é usado para configurar a aplicação meetme. Por exemplo:
+Para criar uma sala de conferência acessível na extensão 500, em `extensions.conf`:
 
 ```
-;
-; Configuration file for MeetMe simple conference rooms for Asterisk of course.
-;
-; This configuration file is read every time you call app meetme()
-[general]
-;audiobuffers=32        ; The number of 20ms audio buffers to be used
-                        ; when feeding audio frames from non-DAHDI channels
-                        ; into the conference; larger numbers will allow
-                        ; for the conference to 'de-jitter' audio that arrives
-                        ; at different timing than the conference's timing
-                        ; source, but can also allow for latency in hearing
-                        ; the audio from the speaker. Minimum value is 2,
-                        ; maximum value is 32.
-;
-[rooms]
-;
-; Usage is conf => confno[,pin][,adminpin]
-;
-conf=>9000
-conf=>9001,123456
+exten => 500,1,Answer()
+ same => n,ConfBridge(101,default_bridge,default_user,sample_user_menu)
 ```
 
-Não é necessário usar reload ou restart para fazer o Asterisk ver as alterações no arquivo meetme.conf.
-
-### Aplicações relacionadas ao Meetme
-
-A aplicação meetme() tem duas outras aplicações de suporte.
-
-```
-MeetMeCount(confno[|var])
-```
-
-Isso toca o número de usuários na conferência. Se uma variável for especificada, ela não toca a mensagem, mas define o número de usuários para ela.
-
-```
-MeetMeAdmin(confno,command,[user]):
-```
-
-Execute o comando de administrador para uma conferência:
-
-- 'e' -- Ejeta o último usuário que entrou
-- 'k' -- Expulsa um usuário da conferência
-- 'K' -- Expulsa todos os usuários da conferência
-- 'l' -- Desbloqueia a conferência
-- 'L' -- Bloqueia a conferência
-- 'm' -- Tira o mudo de um usuário
-- 'M' -- Coloca um usuário no mudo
-- 'n' -- Tira o mudo de todos os usuários na conferência
-- 'N' -- Coloca todos os usuários não administradores no mudo na conferência
-- 'r' -- Redefine as configurações de volume de um usuário
-- 'R' -- Redefine as configurações de volume de todos os usuários
-- 's' -- Diminui o volume de fala de toda a conferência
-- 'S' -- Aumenta o volume de fala de toda a conferência
-- 't' -- Diminui o volume de fala de um usuário
-- 'T' -- Diminui o volume de fala de todos os usuários
-- 'u' -- Diminui o volume de escuta de um usuário
-- 'U' -- Diminui o volume de escuta de todos os usuários
-- 'v' -- Diminui o volume de escuta de toda a conferência
-- 'V' -- Aumenta o volume de escuta de toda a conferência
-
-### Lista de tarefas de configuração do Meetme
-
-Siga os passos abaixo para configurar a aplicação de conferência meetme. Passo 1: Escolha o ramal para a sala Meetme (obrigatório) Passo 2: Edite o arquivo meetme.conf para configurar as senhas (opcional)
-
-### Exemplos
-
-Exemplo #1: Sala meetme simples 1. No arquivo extensions.conf, crie a sala de conferência 101
-
-```
-exten=>500,1,MeetMe(101,,123456)
-```
-
-2. No arquivo meetme.conf, estabeleça a senha para a sala 101. Nota importante: A aplicação meetme() precisa de um temporizador para funcionar. Se você não tiver hardware digium instalado e configurado, use dahdi_dummy como fonte de temporização.
+O primeiro chamador a discar 500 cria a conferência `101`; os chamadores subsequentes entram nela. Perfis e menus referenciados aqui (`default_bridge`, `default_user`, `sample_user_menu`) são definidos em `confbridge.conf`. Para exigir um PIN, defina `pin=` no perfil de usuário; para tornar um participante um administrador da conferência, dê a ele um perfil de usuário com `admin=yes`.
 
 ## Gravação de chamadas
 
-Existem várias maneiras de gravar uma chamada no Asterisk. Você pode usar a aplicação mixmonitor() para gravar chamadas facilmente.
+Existem várias maneiras de gravar uma chamada no Asterisk. Você pode usar a aplicação `MixMonitor()` para gravar chamadas facilmente. (A aplicação mais antiga `Monitor`, que gravava dois arquivos separados, foi removida; use `MixMonitor` em vez disso.)
 
-### Usando a aplicação mixmonitor
+### Usando a aplicação MixMonitor
 
-A aplicação mixmonitor grava o áudio no canal atual para o arquivo especificado. Se o nome do arquivo for um caminho absoluto, ele usa esse caminho. Caso contrário, ele cria o arquivo no diretório de monitoramento configurado em asterisk.conf.
+A aplicação `MixMonitor` grava o áudio no canal atual para o arquivo especificado. Se o nome do arquivo for um caminho absoluto, ele usa esse caminho. Caso contrário, ele cria o arquivo no diretório de monitoramento configurado em asterisk.conf.
 
-![A aplicação MixMonitor(): grava e mixa o áudio de um canal para um arquivo, com opções para anexar, apenas em bridge e ajuste de volume](../images/13-pbx-features-fig09.png)
+![A aplicação MixMonitor(): grava e mixa o áudio de um canal em um arquivo, com opções para anexar, apenas em ponte e ajuste de volume](../images/13-pbx-features-fig09.png)
 
-### Mixmonitor()
+### MixMonitor()
 
-Grave uma chamada e mixe o áudio durante a gravação [Descrição] MixMonitor(<file>.<ext>[|<options>[|<command>]]) Grava o áudio no canal atual para o arquivo especificado. opções: a- Anexa ao arquivo em vez de sobrescrevê-lo. b- Salva áudio no arquivo apenas enquanto o canal estiver em bridge. Nota: não inclui conferências. v(<x>) - Ajusta o volume ouvido por um fator de <x> V(<x>) - Ajusta o volume falado por um fator de <x> W(<x>) - Ajusta ambos os volumes, ouvido e falado, por um fator de <x> Opções válidas:
+Grave uma chamada e mixe o áudio durante a gravação. Sintaxe: `MixMonitor(filename.extension[,options[,command]])`. Grava o áudio no canal atual para o arquivo especificado. Opções válidas:
 
 - a - Anexa ao arquivo em vez de sobrescrevê-lo.
-- b - Salva áudio no arquivo apenas enquanto o canal estiver em bridge.
+- b - Salva áudio no arquivo apenas enquanto o canal estiver em ponte.
 - Nota: não inclui conferências.
 - v(<x>) - Ajusta o volume audível por um fator de <x> (variando de -4 a 4)
 - V(<x>) - Ajusta o volume falado por um fator de <x> (variando de -4 a 4)
 - W(<x>) - Ajusta ambos os volumes, audível e falado, por um fator de <x> (variando de -4 a 4)
 - <command> será executado quando a gravação terminar. Quaisquer strings correspondentes a ^{X} serão desescapadas para ${X} e todas as variáveis serão avaliadas naquele momento. A variável MIXMONITOR_FILENAME conterá o nome do arquivo usado para gravar.
 
-Um recurso interessante é o automon, que permite que você simplesmente disque *1 para iniciar a gravação imediatamente. Exemplo:
+Um recurso interessante é o recurso de gravação com um toque `automixmon`, que permite que uma parte disque um código DTMF (padrão `*3`) durante uma chamada para iniciar (e alternar) a gravação imediatamente. Ele é construído sobre o MixMonitor, portanto, grava um único arquivo mixado. Exemplo:
 
 ```
-exten=>_4XXX,1,Set(DYNAMIC_FEATURES=automon)
-exten=>_4XXX,2,Dial(PJSIP/${EXTEN},20,jtTwW);wW enables the recording.
+exten => _4XXX,1,Set(DYNAMIC_FEATURES=automixmon)
+ same => n,Dial(PJSIP/${EXTEN},20,jtTXx) ; X and x enable one-touch MixMonitor recording
 ```
 
-Os canais de áudio são de entrada (IN) e saída (OUT) e são separados em dois arquivos distintos no diretório /var/spool/asterisk/monitor. Ambos os arquivos podem ser mixados usando a aplicação sox.
-
-```
-debian#soxmix *in.wav *out.wav output.wav
-```
+As opções `X` e `x` habilitam o recurso de MixMonitor com um toque para o chamador e o chamado, respectivamente. Como o MixMonitor grava um único arquivo mixado, não há necessidade de combinar arquivos IN/OUT separados posteriormente (a abordagem antiga `automon`/`Monitor`, que produzia dois arquivos para `soxmix`, foi removida junto com a aplicação `Monitor`).
 
 Se você não quiser usar Set() antes da aplicação Dial(), você pode definir isso na seção globals:
 
 ```
 [globals]
-DYNAMIC_FEATURES=>automon
+DYNAMIC_FEATURES=automixmon
 ```
 
-### Música de espera
+### Música em espera
 
-A música de espera (MOH) mudou várias vezes entre as versões 1.0, 1.2 e 1.4. Na versão mais recente, a MOH é "FILE-BASED" por padrão. Em outras palavras, o Asterisk fornecerá os arquivos de MOH em formatos como g729, alaw, ulaw e gsm. Assim, não é necessário transcodificar a música antes de enviá-la para o canal. Isso economiza tempo de processador, o que é uma modificação bem-vinda para aqueles que trabalham com sistemas de produção. Em versões mais antigas, a MOH era geralmente fornecida por MP3 (ainda pode ser configurada dessa forma). Fornecer MOH usando MP3 obriga o Asterisk a transcodificar, gastando um valioso poder de CPU no processo. O novo arquivo de configuração é mostrado abaixo. Observe que a classe padrão agora usa o modo de formato de arquivo nativo mode=files. Todos os outros modos estão comentados. Cada seção é uma classe. A única classe não comentada neste momento é a default. Se você quiser ter classes diferentes para arquivos diferentes, precisará criar novas seções (classes).
+A música em espera (MOH) mudou várias vezes entre as versões 1.0, 1.2 e 1.4. Na versão mais recente, a MOH é “FILE-BASED” por padrão. Em outras palavras, o Asterisk fornecerá os arquivos de MOH em formatos como g729, alaw, ulaw e gsm. Assim, não é necessário transcodificar a música antes de enviá-la para o canal. Isso economiza tempo de processador, o que é uma modificação bem-vinda para aqueles que trabalham com sistemas de produção. Em versões mais antigas, a MOH era geralmente fornecida por MP3 (ainda pode ser configurada dessa forma). Fornecer MOH usando MP3 obriga o Asterisk a transcodificar, gastando um valioso poder de CPU no processo. O novo arquivo de configuração é mostrado abaixo. Observe que a classe padrão agora usa o modo de formato de arquivo nativo mode=files. Todos os outros modos estão comentados. Cada seção é uma classe. A única classe não comentada neste momento é a default. Se você quiser ter classes diferentes para arquivos diferentes, precisará criar novas seções (classes).
 
-![A configuração de exemplo musiconhold.conf, listando os modos MOH válidos (quietmp3, mp3, custom, files, …)](../images/13-pbx-features-fig10.png)
+![A configuração de exemplo musiconhold.conf, listando os modos de MOH válidos (quietmp3, mp3, custom, files, …)](../images/13-pbx-features-fig10.png)
 
 ```
 ; Music on Hold -- Sample Configuration
@@ -464,7 +360,7 @@ directory=/var/lib/asterisk/moh
 
 ### Tarefas de configuração de MOH
 
-Agora, para usar música de espera, defina a classe MOH nos arquivos de configuração de canal (chan_dahdi.conf, pjsip.conf, iax.conf, e assim por diante). Para endpoints PJSIP, defina `moh_suggest` na seção endpoint de `pjsip.conf` (o nome de opção legado `musicclass` aplica-se ao chan_dahdi e outros drivers de canal, não ao PJSIP). As músicas freeplay instaladas agora estão no formato wav. No momento da instalação, você pode selecionar (usando make menuselect) os formatos de arquivo MOH disponíveis. Se você quiser adicionar novos arquivos MOH, terá que fornecê-los nos formatos necessários. Por exemplo:
+Agora, para usar música em espera, defina a classe de MOH nos arquivos de configuração do canal (chan_dahdi.conf, pjsip.conf, iax.conf, e assim por diante). Para endpoints PJSIP, defina `moh_suggest` na seção de endpoint do `pjsip.conf` (o nome da opção legada `musicclass` se aplica ao chan_dahdi e outros drivers de canal, não ao PJSIP). As músicas freeplay instaladas agora estão no formato wav. No momento da instalação, você pode selecionar (usando make menuselect) os formatos de arquivo de MOH disponíveis. Se você quiser adicionar novos arquivos de MOH, terá que fornecê-los nos formatos necessários. Por exemplo:
 
 ```
 In /etc/asterisk/chan_dahdi.conf, add the line:
@@ -476,18 +372,18 @@ mode=files
 directory=/var/lib/asterisk/moh
 ```
 
-No dialplan, você pode ouvir a MOH usando o seguinte exemplo:
+No dialplan, você pode iniciar a música em espera em um canal com `StartMusicOnHold` (e pará-la com `StopMusicOnHold`):
 
 ```
-Exten=>100,1,SetMusicOnHold(default)
-Exten=>100,2,Dial(DAHDI/2)
+exten => 100,1,StartMusicOnHold(default)
+ same => n,Dial(PJSIP/2)
 ```
 
-Para configurar o arquivo extensions.conf para testar a MOH:
+Para tocar música em espera por um tempo fixo como um teste rápido, use a aplicação `MusicOnHold` com uma duração (em segundos):
 
 ```
 [local]
-exten => 6601,1,WaitMusicOnHold(30)
+exten => 6601,1,MusicOnHold(default,30)
 ```
 
 ## Mapas de aplicação
@@ -497,36 +393,36 @@ Os mapas de aplicação permitem que você adicione novos recursos usando a seç
 ## Quiz
 
 1. Quais afirmações são verdadeiras sobre o estacionamento de chamadas?
-   - A. Por padrão, o ramal 800 é usado para estacionamento de chamadas.
+   - A. Por padrão, a extensão 800 é usada para estacionamento de chamadas.
    - B. Quando você está longe da sua mesa e recebe uma chamada, você pode estacioná-la; o sistema anuncia o slot de estacionamento, e você disca esse slot de qualquer telefone para recuperar a chamada.
-   - C. Por padrão, o ramal 700 estaciona uma chamada, e as chamadas são estacionadas nos slots 701–720.
+   - C. Por padrão, a extensão 700 estaciona uma chamada, e as chamadas são estacionadas nos slots 701–720.
    - D. Você disca 700 para recuperar uma chamada estacionada.
-2. Para usar o recurso de captura de chamadas, todos os ramais devem estar no mesmo ___. Para canais DAHDI, isso é configurado no arquivo ___.
-3. Ao transferir uma chamada, você pode escolher entre uma transferência ___, onde o destino não é consultado primeiro, e uma transferência ___, onde você fala com o destino antes de concluir.
+2. Para usar o recurso de captura de chamadas, todas as extensões devem estar no mesmo ___. Para canais DAHDI, isso é configurado no arquivo ___.
+3. Ao transferir uma chamada, você pode escolher entre uma transferência ___ , onde o destino não é consultado primeiro, e uma transferência ___, onde você fala com o destino antes de completá-la.
 4. Para fazer uma transferência assistida (consultiva), você usa a sequência ___; para uma transferência cega, você usa ___.
    - A. #1, *2
    - B. *2, #1
    - C. #2, #1
    - D. #1, #2
 5. Para hospedar chamadas em conferência no Asterisk 22, você usa a aplicação ___.
-6. No ConfBridge, um participante recebe privilégios de administrador (expulsar, colocar outros no mudo, bloquear a sala) definindo ___ em seu perfil de usuário (`confbridge.conf`):
+6. No ConfBridge, um participante recebe privilégios de administrador (expulsar, silenciar outros, bloquear a sala) definindo ___ em seu perfil de usuário (`confbridge.conf`):
    - A. admin=yes
    - B. marked=yes
    - C. moderator=yes
    - D. type=admin
-7. O melhor formato para música de espera é MP3, porque ele usa muito pouco poder de processamento no servidor Asterisk.
+7. O melhor formato para música em espera é MP3, porque ele usa muito pouco poder de processamento no servidor Asterisk.
    - A. Verdadeiro
    - B. Falso
-8. Para capturar uma chamada de um grupo de chamada específico, você deve estar no grupo de ___ correspondente.
-9. Você pode gravar uma chamada com a aplicação MixMonitor() ou o recurso de um toque (automon). Por padrão, o automon usa a sequência DTMF ___.
+8. Para capturar uma chamada de um grupo de chamadas específico, você deve estar no grupo de ___ correspondente.
+9. Você pode gravar uma chamada com a aplicação MixMonitor() ou o recurso de gravação com um toque (`automixmon`). Por padrão, `automixmon` usa a sequência DTMF ___.
    - A. *1
    - B. *2
-   - C. #3
+   - C. *3
    - D. #1
-10. No ConfBridge, qual opção de perfil de usuário `confbridge.conf` faz com que um participante entre no mudo (eles podem ouvir a conferência, mas não podem ser ouvidos até que o mudo seja removido)?
+10. No ConfBridge, qual opção de perfil de usuário `confbridge.conf` faz com que um participante entre no mudo (eles podem ouvir a conferência, mas não podem ser ouvidos até que o mudo seja desativado)?
     - A. startmuted=yes
     - B. listen=only
     - C. muteall=yes
     - D. quiet=yes
 
-**Respostas:** 1 — B, C · 2 — grupo de captura (pickup group); `chan_dahdi.conf` · 3 — cega; assistida · 4 — B · 5 — ConfBridge() · 6 — A · 7 — B · 8 — captura · 9 — A · 10 — A
+**Respostas:** 1 — B, C · 2 — grupo de captura; `chan_dahdi.conf` · 3 — cega; assistida · 4 — B · 5 — ConfBridge() · 6 — A · 7 — B · 8 — captura · 9 — C · 10 — A

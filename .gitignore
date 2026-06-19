@@ -33,3 +33,4 @@ src/docx-media/
 slides/node_modules/
 slides/dist*/
 slides/.slidev/
+.claude/scheduled_tasks.lock

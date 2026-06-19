@@ -1,27 +1,27 @@
-# Call Queues
+# Filas de Chamadas
 
-Call queues, também conhecidas como ACD (Automatic Call Distribution), estão se tornando cada vez mais importantes para atender chamadas de clientes de forma eficiente. Um distribuidor automático de chamadas pode ajudar a reduzir custos, aumentar o nível de serviço e melhorar as vendas, já que os distribuidores de chamadas afetam a forma como sua empresa funciona — não por alguns dias, mas por muitos anos. Em um ambiente de call center, o fator número um são as pessoas; elas são o recurso mais caro. Leva tempo, dinheiro e paciência para contratar, treinar e motivar agentes. Com um ACD, você pode maximizar a produtividade dos agentes dimensionando precisamente o número de agentes necessários, controlando atendentes bons e ruins e analisando o fluxo de chamadas.
+Filas de chamadas, também conhecidas como ACD (Distribuição Automática de Chamadas), estão se tornando cada vez mais importantes para atender chamadas de clientes com eficiência. Um distribuidor automático de chamadas pode ajudar a reduzir custos, aumentar o nível de serviço e melhorar as vendas, já que os distribuidores de chamadas afetam o funcionamento do seu negócio — não por alguns dias, mas por muitos anos. Em um ambiente de call center, o fator número um são as pessoas; elas são o recurso mais caro. É preciso tempo, dinheiro e paciência para contratar, treinar e motivar agentes. Com um ACD, você pode maximizar a produtividade dos agentes dimensionando precisamente o número de agentes necessários, controlando atendentes bons e ruins e analisando o fluxo de chamadas.
 
 ## Objetivos
 
 Ao final deste capítulo, você deverá ser capaz de:
 
-- Entender por que e como usar call queues
-- Entender a teoria básica das call queues
+- Entender por que e como usar filas de chamadas
+- Entender a teoria básica das filas de chamadas
 - Instalar e configurar o sistema de filas
 
 ## Como as filas funcionam?
 
-Call queues não são exatamente uma novidade. Quando você tem um alto fluxo de chamadas recebidas, é difícil distribuir as chamadas adequadamente. Usar uma estratégia de grupo onde o telefone toca simultaneamente em todos os agentes não parece funcionar, a menos que você tenha apenas alguns agentes. No entanto, uma call queue entregará chamadas apenas para um único agente disponível de cada vez e colocará o cliente em espera com música quando não houver agentes disponíveis. A fila funciona retendo a chamada enquanto encontra um agente desocupado para atendê-la. Um dos maiores benefícios da fila é evitar a perda de chamadas, ao mesmo tempo que oferece a possibilidade de gerar estatísticas.
+Filas de chamadas não são exatamente uma novidade. Quando você tem um alto fluxo de chamadas recebidas, é difícil distribuir as chamadas adequadamente. Usar uma estratégia de grupo onde o telefone toca simultaneamente em todos os agentes não parece funcionar, a menos que você tenha apenas alguns agentes. No entanto, uma fila de chamadas entregará chamadas apenas para um único agente disponível de cada vez e colocará o cliente em espera com música quando não houver agentes disponíveis. A fila funciona retendo a chamada enquanto encontra um agente desocupado para atendê-la. Um dos maiores benefícios da fila é evitar a perda de chamadas enquanto oferece a possibilidade de gerar estatísticas.
 
-![Uma call queue: chamadas recebidas 1-800 entram na fila e uma estratégia ACD (ringall, rrmemory, leastrecent, priority e outras) as distribui para os agentes disponíveis](../images/14-queues-fig01.png)
+![Uma fila de chamadas: chamadas 1-800 recebidas entram na fila e uma estratégia de ACD (ringall, rrmemory, leastrecent, priority e outras) as distribui para os agentes disponíveis](../images/14-queues-fig01.png)
 
-Geralmente, uma call queue funciona assim:
+Geralmente, uma fila de chamadas funciona assim:
 
 - Os agentes fazem login na fila.
 - As chamadas recebidas são enfileiradas.
 - Uma estratégia de enfileiramento para distribuir as chamadas é usada para enviar as chamadas aos agentes.
-- Música de espera (MOH) é reproduzida enquanto o chamador aguarda.
+- Música de espera é reproduzida enquanto o chamador aguarda.
 - Anúncios podem ser feitos aos chamadores, notificando-os sobre o tempo de espera.
 - A chamada é atendida pelo agente e estatísticas são geradas.
 
@@ -35,13 +35,13 @@ A arquitetura ACD é formada por filas e agentes. Um agente pode estar em duas f
 
 ## Filas
 
-As filas são definidas no arquivo de configuração queues.conf. Agentes são atendentes que fazem login e são membros das filas. Agentes são definidos no arquivo agents.conf. O sistema de filas cresceu significativamente ao longo de muitas versões, tornando o arquivo de configuração extenso. Explicaremos alguns dos principais parâmetros. Parâmetros gerais
+As filas são definidas no arquivo de configuração queues.conf. Agentes são atendentes que fazem login e são membros de filas. Agentes são definidos no arquivo agents.conf. O sistema de filas cresceu significativamente ao longo de muitas versões, tornando o arquivo de configuração extenso. Explicaremos alguns dos principais parâmetros. Parâmetros gerais
 
 ```
 autofill=yes
 ```
 
-O comportamento antigo da fila era do tipo serial. A fila esperava que uma chamada fosse despachada antes de enviar a chamada seguinte para o próximo agente. Se um agente levasse 15 segundos para atender uma chamada, as outras chamadas na fila tinham que esperar até que aquela chamada fosse atendida. Para filas de alto volume, esse comportamento era ineficiente. O novo comportamento autofill=yes não espera até que uma chamada seja atendida, mas trabalha em paralelo. Você pode gravar as chamadas na fila usando a opção mixmonitor. Nesse modo, as chamadas são gravadas e mixadas ao mesmo tempo.
+O comportamento antigo da fila era do tipo serial. A fila esperava que uma chamada fosse despachada antes de enviar a chamada seguinte para o próximo agente. Se um agente leva 15 segundos para atender uma chamada, as outras chamadas na fila tinham que esperar até que aquela chamada fosse atendida. Para filas de alto volume, esse comportamento era ineficiente. O novo comportamento autofill=yes não espera até que uma chamada seja atendida, mas trabalha em paralelo. Você pode gravar as chamadas na fila usando a opção mixmonitor. Nesse modo, as chamadas são gravadas e mixadas ao mesmo tempo.
 
 ### Arquivo de configuração de filas
 
@@ -51,7 +51,7 @@ As filas são configuradas no arquivo queues.conf. Na figura, você encontrará 
 
 ### Agentes
 
-Você pode configurar seus agentes no arquivo agents.conf. Os agentes podem fazer login a partir de qualquer extension para receber chamadas. Você pode discar para um agente usando:
+Você pode configurar seus agentes no arquivo agents.conf. Os agentes podem fazer login a partir de qualquer extensão para receber chamadas. Você pode discar para um agente usando:
 
 ```
 Dial(agent/<name>)
@@ -63,9 +63,9 @@ Agente 300
 
 - Você pode verificar o status dos agentes usando o comando `agent show all`
 - o comando agentlogin é executado e o agente é associado ao canal atual.
-- O usuário disca uma extension com a aplicação agentlogin.
+- O usuário disca uma extensão com a aplicação agentlogin .
 
-![Agentes: um usuário faz login discando uma extension que executa a aplicação agentlogin, que vincula o Agente 300 ao canal atual; você pode verificar o status do agente com `agent show all`](../images/14-queues-fig04.png)
+![Agentes: um usuário faz login discando uma extensão que executa a aplicação agentlogin, que vincula o Agente 300 ao canal atual; você pode verificar o status do agente com `agent show all`](../images/14-queues-fig04.png)
 
 Você pode definir os agentes no arquivo agents.conf
 
@@ -107,17 +107,17 @@ As chamadas são distribuídas entre os membros de acordo com uma destas estrat�
 - rrordered: Igual ao rrmemory, exceto que a ordem dos membros da fila do arquivo de configuração é preservada.
 - linear: Toca os membros na ordem em que estão listados no queues.conf; para membros dinâmicos, na ordem em que foram adicionados.
 
-> **[Nota da 2ª ed.]** A estratégia `roundrobin` foi substituída por `rrmemory` nas primeiras versões do Asterisk e não está mais disponível. Remova-a da lista de estratégias se ela apareceu no texto da edição anterior. Todas as estratégias listadas acima estão confirmadas como presentes no Asterisk 22.
+A estratégia mais antiga `roundrobin` foi descontinuada no Asterisk 1.4 e removida; ela não existe mais no Asterisk 22. Use `rrmemory` (ou `rrordered`) em vez disso. As estratégias acima são o conjunto completo aceito pela opção `strategy` no Asterisk 22 `queues.conf`.
 
 ## Agentes
 
-Agentes são implementados como canais proxy. Eles podem ser usados dentro das filas. Outro uso para os canais de agente é a mobilidade de extension. O usuário pode fazer login usando qualquer telefone e receber suas chamadas. Isso permite que um usuário vá para qualquer sala para torná-la um escritório. Você pode discar para um agente no dialplan usando dial(agent/<name>). Você define os agentes no arquivo agents.conf.
+Agentes são implementados como canais proxy. Eles podem ser usados dentro das filas. Outro uso para os canais de agente é a mobilidade de extensão. O usuário pode fazer login usando qualquer telefone e receber suas chamadas. Isso permite que um usuário vá para qualquer sala para torná-la um escritório. Você pode discar para um agente no dialplan usando dial(agent/<name>). Você define agentes no arquivo agents.conf.
 
-![Mobilidade de agente: o usuário atende qualquer telefone, disca uma extension de login e informa o número do agente e a senha; após o sucesso de agentlogin(), o agente (Agente 300) está pronto para receber chamadas, e você pode verificar o status com o comando CLI `agent show all`](../images/14-queues-fig05.png)
+![Mobilidade de agente: o usuário atende qualquer telefone, disca uma extensão de login e informa o número do agente e a senha; após o sucesso de agentlogin(), o agente (Agente 300) está pronto para receber chamadas, e você pode verificar o status com o comando CLI `agent show all`](../images/14-queues-fig05.png)
 
 ### Grupos de Agentes
 
-Você pode optar por usar grupos de agentes. Esta função não leva em consideração as estratégias ACD. Você provavelmente preferirá listar todos os agentes individualmente. Se você quiser transferir para um grupo de agentes, você
+Você pode optar por usar grupos de agentes. Esta função não leva em consideração as estratégias de ACD. Você provavelmente preferirá listar todos os agentes individualmente. Se você quiser transferir para um grupo de agentes, você
 
 ```
 can use queues.conf:
@@ -128,7 +128,7 @@ use agent groups.
 
 ### O arquivo de configuração para agentes
 
-Os agentes são definidos no arquivo agents.conf. Abaixo está um exemplo funcional do arquivo.
+Agentes são definidos no arquivo agents.conf. Abaixo está um exemplo funcional do arquivo.
 
 ![Um exemplo funcional do arquivo agents.conf: uma seção geral com persistentagents, uma seção de agentes com os parâmetros padrão (autologoff, ackcall, endcall, wrapuptime, musiconhold) e duas definições de agente (300 e 301)](../images/14-queues-fig06.png)
 
@@ -138,7 +138,7 @@ O sistema de filas do Asterisk disponibiliza várias aplicações para implement
 
 ### A aplicação queue()
 
-Esta aplicação enfileira chamadas recebidas em uma call queue específica conforme definido no queues.conf. A string de opção pode conter zero ou mais dos seguintes caracteres: Além de transferir a chamada, uma chamada pode ser estacionada e depois atendida por outro usuário. A URL opcional será enviada à parte chamada se o canal a suportar. O parâmetro AGI opcional configurará um script AGI para ser executado no canal da parte chamadora assim que ela for conectada a um membro da fila. O timeout fará com que a fila falhe após um número especificado de segundos, verificado entre cada ciclo de timeout e nova tentativa. Esta aplicação define a variável de status QUEUE após a conclusão:
+Esta aplicação enfileira chamadas recebidas em uma fila de chamadas específica, conforme definido no queues.conf. A string de opções pode conter zero ou mais dos seguintes caracteres: Além de transferir a chamada, uma chamada pode ser estacionada e depois atendida por outro usuário. A URL opcional será enviada à parte chamada se o canal suportar. O parâmetro AGI opcional configurará um script AGI para ser executado no canal da parte chamadora assim que ela for conectada a um membro da fila. O timeout fará com que a fila falhe após um número especificado de segundos, verificado entre cada ciclo de timeout e nova tentativa. Esta aplicação define a variável de status QUEUE após a conclusão:
 
 ![A aplicação queue(): sua sintaxe `Queue(queuename[|options[|URL][|announceoverride][|timeout][|AGI]])` e as opções de letra única disponíveis (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
 
@@ -181,9 +181,9 @@ Algumas aplicações e comandos de console são capazes de ajudar no trabalho co
 
 A figura abaixo resume as principais tarefas para criar um sistema de filas funcional.
 
-![As tarefas de configuração do ACD: (1) criar a call queue (obrigatório), (2) definir parâmetros de agente (opcional), (3) criar agentes (opcional), (4) colocar a fila no dialplan (obrigatório), (5) configurar gravação de agente (opcional) e (6) verificar com agent show all e queue show (opcional)](../images/14-queues-fig10.png)
+![As tarefas de configuração do ACD: (1) criar a fila de chamadas (obrigatório), (2) definir parâmetros de agente (opcional), (3) criar agentes (opcional), (4) colocar a fila no dialplan (obrigatório), (5) configurar gravação de agente (opcional) e (6) verificar com agent show all e queue show (opcional)](../images/14-queues-fig10.png)
 
-Passo 1: Criar a call queue No arquivo queues.conf:
+Passo 1: Criar a fila de chamadas No arquivo queues.conf:
 
 ```
 [telemarketing]
@@ -317,7 +317,7 @@ O sistema de filas do Asterisk possui alguns recursos avançados para priorizar 
 
 ### Menu de usuário
 
-Você pode definir um menu para um usuário enquanto ele aguarda na fila usando extensões de um dígito. Para ativar esta opção, defina um context na configuração da fila queues.conf.
+Você pode definir um menu para um usuário enquanto ele aguarda na fila usando extensões de um dígito. Para habilitar esta opção, defina um context na configuração da fila queues.conf.
 
 ### Penalidade
 
@@ -351,11 +351,11 @@ exten=>112,3,Queue(customerservice)
 
 A aplicação `agentcallbacklogin()` foi descontinuada pela Digium no Asterisk 1.4 (julho de 2006) e não está mais disponível no Asterisk 22. A abordagem recomendada é usar `AddQueueMember()` com uma interface PJSIP para adicionar dinamicamente membros do tipo callback a uma fila. O documento `queues-with-callback-members.txt` foi incluído em diretórios mais antigos do Asterisk `/doc` para orientação de migração.
 
-> **[Nota da 2ª ed.]** Verifique se o driver de canal `chan_agent` (app_agent_pool) ainda é o mecanismo preferido para o comportamento de callback de agente no Asterisk 22, ou se membros PJSIP diretos com `AddQueueMember()`/`RemoveQueueMember()` é agora o padrão.
+O antigo driver de canal `chan_agent` também foi removido; sua funcionalidade foi reescrita como o módulo `app_agent_pool`, que é o que fornece `AgentLogin()`, `AgentRequest()` e a função de dialplan `AGENT()` no Asterisk 22 (estes ainda estão presentes — o `app_agent_pool.so` acompanha uma compilação padrão do 22). Para call centers modernos, no entanto, o padrão é pular os canais de agente inteiramente e adicionar o dispositivo PJSIP do agente diretamente à fila com `AddQueueMember()`/`RemoveQueueMember()` (estaticamente no `queues.conf`, ou dinamicamente a partir do dialplan ou AMI). Isso é mais simples, integra-se perfeitamente ao estado do dispositivo PJSIP e é a abordagem usada ao longo deste capítulo.
 
 ## Estatísticas de fila
 
-Todos os eventos das filas são registrados em /var/log/asterisk/queue_log. O formato do log da fila é publicado no documento queuelog.txt no diretório /doc da documentação do Asterisk. Abaixo estão alguns dos eventos mais importantes registrados.
+Todos os eventos das filas são registrados em /var/log/asterisk/queue_log. O formato do log da fila é publicado no documento queuelog.txt no diretório /doc da documentação do Asterisk. Abaixo estão alguns dos eventos registrados mais importantes.
 
 - ABANDON(position|origposition|waittime)
 - AGENTDUMP
@@ -375,18 +375,18 @@ Todos os eventos das filas são registrados em /var/log/asterisk/queue_log. O fo
 - RINGNOANSWER(ringtime)
 - SYSCOMPAT
 
-Você pode criar seu próprio utilitário para processar esses eventos ou usar um pacote de estatísticas pronto para uso. Testamos dois utilitários na voip.school:
+Você pode criar seu próprio utilitário para processar esses eventos ou usar um pacote de estatísticas pronto para uso:
 
-- Qlog analyzer (http://www.micpc.com/qloganalyzer/) – Excelente pacote open source
-- Queue metrics (http://queuemetrics.com/) – Um dos pacotes mais completos para estatísticas de fila
+- **QueueMetrics** (<https://www.queuemetrics.com/>) – um pacote comercial, mantido ativamente, que analisa o `queue_log` e continua sendo uma das ferramentas de relatório mais completas para call centers Asterisk.
+- **Crie o seu próprio** – como o formato `queue_log` acima é estável e bem documentado, é simples analisá-lo com um pequeno script (Python, etc.) e alimentar os eventos em um banco de dados ou painel.
 
-> **[Nota da 2ª ed.]** Verifique se ambas as ferramentas de estatísticas de terceiros acima ainda são mantidas e compatíveis com o formato queue_log do Asterisk 22. Considere adicionar uma referência à Asterisk REST Interface (ARI) como uma alternativa moderna para construir integrações personalizadas de relatórios de fila.
+Para uma abordagem mais orientada a eventos do que monitorar o `queue_log`, a **Asterisk REST Interface (ARI)** e as ações do **AMI** `QueueSummary`/`QueueStatus` permitem que você crie painéis de fila ao vivo e integrações personalizadas contra o estado da fila em tempo real, em vez de analisar logs após o fato. A ARI é a superfície de integração moderna e suportada para esse tipo de trabalho no Asterisk 22.
 
 ## Resumo
 
 Neste capítulo, você aprendeu como usar um ACD, sua arquitetura e como configurá-lo. Alguns recursos avançados, como prioridades e penalidades, também foram apresentados.
 
-## Quiz
+## Questionário
 
 1. Quais das seguintes são estratégias de distribuição de fila válidas no `queues.conf` (escolha todas as que se aplicam)?
    - A. ringall
@@ -395,7 +395,7 @@ Neste capítulo, você aprendeu como usar um ACD, sua arquitetura e como configu
    - D. fewestcalls
    - E. rrmemory
    - F. linear
-2. Você pode gravar uma conversa entre um agente e um cliente a partir da fila definindo a opção ___ no arquivo `queues.conf`.
+2. Você pode gravar uma conversa entre um agente e um cliente de dentro da fila definindo a opção ___ no arquivo `queues.conf`.
 3. Qual `strategy` toca os membros na ordem exata em que estão listados no `queues.conf`?
    - A. random
    - B. wrandom
@@ -403,7 +403,7 @@ Neste capítulo, você aprendeu como usar um ACD, sua arquitetura e como configu
    - D. fewestcalls
 4. Quando o agente termina uma chamada no exemplo de telemarketing, quais ações ele pode tomar (escolha todas as que se aplicam)?
    - A. Pressionar `*` para desconectar e permanecer na fila
-   - B. Desligar o telefone e desconectar da fila
+   - B. Desligar o telefone e desconectar-se da fila
    - C. Pressionar `#8000` para transferir a chamada para auditoria
    - D. Pressionar `#` para sair de todas as filas imediatamente
 5. Quais duas tarefas são *obrigatórias* para obter uma fila funcional (escolha todas as que se aplicam)?
@@ -412,22 +412,22 @@ Neste capítulo, você aprendeu como usar um ACD, sua arquitetura e como configu
    - C. Configurar parâmetros de agente
    - D. Configurar gravação
    - E. Colocar a fila no dialplan
-6. Em uma call queue, você pode oferecer um menu de um dígito que o chamador pode discar enquanto aguarda. Isso é ativado definindo um(a) ___ na seção ___ da fila:
+6. Em uma fila de chamadas, você pode oferecer um menu de um dígito que o chamador pode discar enquanto aguarda. Isso é habilitado definindo um(a) ___ na seção `queues.conf` da fila:
    - A. agent
    - B. menu
    - C. context
    - D. application
 7. As aplicações de suporte `AddQueueMember()` e `RemoveQueueMember()` são usadas no ___ para adicionar ou remover membros em tempo de execução:
    - A. dialplan
-   - B. command-line interface
+   - B. interface de linha de comando
    - C. queues.conf
    - D. agents.conf
 8. Como o chan_sip foi removido no Asterisk 21, um membro de fila estático deve referenciar um canal como ___ em vez de `SIP/1001`.
 9. O parâmetro `wrapuptime` é o tempo mínimo após um agente desconectar uma chamada antes que a fila envie uma nova chamada para esse agente.
-   - A. True
-   - B. False
+   - A. Verdadeiro
+   - B. Falso
 10. Um chamador pode receber uma posição mais alta na mesma fila definindo a variável de canal `QUEUE_PRIO` antes de chamar `Queue()`.
-    - A. True
-    - B. False
+    - A. Verdadeiro
+    - B. Falso
 
-**Respostas:** 1 — A, C, D, E, F (roundrobin foi substituído por rrmemory e não existe mais) · 2 — `monitor-format` (a gravação a partir da fila é ativada especificando `monitor-format`; `monitor-type` seleciona MixMonitor vs Monitor) · 3 — C (linear) · 4 — A, B, C (`*` desconecta e permanece; `#` não é uma tecla de sair de tudo) · 5 — A, E · 6 — C (a opção `context`) · 7 — A (o dialplan) · 8 — `PJSIP/1001` (qualquer interface `PJSIP/`) · 9 — True · 10 — True
+**Respostas:** 1 — A, C, D, E, F (roundrobin foi substituído por rrmemory e não existe mais) · 2 — `monitor-format` (a gravação a partir da fila é ativada especificando `monitor-format`; `monitor-type` seleciona MixMonitor vs Monitor) · 3 — C (linear) · 4 — A, B, C (`*` desconecta e permanece; `#` não é uma tecla de sair de tudo) · 5 — A, E · 6 — C (a opção `context`) · 7 — A (o dialplan) · 8 — `PJSIP/1001` (qualquer interface `PJSIP/`) · 9 — Verdadeiro · 10 — Verdadeiro

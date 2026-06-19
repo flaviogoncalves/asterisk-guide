@@ -311,15 +311,21 @@ mysql> show tables;
 
 Step 5: The database is already configured for ODBC (since the CDR lab), so no further ODBC setup is needed here.
 
-Step 6: Install phpMyAdmin to handle database tasks
+Step 6: Inspect and populate the tables from the MySQL client. You do not need a graphical tool such as phpMyAdmin — every step in this chapter is plain, copy-pasteable SQL run from the `mysql` command line. Connect to the `astdb` database (use `supersecret` when prompted):
 
 ```
-apt-get install phpmyadmin
+mysql -u astdb -p astdb
 ```
 
-Below are two screenshots of the utility's log-in screen and the table screen. Use astdb/supersecret as name and password.
+You can confirm the columns of a table at any time with `DESCRIBE`, for example:
 
-> **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
+```
+mysql> DESCRIBE ps_endpoints;
+mysql> DESCRIBE ps_auths;
+mysql> DESCRIBE ps_aors;
+```
+
+These tables were created by the Alembic `config` migration, so their columns already match the `pjsip.conf` option names for the running Asterisk version — you only fill in the columns you need.
 
 ## Lab: Configuring and testing ARA
 
@@ -345,33 +351,25 @@ extensions => odbc,cdr,extensions
 
 Note the `ps_endpoints`, `ps_aors`, `ps_auths`, and `ps_contacts` families above; together with the matching `sorcery.conf` mappings (see the "PJSIP Realtime (Sorcery)" section) they make PJSIP read its accounts from the database. The `voicemail` and `extensions` families round out the example.
 
-Step 2: Real Time extension test. Using phpMyAdmin, create a new `6010` endpoint by inserting one row into each of `ps_auths`, `ps_aors`, and `ps_endpoints`, then try to register this endpoint with a softphone.
+Step 2: Real Time extension test. Create a new `6010` endpoint by inserting one row into each of `ps_auths`, `ps_aors`, and `ps_endpoints`, then try to register this endpoint with a softphone. Run the following SQL in the `mysql` client (`mysql -u astdb -p astdb`):
 
-```
--- ps_auths
-id=6010-auth, auth_type=userpass, username=6010, password=supersecret
--- ps_aors
-id=6010, max_contacts=1
--- ps_endpoints
-id=6010, transport=transport-udp, aors=6010, auth=6010-auth
-```
+```sql
+INSERT INTO ps_auths (id, auth_type, username, password)
+VALUES ('6010-auth', 'userpass', '6010', 'supersecret');
 
-> **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
+INSERT INTO ps_aors (id, max_contacts)
+VALUES ('6010', 1);
 
-The remaining account settings are spread across the PJSIP objects. Context, codecs, DTMF mode, and media handling live on the endpoint; dynamic registration lives on the AOR:
-
-```
--- ps_endpoints columns for 6010
-context=from-internal
-disallow=all
-allow=ulaw
-dtmf_mode=rfc4733
-direct_media=no
--- ps_aors: dynamic registration is implicit; the AOR accepts
---          registrations and the contact is written to ps_contacts
+INSERT INTO ps_endpoints
+  (id, transport, aors, auth, context, disallow, allow, dtmf_mode, direct_media)
+VALUES
+  ('6010', 'transport-udp', '6010', '6010-auth', 'from-internal',
+   'all', 'ulaw', 'rfc4733', 'no');
 ```
 
-In PJSIP the RFC 2833 / RFC 4733 DTMF mode is named `rfc4733` (`dtmf_mode=rfc4733`, the default). There is no separate "dynamic" flag for registration: an AOR accepts dynamic REGISTERs as long as it allows at least one contact (`max_contacts` greater than zero), and each registered location is written to `ps_contacts`.
+The three rows together describe one SIP account. The remaining account settings are spread across the PJSIP objects: context, codecs, DTMF mode, and media handling live on the endpoint (the last six columns above); dynamic registration lives on the AOR. There is no separate "dynamic" flag — an AOR accepts dynamic REGISTERs as long as `max_contacts` is greater than zero, and each registered location is written to `ps_contacts`.
+
+In PJSIP the RFC 2833 / RFC 4733 out-of-band DTMF mode is named `rfc4733`, and `dtmf_mode=rfc4733` is the default — so the `dtmf_mode` column above is optional and shown only for clarity.
 
 Step 3: Try to register the new phone with a softphone using username `6010` and password `supersecret`. Confirm the registration on the Asterisk CLI:
 
@@ -388,12 +386,12 @@ mysql -u astdb -p
 
 Enter password:
 
-Use supersecret when asked. Use phpMyAdmin to include an extension in the database. If you prefer, use the following commands instead in the MySQL client interface.
+Use supersecret when asked, then insert the extension row from the MySQL client:
 
-```
-use astdb;
-insert into extensions(id, context, exten, priority, app, appdata) VALUES
-('1','test', '6007','1','Dial','PJSIP/bria');
+```sql
+USE astdb;
+INSERT INTO extensions (id, context, exten, priority, app, appdata)
+VALUES ('1', 'test', '6007', '1', 'Dial', 'PJSIP/bria');
 ```
 
 Step 5: Include Asterisk Real Time in the dial plan. In the context `default`:

@@ -15,8 +15,7 @@ for brief excerpts used in published reviews.
 **Edition:** Second Edition.
 **ISBN:** *to be assigned.*
 
-> **[2nd-ed note]** Assign a **new ISBN** for the 2nd edition — do not reuse the
-> 1st-edition ISBN (9781796396973). Set the publication date here as well.
+> **[author TODO]** Assign a new 2nd-edition ISBN (do not reuse 1st-ed 9781796396973) and set the publication date before print.
 
 Many of the designations used by manufacturers and sellers to distinguish their
 products are claimed as trademarks. Where those designations appear in this book, and

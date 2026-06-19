@@ -219,9 +219,7 @@ exten=>6003,1,Gosub(stdexten,s,1(PJSIP/6003,${EXTEN}))
 
 ## Using Asterisk DB
 
-To implement call forward and black lists, we need some way to store and restore data. Fortunately, Asterisk provides a mechanism for storing and retrieving data from a built-in database called AstDB. In modern Asterisk (including Asterisk 22) AstDB is backed by **SQLite3** (the file `/var/lib/asterisk/astdb.sqlite3`); older versions used Berkeley DB v1. This is similar to the Windows registry database using the family and keys hierarchical concept. The data persist between Asterisk restarts.
-
-> **[2nd-ed note]** Since Asterisk 10 the AstDB is stored in SQLite3 (`astdb.sqlite3`), not the legacy Berkeley DB v1 file used by Asterisk 1.8 and earlier. The family/key API is unchanged.
+To implement call forward and black lists, we need some way to store and restore data. Fortunately, Asterisk provides a mechanism for storing and retrieving data from a built-in database called AstDB. In modern Asterisk (including Asterisk 22) AstDB is backed by **SQLite3** (the file `/var/lib/asterisk/astdb.sqlite3`); Asterisk 1.8 and earlier used Berkeley DB v1. This is similar to the Windows registry database using the family and keys hierarchical concept. The data persist between Asterisk restarts. The family/key API is unchanged from the older backend; only the on-disk storage format changed.
 
 ### Functions, applications, and CLI commands
 
@@ -240,10 +238,10 @@ exten=s,1,set(temp=${DB(CFBS/${EXTEN})})
 
 Some applications can be used to manipulate AstDB:
 
-- DB_DELETE(<family/key>) — function that returns and deletes a key (the old `DBdel()` application was removed)
-- DBdeltree(<family>)
+- DB_DELETE(<family/key>) — function that returns and deletes a single key
+- DBdeltree(<family>) — application that deletes a whole family/subtree
 
-> **[2nd-ed note]** The `DBdel()` application no longer exists in Asterisk 22. Delete a single key with the `DB_DELETE()` dialplan function — e.g. `Set(x=${DB_DELETE(family/key)})` or, as a write operation, `Set(DB_DELETE(family/key)=)`. `DBdeltree()` (delete a whole family/subtree) is still an application.
+The old `DBdel()` application no longer exists in Asterisk 22. Delete a single key with the `DB_DELETE()` dialplan function — e.g. `Set(x=${DB_DELETE(family/key)})` or, as a write operation, `Set(DB_DELETE(family/key)=)`. `DBdeltree()` (delete a whole family/subtree) is still an application.
 
 It is possible to use CLI commands to set and delete keys as well:
 
@@ -288,35 +286,26 @@ exten=_4XXX,1,gosub(stdexten,s,1(${EXTEN}))
 
 ## Using a blacklist
 
-> **[2nd-ed note]** The `LookupBlacklist()` application was **removed** (it disappeared with the old "priority+101 jump" mechanism well before Asterisk 22 — confirmed not registered in the 22.10.0 lab). Implement a blacklist instead with the `DB()`/`DB_EXISTS()` functions plus `GotoIf`, for example:
->
-> ```
-> exten => s,1,GotoIf($[${DB_EXISTS(blacklist/${CALLERID(num)})}]?blocked,s,1)
-> exten => s,n,Dial(PJSIP/4000,20,tT)
-> exten => s,n,Hangup()
-> ```
->
-> The example below is retained for historical reference; the `j` option and the `n+101` priority jump no longer exist.
-
-To create a blacklist, we use the LookupBlacklist() application. The application checks the name/number in the caller ID. If the number is not found, the application sets the variable $LOOKUPBLSTATUS to NOTFOUND. If the number is found, the application sets the variable to FOUND. You can use the “j” option in the application to use the old (1.0) behavior, jumping 101 positions if the number/name is found. Example:
+The old `LookupBlacklist()` application was **removed** from Asterisk (it disappeared together with the legacy "priority+101 jump" mechanism). In Asterisk 22 you build a blacklist directly with the `DB_EXISTS()` function (which both tests for a key and, when found, exposes its value in `${DB_RESULT}`) plus `GotoIf`. Store each blocked number as a key in a `blacklist` family, then check the caller ID at the top of your incoming context:
 
 ```
 [incoming]
-exten => s,1,LookupBlacklist(j)
-exten => s,2,Dial(PJSIP/4000,20,tTj)
-exten => s,3,Hangup()
-exten => s,102,Goto(blocked,s,1)
+exten => s,1,GotoIf($[${DB_EXISTS(blacklist/${CALLERID(num)})}]?blocked,s,1)
+exten => s,n,Dial(PJSIP/4000,20,tT)
+exten => s,n,Hangup()
 [blocked]
 exten => s,1,Answer()
 exten => s,2,Playback(blockedcall)
 exten => s,3,Hangup()
 ```
 
+`DB_EXISTS(blacklist/${CALLERID(num)})` returns `1` when the caller's number is present in the database (sending the call to the `blocked` context) and `0` otherwise, so the call proceeds to the normal `Dial()`.
+
 To insert a number in the blacklist, we can use the same resource as before, using *31* followed by the extensions to be blacklisted. To remove a number from the blacklist, you should use #31# followed by the number to be removed.
 
 ```
 [apps]
-exten=>_*31*X.,1,Set(DB(blacklist/${EXTEN}=1})
+exten=>_*31*X.,1,Set(DB(blacklist/${EXTEN:4})=1)
 exten=>_*31*X.,2,Hangup()
 exten=>_#31#X.,1,Set(x=${DB_DELETE(blacklist/${EXTEN:4})})
 exten=>_#31#X.,2,Hangup()
@@ -328,7 +317,7 @@ You can also insert the numbers in the blacklist using the console CLI:
 CLI>database put blacklist <name/number> 1
 ```
 
-Note: Any value can be associated with the key. The blacklist application will search for the key, not the value. To erase the number from the blacklist, you can use:
+Note: Any value can be associated with the key. The `DB_EXISTS()` test searches for the key, not the value. To erase the number from the blacklist, you can use:
 
 ```
 CLI>database del blacklist <name/number>
@@ -342,7 +331,7 @@ In the following figure, we have a dial plan with three contexts. The [incoming]
 include => context,<times>,<weekdays>,<mdays>,<months>
 ```
 
-> **[2nd-ed note]** Modern Asterisk (incl. 22) separates the time-include fields with **commas**, not pipes. The legacy pipe form (`include => context|times|weekdays|mdays|months`) is parsed as a plain literal context name and silently fails to apply any time condition. Verified in the Asterisk 22.10.0 lab.
+Modern Asterisk (including 22) separates the time-include fields with **commas**, not pipes. The legacy pipe form (`include => context|times|weekdays|mdays|months`) is parsed as a plain literal context name and silently fails to apply any time condition.
 
 During regular working hours, processing will be redirected to the mainmenu, where it will probably call an IVR to handle the incoming call. If the call takes place after hours, it will call the security extension defined in the ${SECURITY} variable. If the security extension does not answer the call, it will be sent to the operator’s voicemail.
 
@@ -352,13 +341,13 @@ During regular working hours, processing will be redirected to the mainmenu, whe
 
 ## Time-based messages using gotoiftime()
 
-The gotoiftime() syntax is shown below.
+The GotoIfTime() syntax is shown below.
 
 ```
-GotoIfTime(<timerange>,<daysofweek>,<daysofmonth>,<months>[,<timezone>]?[[context,]extension,]pri)
+GotoIfTime(times,weekdays,mdays,months[,timezone]?[labeliftrue][:labeliffalse])
 ```
 
-> **[2nd-ed note]** In Asterisk 22 the field separator is a **comma**, not a pipe (the pipe form was deprecated in Asterisk 1.6). The current documented syntax is `GotoIfTime(times,weekdays,mdays,months[,timezone]?[labeliftrue][:labeliffalse])`. An optional `timezone` field is supported.
+In Asterisk 22 the field separator is a **comma**, not a pipe (the pipe form was deprecated in Asterisk 1.6). An optional `timezone` field is supported, and each branch label uses the usual `[[context,]extension,]priority` form.
 
 This application can replace the time-based context and seems easier to understand and read. You can specify the time as follows:
 
@@ -385,8 +374,7 @@ The previous statement transfers the processing to the extension s in the normal
 DISA, or “direct inward system access,” is a system that allows users to receive a second dial tone. It permits users to dial again to another destination. It is often used by technicians when dialing long distance calls for technical support on weekends; instead of dialing from their homes directly to the destination, they call the office’s DISA number, receive a dial tone, and then call the destination. Long-distance charges incur at the company instead of the home phone.
 
 ```
-DISA(passcode[,context])
-DISA(password-file[,context])
+DISA(passcode|filename[,context[,cid[,mailbox[@context][,options]]]])
 ```
 
 Example:
@@ -398,10 +386,10 @@ exten => s,1,DISA(no-password,default)
 Using the previous statement, the user dials the PBX and—without requiring any password—receives a dial tone. Any call using DISA will be processed using the `default` context. The arguments for this application include a global password or individual password within a file. If no context is specified, the `disa` context is assumed. If you use a password file, the complete path has to be specified. A caller ID can be specified for the DISA external dialing too. Example:
 
 ```
-numeric-passcode,context,"Flavio" <4830258590>
+exten => s,1,DISA(numeric-passcode,default,"Flavio" <4830258590>)
 ```
 
-> **[2nd-ed note]** Asterisk 22 uses commas as argument separators (the pipe form was deprecated in 1.6). The full syntax is `DISA(passcode|filename[,context[,cid[,mailbox[@context][,options]]]])`, and the default context when none is given is `disa` (not "DISA"). Verified with `core show application DISA` in the Asterisk 22.10.0 lab.
+Asterisk 22 uses commas as argument separators (the pipe form was deprecated in 1.6). The first argument is either a single passcode or the path to a passcode file, and the default context when none is given is `disa`.
 
 ## Limit simultaneous calls
 
@@ -604,7 +592,7 @@ You can configure voicemail to send a notify message to your phone when you have
 mailboxes=8590
 ```
 
-> **[2nd-ed note]** In PJSIP the mailbox hint is set with the `mailboxes` option inside the `[endpoint]` section of `pjsip.conf`, rather than `mailbox=` in `sip.conf`. MWI subscriptions are handled by `res_pjsip_mwi`. Verify the exact configuration syntax for Asterisk 22.
+In PJSIP the mailbox hint is set with the `mailboxes` option inside the endpoint section of `pjsip.conf`, rather than the old `mailbox=` of `sip.conf`. MWI subscriptions are handled by the `res_pjsip_mwi` module.
 
 ![The Comedian Mail web interface (`vmail.cgi`): the Asterisk Web-Voicemail login — enter your mailbox and password to play, save, forward, or delete voicemail from a browser. It still ships with Asterisk 22 and is installed with `make webvmail`.](../images/10-dialplan-advanced-features-img14.png)
 
@@ -805,8 +793,8 @@ exten=>_9NXXNXXXXXX,1,Dial(DAHDI/g1/${EXTEN:1},20)
 Define international calls
 
 ```
-[ldi)
-include=> ld
+[ldi]
+include=>ld
 exten=>_901X.,1,Dial(DAHDI/g1/${EXTEN:1},20)
 ```
 
@@ -859,7 +847,7 @@ With all these statements, the functionality of your dialing plan is now ready. 
 
 ## Summary
 
-In this chapter, you have learned how to receive calls using an IVR or an auto-attendant. You have studied the concept of context inclusion and implemented a few examples. subroutines were used to avoid repetitive typing, and the Asterisk database based on the Berkley DB engine was used for functions that require data storage (e.g., call forward, do not disturb, blacklists). Finally, you have learned how to implement after-hours behavior and implemented a complete dial plan using these concepts.
+In this chapter, you have learned how to receive calls using an IVR or an auto-attendant. You have studied the concept of context inclusion and implemented a few examples. subroutines were used to avoid repetitive typing, and the Asterisk database (AstDB, backed by SQLite3 in Asterisk 22) was used for functions that require data storage (e.g., call forward, do not disturb, blacklists). Finally, you have learned how to implement after-hours behavior and implemented a complete dial plan using these concepts.
 
 ## Quiz
 

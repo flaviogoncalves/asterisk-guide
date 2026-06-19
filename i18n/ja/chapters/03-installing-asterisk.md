@@ -1,39 +1,39 @@
-# Installing Asterisk 22
+# Asterisk 22のインストール
 
-第1章では、テレフォニー環境においてAsteriskがどのように役立つかを学びました。本章では、Asteriskのダウンロードとインストール方法について解説します。作業を始める前に、コンパイルとインストールの方法を学ぶことが不可欠です。コンパイルのプロセスは、従来のMicrosoft™ Windows™ユーザーには奇妙に思えるかもしれませんが、Linux™環境ではごく一般的なことです。Asteriskをコンパイルすることで、使用するハードウェアに最適化されたコードを得ることができます。これが、ここで行う作業です。Asteriskはいくつかのオペレーティングシステムで動作しますが、ここでは話を簡単にするために、Linuxのみを対象とします。依存関係のインストールが容易で、フットプリントが小さく安定しているという理由から、Linux™ディストリビューションとしてDebianを選択しました。別のディストリビューションを使用したい場合は、それに応じて依存関係の名前を変更してください。
+第1章では、テレフォニー環境においてAsteriskがどのように役立つかを学びました。本章では、Asteriskのダウンロードとインストール方法について解説します。作業を始める前に、コンパイルとインストールの方法を理解しておくことが不可欠です。コンパイルというプロセスは、従来のMicrosoft™ Windows™ユーザーには奇妙に思えるかもしれませんが、Linux™環境ではごく一般的なことです。Asteriskをコンパイルすることで、使用するハードウェアに最適化されたコードを得ることができます。本章ではその手順に従います。Asteriskは複数のオペレーティングシステムで動作しますが、ここでは簡略化のため、Linuxのみを対象とします。依存関係のインストールが容易で、安定性が高く、フットプリントが小さいことから、Linux™ディストリビューションとしてDebianを選択しました。別のディストリビューションを使用したい場合は、それに応じて依存関係のパッケージ名を変更してください。
 
-> **[2nd-ed note]** 本版は **Asterisk 22 LTS**（2024年リリース、2028年10月16日までフルサポート）を対象としています。Asterisk 22は現在の長期サポートリリースです。Digiumは **Sangoma** に買収（2018年）されており、現在AsteriskはSangomaによってスポンサーされていることに注意してください。本章全体を通して言及される「Digium」は、レガシーハードウェアの旧ブランドを指します。
+本書は **Asterisk 22 LTS**（2024年10月16日リリース。2028年10月16日までフルサポート、2029年10月16日までセキュリティ修正を提供）を対象としています。Asterisk 22は現在の長期サポート（LTS）リリースです。Digiumは2018年に **Sangoma** によって買収され、現在AsteriskはSangomaのスポンサーシップを受けていることに注意してください。本書全体を通して言及される「Digium」は、レガシーハードウェアの旧ブランド名を指します。
 
-## 目標
+## 学習目標
 
-本章を読み終えることで、以下のことができるようになります。
+本章を終えるまでに、以下のことができるようになります。
 
-- Asteriskに必要なハードウェア要件を判断する
+- Asteriskのハードウェア要件を判断する
 - 必要な依存関係を備えたLinuxをインストールする
 - HTTPS経由で安定版をダウンロードする
 - Asteriskをコンパイルする
-- 起動時にAsteriskを開始する方法を学ぶ
+- ブート時にAsteriskを起動する方法を学ぶ
 
 ## 最小ハードウェア要件
 
-Asteriskの実行に高性能なハードウェアは必要ありませんが、要件に合わせて最適なハードウェアを選択するためのヒントがいくつかあります。ハードウェアを選択する際は、以下の主要な要素を考慮する必要があります。
+Asteriskの動作に高性能なハードウェアは必要ありませんが、要件に合わせて最適なハードウェアを選択するためのヒントがいくつかあります。ハードウェアを選択する際は、以下の主要な要素を考慮する必要があります。
 
-- 登録ユーザーの総数。サポートが必要な1秒あたりの登録数を定義します
-- 同時通話の総数。Asteriskサーバーのネットワークアダプターおよびブリッジで処理する必要があるネットワーク会話の数を定義します
-- サポートが必要なcodec。複雑度の高いcodecは、サーバーのCPU/FPUパワーを大量に消費します。例えば、iLBCは作成者（Global IP Sound）によって、TI C54x DSP上で30 msフレームあたり約18 MIPS（20 msフレームでは約15 MIPS）と測定されています
-- エコーキャンセレーション。エコーキャンセレーションは多くのCPU/FPUを消費する可能性があるため、場合によってはテレフォニーインターフェースカード上のDSPを使用したハードウェアエコーキャンセレーションを選択する必要があります
+- 登録ユーザーの総数。サポートが必要な1秒あたりの登録数を定義します。
+- 同時通話の総数。Asteriskサーバー上のネットワークアダプターおよびブリッジで処理する必要があるネットワーク会話数を定義します。
+- サポートが必要なコーデック。複雑度の高いコーデックは、サーバーのCPU/FPUパワーを大量に消費します。例えば、iLBCは開発元（Global IP Sound）の測定によると、TI C54x DSP上で30msフレームあたり約18 MIPS（20msフレームでは約15 MIPS）を消費します。
+- エコーキャンセレーション。エコーキャンセレーションは多くのCPU/FPUを消費する可能性があるため、場合によってはテレフォニーインターフェースカード上のDSPを使用したハードウェアエコーキャンセレーションを選択すべきです。
 - 可用性。可用性を高めるためにRAID1または5を使用してください。Asteriskは24時間365日稼働するアプリケーションであることを忘れないでください。
 
-Asteriskサーバーの主要コンポーネントはネットワークアダプターです。優れたサーバー用ネットワークアダプターを推奨します。g.729やiLBCのような複雑度の高いcodecやエコーキャンセレーションをサポートする必要がある場合、CPUは重要です。専用のDSPを使用することも選択肢です。Sangoma（旧Digium）は、120のg729同時通話をサポート可能なTC400BというDSPカードを提供しています。ベストプラクティスは、既知のメーカーの新しいサーバークラスのコンピューターを選択することです。特定のマシンが何件の同時通話や登録ユーザーをサポートできるかを正確に知るには、SIPP（http://sipp.sourceforge.net）のようなストレステストツールを使用してハードウェアをテストする必要があります。Xorcom（http://www.xorcom.com）のような一部のハードウェアメーカーは、その結果をウェブサイトで公開しています。注意：ConfBridgeやMusic on Holdなど、一部のAsteriskアプリケーションには内部タイミングソースが必要です。最新のLinuxでは、これは組み込みの `res_timing_timerfd` モジュールによって自動的に提供されるため、テレフォニーハードウェアは不要です。（古い `dahdi_dummy` ソフトウェアタイマーは存在しなくなりました。その機能はDAHDI Linux 2.3.0でメインの `dahdi` カーネルモジュールに統合されました。）アクティブなタイマーは、CLIコマンド `timing test` で確認できます。
+Asteriskサーバーの主要コンポーネントはネットワークアダプターです。優れたサーバー用ネットワークアダプターを推奨します。g.729やiLBCのような複雑度の高いコーデックやエコーキャンセレーションをサポートする必要がある場合、CPUは重要です。専用のDSPを使用することも可能です。Sangoma（旧Digium）は、120通話のg.729同時通話をサポート可能なTC400BというDSPカードを提供しています。ベストプラクティスは、既知のメーカーの新しいサーバークラスのコンピューターを選択することです。特定のマシンが何通話の同時通話や何人の登録ユーザーをサポートできるかを正確に知るには、SIPP（http://sipp.sourceforge.net）のような負荷テストツールを使用してハードウェアをテストする必要があります。Xorcom（http://www.xorcom.com）のような一部のハードウェアメーカーは、その結果をウェブサイトで公開しています。注意：ConfBridgeやMusic on Holdなど、一部のAsteriskアプリケーションは内部タイミングソースを必要とします。現代のLinuxでは、これは組み込みの `res_timing_timerfd` モジュールによって自動的に提供されるため、テレフォニーハードウェアは不要です。（古い `dahdi_dummy` ソフトウェアタイマーは存在しなくなりました。その機能はDAHDI Linux 2.3.0でメインの `dahdi` カーネルモジュールに統合されました。）アクティブなタイマーはCLIコマンド `timing test` で確認できます。
 
 ### ハードウェア構成
 
-Asteriskのハードウェアは洗練されている必要はありません。高価なビデオカードや多数の周辺機器は不要です。ハードウェア構成に関するいくつかのヒント：
+Asteriskのハードウェアは洗練されている必要はありません。高価なビデオカードや多数の周辺機器は不要です。ハードウェア構成に関するいくつかのヒントを挙げます。
 
 - 不要な割り込みの消費を避けるため、使用していないUSB、シリアル、パラレルポートを無効にします。
 - 堅牢なネットワークインターフェースカードが不可欠です。
-- テレフォニーインターフェースカードを使用する場合は特に注意してください。一部のカードは3.3ボルトのPCIバスを使用しており、それに対応するマザーボードを見つけるのは容易ではありません。現在では、PCI Expressの方が簡単に見つかります。
-- ハードディスクには細心の注意を払ってください。PBXは24時間365日の体制で動作しますが、デスクトップは8時間×5日です。PBXにデスクトップ用ハードウェアを使用しないでください。通常、ハードディスクは1年以内に故障します。サーバーマシン、または24時間365日のアプリケーションを実行するように設計されたアプライアンスを使用することを推奨します。
+- テレフォニーインターフェースカードを使用する場合は特に注意してください。一部のカードは3.3ボルトのPCIバスを使用しますが、これに対応するマザーボードを見つけるのは容易ではありません。現在では、PCI Expressの方が容易に入手できます。
+- ハードディスクには細心の注意を払ってください。PBXは24時間365日稼働しますが、デスクトップPCは8時間×5日稼働を想定しています。PBXにデスクトップ用ハードウェアを使用しないでください。通常、ハードディスクは1年以内に故障します。サーバーマシン、または24時間365日のアプリケーションを実行するように設計されたアプライアンスを使用することを推奨します。
 
 ### IRQ共有
 
@@ -57,11 +57,11 @@ NMI: 0
 ERR: 0
 ```
 
-ここでは、それぞれが独自のIRQを持つ3枚のDigiumカードを確認できます。システムがこの状態であれば、ハードウェアドライバーのインストールに進んでください。そうでない場合は、戻ってIRQ共有を避けるための別の方法を試してください。
+ここでは3枚のDigiumカードが表示されており、それぞれが独自のIRQを使用しています。システムがこの状態であれば、ハードウェアドライバーのインストールに進んでください。そうでない場合は、戻ってIRQ共有を避けるための対策を講じてください。
 
 ## Linuxディストリビューションの選択
 
-Asteriskは当初、Linux上で動作するように開発されました。しかし、BSD UnixやmacOSでも動作可能です。Asteriskが初めてであれば、はるかに簡単なLinuxを最初に試してください。Asteriskは公式にRHELファミリー（CentOS/RHEL/Fedora）、Ubuntu、Debianをターゲットとしています。今日、実用的な選択肢として優れているのは **Debian 12**、**Ubuntu 22.04 LTS / 24.04 LTS**、**Rocky Linux 9 / AlmaLinux 9** です。CentOS Linuxはサポートが終了しているため、RHELファミリーのシステムではRockyまたはAlmaLinuxを優先してください。本書ではUbuntu 24.04 LTSを使用します。以下の公式リリースディレクトリから最新の24.04ポイントリリースサーバーイメージをダウンロードしてください（正確なファイル名は現在のポイントリリースを含みます。例： `ubuntu-24.04.4-live-server-amd64.iso`）：
+Asteriskは当初、Linux上で動作するように開発されました。しかし、BSD UnixやmacOS上でも動作可能です。Asteriskが初めてであれば、はるかに簡単なLinuxから試してください。Asteriskは公式にRHELファミリー（CentOS/RHEL/Fedora）、Ubuntu、Debianをターゲットとしています。今日、実用的な選択肢として適しているのは **Debian 12**、**Ubuntu 22.04 LTS / 24.04 LTS**、**Rocky Linux 9 / AlmaLinux 9** です。CentOS Linuxはサポートが終了しているため、RHELファミリーのシステムではRockyまたはAlmaLinuxを優先してください。本書ではUbuntu 24.04 LTSを使用します。以下の公式リリースディレクトリから最新の24.04ポイントリリースサーバーイメージをダウンロードしてください（正確なファイル名は現在のポイントリリースを含みます。例： `ubuntu-24.04.4-live-server-amd64.iso`）。
 
 ```
 https://releases.ubuntu.com/24.04/
@@ -69,22 +69,22 @@ https://releases.ubuntu.com/24.04/
 
 ### AsteriskのためのLinux準備
 
-Asteriskのインストール直後に、AsteriskおよびDAHDIドライバーのコンパイルに必要なパッケージをインストールします。まず、パッケージのダウンロード元をDebianに指定します。これはapt-setupユーティリティを使用して行います。ステップ1：仮想マシンにUbuntu 24.04 LTS Serverをインストールします（64ビットイメージを使用してください。本書で使用するディストリビューションは64ビットですが、Asterisk自体は依然として32ビットx86もサポートしています）。このトレーニングではVirtualBoxを使用しました。イメージは https://releases.ubuntu.com/24.04 からダウンロードできます。Linuxのインストールはこのトレーニングの範囲外です。Linuxの基本的な知識がこのトレーニングの前提条件となります。
+Asteriskのインストール直後に、AsteriskおよびDAHDIドライバーのコンパイルに必要なパッケージをインストールします。まず、apt-setupユーティリティを使用して、パッケージのダウンロード元をDebianに指定します。ステップ1：仮想マシンにUbuntu 24.04 LTS Serverをインストールします（64ビットイメージを使用してください。本書で使用するディストリビューションは64ビットですが、Asterisk自体は32ビットx86もサポートしています）。このトレーニングではVirtualBoxを使用しました。イメージは https://releases.ubuntu.com/24.04 からダウンロードできます。Linuxのインストール手順は本トレーニングの範囲外です。Linuxの基本的な知識は本トレーニングの前提条件となります。
 
 ## AsteriskのためのLinuxインストール
 
-グラフィカルユーザーインターフェースなしで、通常通りLinuxをインストールしてください。メールサーバーもインストールして設定します。本書の後半でボイスメール通知を送信するためにメールサーバー（exim4）が必要になります。注意：このインストールを行うとPCがフォーマットされます。ディスク内のすべてのデータが消去されます。開始前に必ずすべてのデータをバックアップしてください。ステップ1：CDをCD-ROMドライブに入れ、PCを起動します。ほとんどの質問は非常に簡単に答えられます。
+グラフィカルユーザーインターフェースを使用せず、通常通りLinuxをインストールしてください。メールサーバーもインストールして設定します。本書の後半でボイスメール通知を送信するためにメールサーバー（exim4）が必要になります。注意：このインストールによりPCがフォーマットされます。ディスク上のすべてのデータが消去されます。開始前に必ずすべてのデータをバックアップしてください。ステップ1：CDをCD-ROMドライブに入れ、PCを起動します。ほとんどの質問に対する回答は非常に単純です。
 
 ## 依存関係のインストール
 
-AsteriskとDAHDIをインストールするには、多くのソフトウェア依存関係をインストールする必要があります。Asterisk 22でこれを推奨する方法は、ソースツリーに同梱されているスクリプトを使用することです。このスクリプトは、サポートされている各ディストリビューションの正しいパッケージ名を知っています。Asteriskのソースをダウンロードして展開した後（以下の「Asteriskのコンパイル」を参照）、以下を実行します：
+AsteriskとDAHDIをインストールするには、多くのソフトウェア依存関係をインストールする必要があります。Asterisk 22でこれを実行する推奨方法は、ソースツリーに付属のスクリプトを使用することです。このスクリプトは、サポートされている各ディストリビューションの正しいパッケージ名を知っています。Asteriskソースをダウンロードして展開した後（以下の「Asteriskのコンパイル」を参照）、以下を実行します。
 
 ```
 cd /usr/src/asterisk-22.x.y
 ./contrib/scripts/install_prereq install
 ```
 
-ステップ1：rootとしてログインします（または `sudo` を使用します）。ステップ2：Debian/Ubuntuシステムで依存関係を手動でインストールしたい場合、同等のパッケージリストは以下の通りです：
+ステップ1：rootとしてログインします（または `sudo` を使用します）。ステップ2：Debian/Ubuntuシステムで依存関係を手動でインストールしたい場合、同等のパッケージリストは以下の通りです。
 
 ```
 apt-get install build-essential git wget openssl libssl-dev libxml2-dev \
@@ -92,17 +92,17 @@ apt-get install build-essential git wget openssl libssl-dev libxml2-dev \
   libcurl4-openssl-dev pkg-config autoconf
 ```
 
-> **[2nd-ed note]** 元のリストは `subversion`、 `libnewt-dev`、および `libncurses5-dev` を参照していました。Asteriskのソースは現在Gitでホストされており（Subversionは不要になりました）、最新のDebian/Ubuntuはバージョン付きの `libncurses5-dev` ではなく `libncurses-dev` を提供しています。手動で管理するリストよりも `./contrib/scripts/install_prereq install` を優先してください。
+Asteriskソースは現在Gitでホストされているため、 `subversion` は不要です。また、現代のDebian/Ubuntuはバージョン付きの `libncurses5-dev` ではなく `libncurses-dev` を提供しています。スクリプトは常にディストリビューションの正しいパッケージ名を追跡するため、手動で管理するリストよりも `./contrib/scripts/install_prereq install` を優先してください。
 
 ### DAHDI
 
-DAHDI（Digium/Sangoma Asterisk Hardware Device Interface）は、アナログおよびデジタルカード用のドライバーアーキテクチャです。アナログまたはデジタルインターフェースを使用する予定がある場合は、Asteriskをインストールする前にDAHDIをインストールすることが重要です。DAHDIはアナログ/デジタルテレフォニーカードのために依然として存在しますが、ますますニッチな存在になっています。最新の展開のほとんどは純粋なVoIPであり、このセクションを完全にスキップできます。物理的なテレフォニーインターフェースハードウェアがある場合のみDAHDIをインストールしてください。以下のコマンドでソースファイルを取得します：
+DAHDI（Digium/Sangoma Asterisk Hardware Device Interface）は、アナログおよびデジタルカード用のドライバーアーキテクチャです。アナログまたはデジタルインターフェースを使用する予定がある場合は、Asteriskをインストールする前にDAHDIをインストールすることが重要です。DAHDIはアナログ/デジタルテレフォニーカードのために依然として存在しますが、ますますニッチな存在になっています。現代の導入のほとんどは純粋なVoIPであり、このセクションを完全にスキップできます。物理的なテレフォニーインターフェースハードウェアがある場合のみDAHDIをインストールしてください。以下のコマンドでソースファイルを取得します。
 
 ```
 wget https://downloads.asterisk.org/pub/telephony/dahdi-linux-complete/dahdi-linux-complete-current.tar.gz
 ```
 
-以下のコマンドでファイルを解凍します：
+以下のコマンドでファイルを解凍します。
 
 ```
 tar -xzvf dahdi-linux-complete-current.tar.gz
@@ -110,7 +110,7 @@ tar -xzvf dahdi-linux-complete-current.tar.gz
 
 ### DAHDIドライバーのコンパイル
 
-DAHDIモジュールをコンパイルする必要があります。./configureおよびmake menuselectコマンドは数年前に導入されました。後者は、どのユーティリティとモジュールをビルドするかを選択できるようにします。以下のコマンドでこれを行います：
+DAHDIモジュールをコンパイルする必要があります。./configureおよびmake menuselectコマンドは数年前に導入されました。後者は、どのユーティリティとモジュールをビルドするかを選択できるようにします。以下のコマンドでこれを実行します。
 
 ```
 cd dahdi-linux-complete-X.Y.Z+X.Y.Z/linux   # adapt to the version downloaded
@@ -123,7 +123,7 @@ make
 make install
 ```
 
-make install-configによりDAHDIが設定されました。DAHDIハードウェアがある場合は、このシステムにインストールされているDAHDIハードウェアのサポートのみをロードするように /etc/dahdi/modules を編集することを推奨します。デフォルトでは、すべてのDAHDIハードウェアのサポートがDAHDI開始時にロードされます。システム上のDAHDIハードウェアは以下の通りと思われます：usb:004/002 xpp_usb- e4e4:1150 Astribank-multi no-firmware この画面（上記）は、特定の構成に必要なドライバーのみをロードし、検出されたハードウェアを表示するために /etc/dahdi/modules ファイルを変更するように求めています。/etc/dahdi/modules ファイルを編集し、必要なハードウェアのみをロードしてください。私の場合、Xorcom Astribank 6FXSおよび2FXOを備えたテストマシンを使用していました。ファイルを以下に示します。
+make install-configによりDAHDIの設定が完了します。DAHDIハードウェアがある場合は、このシステムにインストールされているDAHDIハードウェアのサポートのみをロードするように /etc/dahdi/modules を編集することを推奨します。デフォルトでは、すべてのDAHDIハードウェアのサポートがDAHDI起動時にロードされます。システム上のDAHDIハードウェアは以下の通りと推測されます：usb:004/002 xpp_usb- e4e4:1150 Astribank-multi no-firmware。上記の画面は、特定の構成に必要なドライバーのみをロードするように /etc/dahdi/modules ファイルを変更し、検出されたハードウェアを表示するように求めています。/etc/dahdi/modules ファイルを編集し、必要なハードウェアのみをロードしてください。私の場合、Xorcom Astribank 6FXSおよび2FXOを備えたテストマシンを使用していました。ファイルは以下の通りです。
 
 ```
 # Contains the list of modules to be loaded / unloaded by /etc/init.d/dahdi.
@@ -165,13 +165,13 @@ xpp_usb
 
 ## バージョンの選択
 
-経験則として、必要な機能を備えたバージョンを使用すべきです。Asteriskは、LTS（長期サポート）と標準リリースを交互に行うリリースモデルに従っています。本書の執筆時点では、**Asterisk 22が現在のLTSリリース**（2024年リリース、2028年までサポート）であり、今選択するのに最適です。Asterisk 20は前回のLTSであり、バージョン16（初版で使用）はサポートが終了しています。本番システムでは、常にLTSリリースを選択してください。
+経験則として、必要な機能を備えたバージョンを使用すべきです。Asteriskは、LTS（長期サポート）と標準リリースを交互に行うリリースモデルを採用しています。本書執筆時点で、**Asterisk 22は最新のLTSリリース**（2024年10月リリース。最新のポイントリリースは22.10.0）であり、今選択するのに最適です。Asterisk 20は前回のLTSであり、バージョン16（初版で使用）はサポートが終了しています。本番システムでは、常にLTSリリースを選択してください。
 
-> **[2nd-ed note]** 印刷前に downloads.asterisk.org で正確な現在のポイントリリースを確認してください。執筆時点では22ブランチがアクティブなLTSです。
+> **[第2版注]** 著者/印刷時の確認のみ：downloads.asterisk.orgで最新の22.xポイントリリースを確認し、新しいリリースが出ている場合は上記のバージョン文字列を更新してください。
 
 ## Asteriskのコンパイル
 
-以前にソフトウェアをコンパイルしたことがあれば、Asteriskのコンパイルは簡単な作業です。以下のコマンドを実行してAsteriskをコンパイルおよびインストールします。make menuselectを使用して、どのアプリケーションやモジュールをビルドするかを選択できることを忘れないでください。ステップ1：ソースコードをダウンロードします
+以前にソフトウェアをコンパイルしたことがあれば、Asteriskのコンパイルは簡単な作業です。以下のコマンドを実行してAsteriskをコンパイルおよびインストールします。make menuselectを使用して、ビルドするアプリケーションとモジュールを選択できることを忘れないでください。ステップ1：ソースコードをダウンロードします。
 
 ```
 cd /usr/src
@@ -179,28 +179,28 @@ wget https://downloads.asterisk.org/pub/telephony/asterisk/asterisk-22-current.t
 tar -xzvf asterisk-22-current.tar.gz
 ```
 
-ステップ2：ビルドの前提条件をインストールします（上記の「依存関係のインストール」を参照）
+ステップ2：ビルドの前提条件をインストールします（上記の「依存関係のインストール」を参照）。
 
 ```
 cd asterisk-22.x.y (adapt to the version downloaded)
 ./contrib/scripts/install_prereq install
 ```
 
-ステップ3：ビルドを設定します
+ステップ3：ビルドを設定します。
 
 ```
 ./configure
 ```
 
-ステップ4：ビルドするモジュールを選択します
+ステップ4：ビルドするモジュールを選択します。
 
 ```
 make menuselect
 ```
 
-make menuselectを使用して、必要なモジュールのみをインストールします。Asterisk 22では、SIPチャネルは **chan_pjsip** （デフォルトでビルドされます）です。古い **chan_sip** はAsterisk 21で削除され、存在しません。Opusの *パススルー* はそのまま動作しますが（ツリー内の `res_format_attr_opus` モジュールがSDPネゴシエーションを処理します）、**codec_opus** トランスコーディングモジュールは依然としてSangoma/Digiumの外部クローズドソースバイナリです。menuselectでこれを選択すると、Digiumのサーバーからダウンロードされます。バイナリは無料です。詳細は以下の「menuselectによるモジュールの選択」を参照してください。
+make menuselectを使用して、必要なモジュールのみをインストールします。Asterisk 22では、SIPチャネルは **chan_pjsip** です（デフォルトでビルドされます）。古い **chan_sip** はAsterisk 21で削除され、存在しません。Opusの *パススルー* はそのまま動作します（ツリー内の `res_format_attr_opus` モジュールがSDPネゴシエーションを処理します）が、**codec_opus** トランスコーディングモジュールは依然としてSangoma/Digiumの外部クローズドソースバイナリです。menuselectでこれを選択すると、Digiumのサーバーからダウンロードされます。このバイナリは無料です。詳細は以下の「menuselectによるモジュールの選択」を参照してください。
 
-ステップ5：Asteriskをビルドしてインストールし、デフォルトの設定ファイルとサンプルファイルを作成します
+ステップ5：Asteriskをビルドしてインストールし、デフォルトの設定ファイルとサンプルファイルを作成します。
 
 ```
 make
@@ -210,37 +210,37 @@ make config
 ldconfig
 ```
 
-`make install` はバイナリとモジュールをインストールし、 `make samples` はサンプル設定ファイルを `/etc/asterisk` に書き込み、 `make config` は検出されたディストリビューション用のSysV init起動スクリプト（例：Debian/Ubuntu上の `/etc/init.d/asterisk`）をインストールし、 `ldconfig` は共有ライブラリキャッシュを更新します。systemdユニットもソースツリーの `contrib/systemd/asterisk.service` に同梱されていますが、 `make config` はそれを自動的にインストールしません。systemd下でAsteriskを実行したい場合は、自分で適切な場所にコピーしてください（下記参照）。
+`make install` はバイナリとモジュールをインストールし、 `make samples` はサンプル設定ファイルを `/etc/asterisk` に書き込み、 `make config` は検出されたディストリビューション用のSysV init起動スクリプト（例：Debian/Ubuntu上の `/etc/init.d/asterisk` ）をインストールし、 `ldconfig` は共有ライブラリキャッシュを更新します。systemdユニットもソースツリーの `contrib/systemd/asterisk.service` に付属していますが、 `make config` はそれを自動的にインストールしません。systemd下でAsteriskを実行したい場合は、自分で適切な場所にコピーしてください（下記参照）。
 
 ### menuselectによるモジュールの選択
 
-`make menuselect` は、ビルドするアプリケーション、codec、チャネル、リソースを正確に選択できるテキストベースのメニューを開きます。Asterisk 22に固有のいくつかの注意点：
+`make menuselect` は、ビルドするアプリケーション、コーデック、チャネル、リソースを正確に選択できるテキストベースのメニューを開きます。Asterisk 22固有の注意点：
 
-- **chan_pjsip** （*Channel Drivers* 内）は最新のSIPチャネルであり、デフォルトで有効になっています。Asterisk 22における唯一のSIPチャネルです。
-- **codec_opus** （*Codec Translators* 内）は **外部** モジュールです（menuselectのエントリには「Download the Opus codec from Digium」と表示されます）。これを有効にすると、 `make` がSangoma/Digiumから無料のクローズドソースバイナリを取得します。Opusパススルー自体には追加モジュールは不要です。Sangomaの **codec_g729** モジュールも利用可能です。バイナリは無料でダウンロードできますが、合法的なG.729トランスコーディングには、チャネルごとのライセンス購入が必要です。
-- *Core Sound Packages*、*Music On Hold File Packages*、*Extras Sound Packages* メニューで必要なサウンドフォーマットと言語を選択してください。チェックしたものはすべて、 `make install` の実行中に自動的にダウンロードおよびインストールされます。
+- **chan_pjsip**（*Channel Drivers*配下）は最新のSIPチャネルであり、デフォルトで有効になっています。Asterisk 22における唯一のSIPチャネルです。
+- **codec_opus**（*Codec Translators*配下）は **外部** モジュールです（menuselectのエントリには「Download the Opus codec from Digium」と表示されます）。これを有効にすると、 `make` がSangoma/Digiumから無料のクローズドソースバイナリを取得します。Opusパススルー自体には追加モジュールは不要です。Sangomaの **codec_g729** モジュールも利用可能です。バイナリのダウンロードは無料ですが、合法的なG.729トランスコーディングには、チャネルごとのライセンス購入が必要です。
+- *Core Sound Packages*、*Music On Hold File Packages*、*Extras Sound Packages*メニューで必要なサウンドフォーマットと言語を選択してください。チェックを入れたものはすべて、 `make install` の実行中に自動的にダウンロードおよびインストールされます。
 
 選択が完了したら、**Save & Exit** を選択し、 `make` に進みます。
 
-> **[2nd-ed note]** Asterisk 22からキャプチャした新しい `make menuselect` スクリーンショットを挿入してください（初版のスクリーンショットは、現在は存在しないchan_sip/chan_skinny/chan_mgcpを表示していました）。Channel Drivers画面にはchan_pjsipが表示され、chan_sipは表示されないはずです。
+> **[第2版注]** 著者のアクション：初版の `make menuselect` スクリーンショットを、Channel Drivers画面にchan_pjsipが表示され、chan_sip/chan_skinny/chan_mgcpが表示されない最新のAsterisk 22のキャプチャに差し替えてください。
 
-## Asteriskの開始と停止
+## Asteriskの起動と停止
 
-この最小限の設定で、Asteriskを正常に開始できます。学習やデバッグのために、コンソールにアタッチした状態でAsteriskをフォアグラウンドで開始できます：
+この最小構成で、Asteriskを正常に起動できます。学習やデバッグのために、コンソールに接続した状態でフォアグラウンドでAsteriskを起動できます。
 
 ```
 /usr/sbin/asterisk –vvvgc
 ```
 
-Asteriskをシャットダウンするには、CLIコマンド stop now を使用します。
+CLIコマンド stop now を使用してAsteriskをシャットダウンします。
 
 ```
 CLI>core stop now
 ```
 
-### systemdによるAsteriskの開始
+### systemdによるAsteriskの起動
 
-最新のLinuxディストリビューション（Debian 12、Ubuntu 22.04/24.04、Rocky/AlmaLinux 9）では、システムサービスマネージャーは **systemd** です。Asteriskはソースツリーの `contrib/systemd/asterisk.service` にsystemdユニットを同梱しています。これを `/etc/systemd/system/asterisk.service` にコピーし、 `systemctl daemon-reload` を実行してください。インストール後、本番環境でAsteriskを実行する推奨方法は `systemctl` を通すことです：
+現代のLinuxディストリビューション（Debian 12、Ubuntu 22.04/24.04、Rocky/AlmaLinux 9）では、システムサービスマネージャーは **systemd** です。Asteriskはソースツリーの `contrib/systemd/asterisk.service` にsystemdユニットを同梱しています。これを `/etc/systemd/system/asterisk.service` にコピーし、 `systemctl daemon-reload` を実行してください。インストール後、本番環境でAsteriskを実行する推奨方法は `systemctl` を通すことです。
 
 ```
 systemctl start asterisk      # start the service
@@ -250,13 +250,13 @@ systemctl status asterisk     # show current status
 systemctl enable asterisk     # start automatically at boot
 ```
 
-Asteriskがサービスとして実行されたら、 `asterisk -r` （接続）または `asterisk -rvvv` （詳細出力付きで接続）を使用してCLIにアタッチします。
+Asteriskがサービスとして実行されたら、 `asterisk -r` （接続）または `asterisk -rvvv` （詳細出力付きで接続）を使用してCLIに接続します。
 
-> **[2nd-ed note]** 古いシステムでは、AsteriskはレガシーなSysV initスクリプト（ `/etc/init.d/asterisk` ）と、クラッシュ時にAsteriskを自動的に再起動する **safe_asterisk** ラッパーを介して開始されていました。systemdでは、自動再起動はユニットファイルの `Restart=` ディレクティブによって処理されるため、一般的に `safe_asterisk` は不要になりました。レガシーなinit/ `safe_asterisk` アプローチは依然として機能しますが、systemdベースのディストリビューションでは非推奨です。
+古いシステムでは、AsteriskはレガシーなSysV initスクリプト（ `/etc/init.d/asterisk` ）と、クラッシュ時にAsteriskを自動再起動する **safe_asterisk** ラッパーを介して起動されていました。systemdでは、自動再起動はユニットファイルの `Restart=` ディレクティブによって処理されるため、一般的に `safe_asterisk` は不要です。レガシーなinit/ `safe_asterisk` のアプローチは依然として機能しますが、systemdベースのディストリビューションでは非推奨です。
 
 ### Asteriskの実行時オプション
 
-Asteriskの開始プロセスは非常に単純です。パラメーターなしでAsteriskを実行すると、デーモンとして起動します。
+Asteriskの起動プロセスは非常に単純です。パラメーターなしでAsteriskを実行すると、デーモンとして起動します。
 
 ```
 /sbin/asterisk
@@ -276,7 +276,7 @@ asterisk –h を使用して、利用可能な実行時オプションを表示
 sipast:/usr/src/asterisk-22.x.y# asterisk -h
 ```
 
-Asterisk 22.10.0, Copyright (C) 1999 - 2025, Sangoma Technologies Corporation and others. Usage: asterisk [OPTIONS] Valid Options: -V Display version number and exit -C <configfile> Use an alternate configuration file -G <group> Run as a group other than the caller -U <user> Run as a user other than the caller -c Provide console CLI -d Increase debugging (multiple d's = more debugging) -f Do not fork -F Always fork -g Dump core in case of a crash -h This help screen -i Initialize crypto keys at startup -L <load> Limit the maximum load average before rejecting new calls -M <value> Limit the maximum number of calls to the specified value -m Mute debugging and console output on the console -n Disable console colorization. Can be used only at startup. -p Run as pseudo-realtime thread -q Quiet mode (suppress output) -r Connect to Asterisk on this machine -R Same as -r, except attempt to reconnect if disconnected -s <socket> Connect to Asterisk via socket <socket> (only valid with -r) -t Record soundfiles in /var/tmp and move them where they belong after they are done -T Display the time in [Mmm dd hh:mm:ss] format for each line of output to the CLI. Cannot be used with remote console mode. -v Increase verbosity (multiple v's = more verbose) -x <cmd> Execute command <cmd> (implies -r) -X Enable use of #exec in asterisk.conf -W Adjust terminal colors to compensate for a light background
+Asterisk 22.10.0, Copyright (C) 1999 - 2025, Sangoma Technologies Corporation and others. Usage: asterisk [OPTIONS] Valid Options: -V バージョン番号を表示して終了 -C <configfile> 代替設定ファイルを使用 -G <group> 呼び出し元以外のグループとして実行 -U <user> 呼び出し元以外のユーザーとして実行 -c コンソールCLIを提供 -d デバッグを増やす（dが多いほどデバッグ詳細が増加） -f フォークしない -F 常にフォークする -g クラッシュ時にコアをダンプ -h このヘルプ画面 -i 起動時に暗号キーを初期化 -L <load> 新しい通話を拒否する前の最大負荷平均を制限 -M <value> 最大通話数を指定値に制限 -m コンソール上のデバッグおよびコンソール出力をミュート -n コンソールカラーを無効化。起動時のみ使用可能。 -p 疑似リアルタイムスレッドとして実行 -q 静音モード（出力を抑制） -r このマシン上のAsteriskに接続 -R -rと同じだが、切断された場合に再接続を試みる -s <socket> ソケット <socket> を介してAsteriskに接続（-rでのみ有効） -t サウンドファイルを /var/tmp に記録し、完了後に本来の場所へ移動 -T CLIへの各出力行の時間を [Mmm dd hh:mm:ss] 形式で表示。リモートコンソールモードでは使用不可。 -v 詳細出力を増やす（vが多いほど詳細） -x <cmd> コマンド <cmd> を実行（-rを意味する） -X asterisk.conf で #exec の使用を有効化 -W 明るい背景を補正するために端末の色を調整
 
 ## インストールディレクトリ
 
@@ -589,7 +589,7 @@ messages => notice,warning,error
 ;syslog.local0 => notice,warning,error
 ```
 
-; Some console commands are associated with the logger process.
+; 一部のコンソールコマンドはロガープロセスに関連付けられています。
 
 ```
 CLI> logger show channels
@@ -617,7 +617,7 @@ You can control the log rotation using the logrotate daemon. Edit the file
 }
 ```
 
-logrotateに関する詳細は以下を使用して取得できます：
+logrotateに関する詳細は以下を使用して取得できます。
 
 ```
 #man logrotate
@@ -625,13 +625,13 @@ logrotateに関する詳細は以下を使用して取得できます：
 
 ## Asteriskのアンインストール
 
-Asteriskをアンインストールするには、以下を使用します：
+Asteriskをアンインストールするには、以下を使用します。
 
 ```
 make uninstall
 ```
 
-Asteriskとすべての設定ファイルをアンインストールするには、以下を使用します：
+Asteriskとすべての設定ファイルをアンインストールするには、以下を使用します。
 
 ```
 make uninstall-all
@@ -639,24 +639,24 @@ make uninstall-all
 
 ## Asteriskインストールに関する注意点
 
-このセクションでは、Asteriskをインストールする前に対処すべき問題についていくつかのアドバイスを提供します。
+このセクションでは、Asteriskをインストールする前に解決すべき問題についていくつかのアドバイスを提供します。
 
 ### 本番システム
 
-Asteriskを本番環境にインストールする場合は、システム設計に注意を払う必要があります。サーバーは、テレフォニーシステムが他のシステムプロセスよりも優先されるように最適化する必要があります。Asteriskは、X-Windowsのようなプロセッサ集約型のソフトウェアと一緒に実行すべきではありません。CPU集約型のプロセス（巨大なデータベースなど）を実行する必要がある場合は、別のサーバーを使用してください。一般的に言って、Asteriskはハードウェアのパフォーマンス変動の影響を受けやすいです。そのため、CPU使用率が40%を超えないようなハードウェア環境でAsteriskを使用するようにしてください。
+Asteriskを本番環境にインストールする場合は、システム設計に注意を払う必要があります。サーバーは、テレフォニーシステムが他のシステムプロセスよりも優先されるように最適化する必要があります。Asteriskは、X-Windowsのようなプロセッサ集約型のソフトウェアと一緒に実行すべきではありません。CPU集約型のプロセス（巨大なデータベースなど）を実行する必要がある場合は、別のサーバーを使用してください。一般的に、Asteriskはハードウェアパフォーマンスの変動の影響を受けやすいです。そのため、CPU使用率が40%を超えないハードウェア環境でAsteriskを使用するようにしてください。
 
 ### ネットワークのヒント
 
-IP電話を使用する予定がある場合は、ネットワークに注意を払うことが重要です。音声プロトコルは非常に優れており、遅延やジッターにも耐性がありますが、設定が不十分なローカルエリアネットワークを使用すると、音声品質が低下します。優れた音声品質を保証できるのは、スイッチやルーターでQuality of Service（QoS）を使用している場合のみです。ローカルエリアネットワークでの音声は良好な傾向がありますが、LAN環境であっても、衝突が多すぎる10 Mbpsハブを使用していると、最終的には音声が歪んだり、ひどい品質になったりします。最高の音声品質を確保するために、以下の推奨事項に従ってください：
+IP電話を使用する予定がある場合は、ネットワークに注意を払うことが重要です。音声プロトコルは非常に優れており、遅延やジッターにも耐性がありますが、設定が不十分なローカルエリアネットワークを使用すると、音声品質が低下します。スイッチやルーターでサービス品質（QoS）を使用することによってのみ、良好な音声品質を保証できます。ローカルエリアネットワーク内の音声は良好な傾向にありますが、LAN環境であっても、衝突が多すぎる10 Mbpsハブを使用していると、最終的に音声が歪んだり、ひどい品質になったりします。可能な限り最高の音声品質を確保するために、以下の推奨事項に従ってください。
 
-- 可能であれば、または経済的に実現可能であれば、エンドツーエンドのQoSを使用してください。エンドツーエンドのQoSがあれば、音声品質は完璧です。言い訳は無用です！
-- 本番環境で音声用に10/100 Mbpsハブを使用することは避けてください。衝突はネットワークにジッターを課す可能性があります。衝突が発生しない全二重の10/100 Mbpsが推奨されます。
+- 可能であれば、または経済的に実現可能であれば、エンドツーエンドのQoSを使用してください。エンドツーエンドのQoSを使用すれば、音声品質は完璧です。言い訳は無用です！
+- 本番環境で音声用に10/100 Mbpsハブを使用することは避けてください。衝突はネットワークにジッターを課す可能性があります。衝突が発生しない全二重10/100 Mbpsが推奨されます。
 - 音声ネットワークの不要なブロードキャストを分離するためにVLANを使用してください。ARPブロードキャストで音声ネットワークが破壊されるような事態は避けたいはずです。
-- 音声ネットワークにおける期待値についてユーザーを教育してください。QoSがない場合、ほとんどのケースで音声が完璧になるとは言わないでください。多くの場合、携帯電話と同等の音声品質が達成されます。ファームウェアやハードウェア設計の問題は一般的であるため、高品質な電話機を使用してください。
+- 音声ネットワークにおける期待値についてユーザーを教育してください。QoSがない場合、音声が完璧であるとは言わないでください。ほとんどの場合、そうはならないからです。多くの場合、携帯電話と同等の音声品質が達成されます。ファームウェアやハードウェア設計の問題が一般的であるため、高品質な電話機を使用してください。
 
 ## まとめ
 
-本章では、最小ハードウェア要件について学び、Asteriskのダウンロード、インストール、コンパイル方法を習得しました。セキュリティ上の理由から、Asteriskはroot以外のユーザーで実行する必要があります。本番環境を開始する前に、ネットワーク環境を確認してください。
+本章では、最小ハードウェア要件、およびAsteriskのダウンロード、インストール、コンパイル方法について学びました。セキュリティ上の理由から、Asteriskはroot以外のユーザーで実行する必要があります。本番環境を開始する前に、ネットワーク環境を確認してください。
 
 ## クイズ
 
@@ -664,23 +664,23 @@ IP電話を使用する予定がある場合は、ネットワークに注意を
    - A. `chan_sip` が依然としてデフォルトであり、 `chan_pjsip` はオプションです。
    - B. `chan_pjsip` がデフォルトのSIPチャネルであり、 `chan_sip` はAsterisk 21で削除され、存在しません。
    - C. 両方がデフォルトでビルドされ、実行時に選択します。
-   - D. SIPサポートはIAX2のために完全に削除されました。
+   - D. SIPサポートはIAX2を優先して完全に削除されました。
 2. Asterisk用のテレフォニーインターフェースカードには通常、デジタル信号プロセッサ（DSP）が組み込まれているため、PCのCPUをあまり必要としません。
    - A. 正
    - B. 誤
-3. 完璧な音声品質が必要な場合は、エンドツーエンドのQuality of Service（QoS）を実装する必要があります。
+3. 完璧な音声品質が必要な場合は、エンドツーエンドのサービス品質（QoS）を実装する必要があります。
    - A. 正
    - B. 誤
-4. 最新のAsteriskバージョンは最も安定しているため、常に最新バージョンを選択すべきです。
+4. 最新のAsteriskバージョンが最も安定しているため、常に最新バージョンを選択すべきです。
    - A. 正
    - B. 誤
 5. Asterisk 22のビルド依存関係をインストールする推奨方法は何ですか？
 6. TDMインターフェースカードがない場合でも、Linux上の `res_timing_timerfd` モジュールによって提供される内部タイミングソースがあります。このタイミングは、________ や ________ などのアプリケーションで使用されます。
-7. Asteriskをインストールする際、グラフィカルインターフェースはCPUサイクルを消費するため、GNOMEやKDEのようなデスクトップ環境は入れない方が良いです。
+7. Asteriskをインストールする際は、グラフィカルインターフェースがCPUサイクルを消費するため、GNOMEやKDEなどのデスクトップ環境は除外する方が良いです。
    - A. 正
    - B. 誤
 8. Asteriskの設定ファイルは ________ ディレクトリにあります。
-9. Asteriskのサンプル設定ファイルをインストールするには、________ というコマンドを入力します。
+9. Asteriskのサンプル設定ファイルをインストールするには、コマンド ________ を入力します。
 10. Asteriskをroot以外のユーザーとして実行することが重要な理由は何ですか？
 
 **回答:** 1 — B · 2 — B · 3 — A · 4 — B · 5 — 展開したAsteriskソースツリーから `./contrib/scripts/install_prereq install` を実行する · 6 — ConfBridgeおよびMusic on Hold · 7 — A · 8 — `/etc/asterisk` · 9 — `make samples` · 10 — セキュリティ（Asteriskが侵害された場合の被害を制限するため）

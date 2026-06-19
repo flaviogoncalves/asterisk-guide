@@ -40,7 +40,7 @@ Asterisk interprets “=” and “=>” in the same way. Differences in syntax 
 
 ### Simple Group
 
-The simple group format used in extensions.conf, meetme.conf, and voicemail.conf is the most basic grammar. Each object is declared with options in the same line. Example:
+The simple group format used in `extensions.conf` and `voicemail.conf` is the most basic grammar. Each object is declared with options in the same line. Example:
 
 ```
 [Session]

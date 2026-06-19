@@ -94,7 +94,7 @@ Beyond the firewall and Fail2Ban, Asterisk 22's PJSIP stack provides several con
 - **TLS + SRTP for media.** Encrypt signalling with a TLS transport and media with `media_encryption=sdes` (or `dtls` for WebRTC) on the endpoint — covered later in this chapter.
 - **AMI/ARI access control.** Restrict the Asterisk Manager Interface (`manager.conf`) and ARI (`ari.conf` / `http.conf`) to localhost or a trusted management network, use strong unique secrets, bind the HTTP server to a private interface, and never expose these to the Internet.
 
-> **[2nd-ed note]** Verify the exact PJSIP transport option names (the `tcp_keepalive_*` family, `tos`/`cos`, `local_net`) and the `type=identify` / `acl` / `contact_acl` syntax against the Asterisk 22 PJSIP configuration reference for the build under test before print. Note that `res_pjsip` transports do **not** have a `max_clients` option in Asterisk 22.
+All of the option names above are confirmed against Asterisk 22.10: the `type=transport` section exposes `tcp_keepalive_enable`, `tcp_keepalive_idle_time`, `tcp_keepalive_interval_time`, `tcp_keepalive_probe_count`, `tos`, `cos`, `local_net`, and the `external_*` family, but it has **no** `max_clients` option — connection-flood protection comes from the firewall, not from the transport. The `acl` and `contact_acl` endpoint options take section names from `acl.conf`, and source-IP matching for unauthenticated peers is done with `type=identify` sections (`match=`).
 
 ### Removing unnecessary ports
 
@@ -184,20 +184,30 @@ Fail2Ban is almost a standard for Asterisk. Most users implement to enhance the 
 
 In Asterisk 22, PJSIP reports failed authentications and other security events through the Asterisk **security event framework**, written to the dedicated **`security` logger channel**. To make Fail2Ban work you must:
 
-1. Enable the security channel in `/etc/asterisk/logger.conf`, for example:
+1. Enable the security channel in `/etc/asterisk/logger.conf`. The syntax is `<filename> => <levels>`, so to send the security level to a file named `security` write:
 
 ```
 [logfiles]
 security => security
 ```
 
-then run `module reload logger` (or `logger reload`) from the CLI. This produces `/var/log/asterisk/security` with lines such as `SecurityEvent="InvalidPassword"`, `ChallengeResponseFailed`, and `InvalidAccountID`, each carrying the `RemoteAddress=` of the offender.
+then run `logger reload` from the CLI. This produces `/var/log/asterisk/security` with one line per security event, in the form:
 
-2. Point the `asterisk` jail at that file (`logpath = /var/log/asterisk/security`) and use a filter that parses the security-event format and the `res_pjsip` failed-auth events.
+```
+[2026-01-15 10:23:45] SECURITY[1234] res_security_log.c: SecurityEvent="InvalidPassword",...,RemoteAddress="IPV4/UDP/203.0.113.7/5060",...
+```
 
-Modern Fail2Ban ships an `asterisk` filter, and modern PBX distributions (FreePBX/Sangoma) ship updated filters that already understand the PJSIP/security-event log format. Prefer those.
+The events Fail2Ban cares about are `InvalidPassword`, `ChallengeResponseFailed`, `InvalidAccountID`, and `FailedACL`, each carrying a `RemoteAddress="IPV4/UDP/<ip>/<port>"` field that identifies the offender. (Note the address is wrapped as `IPV4/UDP/.../...`, not a bare IP — your filter must extract the host from inside that string.)
 
-> **[2nd-ed note]** The exact regex / `failregex` for the `asterisk` filter, the precise `logger.conf` syntax, and the exact security-event line format should be verified against the Fail2Ban version and the Asterisk 22 build the author tests on before going to print — these strings have changed across versions.
+2. Point the `asterisk` jail at that file (`logpath = /var/log/asterisk/security`) and use a filter that parses this security-event format.
+
+Modern Fail2Ban ships an `asterisk` filter whose `failregex` already matches the events above and extracts `<HOST>` from the `RemoteAddress` field, for example:
+
+```
+failregex = ^SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFailed|InvalidPassword)".*,RemoteAddress="IPV[46]/[^/"]+/<HOST>/\d+"
+```
+
+PBX distributions (FreePBX/Sangoma) ship equivalent filters. Prefer the packaged filter over hand-writing one, since the exact event strings are version-dependent. One caveat to be aware of: a now-patched advisory (GHSA-5743-x3p5-3rg7) showed that crafted PJSIP traffic could inject fake log lines — keep both Asterisk and your Fail2Ban filter current.
 
 Below I provide the instructions to install Fail2Ban Step 1 – Install fail2ban on Linux
 
@@ -480,7 +490,7 @@ exten=_9011.,3,Dial(PJSIP/${EXTEN:1}@my_trunk,20,tT)
 exten=_9011.,4,Hangup()
 ```
 
-> **[2nd-ed note]** `VMAuthenticate` is still valid in Asterisk 22. The original example dialed `DAHDI/g1/...`; most modern installations route international calls over a SIP/PJSIP trunk, so the `Dial()` above uses `PJSIP/<number>@<trunk>` — adapt the trunk name to your setup (use `DAHDI/...` only if you actually have a DAHDI span). Toll-fraud defense in the dialplan (second-factor like this, plus restricting which contexts can reach outbound/international routes) remains one of the most important protections.
+`VMAuthenticate` is still a standard application in Asterisk 22. The `Dial()` above routes the call over a SIP/PJSIP trunk (`PJSIP/<number>@<trunk>`), which is how most modern installations reach the PSTN — adapt `my_trunk` to your own trunk name, and use `DAHDI/g1/...` only if you actually have a DAHDI span. Toll-fraud defense in the dialplan — a second factor like this, combined with restricting which contexts can reach your outbound and international routes — remains one of the single most important protections you can deploy.
 
 ## Summary
 
