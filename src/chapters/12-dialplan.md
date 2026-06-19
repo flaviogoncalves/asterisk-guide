@@ -216,7 +216,9 @@ exten=>6003,1,Gosub(stdexten,s,1(PJSIP/6003,${EXTEN}))
 
 ## Using Asterisk DB
 
-To implement call forward and black lists, we need some way to store and restore data. Fortunately, Asterisk provides a mechanism for storing and retrieving data from a Berkley DB database (version 1) called AstDB. This is similar to the Windows registry database using the family and keys hierarchical concept. The data persist between Asterisk restarts.
+To implement call forward and black lists, we need some way to store and restore data. Fortunately, Asterisk provides a mechanism for storing and retrieving data from a built-in database called AstDB. In modern Asterisk (including Asterisk 22) AstDB is backed by **SQLite3** (the file `/var/lib/asterisk/astdb.sqlite3`); older versions used Berkeley DB v1. This is similar to the Windows registry database using the family and keys hierarchical concept. The data persist between Asterisk restarts.
+
+> **[2nd-ed note]** Since Asterisk 1.8 the AstDB is stored in SQLite3 (`astdb.sqlite3`), not the legacy Berkeley DB v1 file. The family/key API is unchanged.
 
 ### Functions, applications, and CLI commands
 
@@ -235,8 +237,10 @@ exten=s,1,set(temp=${DB(CFBS/${EXTEN})})
 
 Some applications can be used to manipulate AstDB:
 
-- dbdel(<family/key>)
-- dbdeltree(<family>)
+- DB_DELETE(<family/key>) — function that returns and deletes a key (the old `DBdel()` application was removed)
+- DBdeltree(<family>)
+
+> **[2nd-ed note]** The `DBdel()` application no longer exists in Asterisk 22. Delete a single key with the `DB_DELETE()` dialplan function — e.g. `Set(x=${DB_DELETE(family/key)})` or, as a write operation, `Set(DB_DELETE(family/key)=)`. `DBdeltree()` (delete a whole family/subtree) is still an application.
 
 It is possible to use CLI commands to set and delete keys as well:
 
@@ -281,6 +285,16 @@ exten=_4XXX,1,gosub(stdexten,s,1(${EXTEN}))
 
 ## Using a blacklist
 
+> **[2nd-ed note]** The `LookupBlacklist()` application was **removed** (it disappeared with the old "priority+101 jump" mechanism well before Asterisk 22 — confirmed not registered in the 22.10.0 lab). Implement a blacklist instead with the `DB()`/`DB_EXISTS()` functions plus `GotoIf`, for example:
+>
+> ```
+> exten => s,1,GotoIf($[${DB_EXISTS(blacklist/${CALLERID(num)})}]?blocked,s,1)
+> exten => s,n,Dial(PJSIP/4000,20,tT)
+> exten => s,n,Hangup()
+> ```
+>
+> The example below is retained for historical reference; the `j` option and the `n+101` priority jump no longer exist.
+
 To create a blacklist, we use the LookupBlacklist() application. The application checks the name/number in the caller ID. If the number is not found, the application sets the variable $LOOKUPBLSTATUS to NOTFOUND. If the number is found, the application sets the variable to FOUND. You can use the “j” option in the application to use the old (1.0) behavior, jumping 101 positions if the number/name is found. Example:
 
 ```
@@ -301,7 +315,7 @@ To insert a number in the blacklist, we can use the same resource as before, usi
 [apps]
 exten=>_*31*X.,1,Set(DB(blacklist/${EXTEN}=1})
 exten=>_*31*X.,2,Hangup()
-exten=>_#31#X.,1,dbdel(blacklist/${EXTEN}:4)
+exten=>_#31#X.,1,Set(x=${DB_DELETE(blacklist/${EXTEN:4})})
 exten=>_#31#X.,2,Hangup()
 ```
 
@@ -322,8 +336,10 @@ CLI>database del blacklist <name/number>
 In the following figure, we have a dial plan with three contexts. The [incoming] context is where the calls are usually received. We have included four lines that change behavior depending on the system time, as exemplified below:
 
 ```
-include => context|<times>|<weekdays>|<mdays>|<months>
+include => context,<times>,<weekdays>,<mdays>,<months>
 ```
+
+> **[2nd-ed note]** Modern Asterisk (incl. 22) separates the time-include fields with **commas**, not pipes. The legacy pipe form (`include => context|times|weekdays|mdays|months`) is parsed as a plain literal context name and silently fails to apply any time condition. Verified in the Asterisk 22.10.0 lab.
 
 During regular working hours, processing will be redirected to the mainmenu, where it will probably call an IVR to handle the incoming call. If the call takes place after hours, it will call the security extension defined in the ${SECURITY} variable. If the security extension does not answer the call, it will be sent to the operator’s voicemail.
 
@@ -336,9 +352,10 @@ During regular working hours, processing will be redirected to the mainmenu, whe
 The gotoiftime() syntax is shown below.
 
 ```
-GotoIfTime(<timerange>|<daysofweek>|<daysofmonth>|<months>?[[context|]extension
-|]pri)
+GotoIfTime(<timerange>,<daysofweek>,<daysofmonth>,<months>[,<timezone>]?[[context,]extension,]pri)
 ```
+
+> **[2nd-ed note]** In Asterisk 22 the field separator is a **comma**, not a pipe (the pipe form was deprecated in Asterisk 1.6). The current documented syntax is `GotoIfTime(times,weekdays,mdays,months[,timezone]?[labeliftrue][:labeliffalse])`. An optional `timezone` field is supported.
 
 This application can replace the time-based context and seems easier to understand and read. You can specify the time as follows:
 
@@ -355,7 +372,7 @@ This application can replace the time-based context and seems easier to understa
 Names for days and months are not case sensitive.
 
 ```
-exten=>s,1,GotoIfTime(8:00-18:00|mon-fri|*|*?normalhours,s,1)
+exten=>s,1,GotoIfTime(8:00-18:00,mon-fri,*,*?normalhours,s,1)
 ```
 
 The previous statement transfers the processing to the extension s in the normalhours context if the call is between 08:00AM and 06:00PM from Monday to Friday.
@@ -365,21 +382,23 @@ The previous statement transfers the processing to the extension s in the normal
 DISA, or “direct inward system access,” is a system that allows users to receive a second dial tone. It permits users to dial again to another destination. It is often used by technicians when dialing long distance calls for technical support on weekends; instead of dialing from their homes directly to the destination, they call the office’s DISA number, receive a dial tone, and then call the destination. Long-distance charges incur at the company instead of the home phone.
 
 ```
-DISA(passcode[|context])
-DISA(password file)
+DISA(passcode[,context])
+DISA(password-file[,context])
 ```
 
 Example:
 
 ```
-exten => s,1,DISA(no-password|default)
+exten => s,1,DISA(no-password,default)
 ```
 
-Using the previous statement, the user dials the PBX and—without requiring any password—receives a dial tone. Any call using DISA will be processed using the default context. The arguments for this application include a global password or individual password within a file. If no context is specified, DISA will be assumed. If you use a password file, the complete path has to be specified. A caller ID can be specified for the DISA external dialing too. Example:
+Using the previous statement, the user dials the PBX and—without requiring any password—receives a dial tone. Any call using DISA will be processed using the `default` context. The arguments for this application include a global password or individual password within a file. If no context is specified, the `disa` context is assumed. If you use a password file, the complete path has to be specified. A caller ID can be specified for the DISA external dialing too. Example:
 
 ```
-numeric-passcode|context|"Flavio” <4830258590>
+numeric-passcode,context,"Flavio" <4830258590>
 ```
+
+> **[2nd-ed note]** Asterisk 22 uses commas as argument separators (the pipe form was deprecated in 1.6). The full syntax is `DISA(passcode|filename[,context[,cid[,mailbox[@context][,options]]]])`, and the default context when none is given is `disa` (not "DISA"). Verified with `core show application DISA` in the Asterisk 22.10.0 lab.
 
 ## Limit simultaneous calls
 
@@ -637,7 +656,7 @@ options
 ```
 exten=9006,1,VoiceMailMain()
 exten=9006,n,Hangup()
-exten=9007,1,Directory(default|default)
+exten=9007,1,Directory(default,default)
 exten=9007,n,Hangup()
 ```
 
@@ -743,10 +762,10 @@ To receive calls, use two contexts. The first one is for normal-hours operation,
 
 ```
 [incoming]
-include=>normalhours|08:00-18:00|mon-fri|*|*
-include=>afterhours|18:00-23:59|*|*|*
-include=>afterhours|00:00-07:59|*|*|*
-include=>afterhours|*|sat-sun|*|*
+include=>normalhours,08:00-18:00,mon-fri,*,*
+include=>afterhours,18:00-23:59,*,*,*
+include=>afterhours,00:00-07:59,*,*,*
+include=>afterhours,*,sat-sun,*,*
 [normalhours]
 exten=>s,1,Goto(mainmenu,s,1)
 [afterhours]
@@ -790,7 +809,7 @@ In this chapter, you have learned how to receive calls using an IVR or an auto-a
 
 ## Quiz
 
-1. A time-dependent context include uses the form `include => context|<times>|<weekdays>|<mdays>|<months>`. What does `include => normalhours|08:00-18:00|mon-fri|*|*` do?
+1. A time-dependent context include uses the form `include => context,<times>,<weekdays>,<mdays>,<months>`. What does `include => normalhours,08:00-18:00,mon-fri,*,*` do?
    - A. Execute the extensions Monday to Friday, 08:00 to 18:00
    - B. Execute the options every day in all months
    - C. Nothing; the format is invalid
