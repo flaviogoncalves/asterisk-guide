@@ -46,7 +46,7 @@ As you can see below, VoIP uses a set of different protocols working together. D
 
 ![VoIP protocols mapped onto the OSI model: signaling protocols (H.323, SIP, MGCP, IAX) sit at the session layer, codecs at the presentation layer, and RTP/UDP at the transport layer.](../images/06-voip-network-fig02.png)
 
-The first four layers represent a data network, just like the Internet you have in your business or home. You can use some QoS protocols like “diffserv” or “cbwfq” to prioritize voice packets and enhance voice quality. Most VoIP protocols use real-time protocol (RTP) as the transport protocol of choice. In the session layer, protocols are responsible for setting up and closing the calls. H.323 is one of the oldest and mature protocols in this area. SIP is now pervasive in the VoIP provider market, putting aside H.323. Signaling protocols use TCP or UDP to transport the packets. In the presentation layer, the codecs transform the multimedia stream from one format to another based on different characteristics. For example: SIP: SIP uses UDP or TCP in port 5060 to transport signaling. RTP transports the audio stream using ports 1000 to 2000 in Asterisk (as defined in rtp.conf). For example, a call can be coded in g.711. A soft-phone in the application layer will use the lower layers to communicate. H.323: H.323 uses TCP in ports 1720 and 1719 to transport signaling. RTP usually transports audio in UDP ports 16383 to 32768.
+The first four layers represent a data network, just like the Internet you have in your business or home. You can use some QoS protocols like “diffserv” or “cbwfq” to prioritize voice packets and enhance voice quality. Most VoIP protocols use real-time protocol (RTP) as the transport protocol of choice. In the session layer, protocols are responsible for setting up and closing the calls. H.323 is one of the oldest and mature protocols in this area. SIP is now pervasive in the VoIP provider market, putting aside H.323. Signaling protocols use TCP or UDP to transport the packets. In the presentation layer, the codecs transform the multimedia stream from one format to another based on different characteristics. For example: SIP: SIP uses UDP or TCP in port 5060 to transport signaling. RTP transports the audio stream using a configurable UDP port range in Asterisk (the shipped `rtp.conf` sample uses 10000 to 20000). For example, a call can be coded in g.711. A soft-phone in the application layer will use the lower layers to communicate. H.323: H.323 uses TCP in ports 1720 and 1719 to transport signaling. RTP usually transports audio in UDP ports 16383 to 32768.
 
 ## How to choose a protocol
 
@@ -108,7 +108,7 @@ Asterisk 22 supports the following codecs (among others):
 - ITU G.726: 16/24/32/40 Kbps
 - ITU G.729: 8 Kbps — `codec_g729` binary module from Sangoma (free download; per-channel license required to use)
 - Speex: 2.15 to 44.2 Kbps
-- LPC10: 2.5 Kbps
+- LPC10: 2.4 Kbps
 - **Opus**: 6–510 Kbps, variable — modern wideband/fullband codec; excellent quality and packet-loss resilience; free binary module (`codec_opus`) distributed by Sangoma; recommended for WebRTC and modern SIP endpoints
 
 In addition, Asterisk permits translation among codecs. In some cases, this is not possible, such as the case of g723, which is supported only in pass-thru mode. Translating from one codec to another consumes many resources from the CPU. Thus, avoid this altogether whenever possible.
