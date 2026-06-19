@@ -595,10 +595,7 @@ You do not need a paid trunk to practise. The book's lab already runs an Asteris
 will treat the SIPp container as the "carrier" placing inbound calls, and add a
 trunk endpoint that lands those calls in a `from-pstn` context.
 
-> **[2nd-ed note]** A figure showing the two-container topology (PBX +
-> mock-ITSP/SIPp on the lab subnet, inbound INVITE one way, outbound `Dial` the
-> other) would help here — produce `../images/09-sip-trunking-img01.png` and
-> caption it. Left as a note rather than a fabricated image reference.
+![A SIP trunk between the Asterisk PBX and the ITSP: the PBX registers as one account, outbound calls dial `PJSIP/<num>@trunk`, and inbound calls land in the `from-pstn` context.](../images/09-sip-trunking-fig01.png)
 
 ### 1. Add the trunk endpoint
 

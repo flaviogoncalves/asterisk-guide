@@ -90,6 +90,16 @@ In PJSIP a trunk is <strong>just an endpoint</strong> — the same <code>endpoin
 
 ---
 
+# The big picture
+
+![A SIP trunk between the Asterisk PBX and the ITSP](/images/09-sip-trunking-fig01.png){width=760px class="mx-auto"}
+
+<div class="text-center text-sm opacity-70 mt-2">
+The PBX registers as one account; outbound calls dial <code>PJSIP/&lt;num&gt;@trunk</code>, inbound calls land in <code>from-pstn</code>.
+</div>
+
+---
+
 # A trunk is just an endpoint — with a twist
 
 The same objects build a phone or a trunk. What changes is the **direction**:
