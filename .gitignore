@@ -19,3 +19,8 @@ src/docx-media/
 
 # Trashcan — retired files kept locally, out of the repo
 .trash/
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
