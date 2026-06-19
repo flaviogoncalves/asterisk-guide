@@ -2,7 +2,7 @@
 
 In SIP systems, most of the phone features are implemented in the endpoint. A variety of SIP phones and manufacturers exist, and the interoperability is not guaranteed. The Asterisk development team has done an amazing job of implementing most of the features in the PBX itself, making Asterisk almost endpoint independent. However, sometimes you will find the same function being done by both the phone and Asterisk itself. The integration of the phone and the PBX is the next frontier on usability and where proprietary systems are focusing right now. In this chapter, you will learn how to use most of these features.
 
-### Objectives
+## Objectives
 
 By the end of this chapter, you will be able to understand and use:
 
@@ -13,11 +13,11 @@ By the end of this chapter, you will be able to understand and use:
 - Call Recording
 - Music on hold
 
-### Where features are implemented
+## Where features are implemented
 
 First and foremost, it is important to understand when the PBX features are being executed versus when the phone is doing all the work. For example, you may transfer a call using the TRANSFER button on the phone or by dialing # (unconditional transfer executed by the PBX itself).
 
-### Features implemented by Asterisk
+## Features implemented by Asterisk
 
 These features are implemented in the PBX by the Asterisk code:
 
@@ -28,7 +28,7 @@ These features are implemented in the PBX by the Asterisk code:
 - ConfBridge conference room
 - Call transfer (blind and consultative)
 
-### Features usually implemented by the dial plan
+## Features usually implemented by the dial plan
 
 These features need to be programmed in the Asterisk dial plan (extensions.conf):
 
@@ -39,7 +39,7 @@ These features need to be programmed in the Asterisk dial plan (extensions.conf)
 - Do not disturb
 - Redial
 
-### Features usually implemented by the phone
+## Features usually implemented by the phone
 
 These features are implemented by the phone’s firmware:
 
@@ -51,7 +51,7 @@ These features are implemented by the phone’s firmware:
 - Three-way conference
 - Message waiting indicator
 
-### The features configuration file
+## The features configuration file
 
 Some of the features presented in this chapter are configured in the features.conf configuration file. It is possible to change the behavior of some features by modifying this file. We have included the relevant excerpt below. In the next sections of this chapter, we will describe each feature. Excerpt from the sample file (Asterisk 22)
 
@@ -150,7 +150,7 @@ This feature is used to park a call. This helps, for example, when you are answe
 
 By default, the 700 extension is used to park a call. In the middle of a conversation, press # to transfer the call to the 700 extension. Now the Asterisk will announce your parking extension, such as 701 or 702. Hang up the phone, and the caller will be placed on hold. Go to your desk phone and dial the announced parking extension to recover the call. If the caller is parked for a long time, the timeout feature will trigger and the original dialed extension will ring again.
 
-#### Configuration task list
+### Configuration task list
 
 Follow the steps below to enable call parking. Step 1: Enable call parking: (required) In the extensions.conf file, type the following statement.
 
@@ -529,6 +529,37 @@ Application maps allow you to add new features by using the `[applicationmap]` s
 
 ## Quiz
 
-1. Which of the following statement(s) is true about Call Parking? A. By default, extension 800 is used for Call Parking B. When you are not at your desk and receive a call, you can park a call. The system will announce to you the parking extension. When you return to your desk, dial the announced extension to retrieve the call. C. By default, extension 700 is used for Call Parking. Calls are parked in extensions 701 to 720. D. You need to dial 700 to retrieve a parked call. 2. To use the Call Pickup feature, all extensions are required to be in the same _____________. For DAHDI channels, this is configured in the _____________ file. 3. When transferring a call, you may choose between _________________, where the destination extension is not consulted before the transfer, and _____________, where you first talk to the destination extension before the transfer. 4. To make a consultative transfer, use the ___ character; for a blind transfer, use ___. A. #1, *2 B. *2, #1 C. #2, #1 D. #1, #2 5. To enable conference calls in the Asterisk server, it is necessary to use the __________ application. 6. If you have to supervise a conference, you can use the _______________ application. A. MeetMe() B. MeetMeConsole() C. MeetMeAdministrator() D. MeetmeAdmin() 7. The best format for music on hold is MP3 because it uses very little processing power from the Asterisk server. A. True B. False 8. To capture a call from a specific call group, you need to be in their respective ________ group. 9. You can record a call using the mixmonitor() utility or the automon feature. By default, the automon feature uses the ___ character sequence. A. *1 B. *2 C. #3 D. #1 10. In the meetme application, if you want to have users in the listening only mode, you should: A. Merge different conference rooms with different options. B. This is not possible using Asterisk. C. Enable an extension that calls the meetme application with the l option and instruct the listening users to call that extension. D. Enable an extension that calls the meetme application with the t option and instruct the listening users to call that extension. Answers: 1-BCD,2-group,chan_dahdi,3-blind,attended,4-B,5-meetme,6-D,7-B,8-pickup,9-A,10-C
+1. Which statements are true about call parking?
+   - A. By default, extension 800 is used for call parking.
+   - B. When you are away from your desk and receive a call, you can park it; the system announces the parking slot, and you dial that slot from any phone to retrieve the call.
+   - C. By default, extension 700 parks a call, and calls are parked in slots 701–720.
+   - D. You dial 700 to retrieve a parked call.
+2. To use the call-pickup feature, all extensions must be in the same ___. For DAHDI channels this is configured in the ___ file.
+3. When transferring a call you can choose between a ___ transfer, where the destination is not consulted first, and an ___ transfer, where you talk to the destination before completing it.
+4. To make an attended (consultative) transfer you use the ___ sequence; for a blind transfer you use ___.
+   - A. #1, *2
+   - B. *2, #1
+   - C. #2, #1
+   - D. #1, #2
+5. To host conference calls in Asterisk 22, you use the ___ application.
+6. In ConfBridge, a participant is granted administrator privileges (kick, mute others, lock the room) by setting ___ in their user profile (`confbridge.conf`):
+   - A. admin=yes
+   - B. marked=yes
+   - C. moderator=yes
+   - D. type=admin
+7. The best format for music on hold is MP3, because it uses very little processing power on the Asterisk server.
+   - A. True
+   - B. False
+8. To pick up a call from a specific call group, you must be in the matching ___ group.
+9. You can record a call with the MixMonitor() application or the one-touch (automon) feature. By default, automon uses the ___ DTMF sequence.
+   - A. *1
+   - B. *2
+   - C. #3
+   - D. #1
+10. In ConfBridge, to admit users in listen-only mode, you assign them a user profile with ___:
+    - A. startmuted=yes
+    - B. listen=only
+    - C. muteall=yes
+    - D. quiet=yes
 
-> **[2nd-ed note]** Quiz questions 5, 6, and 10 all reference MeetMe/meetme, which is removed in Asterisk 21+. Update Q5 answer to "ConfBridge", replace Q6 with ConfBridge admin user profile options, and replace Q10 with a ConfBridge equivalent (user profile with `listen_only=yes`).
+**Answers:** 1 — B, C, D · 2 — pickup group; `chan_dahdi.conf` · 3 — blind; attended · 4 — B · 5 — ConfBridge() · 6 — A · 7 — B · 8 — pickup · 9 — A · 10 — A
