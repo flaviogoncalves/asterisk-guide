@@ -660,4 +660,23 @@ In this chapter, you have learned about the minimum hardware requirements as wel
 
 ## Quiz
 
-1. What’s the minimal Asterisk hardware configuration? 2. Telephony interface cards for Asterisk usually have some Digital Signal Processors (DSPs) built in and do not need a lot of CPU resources from the PC. A. True B. False 3. If you want perfect voice quality, you need to implement end-to-end quality of service (QoS). A. True B. False 4. You should always choose the latest Asterisk version as it is the most stable version. A. True B. False 5. What is the recommended way to install the build dependencies for Asterisk 22? 6. If you don’t have a TDM interface card, you will end up needing a clock source for synchronization. The dahdi_dummy driver fills this role. This is necessary because some applications like _______ and ________ require a time reference. 7. When you install Asterisk, it’s better to leave desktop interfaces such as GNOME or KDE out. Graphical user interfaces take up numerous CPU cycles. A. True B. False 8. Asterisk configuration files are located in the ____________________ directory. 9. To install Asterisk sample files, you need to type the following command: 10. Why is it important to start Asterisk with a non-root user? Anwers: 1. 512MB memory, 10GB HD, 1 core 2. B 3. A 4. B 5. Run `./contrib/scripts/install_prereq install` from the extracted Asterisk source directory — it installs the correct packages for your distribution. 6. MeetMe (ConfBridge) and MusicOnHold 7. A 8. /etc/asterisk 9. make samples 10. security
+1. What is the minimal Asterisk hardware configuration?
+2. Telephony interface cards for Asterisk usually have Digital Signal Processors (DSPs) built in and so do not need much CPU from the PC.
+   - A. True
+   - B. False
+3. If you want perfect voice quality, you need to implement end-to-end quality of service (QoS).
+   - A. True
+   - B. False
+4. You should always choose the latest Asterisk version, as it is the most stable.
+   - A. True
+   - B. False
+5. What is the recommended way to install the build dependencies for Asterisk 22?
+6. If you don't have a TDM interface card you will need a clock source for synchronization, and the `dahdi_dummy` driver fills this role. This is necessary because some applications such as ________ and ________ require a time reference.
+7. When installing Asterisk it is better to leave desktop environments such as GNOME or KDE out, because graphical interfaces consume CPU cycles.
+   - A. True
+   - B. False
+8. Asterisk configuration files are located in the ________ directory.
+9. To install the Asterisk sample configuration files, type the command: ________
+10. Why is it important to run Asterisk as a non-root user?
+
+**Answers:** 1 — 512 MB RAM, 10 GB disk, 1 core · 2 — B · 3 — A · 4 — B · 5 — Run `./contrib/scripts/install_prereq install` from the extracted Asterisk source tree · 6 — ConfBridge and Music on Hold · 7 — A · 8 — `/etc/asterisk` · 9 — `make samples` · 10 — Security (limits the damage if Asterisk is compromised)
