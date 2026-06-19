@@ -1,0 +1,48 @@
+name: Build book
+
+# Every push and PR rebuilds the book; tags publish downloadable releases.
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to attach files to Releases on tags
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pandoc + LaTeX
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            pandoc \
+            texlive-xetex texlive-fonts-recommended texlive-latex-extra \
+            fonts-dejavu lmodern
+          pandoc --version | head -1
+
+      - name: Build PDF, EPUB and LaTeX
+        run: bash book/build.sh
+
+      - name: Upload book artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: complete-asterisk-training
+          path: build/*
+          if-no-files-found: error
+
+      # On a version tag (e.g. v2.0.0), publish the three formats as a GitHub Release
+      # so readers can download them directly from the repo's Releases page.
+      - name: Publish Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/complete-asterisk-training.pdf
+            build/complete-asterisk-training.epub
+            build/complete-asterisk-training.tex

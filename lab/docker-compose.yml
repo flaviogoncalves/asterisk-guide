@@ -1,0 +1,42 @@
+# Astbook lab — reproducible Asterisk 22 environment for verifying every book example.
+#   docker compose up -d --build      bring the lab up
+#   ./lab.sh verify                   run the headless SIPp smoke test
+#   docker compose exec asterisk asterisk -rx 'pjsip show endpoints'
+
+services:
+  asterisk:
+    build: .
+    image: astbook/asterisk:22.10.0
+    container_name: astlab-asterisk
+    restart: unless-stopped
+    volumes:
+      - ./asterisk/etc:/etc/asterisk:ro
+    ports:
+      - "5060:5060/udp"            # SIP for the SipPulse Softphone on your LAN
+      - "10000-10100:10000-10100/udp"   # RTP
+    networks:
+      lab:
+        ipv4_address: 172.30.0.10
+    healthcheck:
+      test: ["CMD", "asterisk", "-rx", "core show version"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  sipp:
+    build: ./sipp
+    image: astbook/sipp:latest
+    container_name: astlab-sipp
+    depends_on:
+      asterisk:
+        condition: service_healthy
+    networks:
+      lab:
+        ipv4_address: 172.30.0.20
+
+networks:
+  lab:
+    name: astbook-lab
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
