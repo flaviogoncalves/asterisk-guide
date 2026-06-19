@@ -790,19 +790,47 @@ In this chapter, you have learned how to receive calls using an IVR or an auto-a
 
 ## Quiz
 
-1. To include a time-dependent context, you can use: include=> context|<times>|<weekdays>|<mdays>|<months> What does the following statement do? include=>normalhours|08:00-18:00|mon-fri|*|* A. Execute extensions from Monday to Friday from 08:00 to 18:00 B. Execute options every day in all months C. Nothing; its format is invalid. 2. The following statements make the user who called the 8590 extension (mark all that apply):
+1. A time-dependent context include uses the form `include => context|<times>|<weekdays>|<mdays>|<months>`. What does `include => normalhours|08:00-18:00|mon-fri|*|*` do?
+   - A. Execute the extensions Monday to Friday, 08:00 to 18:00
+   - B. Execute the options every day in all months
+   - C. Nothing; the format is invalid
+2. The following statements make the caller who dialed extension 8590 (mark all that apply):
 
-```
-exten => 8590/482518888,1,Congestion
-exten => 8590,2,Dial(DAHDI/1,20,j)
-exten => 8590,3,Voicemail(u8590)
-exten => 8590,103,Voicemail(b8590)
-```
+   ```
+   exten => 8590/482518888,1,Congestion
+   exten => 8590,2,Dial(DAHDI/1,20,j)
+   exten => 8590,3,Voicemail(u8590)
+   exten => 8590,103,Voicemail(b8590)
+   ```
 
-A. Receive a busy tone if the CallerID=482518888 B. Receive a busy tone, independent from the number dialed. C. Dial the DAHDI/1 channel D. Go to to the voicemail if DAHDI/1 is busy or is not answered, except when CallerID=482518888. 3. To concatenate several extensions, you can separate them using the ____ character. 4. A voice menu is usually created using the__________ application. 5. You can include files inside the configuration files using the ____________ statement. 6. The Asterisk database is based in __________. A. Oracle B. MySQL C. SQLITE3 D. PostgreSQL
+   - A. Receive a busy tone if CallerID = 482518888
+   - B. Receive a busy tone, regardless of the number dialed
+   - C. Dial the DAHDI/1 channel
+   - D. Go to voicemail if DAHDI/1 is busy or unanswered, except when CallerID = 482518888
+3. To concatenate several extensions, you separate them with the ___ character.
+4. A voice menu is usually created with the ___ application.
+5. You can include files inside configuration files using the ___ statement.
+6. The Asterisk database is based on:
+   - A. Oracle
+   - B. MySQL
+   - C. SQLite3
+   - D. PostgreSQL
+7. When you use `Dial(type1/identifier1&type2/identifier2)`, Asterisk dials each channel in sequence, waiting 20 seconds between them.
+   - A. False
+   - B. True
+8. With the Background() application, you must wait until the message finishes playing before you can press a DTMF digit to choose an option.
+   - A. False
+   - B. True
+9. The valid formats for the goto() application are:
+   - A. Goto(context,extension)
+   - B. Goto(context,extension,priority)
+   - C. Goto(extension,priority)
+   - D. Goto(priority)
+10. Switches are used to direct dial plan processing to another server.
+    - A. False
+    - B. True
+11. A subroutine can automate the processing of an extension, and you can pass any number of parameters to it.
+    - A. True
+    - B. False
 
-```
-7. When you use Dial(type1/identifier1&type2/identifier2), Asterisk dials to each one in
-```
-
-sequence, waiting 20 seconds between them. A. False B. True 8. Using the Background application, you need to wait until the message is played before you can choose an option to send a DTMF digit. A. False B. True 9. The valid formats for the goto application are: A. Goto (context,extension) B. Goto (context,extension,priority) C. Goto (extension,priority) D. Goto(priority) 10. Switches are used to direct the dial plan processing to another server. A. False B. True 11. A subroutine can be used to automate the processing of an extension. With subroutines you can send any number of parameters: A. True B. False Answers: 1-A,2-ACD,3-&,4-Background,5-INCLUDE,6-C,7-A,8-A,9-BCD,10-B,11-A
+**Answers:** 1 — A · 2 — A, C, D · 3 — `&` · 4 — Background() · 5 — #include · 6 — C · 7 — A · 8 — A · 9 — B, C, D · 10 — B · 11 — A
