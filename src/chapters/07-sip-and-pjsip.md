@@ -1456,5 +1456,58 @@ qualify_frequency=15
 
 Full PJSIP configuration is covered in the PJSIP section of this chapter, and the official documentation at docs.asterisk.org has full coverage of the channel. In our companion labs at voip.school, lab 5 lets you practice what you have just learned.
 
-> **[2nd-ed note]** Add a combined end-of-chapter quiz covering SIP fundamentals, PJSIP
-> objects, and sip.conf→pjsip.conf migration (the original ch8/ch9 quizzes were dropped in the merge).
+## Quiz
+
+1. In the SIP architecture, which component receives a request and answers it with a redirect response (such as `302 Moved Temporarily`) carrying the new location, then stays out of the path of the follow-up messages?
+   - A. Proxy server
+   - B. Redirect server
+   - C. Location server
+   - D. Registrar
+
+2. What role does Asterisk play when it handles a SIP call between two phones?
+   - A. A SIP proxy that stays only in the signaling path
+   - B. A SIP redirect server
+   - C. A back-to-back user agent (B2BUA) that bridges two SIP channels
+   - D. A stateless SIP load balancer
+
+3. Which SIP method is used by a phone to tell the registrar its current IP address so it can later receive calls?
+   - A. INVITE
+   - B. OPTIONS
+   - C. SUBSCRIBE
+   - D. REGISTER
+
+4. True or False: In Asterisk 22, `chan_sip` and `sip.conf` are still available as a legacy fallback alongside PJSIP.
+
+5. Which configuration objects must an endpoint be associated with so that Asterisk knows the listening socket to use and where to send calls for that device? (Choose all that apply.)
+   - A. `type=transport`
+   - B. `type=aor`
+   - C. `type=identify`
+   - D. `type=registration`
+
+6. In a PJSIP `aor` object, which setting keeps the NAT mapping open by periodically qualifying the contact, and what is its unit?
+   - A. `qualify=yes` (boolean)
+   - B. `qualify_frequency` (seconds)
+   - C. `rtp_timeout` (milliseconds)
+   - D. `nat=force_rport`
+
+7. Fill in the blank: To make Asterisk match an inbound SIP request to a specific endpoint by source IP address (instead of by the `From` header), you create a section with `type=________`.
+
+8. Which PJSIP object is used to configure an **outbound** registration from Asterisk to a SIP trunk provider?
+   - A. `type=aor`
+   - B. `type=identify`
+   - C. `type=registration`
+   - D. `type=auth`
+
+9. On the Asterisk 22 CLI, which command enables the SIP packet logger that prints every SIP request and reply to the console?
+   - A. `sip set debug on`
+   - B. `pjsip set logger on`
+   - C. `pjsip debug on`
+   - D. `sip show registry`
+
+10. When migrating a legacy `sip.conf` `[friend]` such as `dtmfmode=rfc2833`, which `dtmf_mode` value does PJSIP use for the same out-of-band DTMF behavior on an endpoint?
+    - A. `rfc2833`
+    - B. `inband`
+    - C. `rfc4733`
+    - D. `info`
+
+**Answers:** 1 — B · 2 — C · 3 — D · 4 — False · 5 — A, B · 6 — B · 7 — identify · 8 — C · 9 — B · 10 — C

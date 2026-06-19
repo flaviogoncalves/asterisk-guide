@@ -660,7 +660,11 @@ In this chapter, you have learned about the minimum hardware requirements as wel
 
 ## Quiz
 
-1. What is the minimal Asterisk hardware configuration?
+1. In Asterisk 22, which channel driver provides SIP support, and what happened to the older `chan_sip`?
+   - A. `chan_sip` is still the default; `chan_pjsip` is optional.
+   - B. `chan_pjsip` is the default SIP channel; `chan_sip` was removed in Asterisk 21 and no longer exists.
+   - C. Both are built by default and you choose between them at runtime.
+   - D. SIP support was removed entirely in favor of IAX2.
 2. Telephony interface cards for Asterisk usually have Digital Signal Processors (DSPs) built in and so do not need much CPU from the PC.
    - A. True
    - B. False
@@ -679,4 +683,4 @@ In this chapter, you have learned about the minimum hardware requirements as wel
 9. To install the Asterisk sample configuration files, type the command: ________
 10. Why is it important to run Asterisk as a non-root user?
 
-**Answers:** 1 — 512 MB RAM, 10 GB disk, 1 core · 2 — B · 3 — A · 4 — B · 5 — Run `./contrib/scripts/install_prereq install` from the extracted Asterisk source tree · 6 — ConfBridge and Music on Hold · 7 — A · 8 — `/etc/asterisk` · 9 — `make samples` · 10 — Security (limits the damage if Asterisk is compromised)
+**Answers:** 1 — B · 2 — B · 3 — A · 4 — B · 5 — Run `./contrib/scripts/install_prereq install` from the extracted Asterisk source tree · 6 — ConfBridge and Music on Hold · 7 — A · 8 — `/etc/asterisk` · 9 — `make samples` · 10 — Security (limits the damage if Asterisk is compromised)
