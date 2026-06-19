@@ -22,8 +22,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             pandoc \
-            texlive-xetex texlive-fonts-recommended texlive-latex-extra \
-            fonts-dejavu lmodern fonts-texgyre
+            texlive-xetex texlive-fonts-recommended texlive-latex-extra texlive-lang-cjk \
+            fonts-dejavu lmodern fonts-texgyre fonts-noto-cjk fonts-noto-core
           pandoc --version | head -1
 
       - name: Build English PDF, EPUB and LaTeX (+ sponsored PDF)
@@ -42,9 +42,11 @@ jobs:
             echo "GEMINI_API_KEY secret not set — skipping translated editions."
             exit 0
           fi
-          for L in pt es; do
-            python3 book/translate/translate.py --lang "$L"
-            BOOK_LANG="$L" bash book/build.sh clean
+          for L in pt es fr de it hi zh ja; do
+            python3 book/translate/translate.py --lang "$L" || { echo "::warning::translate $L failed"; continue; }
+            python3 book/translate/translate.py --lang "$L" --src book/sponsors --only sponsors.md --out "i18n/$L" \
+              || echo "::warning::sponsor-page translate $L failed"
+            BOOK_LANG="$L" bash book/build.sh || echo "::warning::$L build issue (EPUB/sponsored built best-effort)"
           done
 
       - name: Upload book artifacts
@@ -63,10 +65,20 @@ jobs:
           fail_on_unmatched_files: false
           files: |
             build/asterisk-guide-sponsored.pdf
-            build/asterisk-guide.pdf
-            build/asterisk-guide.epub
-            build/asterisk-guide.tex
-            build/asterisk-guide-pt.pdf
-            build/asterisk-guide-pt.epub
-            build/asterisk-guide-es.pdf
-            build/asterisk-guide-es.epub
+            build/asterisk-guide-sponsored.epub
+            build/asterisk-guide-sponsored-pt.pdf
+            build/asterisk-guide-sponsored-pt.epub
+            build/asterisk-guide-sponsored-es.pdf
+            build/asterisk-guide-sponsored-es.epub
+            build/asterisk-guide-sponsored-fr.pdf
+            build/asterisk-guide-sponsored-fr.epub
+            build/asterisk-guide-sponsored-de.pdf
+            build/asterisk-guide-sponsored-de.epub
+            build/asterisk-guide-sponsored-it.pdf
+            build/asterisk-guide-sponsored-it.epub
+            build/asterisk-guide-sponsored-hi.pdf
+            build/asterisk-guide-sponsored-hi.epub
+            build/asterisk-guide-sponsored-zh.pdf
+            build/asterisk-guide-sponsored-zh.epub
+            build/asterisk-guide-sponsored-ja.pdf
+            build/asterisk-guide-sponsored-ja.epub

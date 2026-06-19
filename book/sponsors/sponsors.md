@@ -8,23 +8,21 @@ open for everyone. *(The paid Amazon paperback stays ad-free.)*
 
 ![](book/sponsors/sippulse-hero.png){width=100%}
 
-**SipPulse is the SIP authority** — the telecom infrastructure behind **120+ Brazilian
-operators**. Where this book teaches you Asterisk, SipPulse is what carriers run when a single
-PBX is no longer enough: an integrated platform that combines **SoftSwitch, SBC, contact
-center, multitenant PBX, billing, and AI fraud classification** into one stack.
+**SipPulse is the SIP authority** — the telecom infrastructure behind **200+ operators**.
+Where this book teaches you Asterisk, SipPulse is what carriers run when a single PBX is no
+longer enough: an integrated platform that combines a **SoftSwitch, SBC, multitenant PBX, and
+voice-AI IVR** into one stack.
 
-*Operadoras que usam SipPulse faturam mais, gastam menos e dormem tranquilas.*
+*Operators that run SipPulse bill more, spend less, and sleep soundly.*
 
 ### The platform {.unnumbered}
 
 | Product | What it does |
 |---------|--------------|
 | **SoftSwitch** | Carrier-grade voice routing and switching — up to **1000 CAPS**. |
-| **SBC** | Session Border Controller securing the edge — up to **4000 simultaneous calls**. |
+| **SBC** | Session Border Controller securing the edge — up to **4000 simultaneous calls**, with built-in Call Progress Analysis (CPA). |
 | **BCW** | Multitenant PBX / virtual PABX and contact-center platform. |
-| **NIVA** | IVR / voice-response automation. |
-| **BCORE** | BSS — billing and business support for operators. |
-| **CPA Classifier** | Call-fraud detection with **99.9% accuracy**. |
+| **NIVA** | IVR with voice agents running **locally** — automated, AI-driven voice response. |
 
 ### The SipPulse Softphone {.unnumbered}
 

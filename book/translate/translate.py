@@ -38,7 +38,9 @@ def unmask_code(md, blocks):
 
 DEFAULT_MODEL = os.environ.get("GEMINI_TRANSLATE_MODEL", "gemini-flash-lite-latest")
 KEY_NAMES = ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY")
-LANG_NAMES = {"pt": "Brazilian Portuguese (pt-BR)", "es": "Latin American Spanish (es)"}
+LANG_NAMES = {"pt": "Brazilian Portuguese (pt-BR)", "es": "Latin American Spanish (es)",
+              "fr": "French", "de": "German", "it": "Italian", "hi": "Hindi",
+              "zh": "Simplified Chinese (Mandarin)", "ja": "Japanese"}
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 
@@ -138,6 +140,25 @@ def main():
         print("  → %s (%s)" % (f, LANG_NAMES[a.lang]))
         masked, blocks = mask_code(src)
         translated = translate(a.model, key, prompt_for(LANG_NAMES[a.lang], glossary, masked))
+        # Every real code span is a 【Ci】 sentinel, so the masked translation must contain no
+        # code-fence markers — any ``` the model emitted is spurious (and an odd one breaks
+        # rendering). Strip every ``` occurrence (line-start or mid-line) before restoring, so
+        # the translated chapter has exactly the source's code blocks.
+        translated = translated.replace("```", "")
+        # The model occasionally repeats a 【Ci】 sentinel (printing a code block twice). Keep the
+        # first occurrence of each so every block restores exactly once.
+        _seen = set()
+        def _dedup(m):
+            tok = m.group(0)
+            if tok in _seen:
+                return ""
+            _seen.add(tok)
+            return tok
+        translated = re.sub(r"【C\d+】", _dedup, translated)
+        missing = [i for i in range(len(blocks)) if ("【C%d】" % i) not in translated]
+        if missing:
+            print("    ! WARNING: %d code block(s) dropped by the model in %s (re-run to retry)"
+                  % (len(missing), f))
         restored = unmask_code(translated, blocks)
         if "【C" in restored:                       # a sentinel was mangled — code at risk
             print("    ! WARNING: unrestored code sentinel in %s (skipping cache)" % f)

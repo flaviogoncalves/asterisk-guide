@@ -1,0 +1,21 @@
+---
+title: "Asterisk Guide"
+subtitle: "Costruire un IP PBX con Asterisk 22 LTS"
+author: "Flavio E. Gonçalves"
+date: "Seconda edizione"
+lang: it
+documentclass: book
+classoption:
+  - oneside
+toc: true
+toc-title: "Indice"
+toc-depth: 1
+numbersections: true
+geometry: "paperwidth=7.5in,paperheight=9.25in,inner=0.75in,outer=0.5in,top=0.6in,bottom=0.6in"
+fontsize: 11pt
+colorlinks: true
+linkcolor: black
+urlcolor: blue
+cover-image: "src/images/cover.png"
+listings: false
+...

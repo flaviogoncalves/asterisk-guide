@@ -1,0 +1,21 @@
+---
+title: "Asterisk Guide"
+subtitle: "Eine IP-Telefonanlage mit Asterisk 22 LTS aufbauen"
+author: "Flavio E. Gonçalves"
+date: "Zweite Auflage"
+lang: de
+documentclass: book
+classoption:
+  - oneside
+toc: true
+toc-title: "Inhaltsverzeichnis"
+toc-depth: 1
+numbersections: true
+geometry: "paperwidth=7.5in,paperheight=9.25in,inner=0.75in,outer=0.5in,top=0.6in,bottom=0.6in"
+fontsize: 11pt
+colorlinks: true
+linkcolor: black
+urlcolor: blue
+cover-image: "src/images/cover.png"
+listings: false
+...

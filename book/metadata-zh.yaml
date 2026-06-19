@@ -1,0 +1,21 @@
+---
+title: "Asterisk Guide"
+subtitle: "使用 Asterisk 22 LTS 构建 IP PBX"
+author: "Flavio E. Gonçalves"
+date: "第二版"
+lang: zh-CN
+documentclass: book
+classoption:
+  - oneside
+toc: true
+toc-title: "目录"
+toc-depth: 1
+numbersections: true
+geometry: "paperwidth=7.5in,paperheight=9.25in,inner=0.75in,outer=0.5in,top=0.6in,bottom=0.6in"
+fontsize: 11pt
+colorlinks: true
+linkcolor: black
+urlcolor: blue
+cover-image: "src/images/cover.png"
+listings: false
+...
