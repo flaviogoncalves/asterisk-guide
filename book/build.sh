@@ -13,7 +13,9 @@ mkdir -p "$OUT"
 
 # Chapter order = numeric filename order (00-front-matter, 01-…, … 16-…).
 # After the restructure this becomes an explicit order file; numeric sort holds for now.
-mapfile -t CHAPTERS < <(ls "$SRC"/*.md | sort)
+# (portable: macOS ships bash 3.2, which has no `mapfile`)
+CHAPTERS=()
+while IFS= read -r _f; do CHAPTERS+=("$_f"); done < <(ls "$SRC"/*.md | sort)
 echo "Assembling ${#CHAPTERS[@]} chapters:"
 printf '  %s\n' "${CHAPTERS[@]##*/}"
 
