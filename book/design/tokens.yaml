@@ -1,0 +1,14 @@
+# Design tokens — single source of truth for the book's look (interior + cover).
+trim:   { width_in: 6, height_in: 9, bleed_in: 0.125 }
+type:
+  body:    "TeX Gyre Pagella"   # Palatino-like serif, 10pt/13.5 leading
+  heading: "TeX Gyre Heros"     # Helvetica-like sans
+  mono:    "TeX Gyre Cursor"    # code, scaled 0.86
+  body_size_pt: 10
+color:
+  brand:    "1C5D99"   # restrained blue — headings, rules, links
+  ink:      "14304A"   # near-black heading ink
+  code_bg:  "F5F7F9"
+  code_frame: "D5DCE2"
+code:   { style: boxed, background: code_bg, frame: code_frame }
+brand_voice: "VoIP School Blackbelt / voip.school — professional, practical, uncluttered"

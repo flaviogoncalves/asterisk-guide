@@ -28,11 +28,15 @@ COMMON=( --from=commonmark_x
 echo "→ EPUB"
 pandoc "${COMMON[@]}" -o "$OUT/$NAME.epub" "${CHAPTERS[@]}"
 
+# Interior typesetting (fonts, headings, running heads, boxed code, callouts).
+# xelatex-only — applied to the LaTeX/PDF outputs, not the EPUB.
+INTERIOR="$ROOT/book/template/interior.tex"
+
 echo "→ LaTeX"
-pandoc "${COMMON[@]}" --standalone -o "$OUT/$NAME.tex" "${CHAPTERS[@]}"
+pandoc "${COMMON[@]}" --standalone --include-in-header="$INTERIOR" -o "$OUT/$NAME.tex" "${CHAPTERS[@]}"
 
 echo "→ PDF (xelatex)"
-pandoc "${COMMON[@]}" --pdf-engine=xelatex -o "$OUT/$NAME.pdf" "${CHAPTERS[@]}"
+pandoc "${COMMON[@]}" --pdf-engine=xelatex --include-in-header="$INTERIOR" -o "$OUT/$NAME.pdf" "${CHAPTERS[@]}"
 
 echo "Done. Artifacts in $OUT:"
 ls -la "$OUT"
