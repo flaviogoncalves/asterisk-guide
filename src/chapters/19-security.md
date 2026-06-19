@@ -29,37 +29,16 @@ Denial of Service and Distributed Denial of Service are popular attacks to any I
 
 The DOS is applied usually thru techniques such as fuzzing and flooding. Flooding can use SIP, IAX, RTP and other protocols. They can stop the service completely or degrade the voice quality. They are very hard to mitigate if the ports are open to the Internet. Below are some of the tools used by attackers
 
-- Fuzzing :
+**Fuzzing:**
 
-```
-o
-```
+- **PROTOS Test Suite (c07-sip)** — from the University of Oulu OUSPG. Sends thousands of malformed packets to provoke a malfunction such as a buffer overflow that stops the software.
+- **Voiper** — generates more than 200,000 tests covering all SIP attributes and verifies whether your server can process the messages effectively. <http://voiper.sourceforge.net/>
 
-PROTOS Test Suite (c07-sip), from the University of Oulu OUSPG. This tool makes thousands of tests with malformed packets. The objective is to cause a malfunction such as a buffer overflow and stop the software. Voiper – http://voiper.sourceforge.net/. Generates more than 200.000 tests with all SIP
+**Flooding:**
 
-```
-o
-```
-
-attributes and verifies if your server is capable to process effectively the messages.
-
-- Flooding:
-
-```
-o
-```
-
-INVITE Flooder - http://www.hackingvoip.com/tools/inviteflood.tar.gz IAX Flooder - http://www.hackingvoip.com/tools/iaxflood.tar.gz
-
-```
-o
-```
-
-RTP Flooder - http://www.hackingvoip.com/tools/rtpflood.tar.gz
-
-```
-o
-```
+- **INVITE Flooder** — floods the server with SIP INVITE requests. <http://www.hackingvoip.com/tools/inviteflood.tar.gz>
+- **IAX Flooder** — floods the server with IAX2 traffic. <http://www.hackingvoip.com/tools/iaxflood.tar.gz>
+- **RTP Flooder** — floods active media sessions with RTP packets to degrade voice quality. <http://www.hackingvoip.com/tools/rtpflood.tar.gz>
 
 ### Mitigation techniques for DoS/DDoS
 

@@ -58,7 +58,13 @@ This application records from the channel into a given filename. If the file exi
 - 'format' is the format of the file type to be recorded (wav, gsm, etc).
 - 'silence' is the number of seconds of silence allowed before returning.
 - 'maxduration' is the maximum recording duration in seconds; if it is missing or zero, there is no maximum.
-- 'options' may contain any of the following letters: o 'a': appends to an existing recording rather than replacing it o 'n': do not answer, but record anyway if line is not yet answered o 'q': quiet (do not play a beep tone) o 's': skips recording if the line is not yet answered o 't': use alternate '*' terminator key (DTMF) instead of default '#' o 'x': ignore all terminator keys (DTMF) and keep recording until hang-up
+- 'options' may contain any of the following letters:
+    - `a` — appends to an existing recording rather than replacing it
+    - `n` — do not answer, but record anyway if the line is not yet answered
+    - `q` — quiet (do not play a beep tone)
+    - `s` — skips recording if the line is not yet answered
+    - `t` — use the alternate `*` terminator key (DTMF) instead of the default `#`
+    - `x` — ignore all terminator keys (DTMF) and keep recording until hang-up
 
 If filename contains %d, these characters will be replaced with a number incremented by one each time the file is recorded. Use core show file formats to see the available formats on your system. The user can press # to terminate the recording and continue to the next priority. If the user hangs up during a recording, all data will be lost and the application will terminate.
 
@@ -72,7 +78,9 @@ This application plays back given filenames (do not include extension). Options 
 
 If 'skip' is specified, the application will return immediately should the channel not be off the hook. Otherwise, unless 'noanswer' is specified, the channel will be answered before the sound is played. Not all channels support playing messages while still on the hook. If 'j' is specified, the application will jump to priority n+101 when the file does not exist, if present. This application sets the following channel variable upon completion:
 
-- PLAYBACKSTATUS - The status of the playback attempt as a text string, one of: o SUCCESS o FAILED
+- PLAYBACKSTATUS — the status of the playback attempt as a text string, one of:
+    - `SUCCESS`
+    - `FAILED`
 
 ### The Read() application
 
@@ -85,26 +93,10 @@ This application reads a predetermined number of string digits, a certain number
 
 ![10-dialplan-advanced-features figure 5](../images/10-dialplan-advanced-features-img05.png)
 
-- option -- options are s, i, n
-
-```
-o
-```
-
-s to return immediately if the line is not up
-
-```
-o
-```
-
-i to play filename as an indication tone from your indications.conf
-
-```
-o
-```
-
-n to read digits even if the line is not up
-
+- option -- options are `s`, `i`, `n`:
+    - `s` — return immediately if the line is not up
+    - `i` — play filename as an indication tone from your `indications.conf`
+    - `n` — read digits even if the line is not up
 - attempts -- if greater than 1, the number of attempts that will be made in case no data are entered
 - timeout -- An integer number of seconds to wait for a digit response. If greater than 0, that value will override the default timeout.
 
@@ -116,7 +108,20 @@ This application will cause the calling channel to jump to the specified locatio
 
 ### Lab: Building an IVR menu step-by-step
 
-Let’s create an IVR menu with the following functionality: When dialed, the IVR will play back an audio file with the message “Welcome to the XYZ Corporation; press 1 for sales, 2 for tech support, 3 for training, or wait to speak to a representative.” When 1 is pressed, the call is transferred to sales (PJSIP/4001); if 2 is pressed, the call is transferred to tech support (PJSIP/4002); if 3 is pressed, the call is transferred to training (PJSIP/4003). If no digits are pressed, the call is transferred to the operator (PJSIP/4000). Step 1 – Record the prompts Let’s create an extension to record the prompts. To record a prompt, dial from a soft phone to 9003filename. When you hear the beep, start recording; press # to stop recording. You will hear a beep and the system will play back the recorded prompt. Step 2 – Creating the menu logic When dialing the 9004 extension, processing will jump to the menu in the ‘s’ extension, priority 1.
+Let’s create an IVR menu with the following functionality. When dialed, the IVR plays back an audio file with the message “Welcome to the XYZ Corporation; press 1 for sales, 2 for tech support, 3 for training, or wait to speak to a representative.” The digits route the caller as follows:
+
+- `1` — transfer to sales (PJSIP/4001)
+- `2` — transfer to tech support (PJSIP/4002)
+- `3` — transfer to training (PJSIP/4003)
+- No digit pressed — transfer to the operator (PJSIP/4000)
+
+**Step 1 – Record the prompts**
+
+Let’s create an extension to record the prompts. To record a prompt, dial from a soft phone to `9003<filename>` (for example, `9003welcome`). When you hear the beep, start recording; press `#` to stop. You will hear a beep, and the system will play back the recorded prompt.
+
+**Step 2 – Create the menu logic**
+
+When dialing the 9004 extension, processing jumps to the menu in the `s` extension, priority 1.
 
 ### Matching as you dial
 
@@ -413,20 +418,51 @@ exten=>_214X,n,hangup
 
 ## Voicemail
 
-Voicemail is a computerized telephone answering system that records incoming voice messages, saving them on disk or sending them via e-mail. Sometimes it has a directory where you can look up voicemail boxes by name. In the past, voicemail systems were very expensive. Now, with IP telephony, voicemail is becoming a standard feature. To configure voicemail, you should go through the following steps: Step 1: Edit the file voicemail.conf and set general parameters. format Codec used to read the message (e.g., wav49, wav, gsm) serveremail Who the email notification should appear to come from maxmsg Maximum number of messages in the mailbox; after this threshold, messages are discarded maxsecs Maximum number of seconds for the voicemail message minsecs Minimum number of seconds for the message; below this threshold, no message is recorded maxsilence What to consider silence in seconds Step 2: Edit the file voicemail.conf and create the users’ mailboxes
+Voicemail is a computerized telephone answering system that records incoming voice messages, saving them on disk or sending them via e-mail. Sometimes it has a directory where you can look up voicemail boxes by name. In the past, voicemail systems were very expensive. Now, with IP telephony, voicemail is becoming a standard feature.
+
+To configure voicemail, you should go through the following steps.
+
+**Step 1: Edit `voicemail.conf` and set the general parameters.**
+
+- `format` — codec used to record the message (e.g., wav49, wav, gsm)
+- `serveremail` — who the e-mail notification should appear to come from
+- `maxmsg` — maximum number of messages in the mailbox; after this threshold, messages are discarded
+- `maxsecs` — maximum length of a voicemail message, in seconds
+- `minsecs` — minimum length of a message, in seconds; below this threshold, no message is recorded
+- `maxsilence` — how many seconds of silence to treat as the end of the message
+
+**Step 2: Edit `voicemail.conf` and create the users’ mailboxes.**
 
 ### Voicemail.conf
 
-Mailbox ID=pincode, fullname,email address,pager e- mail,option=value, option=value MailboxID => usually the extension number Pincode=>password to access e-mail system Full name => used for the directory application E-mail => for voicemail notification Pager e-mail=>For notification via SMS gateway or pager Options=> The same options but applied to the MaiboxID Voicemail has several options that control voicemail behavior. For now, we will stick to the default options and concentrate on mailbox definition. After the [general] section in the file, you will start configuring the mailbox ID in its own context. Example:
+A mailbox is defined with one line per mailbox, in the form:
+
+```
+mailboxID => pincode,fullname,email,pager-email,options
+```
+
+The fields are:
+
+- **MailboxID** — usually the extension number
+- **Pincode** — password to access the voicemail system
+- **Full name** — used by the directory application
+- **E-mail** — address for voicemail notification
+- **Pager e-mail** — address for notification via an SMS gateway or pager
+- **Options** — per-mailbox options (the same options as in `[general]`, but applied to this mailbox)
+
+Voicemail has several options that control its behavior. For now, we will stick to the default options and concentrate on the mailbox definition. After the `[general]` section in the file, you start configuring the mailbox IDs, each in its own context. Example:
 
 ```
 [general]
 [default]
-1234=>1234,SomeUser,email@address.com,pager@address.com,saycid=yes|dialout=from
-vm|callback=fromvm|review=yes|operator=yes
+1234=>1234,SomeUser,email@address.com,pager@address.com,saycid=yes|dialout=fromvm|callback=fromvm|review=yes|operator=yes
 ```
 
-Please check for advanced options in the file voicemail.conf. Step 3: Configuring the file extensions.conf Below, you have the instructions to create the subroutine and the call to implement voicemail in the file extensions.conf. We use the results of the channel variable ${DIALSTATUS} to redirect the call flow to the proper voicemail menu.
+Please check for advanced options in the file `voicemail.conf`.
+
+**Step 3: Configure the file `extensions.conf`.**
+
+Below, you have the instructions to create the subroutine and the call that implement voicemail in `extensions.conf`. We use the value of the channel variable `${DIALSTATUS}` to redirect the call flow to the proper voicemail menu.
 
 ### Voicemail Subroutine
 
@@ -540,7 +576,15 @@ You can control how messages are sent by setting up the following variables: Var
 - VM_CALLERID
 - VM_DATE
 
-The e-mail body and e-mail subject will be created as described below. You can modify the e-mail body and subject, but the size limit of the message is 512 bytes. emailsubject=[PBX]: New message ${VM_MSGNUM} in mailbox ${VM_MAILBOX}. The following definition is very close to the default, but the default shows just the CIDNAME, if it is not null, otherwise just the CIDNUM, or "an unknown caller", if they are both null. emailbody=Dear ${VM_NAME}:\n\n\tjust wanted to let you know you were just left a ${VM_DUR} long message (number ${VM_MSGNUM})\nin mailbox ${VM_MAILBOX} from ${VM_CALLERID}, on ${VM_DATE}, so you might\nwant to check it when you get a chance. Thanks!\n\n\t\t\t\t--Asterisk\n
+The e-mail body and subject are built from a template that you set in the `[general]` section of `voicemail.conf`. You can modify both the body and the subject, but the size limit of the message is 512 bytes. In the template, `\n` inserts a newline and `\t` inserts a tab.
+
+The `emailsubject` example below is straightforward. The `emailbody` example is very close to the default; the default shows just the CIDNAME when it is not null, otherwise the CIDNUM, or "an unknown caller" when both are null.
+
+```
+emailsubject=[PBX]: New message ${VM_MSGNUM} in mailbox ${VM_MAILBOX}
+
+emailbody=Dear ${VM_NAME}:\n\n\tjust wanted to let you know you were just left a ${VM_DUR} long message (number ${VM_MSGNUM})\nin mailbox ${VM_MAILBOX} from ${VM_CALLERID}, on ${VM_DATE}, so you might\nwant to check it when you get a chance. Thanks!\n\n\t\t\t\t--Asterisk\n
+```
 
 ## Voicemail Web interface
 
@@ -654,7 +698,10 @@ Thus far, you have learned several dial plan concepts. Let’s put all the appli
 
 - 4 analog trunks
 - 16 SIP-based extensions
-- 3 service classes o restrict (Internal, local and 1-800) o ld (long distance) o ldi (international)
+- 3 service classes:
+    - restrict (internal, local, and 1-800)
+    - ld (long distance)
+    - ldi (international)
 - After-hours message
 - Auto attendant
 

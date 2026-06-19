@@ -207,20 +207,32 @@ Now that we have configured the extconfig.conf file, let’s create the tables. 
 ```
 [4000](endpoint)
 type=endpoint
-context=ramais
+context=from-internal
 disallow=all
 allow=ulaw
 auth=4000
 aors=4000
 ```
 
-is stored as one row across three tables. The `ps_endpoints` row holds `id=4000, context=ramais, disallow=all, allow=ulaw, auth=4000, aors=4000`; the `ps_auths` row holds `id=4000, auth_type=userpass, username=4000, password=senha`; and the `ps_aors` row holds `id=4000, max_contacts=1`. You only need to populate the columns you actually use — any column you leave NULL falls back to the option's default. If you want, for example, the `callerid` parameter on an endpoint, fill in the `callerid` column of `ps_endpoints` (the column name is the same as the `pjsip.conf` option name).
+is stored as one row across three tables. The `ps_endpoints` row holds `id=4000, context=from-internal, disallow=all, allow=ulaw, auth=4000, aors=4000`; the `ps_auths` row holds `id=4000, auth_type=userpass, username=4000, password=supersecret`; and the `ps_aors` row holds `id=4000, max_contacts=1`. You only need to populate the columns you actually use — any column you leave NULL falls back to the option's default. If you want, for example, the `callerid` parameter on an endpoint, fill in the `callerid` column of `ps_endpoints` (the column name is the same as the `pjsip.conf` option name).
 
-A voicemail table follows the same idea: Uniqueid mailbox Context Password email fullname — for instance 4000 / Default / 4000 / joao@silva.com / Joao Silva. The uniqueid should be unique to each voicemail user and can be autoincrement. It need not have any relationship to the mailbox or context.
+A voicemail table follows the same idea. Its columns map to the `voicemail.conf` fields:
+
+| uniqueid | mailbox | context | password | email | fullname |
+|----------|---------|---------|----------|-------|----------|
+| 1 | 4000 | default | 4000 | john@doe.com | John Doe |
+
+The `uniqueid` should be unique to each voicemail user and can be autoincrement. It need not have any relationship to the mailbox or context.
 
 ### Building a dial plan using Asterisk Real Time
 
-You can also use the real-time system to create the dial plan. ARA uses the `switch` statement to include the real-time extensions into the normal dial plan contained in the extensions.conf file. The extension table should look like the one below: context Exten priority app Appdata Ramais 4000 dial PJSIP/4000&IAX2/4000. The `extensions` realtime family is unchanged in Asterisk 22; just make sure the `Appdata` column dials PJSIP channels, for example `PJSIP/4000`. In the dial plan, you have to use the `switch` command to use the real time.
+You can also use the real-time system to create the dial plan. ARA uses the `switch` statement to include the real-time extensions into the normal dial plan contained in the extensions.conf file. The extension table should look like the one below:
+
+| context | exten | priority | app | appdata |
+|---------|-------|----------|-----|---------|
+| from-internal | 4000 | 1 | Dial | PJSIP/4000 |
+
+The `extensions` realtime family is unchanged in Asterisk 22; just make sure the `appdata` column dials PJSIP channels, for example `PJSIP/4000`. In the dial plan, you have to use the `switch` command to use the real time.
 
 ![Building a dial plan with Asterisk Real Time: extensions.conf uses a `switch => realtime` statement to pull extension rows (context, exten, priority, app, data) from a database table instead of from the text file.](../images/18-realtime-fig02.png)
 
@@ -234,24 +246,28 @@ or
 
 ```
 [local]
-Switch =>realtime/ramais@extensions
+switch => realtime/from-internal@extensions
 ```
 
 ## Lab: Installing and creating the database tables
 
-In this lab, we will prepare the database to receive Asterisk parameters. We will prepare just the REALTIME databases. The static configuration will be left to the configuration text files (Cool isn’t it?). Table creation in MySQL: Step 1: Get into to the MySQL database using root
+In this lab, we will prepare the database to receive Asterisk parameters. We will prepare just the REALTIME tables. The static configuration will be left to the configuration text files (cool, isn't it?). Table creation in MySQL follows.
+
+Step 1: Get into the MySQL database as root.
 
 ```
 mysql –u root –p
 ```
 
-Step 2: Log in to the mysql server created in the CDR labs
+Step 2: Log in to the MySQL server created in the CDR labs.
 
 ```
 mysql –u astdb –p
 ```
 
-When asked for the password, type supersecret. Step 3: Create the necessary tables. The legacy static schema files still ship under `contrib/realtime/` (for example `/usr/src/asterisk-22.x/contrib/realtime/mysql`), but on Asterisk 22 the recommended and version-correct way to build the realtime tables — especially the PJSIP `ps_*` tables — is the **Alembic** migrations under `contrib/ast-db-manage` (see the "Creating the PJSIP realtime schema with Alembic" section above).
+When asked for the password, type supersecret.
+
+Step 3: Create the necessary tables. The legacy static schema files still ship under `contrib/realtime/` (for example `/usr/src/asterisk-22.x/contrib/realtime/mysql`), but on Asterisk 22 the recommended and version-correct way to build the realtime tables — especially the PJSIP `ps_*` tables — is the **Alembic** migrations under `contrib/ast-db-manage` (see the "Creating the PJSIP realtime schema with Alembic" section above).
 
 ```
 cd /usr/src/asterisk-22.x/contrib/ast-db-manage
@@ -262,7 +278,9 @@ alembic -c config.ini upgrade head
 
 The Alembic `config` migration set builds the PJSIP `ps_*` tables (along with `voicemail`, `extensions`, and the other realtime schemas) with exactly the columns the running Asterisk version expects, so the schema always matches the build.
 
-Use supersecret as the password. Step 4: Verify the creation of the tables
+Use supersecret as the password.
+
+Step 4: Verify the creation of the tables.
 
 ```
 mysql –u astdb –p astdb
@@ -270,30 +288,44 @@ mysql>use astdb;
 mysql>show tables;
 ```
 
-You should see the output below:
+You should see the PJSIP `ps_*` tables (created by the Alembic `config` migration), along with the `voicemail`, `extensions`, and other realtime tables:
 
 ```
 mysql> show tables;
-+-----------------------------+
-+-----------------------------+
-+-----------------------------+
++----------------------------+
+| Tables_in_astdb            |
++----------------------------+
+| ps_aors                    |
+| ps_auths                   |
+| ps_contacts                |
+| ps_domain_aliases          |
+| ps_endpoint_id_ips         |
+| ps_endpoints               |
+| ps_registrations           |
+| extensions                 |
+| voicemail                  |
++----------------------------+
 ```
 
-Step 6: Install phpmyadmin to handle database tasks
+(Alembic creates more tables than these — the list above shows the ones relevant to this lab.)
+
+Step 5: The database is already configured for ODBC (since the CDR lab), so no further ODBC setup is needed here.
+
+Step 6: Install phpMyAdmin to handle database tasks
 
 ```
 apt-get install phpmyadmin
 ```
 
-Below are two screenshots of the utility log in screen and the table screen. Use astdb/supersecret as name and password.
+Below are two screenshots of the utility's log-in screen and the table screen. Use astdb/supersecret as name and password.
 
 > **[2nd-ed note]** Replace with a current database-admin screenshot (phpMyAdmin/Adminer), or convert these steps to plain SQL (CREATE TABLE/INSERT).
 
-Step 5: Database is already configure for ODBC (since the CDR lab)
-
 ## Lab: Configuring and testing ARA
 
-In this lab we will change the extconfig.conf configuration to reflect our database configuration and tables. Step 1: Configure extconfig.conf and reload Asterisk
+In this lab we will change the extconfig.conf configuration to reflect our database configuration and tables.
+
+Step 1: Configure extconfig.conf and reload Asterisk.
 
 ```
 ; Realtime configuration engine
@@ -313,7 +345,7 @@ extensions => odbc,cdr,extensions
 
 Note the `ps_endpoints`, `ps_aors`, `ps_auths`, and `ps_contacts` families above; together with the matching `sorcery.conf` mappings (see the "PJSIP Realtime (Sorcery)" section) they make PJSIP read its accounts from the database. The `voicemail` and `extensions` families round out the example.
 
-Step 2: Real Time extension test. Using phpMyAdmin, create a new 6010 endpoint by inserting one row into each of `ps_auths`, `ps_aors`, and `ps_endpoints`, then try to register this endpoint with a softphone.
+Step 2: Real Time extension test. Using phpMyAdmin, create a new `6010` endpoint by inserting one row into each of `ps_auths`, `ps_aors`, and `ps_endpoints`, then try to register this endpoint with a softphone.
 
 ```
 -- ps_auths
@@ -341,26 +373,33 @@ direct_media=no
 
 In PJSIP the RFC 2833 / RFC 4733 DTMF mode is named `rfc4733` (`dtmf_mode=rfc4733`, the default). There is no separate "dynamic" flag for registration: an AOR accepts dynamic REGISTERs as long as it allows at least one contact (`max_contacts` greater than zero), and each registered location is written to `ps_contacts`.
 
-Step 3: Try to register the new phone Step 4: Include the extensions in the database
+Step 3: Try to register the new phone with a softphone using username `6010` and password `supersecret`. Confirm the registration on the Asterisk CLI:
 
 ```
-mysql -u asterisk -p
+asterisk-server*CLI> pjsip show endpoint 6010
+asterisk-server*CLI> pjsip show contacts
+```
+
+Step 4: Include the extensions in the database.
+
+```
+mysql -u astdb -p
 ```
 
 Enter password:
 
-Use asterisk when asked. Use phpadmin to include an extension in the database. If you prefer, use the following commands instead in the MySQL client interface.
+Use supersecret when asked. Use phpMyAdmin to include an extension in the database. If you prefer, use the following commands instead in the MySQL client interface.
 
 ```
 use astdb;
 insert into extensions(id, context, exten, priority, app, appdata) VALUES
-('1','teste', '6007','1','Dial','PJSIP/bria');
+('1','test', '6007','1','Dial','PJSIP/bria');
 ```
 
-Step 8: Include Asterisk Real Time in the dial plan. In the context default:
+Step 5: Include Asterisk Real Time in the dial plan. In the context `default`:
 
 ```
-switch => realtime/teste@extensions
+switch => realtime/test@extensions
 ```
 
 Reload the extensions to activate the change.
@@ -369,7 +408,9 @@ Reload the extensions to activate the change.
 asterisk-server*CLI>extensions reload
 ```
 
-Step 5: Reconfigure one of the phones to the username bria, if you have not already done so. Step 6: Dial 6007 from an existent phone the bria should ring.
+Step 6: Reconfigure one of the phones to the username `bria`, if you have not already done so.
+
+Step 7: Dial 6007 from an existing phone; the `bria` phone should ring.
 
 ## Summary
 

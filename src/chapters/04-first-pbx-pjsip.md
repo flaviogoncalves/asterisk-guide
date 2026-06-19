@@ -748,19 +748,39 @@ For the Privacy and Screening Modes, the DIALSTATUS variable will be set to DONT
 Set(GROUP()=...).
 ```
 
-The following table summarizes some of the most frequently used options for the application dial. For the complete list, use the console command core show application dial. A(x) Plays an announcement to the called party, using 'x' as the file. Resets the CDR for this call. Allows the calling user to dial a 1-digit extension while waiting for a call to be answered. Exits to that extension if it exists in the current context or to the context defined in the EXITCONTEXT variable, if it exists. D([called][:calling]) Sends the specified DTMF strings after the called party has answered, but before the call gets bridged. The 'called' DTMF string is sent to the called party, and the 'calling' DTMF string is sent to the calling party. Both parameters can be used alone. f Forces the caller ID of the calling channel to be set as the extension associated with the channel using a dial plan 'hint’. For example, some PSTNs do not allow caller ID to be set to anything other than the number assigned to the caller. g Proceeds with dial plan execution at the current extension if the destination channel hangs up. G(context^exten^pri) If the call is answered, transfers the calling party to the specified priority and the called party to the specified priority+1.Optionally, an extension—or extension and context—can be specified. Otherwise, the current extension is used. h Allows the called party to hang up by sending the '*' DTMF digit H Allows the calling party to hang up by hitting the '*' DTMF digit. L(x[:y][:z]) Limits the call to 'x' ms. Plays a warning when 'y' ms are left. Repeats the warning every 'z' ms. The following special variables can be used with this option: LIMIT_PLAYAUDIO_CALLER yes|no (default yes) Plays sounds for the caller. LIMIT_PLAYAUDIO_CALLEE yes|no Plays sounds for the person called. LIMIT_TIMEOUT_FILE File to be played when time is up. LIMIT_CONNECT_FILE ->File to be played when the call begins. LIMIT_WARNING_FILE ->File to be played as a warning if 'y' is defined. The default is to say the time remaining. m([class]) Provides hold music to the calling party until a requested channel answers. A specific MusicOnHold class can be specified. r Indicates ringing to the calling party. Passes no audio to the calling party until the called channel has answered. S(x) Hangs up the call 'x' seconds after the called party has answered the call. t Allows the called party to transfer the calling party by sending the DTMF sequence defined in features.conf. T Allows the calling party to transfer the called party by sending the DTMF sequence defined in features.conf. w Allows the called party to enable recording of the call by sending the DTMF sequence defined for one-touch recording in
+The following table summarizes some of the most frequently used options for the application Dial. For the complete list, use the console command `core show application Dial`. In Asterisk 22 these options are separated from the channel and timeout by commas — for example `Dial(PJSIP/2000,20,tTm)`.
 
-```
-features.conf.
-```
+| Option | Description |
+|--------|-------------|
+| `A(x)` | Plays an announcement to the called party, using `x` as the file. |
+| `C` | Resets the CDR for this call. |
+| `d` | Allows the calling user to dial a 1-digit extension while waiting for the call to be answered. Exits to that extension if it exists in the current context, or to the context defined in the `EXITCONTEXT` variable, if it exists. |
+| `D([called][:calling])` | Sends the specified DTMF strings after the called party answers, but before the call is bridged. The `called` string is sent to the called party and the `calling` string to the calling party. Either parameter can be used alone. |
+| `f` | Forces the caller ID of the calling channel to be set to the extension associated with the channel via a dial plan `hint`. Useful where the PSTN does not allow an arbitrary caller ID. |
+| `g` | Proceeds with dial plan execution at the current extension if the destination channel hangs up. |
+| `G(context^exten^pri)` | If the call is answered, transfers the calling party to the specified priority and the called party to priority+1. Optionally an extension (or extension and context) can be specified; otherwise the current extension is used. |
+| `h` | Allows the called party to hang up by sending the `*` DTMF digit. |
+| `H` | Allows the calling party to hang up by sending the `*` DTMF digit. |
+| `L(x[:y][:z])` | Limits the call to `x` ms, plays a warning when `y` ms are left, and repeats the warning every `z` ms. See the `LIMIT_*` variables below. |
+| `m([class])` | Provides music on hold to the calling party until the requested channel answers. A specific MusicOnHold class can be specified. |
+| `r` | Indicates ringing to the calling party and passes no audio until the called channel answers. |
+| `S(x)` | Hangs up the call `x` seconds after the called party answers. |
+| `t` | Allows the called party to transfer the calling party by sending the DTMF sequence defined in `features.conf`. |
+| `T` | Allows the calling party to transfer the called party by sending the DTMF sequence defined in `features.conf`. |
+| `w` | Allows the called party to enable one-touch recording by sending the DTMF sequence defined in `features.conf`. |
+| `W` | Allows the calling party to enable one-touch recording by sending the DTMF sequence defined in `features.conf`. |
+| `k` | Allows the called party to park the call by sending the DTMF sequence defined for call parking in `features.conf`. |
+| `K` | Allows the calling party to park the call by sending the DTMF sequence defined for call parking in `features.conf`. |
 
-W Allows the calling party to enable recording of the call by sending the DTMF sequence defined for one-touch recording in
+The `L(x[:y][:z])` option can be tuned with the following special variables:
 
-```
-features.conf.
-```
+- `LIMIT_PLAYAUDIO_CALLER` — `yes|no` (default `yes`): plays sounds for the caller.
+- `LIMIT_PLAYAUDIO_CALLEE` — `yes|no`: plays sounds for the called party.
+- `LIMIT_TIMEOUT_FILE` — file to be played when time is up.
+- `LIMIT_CONNECT_FILE` — file to be played when the call begins.
+- `LIMIT_WARNING_FILE` — file to be played as a warning when `y` is defined. The default is to say the time remaining.
 
-K Allows the called party to enable parking of the call by sending the DTMF sequence defined for call parking in features.conf. K Allows the calling party to enable parking of the call by sending the DTMF sequence defined for call parking in features.conf. Example:
+Example:
 
 ```
 exten=_4XXX,1,Dial(PJSIP/${EXTEN},20,tTm)

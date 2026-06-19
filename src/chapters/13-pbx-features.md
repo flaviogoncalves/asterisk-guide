@@ -219,14 +219,14 @@ type=menu
 
 #### Confbridge functions
 
-As opções da ponte de conferência podem ser passadas dinamicamente no plano de discagem usando a função CONFBRIDGE(). Veja os exemplos abaixo:
+The conference bridge options can be passed dynamically in the dial plan using the CONFBRIDGE() function. See the examples below:
 
 ```
 exten => 1,1,Answer()
 exten => 1,n,Set(CONFBRIDGE(user,template)=default_user)
 exten => 1,n,Set(CONFBRIDGE(user,admin)=yes)
 exten => 1,n,Set(CONFBRIDGE(user,marked)=yes)
-exten => 1,n,ConfBridge(vendas)
+exten => 1,n,ConfBridge(sales)
 ```
 
 ## Meetme (Legacy — deprecated, not built by default in Asterisk 22)

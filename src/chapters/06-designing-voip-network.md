@@ -151,7 +151,19 @@ Codec selection depends on several options, such as:
 - Packet-loss concealment
 - Availability for Asterisk and phone devices
 
-The following table compares the most popular codecs. The quality of these codecs is considered “toll”—in other words, similar to PSTN. Codec g.711 g.729A iLBC GSM 06.10 (20 ms) (30 ms) RTE/LTP Bandwidth 13.33 (Kbps) Costs Free ~ USD10.00 Free Free (per channel) Resistance to No 3% 5% 3% Frame Erasure1 mechanism Complexity ~0.35 ~13 ~18 ~5 MIPS 2 1 Resistance to packet loss refers to the rate when MOS is next to 0.5 worst from peak quality for the specific codec. 2 Complexity refers to quantities in millions of instructions per second spent to code and decode the codec using a reference design in a Texas Instruments DSP (TMS320C54x). A direct relationship exists between processor frequency and MIPS, but it is not possible to draw a precise relationship among such diverse hardware platforms. Use this table just for comparison.
+The following table compares the most popular codecs. The quality of these codecs is considered “toll”—in other words, similar to PSTN.
+
+| Codec | G.711 | G.729A | iLBC | GSM 06.10 |
+|---|---|---|---|---|
+| Sample interval | 20 ms | 30 ms | 30 ms | RTE/LTP |
+| Bandwidth (Kbps) | 64 | 8 | 13.33 | 13 |
+| Cost (per channel) | Free | ~USD 10.00 | Free | Free |
+| Resistance to frame erasure¹ | None | 3% | 5% | 3% |
+| Complexity (MIPS)² | ~0.35 | ~13 | ~18 | ~5 |
+
+¹ Resistance to packet loss refers to the rate at which the MOS drops to about 0.5 below the peak quality for the specific codec.
+
+² Complexity refers to the quantity, in millions of instructions per second, spent to code and decode the codec using a reference design on a Texas Instruments DSP (TMS320C54x). A direct relationship exists between processor frequency and MIPS, but it is not possible to draw a precise relationship among such diverse hardware platforms. Use this table just for comparison.
 
 > **[2nd-ed note]** Rebuild this comparison table for the 2nd edition: add Opus (free `codec_opus`) and G.722 (wideband, 64 Kbps); keep G.711 ulaw/alaw as the PSTN baseline. For G.729, note the licensing reality — Sangoma's `codec_g729` is free to download but requires a per-channel license; the open-source `bcg729` is an alternative.
 

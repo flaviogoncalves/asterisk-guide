@@ -47,7 +47,7 @@ The old behavior for the queue was serial type. The queue waited for a call to b
 
 Queues are configured in the queues.conf file. In the figure, you will find a working example of a queue.
 
-![A working example of the queues.conf file, showing the [general] section and a [customerservice] queue with strategy, service level, announcements, recording, and members](../images/14-queues-fig03.png)
+![A working example of the queues.conf file, showing the general section and a customerservice queue with strategy, service level, announcements, recording, and members](../images/14-queues-fig03.png)
 
 ### Agents
 
@@ -130,7 +130,7 @@ use agent groups.
 
 Agents are defined in the file agents.conf. Below is a working example of the file.
 
-![A working example of the agents.conf file: a [general] section with persistentagents, an [agents] section with the default parameters (autologoff, ackcall, endcall, wrapuptime, musiconhold), and two agent definitions (300 and 301)](../images/14-queues-fig06.png)
+![A working example of the agents.conf file: a general section with persistentagents, an agents section with the default parameters (autologoff, ackcall, endcall, wrapuptime, musiconhold), and two agent definitions (300 and 301)](../images/14-queues-fig06.png)
 
 ## ACD-related applications
 

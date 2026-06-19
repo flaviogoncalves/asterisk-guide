@@ -304,11 +304,11 @@ Configuration in git covers the dialplan and endpoints, but a live PBX accumulat
 
 | What | Where | Why |
 |------|-------|-----|
-| Configuration | `/etc/asterisk/` | dialplan, endpoints, transports (also in git) |
-| Voicemail & recordings | `/var/spool/asterisk/voicemail`, `.../monitor` | user data — irreplaceable |
-| Internal database | `/var/lib/asterisk/astdb.sqlite3` | device state, `DB()` keys, registrations |
-| CDR / CEL | `/var/log/asterisk/cdr-csv/` or your SQL/ODBC store | billing & call history |
-| External databases | your MySQL/PostgreSQL | realtime config, CDR, voicemail (if `ODBC`/realtime) |
+| Configuration | `/etc/asterisk/` | dialplan, endpoints (also in git) |
+| Voicemail & recordings | `/var/spool/asterisk/` | user data — irreplaceable |
+| Internal database | `/var/lib/asterisk/astdb.sqlite3` | `DB()` keys, device state |
+| CDR / CEL | `/var/log/asterisk/cdr-csv/` or SQL store | billing & history |
+| External databases | your MySQL/PostgreSQL | realtime, CDR, voicemail |
 
 The **astdb** deserves a note: it is Asterisk's small built-in key/value store (a
 SQLite file at `/var/lib/asterisk/astdb.sqlite3`) used by `DB()` dialplan functions,
@@ -427,16 +427,35 @@ firewall the ports — see *Asterisk Security*.
 
 For dashboards and alerting, Asterisk 22 ships a Prometheus exporter,
 **`res_prometheus.so`** (a module with *extended* support level), which exposes metrics
-on an HTTP endpoint that a Prometheus server scrapes. Alongside core process metrics
-(`asterisk_core_uptime_seconds`, `asterisk_core_last_reload_seconds`,
-`asterisk_core_scrape_time_ms`, `asterisk_core_properties`), it ships pluggable metric
-providers covering channels (`asterisk_channels_count`, `asterisk_channels_state`,
-`asterisk_channels_duration_seconds`), calls (`asterisk_calls_count`,
-`asterisk_calls_sum`), endpoints (`asterisk_endpoints_count`, `asterisk_endpoints_state`,
-`asterisk_endpoints_channels_count`), bridges (`asterisk_bridges_count`,
-`asterisk_bridges_channels_count`) and PJSIP outbound registrations
-(`asterisk_pjsip_outbound_registration_status`). You can confirm the module is present in
-the lab build:
+on an HTTP endpoint that a Prometheus server scrapes. Alongside core process metrics it
+ships pluggable providers covering channels, calls, endpoints, bridges and PJSIP
+outbound registrations:
+
+```
+# core process
+asterisk_core_uptime_seconds
+asterisk_core_last_reload_seconds
+asterisk_core_scrape_time_ms
+asterisk_core_properties
+# channels
+asterisk_channels_count
+asterisk_channels_state
+asterisk_channels_duration_seconds
+# calls
+asterisk_calls_count
+asterisk_calls_sum
+# endpoints
+asterisk_endpoints_count
+asterisk_endpoints_state
+asterisk_endpoints_channels_count
+# bridges
+asterisk_bridges_count
+asterisk_bridges_channels_count
+# PJSIP outbound registrations
+asterisk_pjsip_outbound_registration_status
+```
+
+You can confirm the module is present in the lab build:
 
 ```
 *CLI> module show like prometheus
@@ -669,7 +688,7 @@ at the edge.
    - B. `external_signaling_address`
    - C. `local_net`
    - D. `qualify_frequency`
-10. For an internet-facing deployment, the Security chapter's core rule — applied doubly in the cloud — is:
+10. For an internet-facing cloud deployment, the Security chapter's core rule is:
     - A. Always run two NICs
     - B. Never expose raw Asterisk to the internet; put an SBC (or hardened proxy + Fail2Ban) at the edge
     - C. Use UDP only

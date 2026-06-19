@@ -108,72 +108,52 @@ Before choosing hardware for Asterisk, you should consider the number of simulta
 
 #### Example 1: One FXO, one FXS installation
 
-In this example, we will use a Sangoma TDM400 telephony interface card (formerly sold as the Digium TDM400) with one FXS and one FXO module. The required steps are listed below: 1. Install the analog card FXS, FXO, or both.
+In this example, we will use a Sangoma TDM400 telephony interface card (formerly sold as the Digium TDM400) with one FXS and one FXO module. The required steps are listed below:
 
-```
-2. Configure the file /etc/dahdi/system.conf (formerly /etc/zaptel.conf).
-```
+1. Install the analog card FXS, FXO, or both.
+2. Configure the file `/etc/dahdi/system.conf` (formerly `/etc/zaptel.conf`).
+3. Generate the configuration files using `dahdi_genconf`.
+4. Load the driver for the DAHDI interface.
+5. Execute `dahdi_test` to verify interrupt misses.
+6. Execute `dahdi_cfg` to configure the driver.
+7. Configure the DAHDI channel in the `chan_dahdi.conf` file, then load Asterisk.
 
-3. Generation of the configuration files using dahdi_genconf. 4. Load the driver for the DAHDI interface. 5. Execute dahdi_test to verify interrupt misses. 6. Execute dahdi_cfg to configure the driver. 7. Configure the channel DAHDI in chan_dahdi.conf file. Load Asterisk. Step 1: Install the TDM400 Board. The TDM404P card contains FXS and FXO modules. Connect the FXS (S110M, green) and FXO (X100M, red) modules. If you are using FXS modules, connect the card directly to the power source using a molex connector. Please wear electrostatic protection before handling interface cards to avoid damage to the hardware. Sangoma (formerly Digium) analog cards also support a hardware echo cancellation module VPMADT032. Step 2: The good news about the configuration is the new utility dahdi_genconf, which automatically detects and generates the configuration for DAHDI interfaces. The utility generates two files:
+##### Step 1: Install the TDM400 board
 
-- /etc/dahdi/system.conf
-- /etc/asterisk/dahdi-channels.conf
-- /etc/asterisk/users.conf (option: users)
-- All these files use the option chan_dahdi full
+The TDM404P card contains FXS and FXO modules. Connect the FXS (S110M, green) and FXO (X100M, red) modules. If you are using FXS modules, connect the card directly to the power source using a molex connector. Please wear electrostatic protection before handling interface cards to avoid damage to the hardware. Sangoma (formerly Digium) analog cards also support a hardware echo cancellation module VPMADT032.
 
-Before you can execute the dahdi_genconf, it is important to configure the file
+##### Step 2: Generate the configuration with dahdi_genconf
 
-```
-gen_parameters.conf
-#
-# /etc/dahdi/genconf_parameters
-#
-# This file contains parameters that affect the
-# dahdi_genconf configurator generator.
-```
+The good news about the configuration is the new utility `dahdi_genconf`, which automatically detects and generates the configuration for DAHDI interfaces. The utility generates two files:
+
+- `/etc/dahdi/system.conf`
+- `/etc/asterisk/dahdi-channels.conf`
+- `/etc/asterisk/users.conf` (with the `users` option)
+- All these files use the option `chan_dahdi full`
+
+Before you can execute `dahdi_genconf`, it is important to configure the file `genconf_parameters` (often referred to as `gen_parameters.conf`):
 
 ![A Sangoma/Digium TDM404P analog card: up to four FXS or FXO modules plug into the numbered ports, with an optional hardware echo-cancellation daughter card and a dedicated 12 V power connector for FXS modules.](../images/10-legacy-fig04.png)
 
 ```
 #
-#base_exten
-4000
-#fxs_immediate
-```
-
-- no
-
-```
-#fxs_default_start ks
-#lc_country
-il
-#context_lines
-```
-
-- from-pstn
-
-```
-#context_phones
-from-internal
-#context_input
-```
-
-- astbank-input
-
-```
-#context_output
-astbank-output
-#group_phones
-0
-#group_lines
-5
+# /etc/dahdi/genconf_parameters
+#
+# This file contains parameters that affect the
+# dahdi_genconf configurator generator.
+#
+#base_exten          4000
+#fxs_immediate       no
+#fxs_default_start   ks
+#lc_country          il
+#context_lines       from-pstn
+#context_phones      from-internal
+#context_input       astbank-input
+#context_output      astbank-output
+#group_phones        0
+#group_lines         5
 #brint_overlap
-#bri_sig_style
-```
-
-- bri_ptmp
-
-```
+#bri_sig_style       bri_ptmp
 #
 # The echo canceller to use. If you have a hardware echo canceller, just
 # leave it be, as this one won't be used anyway.
@@ -182,89 +162,54 @@ astbank-output
 # that bundles a better echo canceller may set it as the default, or
 # dahdi_genconf will scan for the "best" echo canceller.
 #
-#echo_can
-hpec
-#echo_can
-oslec
-#echo_can
-none  # to aboid echo cancellers altogether
+#echo_can            hpec
+#echo_can            oslec
+#echo_can            none   # to avoid echo cancellers altogether
 # bri_hardhdlc: If this parameter is set to 'yes', in the entries for
 # BRI cards 'hardhdlc' will be used instead of 'dchan' (an alias for
 # 'fcshdlc').
 #
-#bri_hardhdlc
-yes
+#bri_hardhdlc        yes
 # For MFC/R2 Support
-#pri_connection_type
-R2
-#r2_idle_bits
-1101
+#pri_connection_type R2
+#r2_idle_bits        1101
 # pri_types contains a list of settings:
 # Currently the only setting is for TE or NT (the default is TE)
 #
 #pri_termtype
-# SPAN/2
-NT
- # SPAN/4
-NT
-O arquivo gen_parameters.conf permite a personalização da sua configuração. Os
-parâmetros mais importantes para linhas analógicas são:
-base_exten
+# SPAN/2              NT
+# SPAN/4              NT
 ```
 
-- 4000
+The `genconf_parameters` file lets you customize your configuration. The most important parameters for analog lines are:
 
 ```
-#fxs_immediate
+base_exten          4000
+fxs_immediate       no
+fxs_default_start   ks
+lc_country          br
+context_lines       from-pstn
+context_phones      from-internal
+context_input       astbank-input
+context_output      astbank-output
+group_phones        0
+group_lines         5
+#echo_can           hpec
+#echo_can           oslec
+echo_can            MG2
 ```
 
-- no
+Warning: It is required that you configure at least the echo cancellation algorithm for the channels. The base_exten parameter defines the basic dial plan for FXS extensions. In this case, the first FXS channel will receive the extension number 4000, the second 4001, and so on. The context in which the lines (context_phones) and trunks (context_lines) are created is very important. After generating the files, you should include the file `/etc/asterisk/dahdi-channels.conf` in the file `/etc/asterisk/chan_dahdi.conf`:
 
 ```
-fxs_default_start
-ks
-lc_country
-```
-
-- br
-
-```
-context_lines
-from-pstn
-context_phones
-```
-
-- from-internal
-
-```
-context_input
-astbank-input
-context_output
-```
-
-- astbank-output
-
-```
-group_phones
-0
-group_lines
-5
-#echo_can
-hpec
-#echo_can
-oslec
-echo_can
-MG2
-```
-
-Warning: It is required that you configure at least the echo cancellation algorithm for the channels. The base_exten parameter defines the basic dial plan for FXS extensions. In this case, the first FXS channel will receive the extension number 4000, the second 4001, and so on. The context in which the lines (context_phones) and trunks (context_lines) are created is very important. After generating the files, you should include the file /etc/asterisk/dahdi-channels.conf in the file
-
-```
-/etc/asterisk/chan_dahdi.conf.
 #include dahdi-channels.conf
 ```
 
-Note: Analog signaling is a bit confusing; it is always the inverse of the card. FXS cards are signaled with FXO whereas FXO cards are signaled with FXS. Asterisk talks to these devices as if it was on the opposite side. Step 3: Load kernel drivers. Now you have to load the chan_dahdi module and the related card kernel driver. Use dahdi_hardware to detect your card and the driver name. For example:
+Note: Analog signaling is a bit confusing; it is always the inverse of the card. FXS cards are signaled with FXO whereas FXO cards are signaled with FXS. Asterisk talks to these devices as if it was on the opposite side.
+
+##### Step 3: Load kernel drivers
+
+Now you have to load the chan_dahdi module and the related card kernel driver. Use dahdi_hardware to detect your card and the driver name. For example:
 
 - Card Driver Description
 - TE410P wct4xxp 4xE1/T1-3.3V PCI
@@ -279,13 +224,19 @@ modprobe dahdi
 modprobe wctdm
 ```
 
-Step 4: Use the dahdi_test utility. An important utility is dahdi_test, which is used to verify interrupt misses in the DAHDI card. Audio quality problems are often related to interrupt conflicts. To verify that your DAHDI card is not sharing an interrupt with other cards, use the following command:
+##### Step 4: Use the dahdi_test utility
+
+An important utility is dahdi_test, which is used to verify interrupt misses in the DAHDI card. Audio quality problems are often related to interrupt conflicts. To verify that your DAHDI card is not sharing an interrupt with other cards, use the following command:
 
 ```
 #cat /proc/interrupts
 ```
 
-You can verify the number of interrupt misses using the dahdi_test utility compiled with the DAHDI cards. A number below 99.987% indicates possible problems. Step 5: Use the dahdi_cfg utility to configure the driver. DAHDI has an unusual system for loading the drivers. First configure the /etc/system/dahdi.conf, and then apply those configurations to the DAHDI driver using dahdi_cfg. In this case, dahdi_cfg is used to configure the signaling for the FX interfaces. To see the results, you can append “-vvvvv” to the command for verbose.
+You can verify the number of interrupt misses using the dahdi_test utility compiled with the DAHDI cards. A number below 99.987% indicates possible problems.
+
+##### Step 5: Use the dahdi_cfg utility to configure the driver
+
+DAHDI has an unusual system for loading the drivers. First configure the /etc/dahdi/system.conf, and then apply those configurations to the DAHDI driver using dahdi_cfg. In this case, dahdi_cfg is used to configure the signaling for the FX interfaces. To see the results, you can append “-vvvvv” to the command for verbose.
 
 ```
 #
@@ -308,37 +259,20 @@ and that FXO interfaces use FXS signalling?
 
 After successfully configuring the hardware, you can proceed to Asterisk configuration.
 
-```
-Step 6: /etc/dahdi/system.conf configuration file.
-```
+##### Step 6: Configure the /etc/asterisk/chan_dahdi.conf file
 
 It sounds strange, but after configuring the /etc/dahdi/system.conf, you configured the card itself. DAHDI can be used for other purposes, like routing and SS7. To use it with Asterisk, you must configure the Asterisk DAHDI channels. Every channel in Asterisk has to be defined; SIP/PJSIP channels are defined in pjsip.conf (note: chan_sip and sip.conf were removed in Asterisk 21) while TDM channels are defined in chan_dahdi.conf. This creates the logical TDM channels to be used in your dial plan.
 
 ```
-signalling=fxs_ks;
-group=1;
+signalling=fxs_ks;                  ; FXS signaling for the FXO interface
+group=1;                            ; channel group
+context=incoming;                   ; context
+channel => 1;                       ; channel number
+signalling=fxo_ks;                  ; FXO signaling for the FXS interface
+group=2;                            ; channel group
+context=extensions;                 ; context
+channel => 2                        ; channel number
 ```
-
-- channel group
-
-```
-context=incoming  ;
-context
-channel => 1;
-channel number
-signalling=fxo_ks;  FXO signaling for FXS interfaces
-group=2;
-```
-
-- channel group
-
-```
-context=extensions;
-context
-channel=> 2
-```
-
-- channel number
 
 ### Configuration options
 
@@ -651,7 +585,17 @@ Another option is to configure the interfaces manually. Below are some examples 
 
 ##### Example #1 – Two T1/ E1 channels using ISDN
 
-Required steps: TE205P or TE210P installation /etc/dahdi/system.conf file configuration dahdi driver loading dahdi_test utility dahdi_cfg utility chan_dahdi.conf file configuration Asterisk load and testing Step 1: TE205P installation Before installing TE205P, it is important to understand the differences between the TE205P and TE210P cards. The TE210P card uses a 64-bit bus powered by 3.3 volts found almost only in the server’s motherboards. Be careful if you specify this interface card; make sure your hardware supports a 64-bit, 3.3V bus. The TE205P card uses a 5V PCI, which is often found in desktop computers. We have chosen the TE205P interface card with two spans for this example because it is easier to reduce it to one-span card or to expand it to the four-span card. These cards are now sold under the Sangoma brand (formerly Digium).
+Required steps:
+
+1. TE205P or TE210P installation
+2. `/etc/dahdi/system.conf` file configuration
+3. DAHDI driver loading
+4. `dahdi_test` utility
+5. `dahdi_cfg` utility
+6. `chan_dahdi.conf` file configuration
+7. Asterisk load and testing
+
+Step 1: TE205P installation. Before installing TE205P, it is important to understand the differences between the TE205P and TE210P cards. The TE210P card uses a 64-bit bus powered by 3.3 volts found almost only in the server’s motherboards. Be careful if you specify this interface card; make sure your hardware supports a 64-bit, 3.3V bus. The TE205P card uses a 5V PCI, which is often found in desktop computers. We have chosen the TE205P interface card with two spans for this example because it is easier to reduce it to one-span card or to expand it to the four-span card. These cards are now sold under the Sangoma brand (formerly Digium).
 
 ![A Sangoma/Digium TE205P dual-span E1/T1 card: the two RJ45 ports accept the digital trunks, and an on-board jumper (the E1/T1/J1 selector) sets the line standard.](../images/10-legacy-fig10.png)
 
@@ -1254,7 +1198,104 @@ The card used to signal MFC/R2 is the same used to signal ISDN. It’s possible 
 
 ##### Understanding the MFC/R2 protocol
 
-The MFC/R2 protocol combines in-band and out-of-band signaling. Address signaling is forwarded in-band using a set of tones while channel information is transmitted over timeslot 16 as out-of-band signaling. Line Signaling (ITU-T Q.421) In timeslot 16, each voice channel uses four ABCD bits to signal its states and call control. Bits C and D are rarely used. In some countries, they can be used for metering (pulse metering for billing). In a normal conversation, we have both sides working: the caller and the called side. Signaling from the caller side is referred to as forward signaling while the called side uses backward signaling. We will designate Af and Bf for forwarding signaling and Ab and Bb for backward signaling. State ABCD forward ABCD backward Idle/Released 1001 1001 Seized 0001 1001 Seize Ack 0001 1101 Answered 0001 0101 ClearBack 0001 1101 ClearFwd (Before clear-back) 1001 0101 ClearFwd (disconnection confirmation) 1001 1001 Blocked 1001 1101 MFC/R2 was defined by the ITU. Unfortunately, several countries customized the standard to their own needs. As a result, variations emerged in standards between countries. Inter-register signals (ITU-T Q.441) MFC/R2 signaling uses a combination of two tones. The table below shows the ITU standard. Signal group I (Forward) Signal Description Forward signal Digit 1 I-1 Digit 2 I-2 Digit 3 I-3 Digit 4 I-4 Digit 5 I-5 Digit 6 I-6 Digit 7 I-7 Digit 8 I-8 Digit 9 I-9 Digit 0 I-10 Country code indicator, outgoing half-echo suppressor required I-11 Country code indicator, no echo suppressor required I-12 Test call indicator I-13 Country code indicator, outgoing half-echo suppressor inserted I-14 Not used I-15 Signal group II (Forward) Signal Description Forward signal Subscriber without priority II-1 Subscriber with priority II-2 Maintenance equipment II-3 Spare II-4 Operator II-5 Data Transmission II-6 Subscriber or operator without forward transfer facility II-7 Data transmission II-8 Subscriber with priority II-9 Operator with forward transfer facility II-10 Spare II-11 Spare II-12 Spare II-13 Spare II-14 Spare II-15 Signal group A (backwards) Signal Description Backward signal Send next digit (n+1) A-1 Send last but one digit (n-1) A-2 Address complete, changeover to reception of Group B signals A-3 Congestion in the national network A4 Send calling party’s category A5 Address complete, charge, set-up speech conditions A6 Send last but two digit (n-2) A7 Send last but three digit (n-3) A8 Spare A9 Spare A10 Send country code indicator A11 Send language or discrimination digit A12 Send nature of circuit A13 Request information on use of echo suppressor A14 Congestion in an international exchange or at its output A15 Signal group B (backwards) Signal Description Backward signal Spare B1 Send special information tone B2 Subscriber’s line busy B3 Congestion (after changeover group A to B) B4 Unallocated number B5 Subscriber’s line free, charge B6 Subscriber’s line free, no charge B7 Subscriber’s line out of order B8 Spare B9 Spare B10 Spare B11 Spare B12 Spare B13 Spare B14 Spare B15
+The MFC/R2 protocol combines in-band and out-of-band signaling. Address signaling is forwarded in-band using a set of tones while channel information is transmitted over timeslot 16 as out-of-band signaling.
+
+**Line Signaling (ITU-T Q.421).** In timeslot 16, each voice channel uses four ABCD bits to signal its states and call control. Bits C and D are rarely used. In some countries, they can be used for metering (pulse metering for billing). In a normal conversation, we have both sides working: the caller and the called side. Signaling from the caller side is referred to as forward signaling while the called side uses backward signaling. We will designate Af and Bf for forward signaling and Ab and Bb for backward signaling.
+
+| State | ABCD forward | ABCD backward |
+| --- | --- | --- |
+| Idle/Released | 1001 | 1001 |
+| Seized | 0001 | 1001 |
+| Seize Ack | 0001 | 1101 |
+| Answered | 0001 | 0101 |
+| ClearBack | 0001 | 1101 |
+| ClearFwd (before clear-back) | 1001 | 0101 |
+| ClearFwd (disconnection confirmation) | 1001 | 1001 |
+| Blocked | 1001 | 1101 |
+
+MFC/R2 was defined by the ITU. Unfortunately, several countries customized the standard to their own needs. As a result, variations emerged in standards between countries.
+
+**Inter-register signals (ITU-T Q.441).** MFC/R2 signaling uses a combination of two tones. The tables below show the ITU standard.
+
+Signal group I (forward):
+
+| Description | Forward signal |
+| --- | --- |
+| Digit 1 | I-1 |
+| Digit 2 | I-2 |
+| Digit 3 | I-3 |
+| Digit 4 | I-4 |
+| Digit 5 | I-5 |
+| Digit 6 | I-6 |
+| Digit 7 | I-7 |
+| Digit 8 | I-8 |
+| Digit 9 | I-9 |
+| Digit 0 | I-10 |
+| Country code indicator, outgoing half-echo suppressor required | I-11 |
+| Country code indicator, no echo suppressor required | I-12 |
+| Test call indicator | I-13 |
+| Country code indicator, outgoing half-echo suppressor inserted | I-14 |
+| Not used | I-15 |
+
+Signal group II (forward):
+
+| Description | Forward signal |
+| --- | --- |
+| Subscriber without priority | II-1 |
+| Subscriber with priority | II-2 |
+| Maintenance equipment | II-3 |
+| Spare | II-4 |
+| Operator | II-5 |
+| Data transmission | II-6 |
+| Subscriber or operator without forward transfer facility | II-7 |
+| Data transmission | II-8 |
+| Subscriber with priority | II-9 |
+| Operator with forward transfer facility | II-10 |
+| Spare | II-11 |
+| Spare | II-12 |
+| Spare | II-13 |
+| Spare | II-14 |
+| Spare | II-15 |
+
+Signal group A (backward):
+
+| Description | Backward signal |
+| --- | --- |
+| Send next digit (n+1) | A-1 |
+| Send last but one digit (n-1) | A-2 |
+| Address complete, changeover to reception of Group B signals | A-3 |
+| Congestion in the national network | A-4 |
+| Send calling party’s category | A-5 |
+| Address complete, charge, set-up speech conditions | A-6 |
+| Send last but two digit (n-2) | A-7 |
+| Send last but three digit (n-3) | A-8 |
+| Spare | A-9 |
+| Spare | A-10 |
+| Send country code indicator | A-11 |
+| Send language or discrimination digit | A-12 |
+| Send nature of circuit | A-13 |
+| Request information on use of echo suppressor | A-14 |
+| Congestion in an international exchange or at its output | A-15 |
+
+Signal group B (backward):
+
+| Description | Backward signal |
+| --- | --- |
+| Spare | B-1 |
+| Send special information tone | B-2 |
+| Subscriber’s line busy | B-3 |
+| Congestion (after changeover group A to B) | B-4 |
+| Unallocated number | B-5 |
+| Subscriber’s line free, charge | B-6 |
+| Subscriber’s line free, no charge | B-7 |
+| Subscriber’s line out of order | B-8 |
+| Spare | B-9 |
+| Spare | B-10 |
+| Spare | B-11 |
+| Spare | B-12 |
+| Spare | B-13 |
+| Spare | B-14 |
+| Spare | B-15 |
 
 #### MFC/R2 sequence
 
@@ -1788,7 +1829,7 @@ secret=senha
 host=dynamic
 ```
 
-I’ve tried to preserved the default (non-commented) lines of the sample file. The following parameters were modified:
+I’ve tried to preserve the default (non-commented) lines of the sample file. The following parameters were modified:
 
 ```
 bandwidth=high

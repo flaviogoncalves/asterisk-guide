@@ -116,7 +116,15 @@ Now we have only cdr_csv and cdr_adaptive_odbc loaded.
 
 > **[2nd-ed note]** Original steps targeted Ubuntu 18.04 and MySQL Connector/ODBC 8.0.14. Steps below are updated for Ubuntu 22.04 LTS; adjust package versions and download URLs to match the current MySQL Connector/ODBC release from dev.mysql.com.
 
-I always regret to publish detailed instructions in the book. They will change sometimes sooner than the book is published. Versions change, modules change, so try to adapt the command here to your own situation. Most of the time minor changes are enough to reproduce the installation. Pay attention on the steps even experienced Linux users will find hard to install the ODBC drivers. Step 1 - Install mysql-server unixodbc unixodbc-dev libltdl-dev libtool Step 2 - Create a database and a user
+I always regret to publish detailed instructions in the book. They will change sometimes sooner than the book is published. Versions change, modules change, so try to adapt the command here to your own situation. Most of the time minor changes are enough to reproduce the installation. Pay attention on the steps even experienced Linux users will find hard to install the ODBC drivers.
+
+Step 1 - Install the required packages:
+
+```
+apt-get install mysql-server unixodbc unixodbc-dev libltdl-dev libtool
+```
+
+Step 2 - Create a database and a user:
 
 ```
 mysql -u root -p
@@ -172,11 +180,20 @@ Server = localhost
 Port = 3306
 ```
 
-Step 7: Test the driver access using iSQL iSQL is a command line utility to connect to the database over unixodbc. isql -v astconn astdb supersecret >show tables Please, do not procede with Asterisk configuration if you can’t see the result of the isql command.
+Step 7: Test the driver access using iSQL. iSQL is a command line utility to connect to the database over unixodbc.
+
+```
+isql -v astconn astdb supersecret
+>show tables
+```
+
+Please, do not procede with Asterisk configuration if you can’t see the result of the isql command.
 
 ### Configuring ODBC in the Asterisk
 
-Before you can configure the cdr_adaptive_odbc, you should first configure the ODBC resource file. Step 1; Connect Asterisk to ODBC. Edit the file res_odbc.conf
+Before you can configure the cdr_adaptive_odbc, you should first configure the ODBC resource file.
+
+Step 1 - Connect Asterisk to ODBC. Edit the file res_odbc.conf:
 
 ```
 [cdr]
@@ -207,11 +224,14 @@ DSN:    astconn
 Step 3 – Configure the adaptive ODBC driver in /etc/asterisk/cdr_adaptive_odbc.conf
 
 ```
-[global]
+[cdr]
 connection=cdr
+table=cdr
 ```
 
-table=cdr Step 4 – Reload the module cdr_adaptive_odbc.so
+Here `connection` points to the `[cdr]` connection section defined in `res_odbc.conf`, and `table` is the database table where CDRs are written.
+
+Step 4 – Reload the module cdr_adaptive_odbc.so:
 
 ```
 asterisk*CLI>reload cdr_adaptive_odbc
