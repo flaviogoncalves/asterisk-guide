@@ -49,13 +49,9 @@ Historically, Digium offered Asterisk under three types of license agreements:
 
 ### The Zapata project and its relationship with Asterisk
 
-The Zapata project was developed by Jim Dixon, who was also responsible for the development of this revolutionary hardware for use with Asterisk. Note that the hardware is open-source too; as such, it can be used by any company. Today, several companies produce cards compatible with this architecture. More details about the project can be seen at:
+The Zapata project was developed by Jim Dixon, who was also responsible for the revolutionary hardware design used with Asterisk. The hardware is open-source too; as such, it can be used by any company, and today several manufacturers produce cards compatible with this architecture.
 
-```
-<http://www.asteriskdocs.org/modules/tinycontent/index.php?id=10>)
-```
-
-The Zapata project produced an architecture called Zaptel (recently renamed Digium Asterisk Hardware Drivers Interface [DAHDI]). One of the main benefits of this architecture is the ability to use the PC CPU to process media streaming, echo cancellation, and transcoding. In contrast, most existing cards use digital signal processors (DSP) to perform these tasks. The use of the PC CPU instead of dedicated DSPs reduces the board's price dramatically. Thus, these cards are significantly cheaper than previously available interfaces from other manufacturers. On the other hand, these cards require a lot of CPU; a misuse of the PC CPU can significantly impact voice quality. Recently, Digium launched a coprocessor card that uses DSPs to encode and decode G.729 and G.723, allowing better scalability for a large number of channels.
+The Zapata project produced an architecture called Zaptel, later renamed DAHDI (Digium/Asterisk Hardware Device Interface). One of the main benefits of this architecture is the ability to use the PC CPU to process media streaming, echo cancellation, and transcoding. In contrast, most existing cards use digital signal processors (DSP) to perform these tasks. The use of the PC CPU instead of dedicated DSPs reduces the board's price dramatically. Thus, these cards are significantly cheaper than previously available interfaces from other manufacturers. On the other hand, these cards require a lot of CPU; a misuse of the PC CPU can significantly impact voice quality. Recently, Digium launched a coprocessor card that uses DSPs to encode and decode G.729 and G.723, allowing better scalability for a large number of channels.
 
 ## Why Asterisk?
 
@@ -125,51 +121,37 @@ One of the main advantages of Asterisk is its capability to run in fault-toleran
 
 Your company probably uses open-source software without even realizing it. Several appliances use Linux as their operating system. Moreover, commercial support and managed deployments are available from Sangoma and its certified partner network.
 
-### Using the PC's CPU to process signaling and media is not
+### Using the PC's CPU to process signaling and media is not recommended
 
-### recommended
+Asterisk uses the server's CPU to process signaling and media for voice channels instead of having dedicated DSPs. Although this allows a cost reduction of up to five times, it makes the system dependent on the performance of the main CPU. With the correct dimensioning, Asterisk is capable of handling large volumes. If you still want to release the main CPU from these tasks, you can also use hardware echo cancellation and even transcoder cards, such as the Sangoma (formerly Digium) TC400B based on DSPs.
 
-Asterisk uses the server's CPU to process signaling and media for voice channels instead of having dedicated DSPs. Although this allows a cost reduction of up to five times, it makes the system dependent on the performance of the main CPU. With the correct dimensioning, Asterisk is capable of handling large volumes. If you still want to release the main CPU from these tasks, you can also use hardware echo cancellation and even transcoder cards, such as the Digium's TC400B based on DSPs.
-
-### Asterisk Architecture
+## Asterisk Architecture
 
 This section will explain how Asterisk’s architecture works. The figure below shows the basic Asterisk architecture. Next, we will explain architecture-related concepts, including channels, codecs, and applications.
 
 ### Channels
 
-A channel is the equivalent of a telephone line, but in a digital format. It usually consists of an analog or digital (TDM) signaling system or a combination of codec and signaling protocol (e.g., SIP-GSM, IAX-uLaw). Initially, all telephony connections were analog and susceptible to echo and noise. Later, most systems were converted to digital systems, with the analogical sound converted into a digital format using pulse code modulation (PCM) in most cases. This format allows voice transmission in 64 kilobits/second without compression. Channels interfacing with the Public Switch Telephony Service (PSTN)
+A channel is the equivalent of a telephone line, but in a digital format. It usually consists of an analog or digital (TDM) signaling system or a combination of codec and signaling protocol (e.g., SIP-GSM, IAX-uLaw). Initially, all telephony connections were analog and susceptible to echo and noise. Later, most systems were converted to digital systems, with the analogical sound converted into a digital format using pulse code modulation (PCM) in most cases. This format allows voice transmission in 64 kilobits/second without compression.
 
-- chan_dahdi: Supports cards from Sangoma, Digium, Xorcom, and others
-- chan_mISDN: Supports ISDN cards based in the Linux ISDN drivers
+Channels interfacing with the Public Switched Telephone Network (PSTN):
 
-Channels interfacing with Voice-over IP
+- `chan_dahdi`: analog (FXO/FXS) and digital (E1/T1/PRI) TDM cards from Sangoma (formerly Digium), Xorcom, and others. Built separately against DAHDI — see the *Legacy channels* chapter.
 
-- chan_pjsip: Supports voice-over IP using the SIP protocol. This is the primary and only supported SIP channel driver in Asterisk 22 LTS. Dial string: PJSIP/endpoint_name. (**Note:** chan_sip was removed in Asterisk 21 and does not exist in Asterisk 22. See Chapter 3 for PJSIP configuration.)
-- chan_iax2: Supports voice-over IP using IAX2 protocol. Dial string: iax2/channel. (Legacy; SIP/PJSIP is preferred for new deployments.)
-- chan_h323: H.323 is one of the oldest and most implemented voice-over IP protocols. It's useful for connecting to existing H.323 networks. There are different flavors of H.323 in Asterisk, including chan_h323, chan_oh323, and chan_ooH323. The channel chan_h323 can be used in Asterisk as a gateway. Asterisk can point to a gatekeeper, but cannot work as one. Dial string h323/hostname if using a gatekeeper or h323/extension@hostname if going directly to the gateway.
+Channels interfacing with Voice over IP:
 
-> **[2nd-ed note]** Verify whether chan_h323 (ooh323) is still actively maintained and available in Asterisk 22. It may be unmaintained/removed.
+- `chan_pjsip`: SIP — the primary and only SIP channel driver in Asterisk 22 LTS. Dial string: `PJSIP/endpoint_name`. (**Note:** the old `chan_sip` was removed in Asterisk 21 and does not exist in Asterisk 22. See *Building your first PBX with PJSIP* for configuration.)
+- `chan_iax2`: the IAX2 protocol — still ships in Asterisk 22 but is legacy; SIP/PJSIP is preferred for new deployments. Dial string: `IAX2/peer`.
+- `chan_unistim`: Nortel/Avaya UNISTIM phones. Still available (extended support) but rarely used.
 
-- chan_mgcp: Supports the voice-over IP protocol using MGCP. Currently Asterisk supports MGCP phones, but it cannot connect to a VoIP provider using MGCP. Dial
+The older VoIP channels are no longer part of a standard Asterisk 22 build: `chan_h323` (H.323) survives only as the community `ooh323` add-on, and `chan_mgcp` (MGCP) and `chan_skinny` (Cisco SCCP) were deprecated and dropped from the modern channel set. If you must interwork with those protocols, a gateway in front of Asterisk is the usual approach.
 
-```
-string: MGCP/aaln/1@hostname
-```
+Miscellaneous channels:
+
+- **Local**: a pseudo-channel (built into the core) that loops back into the dial plan in a different context — useful for recursive routing and for fanning a call out to multiple destinations. Dial string: `Local/extension@context`.
 
 ![01-introduction-to-asterisk figure 1](../images/01-introduction-to-asterisk-img01.png)
 
 ![01-introduction-to-asterisk figure 2](../images/01-introduction-to-asterisk-img02.png)
-
-- chan_skinny: Supports Cisco™ voice-over IP skinny protocol. Dial String:
-
-```
-skinny/channel.
-```
-
-Miscellaneous channels
-
-- chan_agent: Used for automatic call distribution (ACD). It is not related to specific hardware or protocol. It can also be used for mobility, allowing any person to use any phone just by logging in to the agent.
-- chan_local: Is a pseudo channel that simply loops back into the dial plan in a different context. This is useful for recursive routing. Dial string: Local/extension@context
 
 ### Codec and codec translation
 
@@ -197,12 +179,10 @@ The following codecs are supported:
 
 Sending data from one phone to another should be easy provided that the data find a path to the other phone on their own. Unfortunately, it doesn't happen this way, and a signaling protocol is necessary in order to establish connections between phones, discover end devices, and implement telephony signaling. SIP is the dominant signaling protocol in modern deployments and is the only SIP channel available in Asterisk 22 LTS (via chan_pjsip). IAX2 is still available but considered legacy. Asterisk supports the following protocols.
 
-- SIP (via chan_pjsip; chan_sip was removed in Asterisk 21)
-- H323
-- IAX2 (legacy; still ships in Asterisk 22)
-- MGCP
-- SCCP (Cisco Skinny)
-- Nortel Unistim
+- SIP — via `chan_pjsip` (the old `chan_sip` was removed in Asterisk 21)
+- IAX2 — legacy, still ships in Asterisk 22
+- UNISTIM — Nortel/Avaya phones (extended support)
+- H.323, MGCP, and SCCP (Cisco Skinny) — legacy protocols no longer in a standard Asterisk 22 build (H.323 only via the community `ooh323` add-on)
 
 ### Applications
 
@@ -324,13 +304,13 @@ Mailing lists are quite handy when you have questions. Usually, you will receive
 
 ## Summary
 
-Asterisk is software licensed according to the GPL that enables an ordinary PC to act as a powerful IP PBX platform. Digium’s Mark Spencer created Asterisk in the late 1990s. Digium
+Asterisk is software licensed according to the GPL that enables an ordinary PC to act as a powerful IP PBX platform. Digium’s Mark Spencer created Asterisk in the late 1990s, and Digium sustained itself by selling Asterisk-related hardware and commercial products. Digium was acquired by Sangoma Technologies in 2018; Sangoma now sponsors Asterisk development. Hardware interface design originated in the Zapata project developed by Jim Dixon, which gave rise to DAHDI.
 
 ![01-introduction-to-asterisk figure 19](../images/01-introduction-to-asterisk-img19.png)
 
 ![01-introduction-to-asterisk figure 20](../images/01-introduction-to-asterisk-img20.png)
 
-sustained itself by selling hardware related to Asterisk and commercial products. Digium was acquired by Sangoma Technologies in 2018; Sangoma now sponsors Asterisk development. Hardware interface design originated in the Zapata project developed by Jim Dixon, which gave rise to DAHDI. The Asterisk architecture has the following main components:
+The Asterisk architecture has the following main components:
 
 - CHANNELS: Analog, digital, or voice-over IP. In Asterisk 22 LTS, SIP is handled exclusively by chan_pjsip (chan_sip was removed in Asterisk 21).
 - PROTOCOLS: Communication protocols, which are responsible for signaling the calls, including SIP (via PJSIP), H323, MGCP, and IAX2.
