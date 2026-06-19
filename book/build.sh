@@ -25,6 +25,7 @@ printf '  %s\n' "${CHAPTERS[@]##*/}"
 COMMON=( --from=commonmark_x
          --metadata-file="$META"
          --resource-path="$SRC:$ROOT:$ROOT/src/images"
+         --lua-filter="$ROOT/book/strip-notes.lua"
          --toc --toc-depth=2 )
 
 echo "→ EPUB"

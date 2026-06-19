@@ -8,6 +8,11 @@
 
 \usepackage{microtype}
 
+% help long lines and inline literals break instead of bleeding past the right margin
+\usepackage{xurl}                      % break long URLs at any character
+\setlength{\emergencystretch}{3em}
+\sloppy
+
 \usepackage{xcolor}
 \definecolor{brand}{HTML}{1C5D99}     % restrained brand blue
 \definecolor{brandink}{HTML}{14304A}  % near-black ink for headings
