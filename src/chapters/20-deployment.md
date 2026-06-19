@@ -418,7 +418,8 @@ polling the CLI:
   (`ari.conf`, served by the built-in HTTP server). It gives a JSON event stream and
   fine-grained call control — the right choice for new integrations.
 
-Both are detailed in *Extending Asterisk with AMI, AGI and ARI*. The deployment-relevant
+Both are detailed in *Extending Asterisk with AMI and AGI* and *The Asterisk REST
+Interface (ARI)*. The deployment-relevant
 warning: **AMI and ARI are powerful and must never be exposed to the internet.** Bind the
 HTTP server to localhost or a management network, use strong unique secrets, and
 firewall the ports — see *Asterisk Security*.
