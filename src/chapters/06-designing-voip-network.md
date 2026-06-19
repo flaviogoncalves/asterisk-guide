@@ -104,7 +104,7 @@ The following table summarizes the differences among the session protocols.
 | Protocol | Standard body | Used for |
 |----------|---------------|----------|
 | SIP | IETF standard | SIP phones; connecting to SIP service providers |
-| IAX2 | IETF draft | Asterisk-to-Asterisk trunks; IAX2 phones; IAX service providers |
+| IAX2 | RFC 5456 (Informational) | Asterisk-to-Asterisk trunks; IAX2 phones; IAX service providers |
 | H.323 | ITU standard | H.323 phones and gateways (can use an external gatekeeper, cannot be one) |
 | MGCP | IETF/ITU | MGCP phones (no provider/gateway support) |
 | SCCP | Cisco proprietary | Cisco phones |

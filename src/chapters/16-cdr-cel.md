@@ -23,7 +23,7 @@ You can specify account codes and ama flags on each channel. Usually this is don
 - Billing
 - Documentation
 
-Similar to the way in which a record can be flagged for billing or documentation, an account code can be set to each record. The account is a 20-character string usually used to assign a record to a department or business unit. Example: pjsip.conf endpoint section
+Similar to the way in which a record can be flagged for billing or documentation, an account code can be set on each record. The account code is a free-form string (the `accountcode` endpoint option takes any String, and the CDR record stores it in an 80-character field) usually used to assign a record to a department or business unit. Example: pjsip.conf endpoint section
 
 ```
 [8576]

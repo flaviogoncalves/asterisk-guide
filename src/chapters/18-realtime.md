@@ -28,7 +28,7 @@ In the new Real Time architecture, all database-specific code was moved to chann
 
 - UPDATE: Used to update objects.
 
-On Asterisk 22, SIP endpoints are handled by the **PJSIP** stack (`res_pjsip`), which is built on the **Sorcery** object model. Sorcery has a built-in caching and persistence layer, so realtime PJSIP objects are not thrown away after each call the way the old SIP driver discarded its realtime peers — NAT traversal, qualify, and message waiting indication (MWI) all work normally for realtime endpoints. When you change an object in the database, the change is picked up on the next lookup; you do not need to reload after every edit. (The retired `chan_sip` realtime model, with its `sippeers`/`sipusers` families, is covered only in the *Legacy Channels* chapter.)
+On Asterisk 22, SIP endpoints are handled by the **PJSIP** stack (`res_pjsip`), which is built on the **Sorcery** object model. With the `realtime` wizard, Sorcery loads each PJSIP object from the database on demand, and those objects then exist as ordinary configured PJSIP objects — not as the throwaway realtime peers the old SIP driver discarded after each call. Because they are real objects, NAT traversal, qualify, and message waiting indication (MWI) all work normally for realtime endpoints. (Sorcery can additionally be told to cache objects in memory via a `memory_cache` wizard, but that is opt-in and separate from realtime loading.) When you change an object in the database, the change is picked up on the next lookup; you do not need to reload after every edit. (The retired `chan_sip` realtime model, with its `sippeers`/`sipusers` families, is covered only in the *Legacy Channels* chapter.)
 
 ## Configuring Asterisk Real Time
 
@@ -373,7 +373,7 @@ Step 5: Reconfigure one of the phones to the username bria, if you have not alre
 
 ## Summary
 
-In this chapter, you have learned that Asterisk Real Time allows you to put your configurations into a database. Databases supported are MySQL and any other Unix ODBC-supported databases. The configuration is divided into static and real time. Static configuration replaces the configuration files, while the real-time configuration creates dynamic objects that are loaded only when a call or other related event happens. We concluded with a practical lab on how to install and configure ARA.
+In this chapter, you have learned that Asterisk Real Time allows you to put your configurations into a database. Asterisk ships native realtime drivers for ODBC (which reaches any UnixODBC-supported database, including MySQL/MariaDB and SQLite), MySQL, and PostgreSQL, plus an LDAP realtime driver for directory backends. The configuration is divided into static and real time. Static configuration replaces the configuration files, while the real-time configuration creates dynamic objects that are loaded only when a call or other related event happens. We concluded with a practical lab on how to install and configure ARA.
 
 ## Quiz
 
@@ -393,7 +393,7 @@ In this chapter, you have learned that Asterisk Real Time allows you to put your
 4. In static configuration, once the objects are loaded from the database they are kept in Asterisk's memory and refreshed only on start or reload.
    - A. True
    - B. False
-5. PJSIP realtime (Sorcery) fully supports `qualify` and MWI for realtime endpoints, because Sorcery keeps the objects cached rather than discarding them after each call.
+5. PJSIP realtime (Sorcery) fully supports `qualify` and MWI for realtime endpoints, because Sorcery loads them as ordinary configured PJSIP objects rather than discarding them after each call the way the old SIP realtime peers were.
    - A. True
    - B. False
 6. In PJSIP realtime, which tables hold the endpoints and their registered contacts?

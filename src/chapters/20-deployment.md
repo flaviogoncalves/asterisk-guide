@@ -426,9 +426,17 @@ firewall the ports — see *Asterisk Security*.
 ### Metrics: Prometheus and Grafana
 
 For dashboards and alerting, Asterisk 22 ships a Prometheus exporter,
-**`res_prometheus.so`** (a module with *extended* support level), which exposes call
-counts, channel counts, endpoint state and bridge metrics on an HTTP endpoint that a
-Prometheus server scrapes. You can confirm the module is present in the lab build:
+**`res_prometheus.so`** (a module with *extended* support level), which exposes metrics
+on an HTTP endpoint that a Prometheus server scrapes. Alongside core process metrics
+(`asterisk_core_uptime_seconds`, `asterisk_core_last_reload_seconds`,
+`asterisk_core_scrape_time_ms`, `asterisk_core_properties`), it ships pluggable metric
+providers covering channels (`asterisk_channels_count`, `asterisk_channels_state`,
+`asterisk_channels_duration_seconds`), calls (`asterisk_calls_count`,
+`asterisk_calls_sum`), endpoints (`asterisk_endpoints_count`, `asterisk_endpoints_state`,
+`asterisk_endpoints_channels_count`), bridges (`asterisk_bridges_count`,
+`asterisk_bridges_channels_count`) and PJSIP outbound registrations
+(`asterisk_pjsip_outbound_registration_status`). You can confirm the module is present in
+the lab build:
 
 ```
 *CLI> module show like prometheus

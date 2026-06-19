@@ -169,9 +169,9 @@ The following codecs are supported:
 - G.729 - Binary codec module distributed by Sangoma; the download is free of charge, but lawful use requires purchasing a per-channel license (8Kbps)
 - GSM - (12-13 Kbps)
 - iLBC - (15 Kbps)
-- LPC10 - (2.5 Kbps)
+- LPC10 - (2.4 Kbps)
 - Speex - (2.15-44.2 Kbps)
-- Opus (5.3-510Kbps )
+- Opus - (6-510 Kbps)
 
 ### Protocols
 

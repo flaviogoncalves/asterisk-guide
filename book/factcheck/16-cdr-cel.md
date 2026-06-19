@@ -1,6 +1,6 @@
 # Fact-check ledger — Asterisk Call Detail Records (CDR & CEL)
 
-Verified: 22 · Wrong (fixed): 5 · Unverified: 1
+Verified: 22 · Wrong (fixed): 6 · Unverified: 0
 
 Lab: Asterisk 22.10.0 (`docker compose -f lab/docker-compose.yml exec -T asterisk asterisk -rx '<cmd>'`).
 
@@ -10,7 +10,7 @@ Lab: Asterisk 22.10.0 (`docker compose -f lab/docker-compose.yml exec -T asteris
 | 2 | Disposition values "(ANSWERED, NO ANSWER, BUSY, FAILED)" — CONGESTION was missing | 15 | WRONG (fixed) | CDR-Specification lists NO ANSWER, CONGESTION, FAILED, BUSY, ANSWERED → added CONGESTION. https://docs.asterisk.org/Configuration/Reporting/Call-Detail-Records-CDR/CDR-Specification/ + lab `core show function CDR` (disposition 16 = CONGESTION) |
 | 3 | Amaflags "(DOCUMENTATION, BILLING, IGNORE)" | 15 | WRONG (fixed) | "IGNORE" is not a valid AMA flag. Valid set: DEFAULT, OMIT, BILLING, DOCUMENTATION. Fixed text. lab `core show function CDR` (amaflags 1=OMIT, 2=BILLING, 3=DOCUMENTATION) + https://docs.asterisk.org/Configuration/Reporting/Call-Detail-Records-CDR/CDR-Specification/ |
 | 4 | "The possible amaflag values are: Default, Omit, Billing, Documentation" | 21-24 | VERIFIED | lab `core show function CDR` + CDR-Specification (DEFAULT = unset/0; OMIT/BILLING/DOCUMENTATION) |
-| 5 | "an account code … is a 20-character string" | 26 | UNVERIFIED | Docs describe accountcode as a free-form string with no documented 20-char limit; lab `config show help res_pjsip endpoint accountcode` shows `[String] (Default: )` with no length. Historical sip.conf carried a practical limit; could not confirm a hard 20-char limit for A22. Left as author note. |
+| 5 | "an account code … is a 20-character string" | 26 | WRONG (fixed) | No 20-char limit exists. lab `config show help res_pjsip endpoint accountcode` shows `accountcode = [String] (Default: )` — unbounded free-form String. The documented CDR field width is **String (80)**. Reworded to describe accountcode as a free-form string stored in an 80-character CDR field. https://docs.asterisk.org/Configuration/Reporting/Call-Detail-Records-CDR/CDR-Specification/ (accountcode = String (80)) |
 | 6 | pjsip.conf endpoint example uses `amaflags=default` | 28-33 | WRONG (fixed) | `amaflags`/`ama_flags` is NOT a res_pjsip [endpoint] option. lab `config show help res_pjsip endpoint amaflags` → "No option amaflags found"; only `accountcode` exists. Removed line; documented setting AMA via `CHANNEL(amaflags)`/`CDR(amaflags)`. https://docs.asterisk.org/Latest_API/API_Documentation/Module_Configuration/res_pjsip/ |
 | 7 | "chan_sip was removed in Asterisk 21" (2nd-ed note) | 35 | VERIFIED | https://docs.asterisk.org/Asterisk_21_Documentation/WhatsNew/ |
 | 8 | 2nd-ed note: amaflags "may be ama_flags depending on Asterisk version" | 35 | WRONG (fixed) | Neither name is a valid endpoint option in A22; note corrected. lab `config show help res_pjsip endpoint` |
@@ -41,7 +41,8 @@ Lab: Asterisk 22.10.0 (`docker compose -f lab/docker-compose.yml exec -T asteris
 3. `NoCDR()` section — replaced with `Set(CDR_PROP(disable)=1)` plus a 2nd-ed note that NoCDR was removed in Asterisk 21.
 4. `ResetCDR()` section — corrected `w` → `v` and the description (resets start/answer time, wipes variables; `v` preserves variables).
 5. Quiz 6 — reworded around `CDR_PROP(disable)` vs `ResetCDR()`, noting NoCDR removal.
+6. Line 26 — replaced the unsupported "20-character string" with an accurate description: accountcode is a free-form String (unbounded `[String]` endpoint option) stored in an 80-character CDR field. Source: CDR-Specification (accountcode = String (80)) + lab `config show help res_pjsip endpoint accountcode`.
 
 ## Unverified — author must resolve before print
 
-- **Line 26: "an account code … is a 20-character string."** No A22 source confirms a hard 20-character limit; `config show help res_pjsip endpoint accountcode` reports an unbounded String. Either cite the limit or soften to "a short string used to assign a record to a department/business unit."
+- None.

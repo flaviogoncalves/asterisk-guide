@@ -1,6 +1,6 @@
 # Fact-check ledger — Asterisk Security
 
-Verified: 22 · Wrong (fixed): 3 · Unverified: 2
+Verified: 24 · Wrong (fixed): 3 · Unverified: 0
 
 | # | Claim (quoted) | Line | Verdict | Source |
 |---|----------------|------|---------|--------|
@@ -33,16 +33,16 @@ Verified: 22 · Wrong (fixed): 3 · Unverified: 2
 | 27 | Quiz Q8: "Asterisk supports strong authentication by verifying client certificates" → TRUE | 549,563 | VERIFIED | lab: transport options `verify_client` / `require_client_cert` (TLS) exist |
 | 28 | Quiz Q9: `media_encryption=sdes` turns on SRTP via in-SDP keys | 552-554 | VERIFIED | lab media_encryption sdes synopsis |
 | 29 | Quiz Q10: Fail2Ban reads from `security` logger channel | 557-561 | VERIFIED | lab logger SECURITY channel |
-| 30 | "In 2010 hackers used the Sality botnet to scan all vulnerable SIP devices." | 24 | UNVERIFIED | Historical security-news claim; no primary Asterisk/IETF source. Plausible (Sality SIP-scanning campaigns reported c.2011) but author should cite a primary security advisory. |
-| 31 | RTP port range "10000 to 20000" (rtp.conf) | 150,184 | UNVERIFIED (config-dependent) | This is the recommended/example range, not an Asterisk default; rtp.conf default is 10000-20000 in many distros but is operator-set. Stated as a policy choice, acceptable. |
+| 30 | "In 2010 hackers used the Sality botnet to scan all vulnerable SIP devices." | 24 | WRONG (fixed) | Date corrected (Feb 2011, not 2010) and sourced: A. Dainotti et al., "Analysis of a '/0' Stealth Scan from a Botnet," IEEE/ACM Trans. on Networking, DOI 10.1109/TNET.2013.2297678 — Sality scanned the full IPv4 space probing UDP/5060 for SIP servers (observed via UCSD Network Telescope, ~3M source IPs). Footnote added. |
+| 31 | RTP port range "10000 to 20000" (rtp.conf) | 148,182 | WRONG (fixed) | Reframed as the rtp.conf.sample example range, not a built-in default. lab: `rtp.conf.sample` comment "Defaults are rtpstart=5000 and rtpend=31000", while the sample sets rtpstart=10000/rtpend=20000. Text now states no single built-in default and to match the firewall rule to the operator's actual rtpstart/rtpend. |
 
 ## Summary
 
-- Verified: 22
+- Verified: 24
 - Wrong (fixed): 3
   - Removed `noload => chan_mgcp.so` / `chan_skinny.so` from both modules.conf blocks (removed in Asterisk 21; absent in lab) and added a clarifying note; updated the line-130 narrative.
   - Rewrote the bogus `max_clients` / transport `option` DoS claim to reference real transport options (tcp_keepalive_*, tos/cos, local_net) and firewall-based flood control; updated the matching [2nd-ed note].
   - Corrected security event name `ChallengeFailed` → `ChallengeResponseFailed`.
-- Unverified (author to resolve before print):
-  1. "Sality botnet (2010) scanned all vulnerable SIP devices" (line 24) — needs a primary security-advisory citation.
-  2. RTP range 10000–20000 (lines 150/184) — operator/distro-set example, not an Asterisk built-in default; fine as a policy recommendation but should be framed as such.
+- Previously-unverified, now resolved:
+  1. Sality botnet claim (line 24): corrected "2010" → "February 2011" and sourced to the UCSD Network Telescope study (Dainotti et al., IEEE/ACM Trans. on Networking, DOI 10.1109/TNET.2013.2297678) — full-IPv4 stealth scan probing UDP/5060 for SIP servers. Footnote added.
+  2. RTP range (lines 148/182): reframed as the `rtp.conf.sample` example range. Lab confirms the sample comment "Defaults are rtpstart=5000 and rtpend=31000" while the sample sets 10000/20000 — text now makes clear there is no single hard default and the firewall rule must match the operator's chosen `rtpstart`/`rtpend`.

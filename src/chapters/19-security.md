@@ -21,7 +21,9 @@ The main attacks to IP telephony can be classified as DOS/DDOS, Theft of Service
 
 ### DDoS/DOS
 
-Denial of Service and Distributed Denial of Service are popular attacks to any IT infrastructure. It is not different with SIP and other Voice over IP protocols. Distributed denial of service is usually perpetrated by a botnet while DOS just by a single computer. In 2010 hackers used the Sality botnet to scan all vulnerable SIP devices.
+Denial of Service and Distributed Denial of Service are popular attacks to any IT infrastructure. It is not different with SIP and other Voice over IP protocols. Distributed denial of service is usually perpetrated by a botnet while DOS just by a single computer. In February 2011 the Sality botnet carried out a stealthy, coordinated scan of the entire IPv4 address space looking for vulnerable SIP servers — researchers observing the UCSD Network Telescope attributed it to roughly three million distinct source IPs probing UDP port 5060, most likely to brute-force SIP accounts for toll fraud.[^sality]
+
+[^sality]: A. Dainotti et al., "Analysis of a '/0' Stealth Scan from a Botnet," *IEEE/ACM Transactions on Networking*, 2015 (DOI 10.1109/TNET.2013.2297678).
 
 ![A peer-to-peer botnet directing thousands of SIP registration attempts at a server](../images/19-security-fig01.png)
 
@@ -145,7 +147,7 @@ noload => chan_unistim.so
 
 ### Implementing the security police with IPTABLES
 
-IPTABLES or netfilter is a standard firewall present in most Linux distributions. In this lab we will configure iptables and fail2ban. The objective is to implement the recommended security policy for Asterisk and block all unnecessary traffic. Follow the steps below: 1 – Block all external traffic 2 – Allow SSH traffic from an internal network or single host 3 – Allow SIP traffic in UDP and TCP the ports 5060 4 – Allow RTP traffic in the UDP range 10000 to 20000. Make sure you have console access to the server, you don't want to block yourself out of the system. Be careful. Step 1 - Install the package net-persistent.
+IPTABLES or netfilter is a standard firewall present in most Linux distributions. In this lab we will configure iptables and fail2ban. The objective is to implement the recommended security policy for Asterisk and block all unnecessary traffic. Follow the steps below: 1 – Block all external traffic 2 – Allow SSH traffic from an internal network or single host 3 – Allow SIP traffic in UDP and TCP the ports 5060 4 – Allow RTP traffic in the UDP media port range. There is no single built-in default — Asterisk's own `rtp.conf` falls back to ports 5000–31000 when nothing is set, but the shipped `rtp.conf.sample` configures `rtpstart=10000` / `rtpend=20000`, so we use that example range here. Match your firewall rule to whatever `rtpstart`/`rtpend` you actually set in `rtp.conf`. Make sure you have console access to the server, you don't want to block yourself out of the system. Be careful. Step 1 - Install the package net-persistent.
 
 ```
 sudo apt-get install iptables-persistent

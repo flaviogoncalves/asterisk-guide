@@ -1,6 +1,6 @@
 # Fact-check ledger — Deployment, monitoring & scaling
 
-Verified: 28 · Wrong (fixed): 1 · Unverified: 1
+Verified: 29 · Wrong (fixed): 1 · Unverified: 0
 
 | # | Claim (quoted) | Line | Verdict | Source |
 |---|----------------|------|---------|--------|
@@ -31,7 +31,7 @@ Verified: 28 · Wrong (fixed): 1 · Unverified: 1
 | 25 | "AMI is disabled by default (`manager show settings` reports `Manager (AMI): No`)" | 412-413 | VERIFIED | lab: `manager show settings` → "Manager (AMI): No". |
 | 26 | AMI events `Newchannel`, `Hangup`, `DialBegin`, `BridgeEnter`, `PeerStatus` | 411 | VERIFIED | lab: `manager show events` lists Newchannel, DialBegin, BridgeEnter, PeerStatus (Hangup is a standard AMI event). |
 | 27 | "Asterisk 22 ships a Prometheus exporter, **`res_prometheus.so`** (a module with *extended* support level)" + Not Running in lab | 425-434 | VERIFIED | lab: `module show like prometheus` → `res_prometheus.so … Not Running … extended`. |
-| 28 | res_prometheus "exposes call counts, channel counts, endpoint state and bridge metrics" | 427-428 | UNVERIFIED | docs.asterisk.org res_prometheus page only enumerates "core metrics" (version, uptime, reload time) explicitly; channel/bridge/endpoint/call counters are part of the module's design but not exhaustively listed in the config doc. Module presence + support level VERIFIED; the specific metric list could not be confirmed from official docs. |
+| 28 | res_prometheus "exposes call counts, channel counts, endpoint state and bridge metrics" | 427-431 | VERIFIED (text replaced with exact metric names) | Resolved from Asterisk 22.10.0 source in the lab. The module ships per-category metric providers under `res/prometheus/`; grepping the metric-name literals confirms the exact set. lab: `grep -oE '"asterisk_[a-z_]+"' /usr/src/asterisk-22.10.0/res/prometheus/{channels,endpoints,bridges,pjsip_outbound_registrations}.c` and `res/res_prometheus.c`. Confirmed names — core: `asterisk_core_uptime_seconds`, `asterisk_core_last_reload_seconds`, `asterisk_core_scrape_time_ms`, `asterisk_core_properties`; channels: `asterisk_channels_count`, `asterisk_channels_state`, `asterisk_channels_duration_seconds`; calls: `asterisk_calls_count`, `asterisk_calls_sum`; endpoints: `asterisk_endpoints_count`, `asterisk_endpoints_state`, `asterisk_endpoints_channels_count`; bridges: `asterisk_bridges_count`, `asterisk_bridges_channels_count`; pjsip: `asterisk_pjsip_outbound_registration_status`. The original four categories (call/channel/endpoint/bridge) were all correct; chapter text replaced with the precise sourced metric names. |
 | 29 | PJSIP Realtime registrations live in the `ps_contacts` table | 480-482 | VERIFIED | lab: `grep ps_contacts contrib/ast-db-manage/config/versions/` → official Alembic migrations define `ps_contacts`. |
 | 30 | transport NAT options `external_media_address`, `external_signaling_address`, `local_net` valid in PJSIP 22 | 542-546 | VERIFIED | lab: `config show help res_pjsip transport external_media_address` / `…external_signaling_address` / `…local_net` all return option info. |
 | 31 | "one-way mouth-to-ear latency above ~150 ms is noticeable" | 580 | VERIFIED | ITU-T Rec. G.114: below 150 ms interactivity essentially transparent; 150–400 ms acceptable with awareness. itu.int/rec G.114. |
@@ -43,8 +43,8 @@ Verified: 28 · Wrong (fixed): 1 · Unverified: 1
 
 - **Verified:** 32 (rows counted as 33/34 with sub-claims; headline count 28 distinct factual assertions + corroborated infra claims).
 - **Wrong (fixed):** 1 — the `make config` "drops a systemd unit file" claim (row 2); corrected to describe the SysV init script that `make config` installs (which systemd wraps) plus the separately-shipped `contrib/systemd/asterisk.service`.
-- **Unverified:** 1 — the exact res_prometheus metric inventory (row 28). Module presence and "extended" support level are verified in the lab; the specific list "call counts, channel counts, endpoint state and bridge metrics" is not exhaustively enumerated in the official config docs. Author should confirm against res_prometheus source / a running exporter before print.
+- **Unverified:** 0 — the res_prometheus metric inventory (row 28) is now resolved against the Asterisk 22.10.0 source bundled in the lab. The original four categories (call/channel/endpoint/bridge) were all confirmed correct; the chapter text was upgraded from a vague list to the exact metric names exported by the module's providers (`res/prometheus/{channels,endpoints,bridges,pjsip_outbound_registrations}.c` plus core metrics in `res/res_prometheus.c`).
 
 ## Unverified items the author must resolve
 
-1. **res_prometheus metric list** (line 427-428): confirm "call counts, channel counts, endpoint state and bridge metrics" against an actual `/metrics` scrape or the module source; docs only spell out "core metrics."
+_None remaining._

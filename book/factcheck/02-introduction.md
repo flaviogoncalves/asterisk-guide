@@ -1,6 +1,6 @@
 # Fact-check ledger — Introduction to Asterisk PBX
 
-Verified: 35 · Wrong (fixed): 1 · Unverified: 1 (minor, Opus lower bound) · Resolved (reworded/removed): 6
+Verified: 35 · Wrong (fixed): 2 · Unverified: 0 · Resolved (reworded/removed): 6
 
 Lab used: `docker compose -f /Users/flavio/crosscall/astbook/lab/docker-compose.yml exec -T asterisk asterisk -rx '<cmd>'` running **Asterisk 22.10.0** (`core show version`).
 
@@ -44,12 +44,12 @@ Lab used: `docker compose -f /Users/flavio/crosscall/astbook/lab/docker-compose.
 | 36 | "Eastern Management Group concluded that open-source PBXs account for 18% … 85% of the open-source PBX market is based on Asterisk … now ranks second in terms of lines connected to an IP PBX" | 98 | REMOVED | Dated (~2008–2012) analyst figures; original Eastern Management Group report not verifiable as a primary source. The 18%/~90% figures surface only in secondary 2012 articles. Removed to avoid aging the book; replaced with an undated statement that Asterisk dominates the open-source PBX ecosystem. |
 | 37 | "more than 3,000 changes and bugs … corrected" between Asterisk 1.0 and 1.2 | 86 | REMOVED | No authoritative changelog tally supports the "3,000" figure; ChangeLog-1.2.0 (downloads.asterisk.org) gives no aggregate count. Dated 1.0→1.2 (~2004–2005) stat with no value in a v22 book. Removed; reworded to a general statement about Asterisk being widely tested/stable. |
 | 38 | "Asterisk has been used in installations with more than 10,000 users" | 110 | REMOVED (reworded) | No citable authoritative deployment reference for the specific "10,000 users" figure. Reworded to a non-numeric scalability statement (single server handles many extensions; scales via multiple servers with load balancing/failover). |
-| 39 | "Opus (5.3-510Kbps)" lower bound 5.3 | 174 | UNVERIFIED (minor) | RFC 6716 states Opus 6–510 kbit/s; the "5.3" lower bound is slightly off (likely conflated with G.723.1's 5.3 kbps). Left for author — not unambiguously a typo in this codec list. |
+| 39 | "Opus (5.3-510Kbps)" lower bound 5.3 | 174 | WRONG (fixed) | RFC 6716: Opus operates 6–510 kbit/s; corrected the codec list to "Opus - (6-510 Kbps)" (5.3 was conflated with G.723.1). Also fixed LPC10 2.5 → 2.4 Kbps for consistency. https://www.rfc-editor.org/rfc/rfc6716 |
 | 40 | "Asterisk does not support silence suppression" | 299, 156 | VERIFIED (reworded) | Correct: Asterisk does **not** perform voice activity detection / silence suppression or generate comfort noise (RFC 3389); the standard guidance is to disable VAD on clients. Sources: https://www.asteriskguru.com/tutorials/comfort_noise_support_incomplete.html ("Asterisk does not (yet) support voice activity detection (and comfort noise generation)"); https://community.asterisk.org/t/enabling-silence-suppression-and-changing-codec-payload-size/35866 . Reworded L156 and L299 so the codec-feature list no longer implies Asterisk performs VAD/CNG, and the summary states the limitation accurately. |
 
 ## Unverified claims the author must resolve before print
 
-- **#39** Opus lower bitrate "5.3 Kbps" — RFC 6716 gives ~6 kbps; consider correcting to 6–510 kbps. (Still open — minor, left for author.)
+- **#39** Opus lower bitrate — corrected to 6–510 kbps (RFC 6716); LPC10 corrected 2.5 → 2.4 Kbps. (Resolved.)
 
 ### Resolved in this pass (previously unverified)
 

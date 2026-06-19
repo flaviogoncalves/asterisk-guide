@@ -1,6 +1,6 @@
 # Fact-check ledger — Designing a VoIP network (Chapter 6)
 
-Verified: 25 · Wrong (fixed): 2 · Unverified: 2
+Verified: 25 · Wrong (fixed): 4 · Unverified: 0
 
 Lab = Asterisk 22.10.0 running in `/Users/flavio/crosscall/astbook/lab` (docker compose exec asterisk).
 
@@ -9,11 +9,11 @@ Lab = Asterisk 22.10.0 running in `/Users/flavio/crosscall/astbook/lab` (docker 
 | 1 | "SIP is an Internet Engineering Task Force (IETF) open standard, largely defined in RFC 3261" | 57 | VERIFIED | RFC 3261 (SIP), IETF Standards Track, June 2002 — https://datatracker.ietf.org/doc/html/rfc3261 |
 | 2 | "SIP uses UDP or TCP in port 5060 to transport signaling" | 49 | VERIFIED | RFC 3261 §19.1.1 / IANA: SIP default port 5060 (UDP/TCP) — https://datatracker.ietf.org/doc/html/rfc3261 |
 | 3 | "RTP transports the audio stream using ports 1000 to 2000 in Asterisk (as defined in rtp.conf)" | 49 | WRONG (fixed) | Asterisk sample `rtp.conf` uses rtpstart=10000/rtpend=20000 (documented internal defaults 5000–31000); 1000–2000 is incorrect. Fixed to "10000 to 20000". Source: https://github.com/asterisk/asterisk/blob/master/configs/samples/rtp.conf.sample ; lab `rtp show settings` (lab override 10000–10100) |
-| 4 | "H.323 uses TCP in ports 1720 and 1719 to transport signaling" | 49 | UNVERIFIED (imprecise) | TCP 1720 = H.225/Q.931 call signaling (correct); UDP 1719 = H.225 RAS (not TCP). Cisco H.323 gatekeepers doc — https://www.cisco.com/c/en/us/support/docs/voice/h323/5244-understand-gatekeepers.html . Left unedited (legacy prose; needs rewrite, not a single-token fix). |
+| 4 | "H.323 uses TCP in ports 1720 and 1719 to transport signaling" | 49 | WRONG (fixed) | Rewrote the section: H.225 call signaling on TCP 1720; H.225 RAS on UDP 1719. https://www.cisco.com/c/en/us/support/docs/voice/h323/5244-understand-gatekeepers.html |
 | 5 | "IAX ... transports signaling and media through the same UDP port (4569)" | 61 | VERIFIED | RFC 5456 §3: IAX uses well-known UDP port 4569 for all traffic — https://datatracker.ietf.org/doc/html/rfc5456 |
 | 6 | "IAX is an open protocol originally developed by Digium (now Sangoma)" | 61 | VERIFIED | RFC 5456 (IAX/Inter-Asterisk eXchange v2), Digium authors; Digium acquired by Sangoma 2018 — https://datatracker.ietf.org/doc/html/rfc5456 |
 | 7 | "IAX2 (version 2) still ships in Asterisk 22 via the `chan_iax2` module" | 61, 80 | VERIFIED | lab: `module show like chan_iax2` → `chan_iax2.so ... core` (1 module loaded) |
-| 8 | "IAX2 | IETF draft" (comparison table standard body) | 80 | UNVERIFIED (outdated label) | IAX2 is now RFC 5456 (Informational, Independent Submission — "not endorsed by the IETF, no formal standing"). Not a numbered "draft" anymore. Author note at line 63 already flags this; left as judgment call. — https://datatracker.ietf.org/doc/html/rfc5456 |
+| 8 | "IAX2 | IETF draft" (comparison table standard body) | 80 | WRONG (fixed) | Changed the table cell to "RFC 5456 (Informational)". https://datatracker.ietf.org/doc/html/rfc5456 |
 | 9 | "chan_sip was removed in Asterisk 21" | 85 | VERIFIED | lab: `module show like chan_sip` → 0 modules loaded (absent in 22); removal in 21 — https://docs.asterisk.org/Deployment/Module-Loading-and-Configuration/Configuring-chan_pjsip/ and Asterisk 21 release notes |
 | 10 | "In Asterisk 22, SIP is handled exclusively by `chan_pjsip`" / "only SIP channel driver in Asterisk 22" | 85, 251 | VERIFIED | lab: `module show like chan_pjsip` → `chan_pjsip.so ... Running ... core`; chan_sip absent |
 | 11 | "H.323 ... available only through the community `ooh323` add-on" / "chan_ooh323 add-on" | 39, 251 | VERIFIED | lab: `module show like ooh323` → 0 modules (not in standard build); chan_ooh323 is the addons/community H.323 module |
@@ -42,7 +42,6 @@ Lab = Asterisk 22.10.0 running in `/Users/flavio/crosscall/astbook/lab` (docker 
 - **Line 111** — LPC10 "2.5 Kbps" → "2.4 Kbps". FS-1015/LPC-10 standard rate is 2.4 kbps.
 - **Lines 126/138/141** — Removed the unsourced "free of charge / free download" wording for the `codec_g729` and `codec_opus` add-ons. Both are now described accurately as external (`support_level=external`) binary modules downloaded from Digium/Sangoma, per Asterisk's `codecs/codecs.xml`. G.729 wording now matches the codecs.xml note "A license must be purchased for this codec"; Opus wording notes no purchase requirement is stated (unlike G.729) rather than asserting it is "free." Source: https://github.com/asterisk/asterisk/blob/master/codecs/codecs.xml ; lab `module show like codec`.
 
-## Unverified items for the author to resolve before print (2)
+## Unverified items for the author to resolve before print (0)
 
-1. **Line 49** — H.323 "TCP in ports 1720 and 1719": port 1719 (H.225 RAS) is UDP, not TCP. Sentence needs a rewrite, not a single-token fix.
-2. **Line 80** — Comparison table calls IAX2 an "IETF draft"; it is now RFC 5456 (Informational, Independent Submission, not IETF-endorsed). Update the standard-body cell.
+_None remaining — both items resolved: H.323 ports corrected in the rewritten network-stack section (TCP 1720 / UDP 1719), and the IAX2 comparison-table cell now reads "RFC 5456 (Informational)."_
