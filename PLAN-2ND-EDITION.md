@@ -16,29 +16,37 @@ Living plan. Captures decisions from the planning interview and open questions.
 5. **New chapters in scope:** WebRTC; SIP trunking/DID/PSTN; Deployment/monitoring/scaling;
    plus merge of SIP-theory (old ch8) + PJSIP (old ch9) into one chapter.
 
-## Target TOC (draft — pending legacy-channels decision)
+## Target TOC (16 chapters, 4 parts — FINAL)
 
 ```
 PART I — FOUNDATIONS
-  1. Introduction to Asterisk (the Sangoma era)        ← ch1
-  2. Installing Asterisk 22 (source + Docker)          ← ch2 + containers
-  3. Building your first PBX with PJSIP                 ← ch3 (PJSIP-first)
+  1. Introduction to Asterisk (the Sangoma era)        ← old ch1
+  2. Installing Asterisk 22 (source + Docker)          ← old ch2 + containers
+  3. Building your first PBX with PJSIP                 ← old ch3 (PJSIP-first)
 PART II — CHANNELS & CONNECTIVITY
-  4. SIP & PJSIP in depth                               ← ch8 + ch9 merged
-  5. WebRTC with Asterisk                               ← NEW
-  6. SIP trunking, DID & the PSTN                       ← NEW
-  7. Legacy channels: analog, TDM & IAX2               ← ch4 + ch5 + ch7 (decision pending)
+  4. Designing a VoIP network                          ← old ch6
+  5. SIP & PJSIP in depth                              ← old ch8 + ch9 merged
+  6. WebRTC with Asterisk                              ← NEW
+  7. SIP trunking, DID & the PSTN                      ← NEW
+  8. Legacy channels: analog, TDM & IAX2              ← old ch4 + ch5 + ch7 merged
 PART III — DIALPLAN & CALL FEATURES
-  8. The dialplan: fundamentals to advanced            ← ch10
-  9. PBX features (transfer, park, ConfBridge, VM)     ← ch11
- 10. Queues & basic contact-center                     ← ch12
+  9. The dialplan: fundamentals to advanced            ← old ch10
+ 10. PBX features (transfer, park, ConfBridge, VM)     ← old ch11
+ 11. Queues & basic contact-center                     ← old ch12
 PART IV — INTEGRATION & OPERATIONS
- 11. CDR & CEL                                          ← ch13
- 12. AMI, AGI & ARI                                     ← ch14 (ARI expanded)
- 13. Asterisk Realtime (ODBC + PJSIP Sorcery)          ← ch16
- 14. Security & hardening                               ← ch15
- 15. Deployment, monitoring & scaling                  ← NEW
+ 12. CDR & CEL                                          ← old ch13
+ 13. AMI, AGI & ARI                                     ← old ch14 (ARI expanded)
+ 14. Asterisk Realtime (ODBC + PJSIP Sorcery)          ← old ch16
+ 15. Security & hardening                               ← old ch15
+ 16. Deployment, monitoring & scaling                  ← NEW
 ```
+
+File numbering interleaves unnumbered Part dividers (`NN-partN.md`), so on disk:
+`01-part1`, `02-introduction`, `03-installing-asterisk`, `04-first-pbx-pjsip`,
+`05-part2`, `06-designing-voip-network`, `07-sip-and-pjsip`, `08-webrtc`,
+`09-sip-trunking`, `10-legacy-channels`, `11-part3`, `12-dialplan`, `13-pbx-features`,
+`14-queues`, `15-part4`, `16-cdr-cel`, `17-ami-agi-ari`, `18-realtime`, `19-security`,
+`20-deployment` (+ `00-front-matter`).
 
 ## More locked decisions
 

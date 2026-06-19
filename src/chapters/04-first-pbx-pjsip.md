@@ -1,4 +1,4 @@
-# Building a simple PBX
+# Building your first PBX with PJSIP
 
 > **[2nd-ed note]** This chapter has been updated for Asterisk 22 LTS. The original `chan_sip` (`sip.conf`) examples are preserved for comparison but marked **legacy/removed** — `chan_sip` was removed in Asterisk 21 and does not exist in 22. PJSIP (`pjsip.conf`) equivalents have been added inline. CLI commands have been updated to the `pjsip` family.
 

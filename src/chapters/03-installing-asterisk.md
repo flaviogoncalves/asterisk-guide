@@ -1,6 +1,4 @@
-# How to download and install
-
-# Asterisk
+# Installing Asterisk 22
 
 In the first chapter, we learned a bit about how Asterisk is useful in the telephony environment. In this chapter, we will cover how to download and install Asterisk. Before starting, it is essential to learn how to compile and install it. The compilation process may seem weird for traditional Microsoft™ Windows™ users, but it is fairly common in the Linux™ environment. One can get an optimized code for your hardware when compiling Asterisk, which is what we will do here. Asterisk runs in several operating systems, but we chose to keep things easy and start with only one of them: Linux. We chose Debian as the Linux™ distribution because the dependencies are easy to install and the distribution is stable, with a low footprint. If you want to use another distribution, please change the name of the dependencies accordingly.
 

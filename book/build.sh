@@ -18,7 +18,8 @@ echo "Assembling ${#CHAPTERS[@]} chapters:"
 printf '  %s\n' "${CHAPTERS[@]##*/}"
 
 # --resource-path lets Pandoc resolve the chapters' ../images/ figure links.
-COMMON=( --from=gfm
+# +header_attributes enables {.unnumbered} on the Part divider pages.
+COMMON=( --from=gfm+header_attributes
          --metadata-file="$META"
          --resource-path="$SRC"
          --toc --toc-depth=2 )

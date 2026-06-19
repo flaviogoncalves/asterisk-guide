@@ -1,6 +1,4 @@
-# Extending Asterisk with AMI and
-
-# AGI
+# Extending Asterisk with AMI, AGI and ARI
 
 In several situations, it may be necessary to extend Asterisk features using external applications. There are many different ways by which it may be extended. In this chapter, we will cover different ways to integrate Asterisk with other systems. There are three major ways to integrate Asterisk, AMI Asterisk Manager Interface, AGI – Asterisk Gateway Interface and ARI Asterisk RESTful Interface. We will also look at the command asterisk –rx and the system() application. To choose which way you want to integrate with Asterisk depends on the application. For AGI the most usual application is the IVR connected to a database. For AMI, dialers are the most popular app. ARI (introduced in Asterisk 12) has matured into the recommended approach for building new telephony applications and is now widely adopted.
 

@@ -1,10 +1,533 @@
-# Digital channels
+# Legacy channels: analog, TDM & IAX2
+
+In a 2026 pure-VoIP world, the channel types in this chapter are increasingly rare: most new deployments are SIP trunks and PJSIP endpoints over Ethernet, with no telephony hardware at all. Asterisk 22 nonetheless still supports them fully. Analog (FXO/FXS) and digital TDM (E1/T1/ISDN PRI/BRI) connectivity is provided through DAHDI — the driver stack originally developed by Digium, which was acquired by Sangoma in 2018, after the earlier Zaptel drivers were renamed following a trademark dispute. Server-to-server connectivity over IAX2 is provided by `chan_iax2`, which is still shipped and supported but is now firmly a legacy protocol. If you are running a pure-SIP shop with no telephony cards and no IAX2 trunks, you can safely skip this chapter.
+
+## Analog channels (FXO/FXS)
+
+> **[2nd-ed note]** Update front-matter dates/ISBN for the 2nd edition before publication.
+
+> **[2nd-ed note — deployment context]** As of Asterisk 22, DAHDI and analog telephony cards remain fully supported and DAHDI still builds against current kernels. However, the majority of new deployments are pure VoIP (SIP trunks, PJSIP). Analog/TDM hardware is now a niche choice, mainly found in legacy environments, rural PSTN connectivity, or regulated markets. The content below is still accurate for those scenarios.
+
+There are several ways to connect the public switched telephone network (PSTN). The best way depends on how the telephone company makes this connection available in your area. The simplest way is to use an analog line, similar to the line you use at home. In this section, we will show you how to configure analog cards from Sangoma™ (formerly Digium™) and Xorcom™.
+
+### Objectives
+
+By the end of this chapter you should be able to:
+
+- Recognize the main telephony terms and acronyms;
+- Understand when to use digital and analog circuits;
+- Recognize the difference between FXS and FXO; and
+- Configure Asterisk for FXS and FXO.
+
+### Telephony basics
+
+Most analog implementations use a pair of cooper lines named tip and ring. When a loop is closed, the phone receives the dial tone from the telecom switch (or the private PBX). The most frequently used signaling is loop-start; other, less common kinds of signaling including ground start, which is used in several countries. The three categories of signaling are:
+
+- Supervision signaling
+- Address signaling
+- Information signaling
+
+#### Supervision signaling
+
+The main supervision signalings are on-hook, off-hook, and ringing. On-Hook – When a user puts the phone on the hook, the PBX interrupts and does not allow the electric current to pass. In this state, the circuit is named on-hook. In this position, only the ringer is active. Off-Hook – Before starting a phone call, the phone needs to pass to the off-hook state. Removing the handset from the hook closes the loop and indicates to the PBX that the user intends to make a call. Upon receiving this indication, the PBX generates a dial tone, indicating to the user that it is ready to accept the destination address (i.e., phone number). Ringing – When a user calls another phone, it generates a voltage to the ringer that warns the other user about a call being received. Signaling varies by country, with different tones for different countries. You can personalize Asterisk tones to your country by modifying the indications.conf file. For example:
+
+```
+[br]
+description=Brazil
+ringcadance=1000,4000
+dial=425
+busy=425/250,0/250
+ring=425/1000,0/4000
+congestion=425/250,0/250,425/750,0/250
+callwaiting=425/50,0/1000
+```
+
+#### Address Signaling
+
+You can use two kinds of signaling for dialing. The first and most common is dual tone multi- frequency (dtmf) while the other is pulse dialing (used in old rotary dial phones). Phones have a keypad for dialing, and each button is associated with two frequencies: one high and one low. In the case of dtmf signaling, the combination of these tones indicates what digit is being pressed. MFC/R2 uses a multi-frequency tone different from dtmf.
+
+#### Information signaling
+
+Information signaling shows the call’s progress and different events.
+
+- Dial tone
+- Busy Tone
+- Ringback
+- Congestion
+- Invalid number
+- Confirmation tone
+
+### PSTN interfaces
+
+As in the case of old PBXs, it is often required to connect the Asterisk PBX to the PSTN. Here we’ll show you how to do it. Usually you have three options for telephone lines.
+
+- Analog: The most common form for home and small business, usually delivered with a metallic pair of cooper lines.
+- Digital: Used when many lines are necessary. A digital line is usually delivered by a CSU/DSU or a Fiber multiplexer. The end user connector is usually a RJ45. In some countries, E1 lines are delivered using two coaxial BNC connectors; in this case you will need a balloon to connect to the RJ45 jack to the telephony board.
+- SIP: This option has been recently developed. The telephone line is delivered using a data connection with SIP signaling (VoIP). This is a good option to use with Asterisk since you will not need to buy a telephony card. Phone calls will be delivered directly to the Ethernet port. Another advantage is that you may be able to free resources from your CPU by avoiding codec transcoding.
+
+### Analog FXS, FXO, and E&M interfaces
+
+Several types of analog interfaces are available. It is fundamental to understand the differences between these interfaces to learn how to connect to the phone network as well as to other PBXs. Here, we will show you the E&M interface. Although it is not currently available for Asterisk and has been discontinued by several vendors, you may find routers and PBXs with this kind of interface, so it is better to know what you are dealing with.
+
+#### Foreign eXchange (FX) Interfaces
+
+FX interfaces are analog. The term “Foreign eXchange” is applied to access trunks to a PSTN central office (CO). Foreign eXchange Office (FXO)
+
+![04-analog-channels figure 1](../images/04-analog-channels-img01.png)
+
+The FXO interface is used to connect to a central office (CO) or another PBX’s extension. It communicates directly with a telephone line coming from the PSTN. Another option is to connect the FXO interface to an existing PBX, allowing communication between Asterisk and the legacy PBX. Connecting Asterisk to a PBX port and delivering a remote extension using VoIP is often referred to as an off-promises extension (OPX). An FXO interface receives a dial tone. Foreign eXchange Station (FXS) The FXS interface feeds an analog phone, modem, or fax. The FXS provides the dial tone and power for a phone.
+
+#### Trunk signaling
+
+- Loop-Start
+- Ground-Start
+- Kewlstart
+
+The use of kewlstart signaling in Asterisk is almost default. Kewlstart is not signaling itself, but adds intelligence to the circuit by monitoring what is happening on the other side. Kewlstart is based in loop-start. Most switches do not support this feature, which is used to get the hang-up notification.
+
+- Loopstart: Used in most analog lines, it allows the telephone to indicate “on-hook” and “off-hook” and the switch to indicate “ring” and “no-ring”. This is probably what most people have at home. The name comes from the fact that the line is always open. When you close the loop, the switch provides you with a dial tone. An incoming call is signaled by a 100V ringing voltage over the open pair.
+
+![04-analog-channels figure 2](../images/04-analog-channels-img02.png)
+
+- Groundstart: Similar to Loopstart. When you want to make a call, one side of the line is short-circuited. When the switch identifies this state, it reverses the voltage through the open pair, and then the loop is closed. Consequently, the line first becomes occupied before being offered to the caller.
+- Kewlstart: Adds intelligence to the circuits, allowing monitoring of the other side. Kewlstart incorporates many advantages from loop-start.
+
+### Asterisk telephony channels setup
+
+To configure a telephony interface card, several steps are necessary. In this chapter, we will show three of the most common scenarios:
+
+- Analog connection using FXS
+- Analog connection using FXO
+- Connection of an Astribank™ with FXS and FXO interfaces
+
+### Configuration Procedure (valid in both cases)
+
+Before choosing hardware for Asterisk, you should consider the number of simultaneous calls, services, and codecs that are going to be installed and enabled. Asterisk is a CPU-intensive application, which is why we recommend a dedicated machine for Asterisk. The number of interface cards installed within the computer is limited by the number of slots and interruptions available. It is preferable to install a single card with eight voice interfaces than two cards with four. Another option is to use a USB channel bank, such as the Xorcom Astribank. Recently, some manufacturers (e.g., CIANET) have started producing TDMoE channel banks, making it even easier to connect dozens of analog interfaces. Astribank 19” with 32 FXS/FXO ports
+
+#### Example 1: One FXO, one FXS installation
+
+In this example, we will use a Sangoma TDM400 telephony interface card (formerly sold as the Digium TDM400) with one FXS and one FXO module. The required steps are listed below: 1. Install the analog card FXS, FXO, or both.
+
+```
+2. Configure the file /etc/dahdi/system.conf (formerly /etc/zaptel.conf).
+```
+
+3. Generation of the configuration files using dahdi_genconf. 4. Load the driver for the DAHDI interface. 5. Execute dahdi_test to verify interrupt misses. 6. Execute dahdi_cfg to configure the driver. 7. Configure the channel DAHDI in chan_dahdi.conf file. Load Asterisk. Step 1: Install the TDM400 Board. The TDM404P card contains FXS and FXO modules. Connect the FXS (S110M, green) and FXO (X100M, red) modules. If you are using FXS modules, connect the card directly to the power source using a molex connector. Please wear electrostatic protection before handling interface cards to avoid damage to the hardware. Sangoma (formerly Digium) analog cards also support a hardware echo cancellation module VPMADT032. Step 2: The good news about the configuration is the new utility dahdi_genconf, which automatically detects and generates the configuration for DAHDI interfaces. The utility generates two files:
+
+- /etc/dahdi/system.conf
+- /etc/asterisk/dahdi-channels.conf
+- /etc/asterisk/users.conf (option: users)
+- All these files use the option chan_dahdi full
+
+Before you can execute the dahdi_genconf, it is important to configure the file
+
+```
+gen_parameters.conf
+#
+# /etc/dahdi/genconf_parameters
+#
+# This file contains parameters that affect the
+# dahdi_genconf configurator generator.
+```
+
+![04-analog-channels figure 3](../images/04-analog-channels-img03.png)
+
+```
+#
+#base_exten
+4000
+#fxs_immediate
+```
+
+- no
+
+```
+#fxs_default_start ks
+#lc_country
+il
+#context_lines
+```
+
+- from-pstn
+
+```
+#context_phones
+from-internal
+#context_input
+```
+
+- astbank-input
+
+```
+#context_output
+astbank-output
+#group_phones
+0
+#group_lines
+5
+#brint_overlap
+#bri_sig_style
+```
+
+- bri_ptmp
+
+```
+#
+# The echo canceller to use. If you have a hardware echo canceller, just
+# leave it be, as this one won't be used anyway.
+#
+# The default is mg2, but it may change in the future. E.g: a packager
+# that bundles a better echo canceller may set it as the default, or
+# dahdi_genconf will scan for the "best" echo canceller.
+#
+#echo_can
+hpec
+#echo_can
+oslec
+#echo_can
+none  # to aboid echo cancellers altogether
+# bri_hardhdlc: If this parameter is set to 'yes', in the entries for
+# BRI cards 'hardhdlc' will be used instead of 'dchan' (an alias for
+# 'fcshdlc').
+#
+#bri_hardhdlc
+yes
+# For MFC/R2 Support
+#pri_connection_type
+R2
+#r2_idle_bits
+1101
+# pri_types contains a list of settings:
+# Currently the only setting is for TE or NT (the default is TE)
+#
+#pri_termtype
+# SPAN/2
+NT
+ # SPAN/4
+NT
+O arquivo gen_parameters.conf permite a personalização da sua configuração. Os
+parâmetros mais importantes para linhas analógicas são:
+base_exten
+```
+
+- 4000
+
+```
+#fxs_immediate
+```
+
+- no
+
+```
+fxs_default_start
+ks
+lc_country
+```
+
+- br
+
+```
+context_lines
+from-pstn
+context_phones
+```
+
+- from-internal
+
+```
+context_input
+astbank-input
+context_output
+```
+
+- astbank-output
+
+```
+group_phones
+0
+group_lines
+5
+#echo_can
+hpec
+#echo_can
+oslec
+echo_can
+MG2
+```
+
+Warning: It is required that you configure at least the echo cancellation algorithm for the channels. The base_exten parameter defines the basic dial plan for FXS extensions. In this case, the first FXS channel will receive the extension number 4000, the second 4001, and so on. The context in which the lines (context_phones) and trunks (context_lines) are created is very important. After generating the files, you should include the file /etc/asterisk/dahdi-channels.conf in the file
+
+```
+/etc/asterisk/chan_dahdi.conf.
+#include dahdi-channels.conf
+```
+
+Note: Analog signaling is a bit confusing; it is always the inverse of the card. FXS cards are signaled with FXO whereas FXO cards are signaled with FXS. Asterisk talks to these devices as if it was on the opposite side. Step 3: Load kernel drivers. Now you have to load the chan_dahdi module and the related card kernel driver. Use dahdi_hardware to detect your card and the driver name. For example:
+
+- Card Driver Description
+- TE410P wct4xxp 4xE1/T1-3.3V PCI
+- TE405P wct4xxp 4xE1/T1-5V PCI
+- TDM400P wctdm 4 FXS/FXO
+- T100P wct1xxp 1 T1 E100P wctlxxp 1 E1 X100P wcfxo 1 FXO
+
+Commands to load the drivers:
+
+```
+modprobe dahdi
+modprobe wctdm
+```
+
+Step 4: Use the dahdi_test utility. An important utility is dahdi_test, which is used to verify interrupt misses in the DAHDI card. Audio quality problems are often related to interrupt conflicts. To verify that your DAHDI card is not sharing an interrupt with other cards, use the following command:
+
+```
+#cat /proc/interrupts
+```
+
+You can verify the number of interrupt misses using the dahdi_test utility compiled with the DAHDI cards. A number below 99.987% indicates possible problems. Step 5: Use the dahdi_cfg utility to configure the driver. DAHDI has an unusual system for loading the drivers. First configure the /etc/system/dahdi.conf, and then apply those configurations to the DAHDI driver using dahdi_cfg. In this case, dahdi_cfg is used to configure the signaling for the FX interfaces. To see the results, you can append “-vvvvv” to the command for verbose.
+
+```
+#
+/sbin/dahdi_cfg -vv
+Dahdi Configuration
+======================
+Channel map:
+Channel 01: FXS Kewlstart (Default) (Slaves: 01)
+Channel 02: FXO Kewlstart (Default) (Slaves: 02)
+2 channels configured.
+```
+
+If the channels were loaded successfully, you will see an output similar to the one shown above. Users often incorrectly configure chan_dahdi.conf with inverted signaling between channels. If this happens, you will see a message like the one shown below:
+
+```
+DAHDI_CHANCONFIG failed on channel 1: Invalid argument (22)
+Did you forget that FXS interfaces are configured with FXO signalling
+and that FXO interfaces use FXS signalling?
+```
+
+After successfully configuring the hardware, you can proceed to Asterisk configuration.
+
+```
+Step 6: /etc/dahdi/system.conf configuration file.
+```
+
+It sounds strange, but after configuring the /etc/dahdi/system.conf, you configured the card itself. DAHDI can be used for other purposes, like routing and SS7. To use it with Asterisk, you must configure the Asterisk DAHDI channels. Every channel in Asterisk has to be defined; SIP/PJSIP channels are defined in pjsip.conf (note: chan_sip and sip.conf were removed in Asterisk 21) while TDM channels are defined in chan_dahdi.conf. This creates the logical TDM channels to be used in your dial plan.
+
+```
+signalling=fxs_ks;
+group=1;
+```
+
+- channel group
+
+```
+context=incoming  ;
+context
+channel => 1;
+channel number
+signalling=fxo_ks;  FXO signaling for FXS interfaces
+group=2;
+```
+
+- channel group
+
+```
+context=extensions;
+context
+channel=> 2
+```
+
+- channel number
+
+### Configuration options
+
+Several options are available in the chan_dahdi.conf file. A description of all options would be boring and counterproductive; instead, we will focus on the main option groups available for easy understanding.
+
+#### General options (channel independent)
+
+These options work for any channel: context: Defines the incoming context.
+
+```
+context=default
+```
+
+channel: Defines channel or channel range. Each channel definition will inherit options defined before the declaration. Channels can be identified individually or in the same line by comma separation. Ranges can be defined using “-”.
+
+```
+Channel=>1-15
+Channel=>16
+Channel=>17,18
+```
+
+group: Allows channels to be handled as a group. If you dial a group number instead of a channel number, the first channel available is used. If channels are phones, when you call a group, all phones will ring simultaneously. With commas, you can specify more than one group for the same channel.
+
+```
+group=1
+group=3,5
+```
+
+language: Turns on the internationalization and configures a language. This feature will configure system messages for a specific language. English is the only language with complete prompts available through standard installation. musiconhold: Selects music on hold class.
+
+#### Caller ID options
+
+There are many callerid options. Some can be disabled, although most are enabled by default. usecallerid: Enables or disables the callerid transmission for the subsequent channels (Yes/No). Note: If your system gets two rings before answering, try disabling this feature. It should answer immediately. hidecallerid: Defines whether or not to hide the outgoing callerid (Yes/No). callerid: Configures a callerid string for a specific channel. The caller can be configured with asreceived. This is mostly used in trunk interfaces to indicate the incoming callerid.
+
+```
+callerid = "Flavio Eduardo Gonçalves" <48 30258500>
+```
+
+callwaitingcallerid: Supports callerid during call waiting. useincomingcalleridondahditransfer: Uses the incoming callerid in a transfer.
+
+#### Call Waiting
+
+Asterisk supports call waiting in FXS channels. The user will receive a waiting tone if someone tries the extension. To enable call waiting:
+
+```
+callwaiting=yes
+```
+
+To support callerid in call waiting:
+
+```
+callwaitingcallerid=yes
+```
+
+#### Audio quality options
+
+Adjusting the echo cancellation is half technical, half art. These options adjust certain Asterisk parameters that affect audio quality in the DAHDI channels. They can help improve audio quality in analog interfaces.
+
+#### The fxotune utility
+
+The fxotune is a utility used to fine-tune certain parameters for FXO modules. This fine-tuning is required to adjust impedance mismatch caused by the hybrid. The utility has three operation modes:
+
+- Detection (-i): detects and fixes the existing FXO channels and saves the configuration to
+
+```
+fxotune.conf
+```
+
+- Dump mode (-d): generates the waveform files to fxotune_dump.vals
+- Startup mode (-s): reads the file fxotune.conf and applies it to the FXO modules
+
+It is important to understand that you will have to insert the instruction fxotune –s in the system load before starting Asterisk:
+
+```
+#modprobe dahdi
+#modprobe wctdm
+#fxotune-s
+```
+
+### Echo cancellation
+
+Most echo cancellation algorithms operate by generating multiple copies of the received signal, in which each one is delayed by a specific amount of time. The number of taps of the filter determines the size of the echo delay that needs to be cancelled. These delayed copies are then adjusted and subtracted from the received signal. The trick is to adjust only the delayed signal to remove the echo without using too many CPU cycles. From the users’ perspective, it is important to choose an appropriate echo cancellation algorithm. The default is MG2; however, two other options are available: the High Performance Echo Cancellation (HPEC) from Sangoma (formerly Digium) and the open-source echo cancellation (OSLEC) developed by David Rowe.
+
+> **[2nd-ed note]** The OSLEC project page (http://www.rowetel.com/ucasterisk/oslec.html) may no longer be current; verify availability and kernel integration status for modern kernels before referencing it. To change the echo cancellation algorithm, change the parameter echo_can to /etc/dahdi/system.conf. For example:
+
+```
+echo_can=oslec
+```
+
+The echo cancellation in Asterisk is controlled by three parameters in the file /etc/asterisk/chan-
+
+```
+dahdi.conf.
+```
+
+echocancel: Disables or enables echo cancellation. You should keep this feature enabled. It accepts “yes” or the number of taps. Explanation: How does echo canceling work? Most echo canceling algorithms operate by generating multiple copies of a received signal, with each being delayed by a small interval. This little flow is called a “tap”. The number of taps determines the echo delay that can be cancelled. These copies are delayed, adjusted, and subtracted from the original signal. The trick is to adjust the delayed signal exactly to what is necessary to remove the echo. echocancelwhenbridged: Enables or disables the echo canceller during a pure TDM call. This is usually not necessary. rxgain: Adjusts the audio reception gain to either increase or decrease reception volume (-100% to 100%). txgain: Adjusts audio transmission gain to either increase or decrease the transmission volume (- 100% to 100%). For example:
+
+```
+echocancel=yes
+echocancelwhenbridged=yes
+txgain=-10%
+rxgain=10%
+```
+
+#### Billing options
+
+These options change how call information is recorded in the call detail records (CDR) database. amaflags: Configures the AMA flags affecting the CDR categorization. It accepts the following values:
+
+- billing
+- documentation
+- omit
+- default
+
+accountcode: Configures an account code for a specific channel. It can contain any alphanumeric value—usually the department or user name.
+
+```
+accountcode=finance
+amaflags=billing
+```
+
+### Call progress options
+
+These items are used to acquire information about the progress of the call. In public interfaces, it may be useful to detect the call progress and determine if it was answered or busy. The busy detection is highly experimental and regulated by specific parameters.
+
+```
+busydetect=yes
+busycount=4
+busypattern=500,500
+callprogress=yes
+progzone=br
+```
+
+These parameters (above) specify whether the interface will try to detect the busy tone, how many tones will be used for successful detection, and what is the busy pattern. The busy detection is largely experimental, and some additional parameters can be changed in the Makefile. To detect the answer of a call, which is essential for precise billing, it is possible to use the polarity reversal to signal the exact answer time. This is important if you plan to charge for the call or just wish to have precise billing for comparison. Usually you have to contact the phone company to request this service.
+
+```
+answeronpolarityswitch=yes
+```
+
+In some countries, it is possible to detect the hang up of the call using polarity reversal as well.
+
+```
+hanguponpolarityswitch=yes
+```
+
+#### Options for phones
+
+These options are used for phones connected to the FXS interfaces. All the functionalities delivered to analog phones connected directly to the DAHDI interfaces are controlled by Asterisk. Adsi (Analog Display Services Interface): This is a set of telecom standards used by some telcos to offer services such as ticket buying. cancallforward: Enables or disables call forwarding (*72 to enable and *73 to disable). calleridcallwaiting: Enables callerid received during a call waiting indication (Yes/No). immediate: In immediate mode, instead of providing a dial tone, the channel jumps immediately to the “s” extension in the defined context. This is used to create hotlines. threewaycalling: Enables or disables three-way conferencing. mailbox: Warns the user about available voicemail messages. It can be an audible sign or a visual indicator (if the telephone supports this feature). The argument is the mailbox number. callgroup: Group phones to dial or to pick up. pickupgroup: Group of phones for call pickup.
+
+### Useful DAHDI CLI commands
+
+Once Asterisk is running with DAHDI channels loaded, you can inspect channel status from the Asterisk CLI. These commands remain current in Asterisk 22:
+
+```
+*CLI> dahdi show channels
+*CLI> dahdi show channel 1
+*CLI> module reload chan_dahdi.so
+```
+
+### DAHDI channel format.
+
+DAHDI channels use the following format in the dial plan:
+
+```
+DAHDI/[g]<identifier>[c][r<cadence>]
+<identifier>- Physical channel numeric identifier
+[g] – Group identifier
+[c] – Answer confirmation. A number is not considered until the callee press
+“#”
+[r] – customized ringing
+[cadence] Integer from 1 to 4
+```
+
+For example:
+
+```
+DAHDI/2
+- channel 2
+DAHDI/g1  - First available channel in group 1
+```
+
+### Quiz
+
+1. Supervision signaling includes: A. On-hook B. Off-hook C. Ringing D. Dtmf 2. Information signaling includes: A. Dtmf B. Dial tone C. Invalid number D. Ringback E. Congestion F. Busy G. Pulse 3. There are two types of analog interfaces available for Asterisk: FXS and FXO. Mark the correct answers. A. FXS: Foreign Exchange Station can be connected directly to the company’s PBX extension port. B. FXO: Foreign Exchange Office can be connected to the public switched telephony network. C. FXS: Foreign Exchange Station provides a dial tone and can be connected to a standard analog phone. 4. To configure DAHDI hardware, you should first edit the ______ file. A. /etc/dahdi/system.conf B. /etc/asterisk/chan_dahdi.conf C. /etc/asterisk/unicall.conf D. serial.conf 5. The DAHDI hardware is independent of Asterisk. In the chan_dahdi.conf, you configure Asterisk channels, not the hardware itself. A. True B. False 6. When using a TDM400 with an ___ port, is necessary to connect the PC power source to the card using a specific connector (similar to the one used to power the hard disk). A. FXO B. FXS C. E+M D. ISDN 7. Echo, pops, and noise in a DAHDI card are often related to the: A. Asterisk compilation B. Cable problems C. PCI Interrupt conflicts D. Electromagnetic interference 8. When a card presents problems with echo, what you can do? (check all that apply) A. Change tx and rx gains B. Change the echo cancellation algorithm (oslec, mg2) C. Use hardware echo cancellation D. Activate call progress detection E. Invert the tip and ring 9. In some cases, when you want a precise billing using analog channels, it is important to activate a feature that allows the precise detection of the moment when the call answer occurred. To do this, you should activate _________ on Asterisk and at the phone company. A. Answer reversal B. Billing reversal C. Charge reversal D. Polarity reversal E. Dial tone generation 10. Caller ID identification on analog lines is country dependent. The most frequently used standard for North America is: A. v.23 B. dtmf C. polarity reversal D. battery reversal Answers: 1-ABC,2-BCDEF,3-BC,4-A,5-A,6-B,7-C,8-ABC,9-D,10-A
+
+## Digital channels (E1/T1/PRI / TDM)
 
 > **[2nd-ed note]** As of Asterisk 22, DAHDI and libpri remain fully supported, but TDM digital trunks (E1/T1/ISDN PRI) are increasingly replaced by SIP trunks in new deployments. This chapter remains fully applicable where TDM connectivity is required; readers in greenfield environments may prefer SIP trunking (Chapter 3) for similar channel density.
 
 Digital channels are extremely common, so you will need to learn how to implement these channels if you want to focus on large customers. When the number of channels is high—usually more than 8—it is fairly common to use digital interfaces such as T1/E1/J1. T1 is very common in the US, whereas E1 is common in Europe and J1 in Japan. These types of channels allow for a good density of circuits—24 per T1 channel and 30 for E1 channels. In Latin America, China, and Africa, it is common to use a type of channel associated signaling (CAS) known as MFC/R2. This chapter will examine how to implement MFC/R2 using the library OpenR2. In the US and Europe, Integrated Services Digital Networks (ISDN) PRI is the most common signaling. The chapter will also discuss ISDN Basic Rate Interface (BRI), which is very common in Europe in mid-range applications. All examples in the book concentrate on DAHDI channels. Some cards are implemented using proprietary channels, so please check with your manufacturer for further details on how to configure your specific card.
 
-## Objectives
+### Objectives
 
 By the end of this chapter you will be able to:
 
@@ -14,19 +537,19 @@ By the end of this chapter you will be able to:
 - Configure interfaces with ISDN signaling
 - Configure interfaces with R2 signaling
 
-## E1/T1 digital lines
+### E1/T1 digital lines
 
 Digital lines E1/T1 are an option whenever you need to implement a large number of channels. A single E1 circuit is capable of 30 simultaneous calls, and you may have features such as direct inward dial (DID), Caller ID (caller identification), and advanced signaling. The E1/T1 line may arrive at your company in several ways using twisted pair, fiber, and microwaves, depending on your country. Digital lines are delivered to your company using UTP, fiber, or microwaves. Modems and multiplexors (MUX) are used to deliver the physical line. The connection to a T1 line is always based in an RJ45 connector. However, E1 lines may be provisioned as well using BNC. It is very important to know the type of connector you are going to receive in advance, mainly in E1 lines. Usually all the equipment up to the RJ45 is provided by the TELCO.
 
-### How is the voice converted to bits?
+#### How is the voice converted to bits?
 
-The analog signal is sampled 8,000 times per second to create a digital version of the analog voice. This encoding is known as pulse code modulation (PCM). In the US and Japan, the signal is encoded using law (in Asterisk, referred to as ulaw). In the rest of the world, the encoding is alaw.
+The analog signal is sampled 8,000 times per second to create a digital version of the analog voice. This encoding is known as pulse code modulation (PCM). In the US and Japan, the signal is encoded using law (in Asterisk, referred to as ulaw). In the rest of the world, the encoding is alaw.
 
 ![05-digital-channels figure 1](../images/05-digital-channels-img01.png)
 
 ![05-digital-channels figure 2](../images/05-digital-channels-img02.png)
 
-### Time Division Multiplexing
+#### Time Division Multiplexing
 
 Analog lines make sense when you need just a few channels. When using time division multiplexing (TDM), it is possible to stuff multiple channels into a single data connection. When you want a large number of circuits, the phone company will usually provide you with a digital trunk, which is a data circuit in which the voice is transported in a digital format using PCM. Each timeslot uses 64 Kbps of bandwidth to transport a single voice channel.
 
@@ -38,11 +561,11 @@ Analog lines make sense when you need just a few channels. When using time divis
 
 In the US, the most common digital trunk is T1, which has 24 available lines; in Europe and Latin America, E1 trunks have 30 lines. Some companies provide a fractional T1/E1 with fewer channels. Robbed bit signaling Sometimes a T1 trunk uses a robbed bit scheme where one bit is borrowed for signaling. On T1 trunks, the data/voice channel is transmitted with 56 Kbps on each timeslot. As you may observe, when you use the robbed bit, the T1 circuit does not lose two slots for synchronization and signaling.
 
-### T1/E1 Line code
+#### T1/E1 Line code
 
 T1s and E1s are actually data circuits and have a data coding that determines the way in which the bits are interpreted. For E1s, the most common line code is HDB3 for layer 1 and CCS for layer 2. The easiest way to know how your digital trunk is configured is to ask the TELCO about this information. You will need this information to configure the file /etc/dahdi/system.conf.
 
-### T1/E1 Signaling
+#### T1/E1 Signaling
 
 It is important to understand that T1/E1 lines may be delivered using different kinds of signaling, such as:
 
@@ -63,15 +586,15 @@ Usually, an ISDN line is provided using two physical means:
 
 Sometimes, E1 circuits use a CAS signaling scheme called MFC/R2, which was defined by the ITU as a standard known as Q.421/Q441. This is frequently found in Latin America and Asia. Several telephony companies in these countries use customized variants of MFC/R2. Hence, you will need to know the correct country variation in order to make it work.
 
-## ISDN BRI
+### ISDN BRI
 
 Channels using ISDN BRI signalling are very popular in Europe. Most ISDN BRI cards for Asterisk supports an S/T interface with NT and TE capabilities. The TE (terminal) connection is the one used to connect to the TELCO or to other PBXs configured as network termination (NT). The NT is used to connect phones and PBXs configured as TE. ISDN BRI provides two data/voice channels and one signalling channel. ISDN BRI cards are available from several vendors of interface cards for Asterisk.
 
-## Choosing a telephony card for your Asterisk server
+### Choosing a telephony card for your Asterisk server
 
 There are several manufacturers for digital cards compatible with Asterisk. The choice of a card depends on some of the following factors:
 
-### Data bus
+#### Data bus
 
 There are several types of bus on your PC. It is very important that you have the right card for your server. The following overview outlines the most frequently used cards:
 
@@ -84,31 +607,27 @@ There are several types of bus on your PC. It is very important that you have th
 - USB 2.0 found in most modern PCs. Solutions based on USB allow a great density of analog and digital channels. This bus supports 480 Mbps, and each voice channel occupies 64 Kbps. When using USB hubs, it is possible to get densities up to a thousand analog ports in a single port. o Xorcom Astribank (FXS, FXO, E1-ISDN, E1-R2)
 - Etherne t. The biggest advantage of Ethernet is to allow the card to be connected by more than one server. High availability solutions are usually the core application for these devices. The strength of this solution is the use of servers without free PCI slots or blade servers. o Redfone FoneBridge (up to four E1 circuits)
 
-## Using hardware echo cancellation
+### Using hardware echo cancellation
 
 Hardware echo cancellation reduces the load in the host CPU. For cards with more than a single E1 interface, hardware echo cancellation can help alleviate your processor. New enhanced software echo cancellers such as the OSLEC are reducing the need for a hardware echo canceller. To choose between hardware and software echo cancellers, you should consider the amount of processing power available in your server and the number of E1 circuits. An echo cancellation process may use up to nine MIPS (millions of instructions per second) per voice channel with 128 taps of amplitude using OSLEC (Reference: Xorcom Ltd.). If you consider 1 CPU cycle per each instruction (which is not always correct based on the processor and software implementation itself), we are speaking of 1.080 Ghz for four E1s.
 
-### Type of signaling
+#### Type of signaling
 
 Selecting the type of signaling (e.g., T1 CAS, T1 PRI, E1 CAS R2, or E1 CAS ISDN) is not an easy task. It really depends on what you have available in your area and at what price. Common Channel Signaling (CCS) is often better than channel associated signaling (CAS). However, it is often not available. In the US, you can usually choose, as most TELCOS offer T1 CAS for regular users and T1 PRI for advanced users (e.g., call centers). In Latin America, E1 CAS R2 is prevalent, but ISDN PRI is available in some cities.
 
-### Asterisktm
+#### Asterisktm
 
 Asterisk chan_dahdi Libpri LibopenR2 Libss7
 
-### /dev/dahdi
+#### /dev/dahdi
 
-### dahdi kernel driver
+#### dahdi kernel driver
 
-### Interface kernel driver
+#### Interface kernel driver
 
 Implementing R2 is necessary for installing a library known as OpenR2 (www.libopenr2.org), developed by Moises Silva, and to patch Asterisk before the installation—a simple procedure shown later in this chapter. The library has passed several tests and is in production in several of our customers. ISDN is, in my opinion, always the best choice, if available. Some providers can have access to signaling system 7 (SS7), which is a CCS signaling available between phone companies. Proprietary and open source solutions are available for SS7. Library libss7 is used to support SS7 on Asterisk.
 
-## Zaptel and DAHDI
-
-Originally developed by Digium (now Sangoma), DAHDI replaced the earlier Zaptel™ drivers following a trademark dispute. The old Zaptel drivers are no longer maintained; all modern Asterisk installations use DAHDI. The file UPGRADE.txt in the source code details the migration differences.
-
-## Asterisk telephony channels setup
+### Asterisk telephony channels setup
 
 Configuring a telephony interface card involves several necessary steps. In this chapter, we will show three of the most common scenarios:
 
@@ -118,7 +637,7 @@ Configuring a telephony interface card involves several necessary steps. In this
 
 There are two ways to configure DAHDI channels. The first one is to configure it manually with full control of all parameters. The second way is to use the utility dahdi_genconf to detect and configure the cards.
 
-### Automatic detection and configuration
+#### Automatic detection and configuration
 
 Thanks to the DAHDI development team, we now have automatic detection and configuration of the cards. Step 1: To generate the configuration automatically, use the utility dahdi_genconf, which will detect the card and generate the files /etc/dahdi/system.conf and dahdi-channels.conf.
 
@@ -138,11 +657,11 @@ Step 3: Comment on all the unused modules in the file modules or simply use:
 dahdi_genconf modules
 ```
 
-### Manual configuration
+#### Manual configuration
 
 Another option is to configure the interfaces manually. Below are some examples of the configuration for DAHDI channels.
 
-#### Example #1 – Two T1/ E1 channels using ISDN
+##### Example #1 – Two T1/ E1 channels using ISDN
 
 Required steps: TE205P or TE210P installation /etc/dahdi/system.conf file configuration dahdi driver loading dahdi_test utility dahdi_cfg utility chan_dahdi.conf file configuration Asterisk load and testing Step 1: TE205P installation Before installing TE205P, it is important to understand the differences between the TE205P and TE210P cards. The TE210P card uses a 64-bit bus powered by 3.3 volts found almost only in the server’s motherboards. Be careful if you specify this interface card; make sure your hardware supports a 64-bit, 3.3V bus. The TE205P card uses a 5V PCI, which is often found in desktop computers. We have chosen the TE205P interface card with two spans for this example because it is easier to reduce it to one-span card or to expand it to the four-span card. These cards are now sold under the Sangoma brand (formerly Digium).
 
@@ -297,7 +816,7 @@ channel=>1,2,4,5,7,8,10,11
 
 Use signaling=bri_cpe_ptmp for point to multipoint BRI. Currently, BRI point to multipoint is not supported in NT mode.
 
-### Loading the kernel drivers
+#### Loading the kernel drivers
 
 After configuring the drivers, you may simply restart the server. If you have installed DAHDI with make config, you won’t need to do anything extra. The kernel driver will be automatically loaded and configured. However, sometimes it is useful to load and unload the drivers manually. Example:
 
@@ -308,7 +827,7 @@ dahdi_cfg –vvvvv
 
 The first command loads the driver and the second, dahdi_cfg, applies the configuration to the kernel driver.
 
-## Troubleshooting
+### Troubleshooting
 
 Sometimes things don’t work the first time. Let’s check some resources for troubleshooting DAHDI. Step 1: Check if the card is being recognized by the operation system. Sangoma/Digium cards are usually recognized as the ISDN modem.
 
@@ -641,11 +1160,11 @@ NEW_HANGUP DEBUG: Calling q931_hangup, ourstate Null, peerstate Null
 NEW_HANGUP DEBUG: Destroying the call, ourstate Null, peerstate Null
 ```
 
-## Configuration options in chan_dahdi.conf
+### Configuration options in chan_dahdi.conf
 
 Several options are available in the file chan_dahdi.conf. A description of all options would be boring and counterproductive. Here, we will detail the main option groups available to provide a better understanding.
 
-### General options (channel independent)
+#### General options (channel independent)
 
 context: Defines the incoming context.
 
@@ -670,7 +1189,7 @@ group=3,5
 
 language: Turns on the internationalization and configures a language. This feature will configure system messages for a specific language. English is the only language with complete prompts available from the standard installation. musiconhold: Select music on hold class.
 
-### ISDN options
+#### ISDN options
 
 switchtype: Is dependent on the PBX or switch used. In Europe and Latin America, EuroISDN is common.
 
@@ -705,7 +1224,7 @@ overlapdial: Overlap dialing is used when you pass digits after the connection i
 - bri_net: Used when Asterisk is connected to an ISDN phone or PBX configured as a terminal (TE).
 - bri_cpe_ptmp: Sames as bri_cpe, but in a point-to-multipoint architecture.
 
-### CallerID options
+#### CallerID options
 
 Many Caller ID options are available. Some can be disabled, although most are enabled by default. usecallerid: Enables or disables the Caller ID transmission for the subsequent channels (Yes/No). Note: If your system requires two rings before answering, try disabling this feature so that it will answer immediately. hidecallerid: Hides the Caller ID (Yes/No). calleridcallwaiting: Enables receiving Caller ID during a call waiting indication (Yes/No). callerid: Configures a Caller ID string for a specific channel. The caller can be configured with “asreceived” in trunk interfaces to pass the Caller ID forward.
 
@@ -715,7 +1234,7 @@ callerid = "Flavio Eduardo Gonçalves" <48 30258500>
 
 Note: Most TELCOs mandate that you configure your correct caller ID. If you do not pass the right caller ID, you shouldn’t be able to dial out over the TELCO. On the other hand, you will be able to receive calls even without configuring the caller ID.
 
-### Audio quality options
+#### Audio quality options
 
 These options adjust certain Asterisk parameters that affect audio quality in DAHDI channels. echocancel: Disable or enable echo cancellation. You should keep this feature enabled. It accepts “yes” or the number of taps. Explanation: How does echo canceling work? Most echo canceling algorithms operate by generating multiple copies of a received signal, with each being delayed by a small interval. This little flow is named “tap”. The number of taps determines the echo delay that can be cancelled. These copies are delayed, adjusted, and subtracted from the original signal. The trick is to adjust the delayed signal exactly to what is necessary to remove the echo. echocancelwhenbridged: Enables or disables the echo canceller during a pure TDM call. This is usually not required. rxgain: Adjusts the audio reception gain to either increase or decrease reception volume (-100% to 100%). txgain: Adjusts audio transmission gain to either increase or decrease the transmission volume (- 100% to 100%). Example:
 
@@ -726,7 +1245,7 @@ txgain=-10%
 rxgain=10%
 ```
 
-### Billing options
+#### Billing options
 
 These options change the way in which call information is recorded in the call detail records (CDR) database. amaflags: Affects the categorization of CDR. It accepts these values:
 
@@ -742,23 +1261,23 @@ accountcode=finance
 amaflags=billing
 ```
 
-## MFC/R2 configuration
+### MFC/R2 configuration
 
 MFC/R2 is used in several countries in Latin America, China, and Africa as well as some European countries. ISDN is superior and preferred if available in your area.
 
-### Understanding the problem
+#### Understanding the problem
 
 The card used to signal MFC/R2 is the same used to signal ISDN. It’s possible to use MFC/R2 on DAHDI channels using the library called libopenR2 (www.libopenr2.com). This library was not part of versions of Asterisk prior to 1.6.2.
 
-#### Understanding the MFC/R2 protocol
+##### Understanding the MFC/R2 protocol
 
 The MFC/R2 protocol combines in-band and out-of-band signaling. Address signaling is forwarded in-band using a set of tones while channel information is transmitted over timeslot 16 as out-of-band signaling. Line Signaling (ITU-T Q.421) In timeslot 16, each voice channel uses four ABCD bits to signal its states and call control. Bits C and D are rarely used. In some countries, they can be used for metering (pulse metering for billing). In a normal conversation, we have both sides working: the caller and the called side. Signaling from the caller side is referred to as forward signaling while the called side uses backward signaling. We will designate Af and Bf for forwarding signaling and Ab and Bb for backward signaling. State ABCD forward ABCD backward Idle/Released 1001 1001 Seized 0001 1001 Seize Ack 0001 1101 Answered 0001 0101 ClearBack 0001 1101 ClearFwd (Before clear-back) 1001 0101 ClearFwd (disconnection confirmation) 1001 1001 Blocked 1001 1101 MFC/R2 was defined by the ITU. Unfortunately, several countries customized the standard to their own needs. As a result, variations emerged in standards between countries. Inter-register signals (ITU-T Q.441) MFC/R2 signaling uses a combination of two tones. The table below shows the ITU standard. Signal group I (Forward) Signal Description Forward signal Digit 1 I-1 Digit 2 I-2 Digit 3 I-3 Digit 4 I-4 Digit 5 I-5 Digit 6 I-6 Digit 7 I-7 Digit 8 I-8 Digit 9 I-9 Digit 0 I-10 Country code indicator, outgoing half-echo suppressor required I-11 Country code indicator, no echo suppressor required I-12 Test call indicator I-13 Country code indicator, outgoing half-echo suppressor inserted I-14 Not used I-15 Signal group II (Forward) Signal Description Forward signal Subscriber without priority II-1 Subscriber with priority II-2 Maintenance equipment II-3 Spare II-4 Operator II-5 Data Transmission II-6 Subscriber or operator without forward transfer facility II-7 Data transmission II-8 Subscriber with priority II-9 Operator with forward transfer facility II-10 Spare II-11 Spare II-12 Spare II-13 Spare II-14 Spare II-15 Signal group A (backwards) Signal Description Backward signal Send next digit (n+1) A-1 Send last but one digit (n-1) A-2 Address complete, changeover to reception of Group B signals A-3 Congestion in the national network A4 Send calling party’s category A5 Address complete, charge, set-up speech conditions A6 Send last but two digit (n-2) A7 Send last but three digit (n-3) A8 Spare A9 Spare A10 Send country code indicator A11 Send language or discrimination digit A12 Send nature of circuit A13 Request information on use of echo suppressor A14 Congestion in an international exchange or at its output A15 Signal group B (backwards) Signal Description Backward signal Spare B1 Send special information tone B2 Subscriber’s line busy B3 Congestion (after changeover group A to B) B4 Unallocated number B5 Subscriber’s line free, charge B6 Subscriber’s line free, no charge B7 Subscriber’s line out of order B8 Spare B9 Spare B10 Spare B11 Spare B12 Spare B13 Spare B14 Spare B15
 
-### MFC/R2 sequence
+#### MFC/R2 sequence
 
 The following sequence illustrates a call originating from an Asterisk’s extension to a terminal in the PSTN. The PSTN drops the call and ends the communication.
 
-## How to use the driver libopenr2
+### How to use the driver libopenr2
 
 The project initiated by Moises Silva was inspired on the Unicall channel driver written by Steve Underwood. The OpenR2 library is currently the most stable software solution for Asterisk. With this solution, we may use any digital card compatible with DAHDI. Previously, only proprietary solutions were available for MFC/R2, one of the best I have used is the one made available by Khomp, www.khomp.com.br. In Asterisk 22, MFC/R2 support via libopenR2 is built in when the library is present at compile time — no external patch is required. The steps below show the historical manual installation for reference; on modern systems, install `libopenr2-dev` from your distribution's package manager before running `./configure`, then enable `chan_dahdi` in `make menuselect`.
 
@@ -903,7 +1422,7 @@ exten => _XXXXXXXX,n,Dial(DAHDI/g1/${EXTEN},60,tT)
 
 Note: Some TELCOS do not accept calls without the caller ID. Please set the caller ID to one of the DID numbers assigned by the operator. In some countries, this step is not required. Step 7: Test the solution: Now, with an extension in the context from-internal, call any number and observe the console. Check to see if any errors are occurring. -- Executing Set("SIP/8564-081ca5d8", "CALLERID(num)=1145678990") in new stack -- Executing Dial("SIP/8564-081ca5d8", "DAHDI/g1/35678899|60|tT") in new stack
 
-### Debugging OpenR2
+#### Debugging OpenR2
 
 To detect errors in the calls, you can activate the debug. To do this, follow the steps below. Step 1: Edit the file chan_dahdi.conf and add the following three lines to the configuration:
 
@@ -1089,7 +1608,7 @@ chan 1
 [15:06:03:569] [Thread: 3085228944] [Chan 1] - Cannot cancel timer 0
 ```
 
-## MFC/R2 Configuration
+#### MFC/R2 Configuration
 
 The options are documented within the file chan_dahdi.conf. Some of the most important options are detailed here. Mandatory parameters: mfcr2_variant, mfcr2_max_ani and mfcr2_max_dnis. mfcr2_variant: Country variant.
 
@@ -1119,11 +1638,11 @@ mfcr2_max_ani: Max amount of ANI digits to ask for mfcr2_max_dnis: Max amount of
 
 mfcr2_mfback_timeout: This value deserves to be mentioned. Sometimes if you are calling a cell phone or any call that takes a long time to complete, this parameter can time out, so it is often changed for fine tuning. If some of your calls are not being completed, this is the parameter you should change first. mfcr2_metering_pulse_timeout: Pulses are used by some R2 variants to indicate costs mfcr2_allow_collect_calls: In Brazil, the tone II-8 is used to indicate a collect call; this parameter allows you to block collect calls. mfcr2_double_answer: Also used to avoid collect calls when a double answer is required. With double_answer=yes you actually block the collect calls. mfcr2_immediate_accept: Allows you to skip the use of group B/II signals and go directly to the accepted state. mfcr2_forced_release: Allows you to speed up the release of the call; works for the Brazilian variant.
 
-### ANI and DNIS
+#### ANI and DNIS
 
 Automatic Number Identification (ANI) is the caller’s number. Dialed Number Identification Service (DNIS ) is the number called or, in other words, the number dialed. When a call is received, usually the last four numbers are passed to the PBX in a process referred to as direct inward dial (DID). The ANI number is actually the Caller ID. ANI will have the caller’s extension when dialing while DNIS will contain the call destination. It is important that these parameters be configured correctly. Some switches send just the last four digits while others send the complete number.
 
-## DAHDI channel format
+### DAHDI channel format
 
 DAHDI channels use the following format in the dial plan:
 
@@ -1150,6 +1669,772 @@ DAHDI/g1  - First available channel in group 1
 [cadence] Integer from 1 to 4
 ```
 
-## Questions
+### Questions
 
 1 – In regard to T1 and E1 signaling, mark the correct affirmations. A. E1 is digital signaling that uses 1.544 Mbits/s bandwidth. B. T1 is often used in Latin America and Europe. C. It is possible to use 30 channels for an E1 trunk and 23 channels for a T1 trunk in an ISDN PRI configuration. D. ISDN is an example of CCS signaling while MFC/R2 is an example of CAS signaling. 2 – To configure the hardware with a DAHDI interface, you should first edit the ______ file. A. system.conf B. chan_dahdi.conf C. unicall.conf D. serial.conf 3 – The DAHDI hardware is independent of Asterisk. In chan_dahdi.conf, you configure Asterisk channels and not the hardware itself. A. False B. True 4 – R2 signaling defined by ITU is standardized throughout the world, and no variations to the standard exist based on the country. A. True B. False 5 – The utility to detect and configure the DAHDI channel automatically is: A. dahdi_generator B. dahdi_genconf C. dahdigenconf D. generate_dahdi 6 – ISDN BRI is common on Europe. An ISDN BRI line supports ___ voice/data channels and ___ signaling channel(s). A. 15, 2 B. 30,2 C. 23,1 D. 2,1 7 – When using a USB 2.0 connection, you can support only 32 channels. A. True B. False 8 – You can improve Asterisk’s echo cancellation by installing OSLEC. A. True B. False Answers: 1-CD,2-A,3-B,4-B,5-B,6-D,7-B,8-A
+
+## The IAX2 protocol
+
+In this chapter, we will learn about the Inter-Asterisk eXchange (IAX) protocol, including its strengths and weaknesses. Details such as trunk mode and the interconnection of two Asterisk servers will also be covered. All references in this document correspond to IAX version 2. The IAX protocol provides media transport and signaling for voice and video. IAX is very innovative; it saves bandwidth in trunk mode and is much simpler than SIP when you need to traverse NAT. The primary use for IAX nowadays is to interconnect Asterisk servers. IAX was created primarily for voice, but it can also accommodate video and other multimedia streams. IAX was inspired from other VoIP protocols, such as SIP and MGCP. Instead of using two separate protocols for signaling and media, IAX unified them to make a unique protocol. IAX does not use RTP for media transport; instead, it embeds the media in the same UDP connection.
+
+> **[2nd-ed note — Status in Asterisk 22]** `chan_iax2` is still included and fully supported in Asterisk 22 LTS, so everything in this chapter remains valid. However, IAX2 is now a legacy protocol and sees relatively little new deployment. The VoIP industry has largely converged on SIP (via `chan_pjsip` in Asterisk 22) for both provider trunking and server interconnection. IAX2's primary remaining selling point is its **single-port NAT traversal**: all signaling and media flow over a single UDP port (4569 by default), which greatly simplifies firewall and NAT configuration compared to SIP + RTP. If you are building a new Asterisk-to-Asterisk trunk and NAT is not a concern, PJSIP trunks are the recommended modern approach. IAX2 is kept here because it is still a valid choice, especially in environments where only one UDP port can be opened through a firewall.
+
+### Objectives
+
+By the end of this chapter, you should be able to:
+
+- Identify strengths and weakness of IAX protocol
+- Describe usage scenarios for the IAX protocol
+- Describe the advantages of IAX trunk mode
+- Configure iax.conf for phones
+- Configure iax.conf for connection to a VoIP provider
+- Configure iax.conf for Asterisk interconnection
+- Understand IAX authentication
+
+### IAX design
+
+The main objectives for IAX design are:
+
+- To reduce the bandwidth required for media transport and signaling
+- To provide NAT transparency
+- To be able to transmit the dial plan information
+- To support the efficient use of paging and intercom
+
+IAX is a peer-to-peer signaling and media protocol that is similar to SIP without using RTP. The basic approach is to multiplex the multimedia streams over a single UDP connection between two hosts. The greatest benefit of this approach is its simplicity when traversing connections over NAT, regularly found in xDSL modems. IAX uses a single port, UDP 4569 by default, and then uses a call number with 15 bits to multiplex all streams. The IAX protocol uses registration and authentication processes similar to the SIP protocol. A description of the protocol can be found at http://www.ietf.org/internet-drafts/draft-guy-iax-05.txt
+
+### Bandwidth usage
+
+The bandwidth used in VoIP networks is affected by several factors; codecs and protocol headers are the most important. The IAX protocol has a surprising feature called trunk mode, whereby it multiplexes several calls using a single header. By playing with the Asterisk bandwidth calculator, you will see how IAX trunks can save you up to 80% of the traffic with multiple calls.
+
+![07-the-iax-protocol figure 1](../images/07-the-iax-protocol-img01.png)
+
+![07-the-iax-protocol figure 2](../images/07-the-iax-protocol-img02.png)
+
+![07-the-iax-protocol figure 3](../images/07-the-iax-protocol-img03.png)
+
+### Channel naming
+
+It is important to understand channel-naming conventions as you will use these names when specifying a channel in the dial plan. The format of an IAX channel name used for outbound channels is:
+
+```
+IAX/[<user>[:<secret>]@]<peer>[:<portno>][/<exten>[@<context>][/<options>]
+```
+
+<user> UserID on remote peer, or name of client configured in iax.conf <secret> The password. Alternatively it can be the filename for an RSA key without the trailing extension (.key or .pub) and enclosed in square brackets <peer> Name of server to connect to <portno> Port number for connection <exten> Extension in the remote Asterisk server <context> Context in the remote Asterisk server <options> The only option available is ‘a’ meaning ‘request autoanswer’
+
+#### Outbound channels example:
+
+Outbound channels are seen in the Asterisk console. IAX2/8590:secret@myserver/8590@default Call the 8590 extension in myserver. It uses 8590:secret as the name/password pair
+
+![07-the-iax-protocol figure 4](../images/07-the-iax-protocol-img04.png)
+
+![07-the-iax-protocol figure 5](../images/07-the-iax-protocol-img05.png)
+
+IAX2/iaxphone Call "iaxphone" IAX2/judy:[judyrsa]@somewhere.com Call somewhere.com using judy as the username and a RSA key for authentication
+
+#### The format of an incoming IAX channel is:
+
+Inbound channels are seen in the Asterisk console.
+
+```
+IAX2/[<username>@]<host>]-<callno>
+```
+
+<username> Username if known <host> Host connecting <callno> Local call number Incoming channel example: IAX2[flavio@8.8.30.34]/10 Call number 10 from IP address 8.8.30.34 using flavio as the user. IAX2[8.8.30.50]/11 Call number 11 from IP address 8.8.30.50.
+
+### Using IAX
+
+You may use IAX in several ways. In this section, we will show you how to configure IAX for several scenarios, including:
+
+- Connecting a soft-phone using IAX
+- Connecting IAX to a VoIP provider using IAX
+- Connecting two servers using IAX
+- Connecting two servers using IAX in trunk mode
+- Debugging an IAX connection
+- Using RSA pair keys for authentication
+
+#### Connecting a soft-phone using IAX
+
+Asterisk supports IP phones based on IAX such as the ATCOM and the old ATA from Digium (called IAXy) as well as soft-phones such as Zoiper. The process for soft-phones, ATAs, and hard- phones is similar. To configure an IAX device, you need to edit the iax.conf file in /etc/asterisk
+
+```
+directory.
+```
+
+We will use the Zoiper (www.zoiper.com) as an example. It is a full-featured and free soft-phone. Step 1: Make a backup of the original iax.conf file using:
+
+```
+#cd /etc/asterisk
+#mv iax.conf iax.conf.backup
+```
+
+Step 2: Start editing a new iax.conf file:
+
+```
+[general]
+bindport=4569
+bindaddr=8.8.1.4
+bandwidth=high
+```
+
+- ; Very important parameter, it changes the codecs available
+
+```
+disallow=all
+allow=ulaw
+jitterbuffer=no
+forcejitterbuffer=no
+tos=lowdelay
+autokill=yes
+[guest]
+type=user
+context=guest
+callerid="Guest IAX User"
+; Trust Caller*ID Coming from iaxtel.com
+;
+[iaxtel]
+type=user
+context=default
+auth=rsa
+inkeys=iaxtel
+;
+; Trust Caller*ID Coming from iax.fwdnet.net
+;
+[iaxfwd]
+type=user
+context=default
+auth=rsa
+inkeys=freeworlddialup
+;
+; Trust callerid delivered over DUNDi/e164
+;
+;
+;[dundi]
+;type=user
+;dbsecret=dundi/secret
+;context=dundi-e164-local
+[2003]
+type=friend
+context=default
+secret=senha
+host=dynamic
+```
+
+I’ve tried to preserved the default (non-commented) lines of the sample file. The following parameters were modified:
+
+```
+bandwidth=high
+```
+
+This line affects the codec selection. Using the high setting allows for the selection of a high bandwidth and a high quality codec such as g.711 defined by the ulaw keyword. If you keep the default parameter, you will not be able to choose ulaw. In this case, Asterisk will give you the message “no codec available” for the configuration below.
+
+```
+disallow=all
+allow=ulaw
+```
+
+In the commands described above, we disabled all codecs and enabled just ulaw. In LANs, most people prefer to use ulaw because it is not processor-intensive and saves CPU cycles. Even using more bandwidth, this codec is preferable because in LANs you usually have a 100-megabits Ethernet or even a Gigabit. A voice call using ulaw uses almost 100 kilobits per second of bandwidth from your network, which is a very light use for today’s high-speed LANs. In WAN or Internet networks, you will usually disable ulaw, trading some available CPU cycles by voice compression for better bandwidth use. The codecs gsm , g729, and ilbc provide a good compression factor as well.
+
+```
+[2003]
+type=friend
+context=default
+secret=senha
+host=dynamic
+```
+
+In the above commands, we have defined a friend named [2003]. The context is the default (in the first labs we always use the default context to avoid confusion; this context will be fully explained in chapter 9). The line “host=dynamic” provides a dynamic registration of the phone’s IP address. Step 3: Download and install Zoiper™ from the following URL: http://www.zoiper.com/ Note: URLs frequently change. Please resort to “googling” if you cannot find the file at this specific URL. You can choose other soft-phones for the lab as well. Step 4: Configure an Asterisk account by clicking the right button over the Zoiper. You should see a screen similar to the one below: Step 5: Configure the extensions.conf file to test your IAX device.
+
+```
+[default]
+exten=>2000,1,Dial(SIP/2000)
+exten=>2001,1,Dial(SIP/2001)
+exten=>2003,1,Dial(IAX2/2003)
+```
+
+Now you can dial between the SIP phones created in Chapter 3 and the IAX phone created in the lab.
+
+#### Connecting to a VoIP provider using IAX
+
+A few VoIP providers support IAX. You can easily find an IAX provider by searching for “IAX providers”. Using an IAX provider makes a lot of sense as IAX can save a lot of bandwidth, easily traverses NAT, and can authenticate using RSA key pairs.
+
+> **[2nd-ed note]** The number of IAX-capable commercial VoIP providers has declined significantly since Asterisk 16. Most providers now offer SIP/PJSIP trunks exclusively. Before choosing an IAX provider, confirm they actively maintain their IAX infrastructure. For new provider integrations, a PJSIP trunk is the recommended alternative.
+
+#### Connecting to a provider using IAX
+
+Step 1: Open an account in your favorite provider. Your provider will provide you three things.
+
+- Name
+- Secret
+- IP address or Host name
+- RSA public key
+
+Step 2: Configure the iax.conf file to register your Asterisk with your provider. Add the following lines to the [general] section of the file.
+
+```
+[general]
+register=>name:secret@hostname/2003
+```
+
+In the instructions described above, you registered with your provider using your account and password. The moment you receive a call, it will be forwarded to the 2003 extension.
+
+```
+[name]
+```
+
+- ; Your account name or number
+
+```
+type=peer
+secret=secret
+; Your password
+host=hostname
+```
+
+In the instructions described above, we have created a peer corresponding to the provider for dialing purposes.
+
+```
+[nameiax]
+type=user
+context=default
+auth=rsa
+inkeys=hostname
+```
+
+![07-the-iax-protocol figure 6](../images/07-the-iax-protocol-img06.png)
+
+This is required for RSA authentication. Using the public key from your provider allows you to be sure that the call being received is really from the true provider. If anyone else tries to use the same path, they will not be able to authenticate it because they do not have the corresponding private key. Step 4: Try the connection. To test the connection, call any number. Some vendors provide an echo test. To accomplish this, please edit the file extensions.conf.
+
+```
+[default]
+exten=>*98,1,Dial(IAX2/name:secret@hostname/*98,20,r)
+```
+
+Go to the Asterisk CLI and issue a reload. To verify if Asterisk is registered with the provider, use the next command.
+
+```
+CLI>reload
+CLI>iax2 show register
+```
+
+Now simply dial *98 on the soft-phone connected to the Asterisk server.
+
+#### Connecting two Asterisk servers through an IAX trunk
+
+It is very easy to connect one server to another. You won’t need to register them because the IP addresses are already known. You will have to create the peers and users in the iax.conf file. All extensions in the HQ site start with 20 followed by two digits (e.g., 2000). In the Branch, all extensions start with 22 followed by two digits (e.g., 2200). We will use the trunk. You will need a DAHDI timing source to enable this feature. Step 1: Edit the iax.conf file in the Branch server.
+
+![07-the-iax-protocol figure 7](../images/07-the-iax-protocol-img07.png)
+
+```
+[general]
+bindport=4569                   ; bindport and bindaddr may be specified
+bindaddr=0.0.0.0                ; more than once to bind to multiple
+disallow=all
+allow=ulaw
+;allow=gsm
+[Branch]
+type=user
+context=default
+secret=password
+host=192.168.2.10
+trunk=yes
+notransfer=yes
+[HQ]
+type=peer
+context=default
+username=HQ
+secret=password
+host=192.168.2.10
+callerID='HQ'
+trunk=yes
+notransfer=yes
+[2200]
+type=friend
+auth=md5
+context=default
+secret=password
+host=dynamic
+callerid='2000'
+[2201]
+type=friend
+auth=md5
+context=default
+secret=password
+host=dynamic
+callerid='2001'
+```
+
+Step 2: Configure the file extensions.conf in the Branch server
+
+```
+[general]
+static=yes
+writeprotect=no
+autofallthrough=yes
+clearglobalvars=no
+priorityjumping=no
+[default]
+exten=>_20XX,1,dial(IAX2/HQ/${EXTEN},20)
+exten=>_20XX,2,hangup
+exten=>_22XX,1,dial(IAX2/${EXTEN},20)
+exten=>_22XX,2,hangup
+```
+
+Step 3: Configure the iax.conf file in the HQ server
+
+```
+[general]
+bindaddr=0.0.0.0
+bindport=4569
+disallow=all
+allow=ulaw
+allow=gsm
+[Branch]
+type=peer
+context=default
+username=Branch
+secret=password
+host=192.168.2.9
+callerid="Branch"
+trunk=yes
+notransfer=yes
+[HQ]
+type=user
+secret=password
+context=default
+host=192.168.2.9
+callerid="HQ"
+trunk=yes
+notransfer=yes
+[2000]
+type=friend
+auth=md5
+context=default
+secret=password
+callerid="2200"
+host=dynamic
+[2001]
+type=friend
+auth=md5
+context=default
+secret=password
+callerid="2201"
+host=dynamic
+```
+
+Step 4: Configure the extensions.conf file in the HQ server.
+
+```
+[general]
+static=yes
+writeprotect=no
+autofallthrough=yes
+clearglobalvars=no
+priorityjumping=no
+[default]
+exten=>_22XX,1,Dial(IAX2/Branch/${EXTEN})
+exten=>_22XX,2,hangup
+exten=>_20XX,1,Dial(IAX2/${EXTEN})
+exten=>_20XX,2,hangup
+```
+
+Step 5: Test a call from the phone 2000 in the HQ server to the phone 2200 in the Branch server.
+
+### IAX authentication
+
+Now let’s analyze the IAX authentication process from the practical standpoint to help you choose the best method for each specific requirement.
+
+#### Incoming connections
+
+When Asterisk receives an incoming connection, the initial information can include a user name (from the field “username=”) or not. The incoming connection has an IP address too, which Asterisk uses for authentication as well. If a user is provided, Asterisk: 1. Searches iax.conf for an entry with type=user (or type=friend with a section name matching the username). If it did not find it, Asterisk refuses the connection. 2. If the entry found has deny/allow configurations, it compares the IP address from the caller to determine whether to accept the call or not depending on the deny/allow clauses. 3. It checks the password (secret) using plaintext, md5, or RSA. 4. It accepts the connection and sends the call to the context specified in the line “context=” from the iax.conf file. If a username is not provided, Asterisk: 1. Searches for an entry containing type=user (or type=friend) in the iax.conf file without a specified secret. It checks deny/allow clauses as well. If an entry is found, the connection is accepted and the section name is used as the user’s name. 2. Searches for an entry containing type=user (or type=friend) in the iax.conf file with a secret or RSA key specified. It checks deny/allow clauses. If an entry is found, it tries to authenticate the caller using the specified secret; if it matches, it accepts the connection. Section name is the user’s name. Let’s suppose your iax.conf file has the following entries:
+
+```
+[guest]
+type=user
+context=guest
+[iaxtel]
+type=user
+context=incoming
+auth=rsa
+inkeys=iaxtel
+[iax-gateway]
+type=friend
+allow=192.168.0.1
+context=incoming
+host=192.168.0.1
+[iax-friend]
+type=user
+secret=this_is_secret
+auth=md5
+context=incoming
+```
+
+If a call has a specified username, such as:
+
+- guest
+- iaxtel
+- iax-gateway
+- iax-friend
+
+Asterisk will try to authenticate the call using only the corresponding entry in the iax.conf file. If any other names are specified, the call would be rejected. If no user is specified, Asterisk will try to authenticate the connection as guest. However, if guest does not exist, it will try any other connections with a matching secret. In other words, if you don’t have a guest section in your iax.conf file, a malicious user could try to guess any matching secret by not specifying the user name. IP addresses’ deny/allow restrictions apply too. A good way to avoid secret guessing is to use RSA authentication. Another method is to restrict the IP addresses allowed to call in.
+
+#### IP address restrictions
+
+permit = <ipaddr>/<netmask> Rules are interpreted in sequence, and all are evaluated (this concept is different from ACLs deny = <ipaddr>/<netmask> usually found in routers and firewalls). Example #1 permit=0.0.0.0/0.0.0.0 deny=192.168.0.0/255.255.255.0 Will deny any packet from 192.168.0.0/24 network Example #2 deny=192.168.0.0/255.255.255.0 permit=0.0.0.0/0.0.0.0 It will permit any packet. The last instruction supersedes the first.
+
+#### Outbound connections
+
+Outbound connections acquire authentication information using the following methods:
+
+- The IAX2 channel description passed by the dial() application.
+- An entry with type=peer or type=friend in the iax.conf file.
+- A combination of both methods.
+
+#### Connecting two Asterisk servers using RSA keys
+
+It is possible to use IAX with strong authentication using asymmetric RSA keys. According to the source code (res_krypto.c), Asterisk uses RSA keys with an SHA-1 algorithm for message digests instead of the weaker MD5. Below is a step-by-step guide for setting up two servers using RSA keys.
+
+##### Configuring the server for the branch
+
+Step 1: Generate the RSA keys in the branch server
+
+```
+astkeygen –n
+```
+
+When asked, use the key name branch. We have used the parameter –n to avoid passing a passphrase whenever Asterisk reinitializes. If you want to improve the security, don’t use the –n and start Asterisk with asterisk -i Step 2: Copy the keys to the directory /var/lib/asterisk/keys
+
+```
+cp branch.* /var/lib/asterisk/keys
+```
+
+Step 3: Copy the public key to the HQ server
+
+```
+scp branch.pub root@hq_ip_address:/var/lib/asterisk/keys
+```
+
+Step 4: Edit the iax.conf file in the Branch server.
+
+```
+[general]
+bindport=4569                   ; bindport and bindaddr may be specified
+bindaddr=0.0.0.0                ; more than once to bind to multiple
+disallow=all
+allow=ulaw
+;Create an entry for the HQ server
+[hq]
+type=user
+context=default
+host=192.168.2.10
+trunk=yes
+notransfer=yes
+auth=rsa
+inkeys=hq
+[2200]
+type=friend
+auth=md5
+context=default
+secret=password
+host=dynamic
+callerid='2200'
+[2201]
+type=friend
+auth=md5
+context=default
+secret=password
+host=dynamic
+callerid='2201'
+```
+
+Step 8: Configure the extensions.conf file in the Branch server
+
+```
+ [default]
+exten=>_20XX,1,dial(IAX2/branch:[branch]@192.168.2.10/${EXTEN},20)
+exten=>_20XX,2,hangup
+exten=>_22XX,1,dial(IAX2/${EXTEN},20)
+exten=>_22XX,2,hangup
+```
+
+##### Configuring the server for the headquarters
+
+Step 1: Generate the RSA keys in the HQ server
+
+```
+astkeygen –n
+```
+
+When asked use the key name hq. Step 2: Copy the keys to the directory /var/lib/asterisk/keys
+
+```
+cp hq.* /var/lib/asterisk/keys
+```
+
+Step 3: Copy the public key to the BRANCH server
+
+```
+scp hq.pub root@branch_ip_address:/var/lib/asterisk/keys
+```
+
+Step 4: Configure the iax.conf file in the HQ server
+
+```
+[general]
+bindaddr=0.0.0.0
+bindport=4569
+disallow=all
+allow=ulaw
+allow=gsm
+;Configure an entry for the branch server
+[branch]
+type=user
+context=default
+host=192.168.2.9
+trunk=yes
+notransfer=yes
+auth=rsa
+inkeys=branch
+[2000]
+type=friend
+auth=md5
+context=default
+secret=password
+callerid="2000"
+host=dynamic
+[2001]
+type=friend
+auth=md5
+context=default
+secret=password
+callerid="2001"
+host=dynamic
+```
+
+Step 10: Configure the extensions.conf file in the HQ server.
+
+```
+[default]
+exten=>_22XX,1,Dial(IAX2/hq:[hq]@192.168.2.9/${EXTEN})
+exten=>_22XX,2,hangup
+exten=>_20XX,1,Dial(IAX2/${EXTEN})
+exten=>_20XX,2,hangup
+```
+
+Step 11: Test a call from the 2000 phone in the HQ server to the 2200 phone in the Branch server.
+
+### The iax.conf file configuration
+
+The file iax.conf has several parameters; discussing each parameter one by one would be boring and counterproductive. All parameters, along with a description, can be found in the sample file. In the wiki www.voip-info.org you will find detailed information about each one. Here we will show some of the most important parameters for the configuration of the general section, peers, and users.
+
+#### [General] Section
+
+Server addresses bindport = <portnum> Configures the IAX UDP port. Default is 4569. bindaddr = <ipaddr> Use 0.0.0.0 to bind Asterisk to all interfaces or specify the IP address of a specific interface. Codec selection bandwidth = [low|medium|high] High = all codecs Medium = all codecs except ulaw and alaw Low = low bandwidth codecs allow/disallow = Codec selection fine tuning [alaw|ulaw|gsm|g.729| etc.]
+
+### Jitter buffer
+
+Jitter is the delay variation between packets. It is the most important factor affecting voice quality. A Jitter buffer is used to compensate for the delay variation. It sacrifices latency in favor of lower jitter. You can make an analogy between the jitter buffer and a water tank. Both can receive packets or water at irregular intervals, but will ultimately deliver a regular flow.
+
+![07-the-iax-protocol figure 8](../images/07-the-iax-protocol-img08.png)
+
+![07-the-iax-protocol figure 9](../images/07-the-iax-protocol-img09.png)
+
+A small jitter (i.e., below 20 ms) is usually imperceptible. However, jitter above this level is annoying. The latency or delay should be kept to below 150ms. Creating a jitter buffer will sacrifice some delay for a lower jitter—a concept known as “delay-budget”. You can affect the jitter buffer using these parameters:
+
+- Jitterbuffer=<yes/no> – Enables or disables
+- Dropcount=<number> - Maximum amount of frames that should be delayed in the last two seconds. The recommended setting is 3 (1.5% of dropped frames)
+- Maxjitterbuffer=<ms> - Usually below 100 ms
+- Maxexcessbuffer=<ms> - If the network delay improves, the jitter buffer could be oversized. Consequently, Asterisk will try to reduce it.
+- Minexcessbuffer=<ms> - Once the excess buffer drops to this value, Asterisk starts to increase the buffer size.
+
+### Frame tagging
+
+The parameter below marks the IP packet in the type of service field. Routers can read this tag, thereby prioritizing traffic. Asterisk uses DSCP codes for this field (RFC 2474). Allowed values are CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, and ef (i.e., expedited forwarding).
+
+```
+tos=ef
+```
+
+### IAX2 Encryption
+
+IAX supports call encryption using a symmetric key, 128-bit block cipher called AES (Advanced Encryption Standard). It is very simple to activate the encryption between IAX trunks. In the file iax.conf use:
+
+```
+encryption=yes
+```
+
+To force the encryption:
+
+```
+forceencryption=yes
+```
+
+To guarantee compatibility with older versions, you may need to disable key rotation using:
+
+```
+keyrotate=no
+```
+
+### IAX2 debug commands
+
+Below are some of the most important troubleshooting console commands for Asterisk.
+
+```
+iax2 show netstats
+vtsvoffice*CLI> iax2 show netstats
+                        -------- LOCAL ---------------------  -------- REMOTE ---------------
+-----
+Channel           RTT  Jit  Del  Lost   %  Drop  OOO  Kpkts  Jit  Del  Lost   %  Drop  OOO
+Kpkts
+IAX2/8590-1        16   -1    0    -1  -1     0   -1      1   60  110     3   0     0    0
+0
+iax2 show channels
+vtsvoffice*CLI> iax2 show channels
+Channel       Peer             Username    ID (Lo/Rem)  Seq (Tx/Rx)  Lag      Jitter  JitBuf
+Format
+IAX2/8590-2   8.8.30.43        8590        00002/26968  00004/00003  00000ms  -0001ms  0000ms
+unknow
+iax2 show peers
+vtsvoffice*CLI> iax2 show peers
+Name/Username    Host                 Mask             Port          Status
+8584             (Unspecified)   (D)  255.255.255.255  0             UNKNOWN
+8564             (Unspecified)   (D)  255.255.255.255  0             UNKNOWN
+8576             (Unspecified)   (D)  255.255.255.255  0             UNKNOWN
+8572             (Unspecified)   (D)  255.255.255.255  0             UNKNOWN
+8571             (Unspecified)   (D)  255.255.255.255  0             UNKNOWN
+8585             (Unspecified)   (D)  255.255.255.255  0             UNKNOWN
+8589             (Unspecified)   (D)  255.255.255.255  0             UNKNOWN
+8590             8.8.30.43       (D)  255.255.255.255  4569          OK (16 ms)
+3232             (Unspecified)   (D)  255.255.255.255  0             UNKNOWN
+9 iax2 peers [1 online, 8 offline, 0 unmonitored]
+iax2 debug
+```
+
+Looking at this output, identify the beginning and end of the call. Observe the delay and jitter information obtained using poke and pong packets. These packets help create the output of the “iax2 show netstats” command.
+
+```
+vtsvoffice*CLI> iax2 debug
+IAX2 Debugging Enabled
+Rx-Frame Retry[ No] -- OSeqno: 000 ISeqno: 000 Type: IAX     Subclass: REGREQ
+   Timestamp: 00003ms  SCall: 26975  DCall: 00000 [8.8.30.43:4569]
+   USERNAME        : 8590
+   REFRESH         : 60
+Tx-Frame Retry[000] -- OSeqno: 000 ISeqno: 001 Type: IAX     Subclass: REGAUTH
+   Timestamp: 00009ms  SCall: 00003  DCall: 26975 [8.8.30.43:4569]
+   AUTHMETHODS     : 2
+   CHALLENGE       : 137472844
+   USERNAME        : 8590
+Rx-Frame Retry[ No] -- OSeqno: 001 ISeqno: 001 Type: IAX     Subclass: REGREQ
+   Timestamp: 00016ms  SCall: 26975  DCall: 00003 [8.8.30.43:4569]
+   USERNAME        : 8590
+   REFRESH         : 60
+   MD5 RESULT      : f772b6512e77fa4a44c2f74ef709e873
+Tx-Frame Retry[000] -- OSeqno: 001 ISeqno: 002 Type: IAX     Subclass: REGACK
+   Timestamp: 00025ms  SCall: 00003  DCall: 26975 [8.8.30.43:4569]
+   USERNAME        : 8590
+   DATE TIME       : 2006-04-17  16:03:00
+   REFRESH         : 60
+   APPARENT ADDRES : IPV4 8.8.30.43:4569
+   CALLING NUMBER  : 4830258590
+   CALLING NAME    : Flavio
+Rx-Frame Retry[ No] -- OSeqno: 002 ISeqno: 002 Type: IAX     Subclass: ACK
+   Timestamp: 00025ms  SCall: 26975  DCall: 00003 [8.8.30.43:4569]
+Tx-Frame Retry[000] -- OSeqno: 000 ISeqno: 000 Type: IAX     Subclass: POKE
+   Timestamp: 00003ms  SCall: 00006  DCall: 00000 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 000 ISeqno: 001 Type: IAX     Subclass: ACK
+   Timestamp: 00003ms  SCall: 26976  DCall: 00006 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 000 ISeqno: 001 Type: IAX     Subclass: PONG
+   Timestamp: 00003ms  SCall: 26976  DCall: 00006 [8.8.30.43:4569]
+   RR_JITTER       : 0
+   RR_LOSS         : 0
+   RR_PKTS         : 1
+   RR_DELAY        : 40
+   RR_DROPPED      : 0
+   RR_OUTOFORDER   : 0
+Tx-Frame Retry[-01] -- OSeqno: 001 ISeqno: 001 Type: IAX     Subclass: ACK
+   Timestamp: 00003ms  SCall: 00006  DCall: 26976 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 000 ISeqno: 000 Type: IAX     Subclass: NEW
+   Timestamp: 00003ms  SCall: 26977  DCall: 00000 [8.8.30.43:4569]
+   VERSION         : 2
+   CALLING NUMBER  : 8590
+   CALLING NAME    : 4830258590
+   FORMAT          : 2
+   CAPABILITY      : 1550
+   USERNAME        : 8590
+   CALLED NUMBER   : 8580
+   DNID            : 8580
+Tx-Frame Retry[000] -- OSeqno: 000 ISeqno: 001 Type: IAX     Subclass: AUTHREQ
+   Timestamp: 00007ms  SCall: 00004  DCall: 26977 [8.8.30.43:4569]
+   AUTHMETHODS     : 2
+   CHALLENGE       : 190271661
+   USERNAME        : 8590
+Rx-Frame Retry[Yes] -- OSeqno: 000 ISeqno: 000 Type: IAX     Subclass: NEW
+   Timestamp: 00003ms  SCall: 26977  DCall: 00000 [8.8.30.43:4569]
+   VERSION         : 2
+   CALLING NUMBER  : 8590
+   CALLING NAME    : 4830258590
+   FORMAT          : 2
+   CAPABILITY      : 1550
+   USERNAME        : 8590
+   CALLED NUMBER   : 8580
+   DNID            : 8580
+Tx-Frame Retry[-01] -- OSeqno: 000 ISeqno: 001 Type: IAX     Subclass: ACK
+   Timestamp: 00003ms  SCall: 00004  DCall: 26977 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 001 ISeqno: 001 Type: IAX     Subclass: AUTHREP
+   Timestamp: 00063ms  SCall: 26977  DCall: 00004 [8.8.30.43:4569]
+   MD5 RESULT      : 57cc5c48affba14106c29439944413a1
+Tx-Frame Retry[000] -- OSeqno: 001 ISeqno: 002 Type: IAX     Subclass: ACCEPT
+   Timestamp: 00054ms  SCall: 00004  DCall: 26977 [8.8.30.43:4569]
+   FORMAT          : 1024
+Tx-Frame Retry[000] -- OSeqno: 002 ISeqno: 002 Type: CONTROL Subclass: ANSWER
+   Timestamp: 00057ms  SCall: 00004  DCall: 26977 [8.8.30.43:4569]
+Tx-Frame Retry[000] -- OSeqno: 003 ISeqno: 002 Type: VOICE   Subclass: 138
+   Timestamp: 00090ms  SCall: 00004  DCall: 26977 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 002 ISeqno: 002 Type: IAX     Subclass: ACK
+   Timestamp: 00054ms  SCall: 26977  DCall: 00004 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 002 ISeqno: 003 Type: IAX     Subclass: ACK
+   Timestamp: 00057ms  SCall: 26977  DCall: 00004 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 002 ISeqno: 004 Type: IAX     Subclass: ACK
+   Timestamp: 00090ms  SCall: 26977  DCall: 00004 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 002 ISeqno: 004 Type: VOICE   Subclass: 138
+   Timestamp: 00210ms  SCall: 26977  DCall: 00004 [8.8.30.43:4569]
+Tx-Frame Retry[-01] -- OSeqno: 004 ISeqno: 003 Type: IAX     Subclass: ACK
+   Timestamp: 00210ms  SCall: 00004  DCall: 26977 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 003 ISeqno: 004 Type: IAX     Subclass: PING
+   Timestamp: 02083ms  SCall: 26977  DCall: 00004 [8.8.30.43:4569]
+Tx-Frame Retry[000] -- OSeqno: 004 ISeqno: 004 Type: IAX     Subclass: PONG
+   Timestamp: 02083ms  SCall: 00004  DCall: 26977 [8.8.30.43:4569]
+   RR_JITTER       : 0
+   RR_LOSS         : 0
+   RR_PKTS         : 1
+   RR_DELAY        : 40
+   RR_DROPPED      : 0
+   RR_OUTOFORDER   : 0
+Rx-Frame Retry[ No] -- OSeqno: 004 ISeqno: 005 Type: IAX     Subclass: ACK
+   Timestamp: 02083ms  SCall: 26977  DCall: 00004 [8.8.30.43:4569]
+Rx-Frame Retry[ No] -- OSeqno: 004 ISeqno: 005 Type: IAX     Subclass: HANGUP
+   Timestamp: 08693ms  SCall: 26977  DCall: 00004 [8.8.30.43:4569]
+   CAUSE           : Dumped Call
+```
+
+To turn off debugging, use:
+
+```
+vtsvoffice*CLI>iax2 no debug
+```
+
+### Summary
+
+This chapter has reviewed the strengths and weaknesses of the IAX protocol. It has demonstrated how IAX works in several scenarios, such as soft-phones and a trunk between two Asterisk servers. Trunk mode allows you to save bandwidth by carrying more than one call in a single packet. Finally, you learned console commands that you can use to check the status and debug the protocol.
+
+### Quiz
+
+1. Two of the main benefits of IAX are bandwidth savings and easier NAT traversal. A. False B. True 2. IAX protocols use different UDP ports for signaling and media. A. False B. True 3. The bandwidth used by the IAX protocol is the voice payload plus the following headers (mark all that apply): A. IP B. UDP C. IAX D. RTP E. cRTP 4. It is important to match the codec payload (20 to 30 ms) with frame synchronization (20ms default) when using trunk mode. A. False B. True 5. When IAX is used in trunk mode, just one header is used for multiple calls. A. False B. True 6. IAX is the most used protocol to connect to service providers because it is easier for NAT traversal. A. False B. True
+
+> **[2nd-ed note]** Question 6 answer (A — False) remains correct and is actually even more true in Asterisk 22: SIP/PJSIP is overwhelmingly the dominant provider interconnection protocol today. 7. In an IAX channel as shown below, the option <secret> can be a password or a ____________________.
+
+```
+IAX/[<user>[:<secret>]@]<peer>[:<portno>][/<exten>[@<context>][/<options>]]
+```
+
+8. The IAX2 show registry provides information about: A. Registered users B. Providers to which Asterisk is connected 9. Jitter buffer sacrifices latency to have a steady flow of voice. A. False B. True 10. RSA keys might be used for IAX authentication. You have to keep the ___________ key secret and give your customers the matching ___________ key. A. public, private B. private, public C. shared, private D. public, shared Answers: 1-B,2-A,3-ABC,4-B,5-B,6-A,7-KEY, 8-A,9-B,10-B
