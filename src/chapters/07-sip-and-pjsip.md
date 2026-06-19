@@ -115,7 +115,7 @@ response="983c0099eea125d8cdfe93b0ec99f3ec",algorithm=MD5
 
 #### Session description protocol (SDP)
 
-SDP is defined in IETF RFC2327. It is intended for describing multimedia sessions for the purposes of session announcement, session invitation, and other forms of multimedia session initiation. SDP includes:
+SDP was originally defined in IETF RFC 2327, now obsoleted by RFC 4566. It is intended for describing multimedia sessions for the purposes of session announcement, session invitation, and other forms of multimedia session initiation. SDP includes:
 
 - Transport protocol (RTP/UDP/IP)
 - Type of media (text, audio, video)
@@ -1032,11 +1032,10 @@ For SIP trunks you should also associate the transport to the registration secti
 [siptrunk_reg]
 type=registration
 transport=tnat
-server=sip:sip.flagonc.com:5600
+server_uri=sip:sip.flagonc.com:5600
 outbound_auth=siptrunk_auth
-client_uri=23456789@flagonc.com
+client_uri=sip:23456789@flagonc.com
 contact_user=9999
-realm=flagonc.com
 ```
 
 #### Using Asterisk with clients behind NAT
@@ -1069,7 +1068,7 @@ force_rport=yes
 
 ##### qualify_frequency
 
-This settings have to be applied to the endpoint. There is also the last step, to configure the qualify option. You should have always some packets pinging the destination to keep the NAT mapping open. This is set in the AOR section. Example:
+This setting has to be applied to the AOR (not the endpoint). There is also the last step, to configure the qualify option. You should always have some packets pinging the destination to keep the NAT mapping open. This is set in the AOR section. Example:
 
 - qualify_frequency=15
 
@@ -1167,7 +1166,7 @@ Now that you configured your PJSIP endpoints, it is time to see how to check you
 module reload res_pjsip.so
 ```
 
-The shorthand `pjsip reload` works as well. On legacy chan_sip you could list all available SIP console commands with `help sip`; on Asterisk 22 the equivalent is `help pjsip`.
+A plain `reload` (or `core reload`) reloads all modules including PJSIP. (Note there is no bare `pjsip reload` command — `pjsip reload` only exists in the form `pjsip reload qualify aor|endpoint`.) On legacy chan_sip you could list all available SIP console commands with `help sip`; on Asterisk 22 the equivalent is `help pjsip`.
 
 #### pjsip show endpoints
 
@@ -1216,7 +1215,7 @@ A great addition to PJSIP is the concept of history. You can capture and analyse
 
 ![09-pjsip-the-new-sip-channel figure 6](../images/09-pjsip-the-new-sip-channel-img06.png)
 
-Very easy, isn’t it? You may also clear the history whenever you want using pjsip history clear.
+Very easy, isn’t it? You may also clear the history whenever you want using `pjsip set history clear`.
 
 ## Migrating from sip.conf to pjsip.conf
 
@@ -1246,7 +1245,7 @@ socket, NAT addresses). The following table maps the most common concepts.
 | `localnet=` | `local_net=` on the **transport** |
 | `insecure=invite` (provider, no auth) | omit `auth=`/`outbound_auth=` and use `identify` (`type=identify`, `match=`) |
 | `allowguest=yes` | `anonymous` endpoint + `allow_unauthenticated_options` (use with care) |
-| `tos_sip` / `tos_audio` | `tos_sip` / `tos_media` (and `cos_sip` / `cos_media`) |
+| `tos_sip` / `tos_audio` | `tos_audio` / `tos_video` (and `cos_audio` / `cos_video`) on the endpoint |
 
 A registering extension that looked like this in legacy `sip.conf`:
 
@@ -1299,15 +1298,19 @@ Asterisk ships a helper script, **`sip_to_pjsip.py`**, that reads an existing
 where the Asterisk source files are found (usually /usr/src/asterisk-22.x.y/):
 
 ```
-${PATH_TO_ASTERISK_SOURCE}/contrib/scripts/sip_to_pjsip.py
+${PATH_TO_ASTERISK_SOURCE}/contrib/scripts/sip_to_pjsip/sip_to_pjsip.py
 ```
 
-If you run it with the `--help` option you will see two options:
+If you run it with the `--help` option you will see its options:
 
 ```
--h help
--p prefix output included files with a prefix
+-h, --help                help
+-p, --prefix PREFIX       prefix to use for the included config files
+-q, --quiet               suppress warnings and informational messages
 ```
+
+It also accepts optional positional arguments — `[input-file [output-file]]`,
+defaulting to `sip.conf` and `pjsip.conf` in the current directory.
 
 Treat its output as a **starting point**: review every generated object,
 especially transports, NAT settings, and codec lists, and test thoroughly before
