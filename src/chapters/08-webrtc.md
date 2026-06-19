@@ -186,9 +186,13 @@ Reading that output:
 - `rtcp_mux: true` — RTP and RTCP share one port, as browsers expect.
 - `use_avpf: true` — the AVPF RTP profile (feedback), required by WebRTC.
 
-`allow=opus` is recommended — Opus is the codec browsers prefer. (`codec_opus` ships
-freely with Asterisk 22; see the codecs discussion in *Designing a VoIP network*.)
-Keep `ulaw` as a fallback for bridging to non-WebRTC legs.
+`allow=opus` is recommended — Opus is the codec browsers prefer. Asterisk 22 ships
+Opus *passthrough* in core (the `res_format_attr_opus` module), which is enough to
+relay Opus between two Opus-capable legs without re-encoding. *Transcoding* Opus to
+another codec requires the separate `codec_opus` module, which the official WebRTC
+guide lists as optional but highly recommended and which you install on top of the
+base build; see the codecs discussion in *Designing a VoIP network*. Keep `ulaw` as a
+fallback for bridging to non-WebRTC legs that cannot speak Opus.
 
 ## Step 4 — ICE, STUN and TURN
 
@@ -216,7 +220,7 @@ STUN/TURN entirely.
 
 ## Step 5 — the browser client
 
-Any WebRTC SIP library works; the two most common are **SIP.js** and **JsSIP**. The
+Any WebRTC SIP library works; two widely used ones are **SIP.js** and **JsSIP**. The
 lab includes a minimal SIP.js softphone at `lab/webrtc/index.html`. The essential
 part is the transport URL and the credentials:
 

@@ -123,7 +123,7 @@ Three kinds of SIP and IAX clients exist. The first one is “user”. Users can
 
 ## Codecs and codec translation
 
-You will use a codec to convert the voice from an analog wave to a digital signal. Codecs differ from one another in aspects such as sound quality, compression rate, bandwidth, and computing requirements. Services, phones, and gateways usually support several of these aspects. The codec G.729 is very popular. Sangoma distributes a `codec_g729` binary module for Asterisk 22; the download is free of charge, but lawful G.729 use still requires a purchased per-channel license. (An open-source alternative, `bcg729`, also exists.)
+You will use a codec to convert the voice from an analog wave to a digital signal. Codecs differ from one another in aspects such as sound quality, compression rate, bandwidth, and computing requirements. Services, phones, and gateways usually support several of these aspects. The codec G.729 is very popular. It is not part of the standard Asterisk 22 build; instead it ships as an external add-on module (`codec_g729`) that you download from Digium (now Sangoma). Asterisk's `menuselect` source lists it with `support_level=external` and notes plainly: "Download the g729a codec from Digium. A license must be purchased for this codec." In other words, lawful G.729 use requires a purchased per-channel license. (An open-source alternative, `bcg729`, also exists.)
 
 ![Pulse Code Modulation (PCM): a 4000 Hz analog signal is sampled 8000 times per second (Nyquist theorem) and coded into a 64 Kbps digital bitstream.](../images/06-voip-network-fig04.png)
 
@@ -135,10 +135,10 @@ Asterisk 22 supports the following codecs (among others):
 - ITU G.722: 64 Kbps — wideband (HD voice), good quality at the same bandwidth as G.711
 - ITU G.723.1: 5.3/6.3 Kbps
 - ITU G.726: 16/24/32/40 Kbps
-- ITU G.729: 8 Kbps — `codec_g729` binary module from Sangoma (free download; per-channel license required to use)
+- ITU G.729: 8 Kbps — external `codec_g729` binary module downloaded from Digium/Sangoma (`support_level=external`; a license must be purchased to use it)
 - Speex: 2.15 to 44.2 Kbps
 - LPC10: 2.4 Kbps
-- **Opus**: 6–510 Kbps, variable — modern wideband/fullband codec; excellent quality and packet-loss resilience; free binary module (`codec_opus`) distributed by Sangoma; recommended for WebRTC and modern SIP endpoints
+- **Opus**: 6–510 Kbps, variable — modern wideband/fullband codec; excellent quality and packet-loss resilience; provided as an external `codec_opus` binary module downloaded from Digium/Sangoma (`support_level=external`; no license purchase noted, unlike G.729); recommended for WebRTC and modern SIP endpoints. (Open-source build alternatives exist on GitHub.)
 
 In addition, Asterisk permits translation among codecs. In some cases, this is not possible, such as the case of g723, which is supported only in pass-thru mode. Translating from one codec to another consumes many resources from the CPU. Thus, avoid this altogether whenever possible.
 

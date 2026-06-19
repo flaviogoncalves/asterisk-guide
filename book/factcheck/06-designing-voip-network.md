@@ -1,6 +1,6 @@
 # Fact-check ledger — Designing a VoIP network (Chapter 6)
 
-Verified: 24 · Wrong (fixed): 2 · Unverified: 3
+Verified: 25 · Wrong (fixed): 2 · Unverified: 2
 
 Lab = Asterisk 22.10.0 running in `/Users/flavio/crosscall/astbook/lab` (docker compose exec asterisk).
 
@@ -34,15 +34,15 @@ Lab = Asterisk 22.10.0 running in `/Users/flavio/crosscall/astbook/lab` (docker 
 | 26 | "a g.729 conversation consumes 31.2 Kbps" (Ethernet, 20-byte payload + 58B headers) | 142, 150 | VERIFIED | Standard reference figure: G.729 on Ethernet ≈ 31.2 kbps at 20 ms ptime — https://www.cisco.com/c/en/us/support/docs/voice/voice-quality/7934-bwidth-consume.html |
 | 27 | "SIP | IETF standard" / "H.323 | ITU standard" (table standard bodies) | 79–81 | VERIFIED | SIP = IETF (RFC 3261); H.323 = ITU-T recommendation — https://datatracker.ietf.org/doc/html/rfc3261 ; ITU-T H.323 |
 | 28 | "lawful G.729 use ... requires a purchased per-channel license" | 97, 109, 134 | VERIFIED | Sangoma G.729 license keys are per-channel, per-server activations — https://help.sangoma.com/s/article/How-to-determine-which-G729-codec-binary-I-should-use-in-my-asterisk-system (Sangoma G.729 Codec Policy) |
-| 29 | "Sangoma distributes a `codec_g729` binary module ... free of charge" / `codec_opus` free binary module | 97, 109, 112, 136 | UNVERIFIED | Primary Sangoma pages (sangoma.com/products/asterisk-add-ons, G729 Codec Policy PDF) returned HTTP 403 to the fetcher. Per-channel licensing is confirmed (row 28); the "free download" and `codec_opus` binary distribution claims could not be confirmed from a primary Sangoma source in this run. Author should confirm against Sangoma's current download/policy page before print. |
+| 29 | "Sangoma distributes a `codec_g729` binary module ... free of charge" / `codec_opus` free binary module | 126, 138, 141 | VERIFIED (reworded) | Asterisk `menuselect` source `codecs/codecs.xml` (the lab's own build source) lists both as `<support_level>external</support_level>` downloadable binaries: codec_opus displayname = "Download the Opus codec from Digium. See https://downloads.digium.com/pub/telephony/codec_opus/README."; codec_g729a displayname = "Download the g729a codec from Digium. **A license must be purchased for this codec.** See https://downloads.digium.com/pub/telephony/codec_g729/README." Lab confirms neither ships in the standard build (`module show like codec` lists only core codecs, no g729/opus). The unsourced "free of charge" wording was removed; G.729 now states "a license must be purchased" (per codecs.xml), and Opus states "no license purchase noted, unlike G.729." Source: https://github.com/asterisk/asterisk/blob/master/codecs/codecs.xml ; lab `module show like codec` |
 
-## Fixes applied (2)
+## Fixes applied (3)
 
 - **Line 49** — "ports 1000 to 2000 in Asterisk (as defined in rtp.conf)" → "a configurable UDP port range in Asterisk (the shipped `rtp.conf` sample uses 10000 to 20000)". Asterisk's sample `rtp.conf` ships 10000–20000; 1000–2000 is wrong.
 - **Line 111** — LPC10 "2.5 Kbps" → "2.4 Kbps". FS-1015/LPC-10 standard rate is 2.4 kbps.
+- **Lines 126/138/141** — Removed the unsourced "free of charge / free download" wording for the `codec_g729` and `codec_opus` add-ons. Both are now described accurately as external (`support_level=external`) binary modules downloaded from Digium/Sangoma, per Asterisk's `codecs/codecs.xml`. G.729 wording now matches the codecs.xml note "A license must be purchased for this codec"; Opus wording notes no purchase requirement is stated (unlike G.729) rather than asserting it is "free." Source: https://github.com/asterisk/asterisk/blob/master/codecs/codecs.xml ; lab `module show like codec`.
 
-## Unverified items for the author to resolve before print (3)
+## Unverified items for the author to resolve before print (2)
 
 1. **Line 49** — H.323 "TCP in ports 1720 and 1719": port 1719 (H.225 RAS) is UDP, not TCP. Sentence needs a rewrite, not a single-token fix.
 2. **Line 80** — Comparison table calls IAX2 an "IETF draft"; it is now RFC 5456 (Informational, Independent Submission, not IETF-endorsed). Update the standard-body cell.
-3. **Lines 97/109/112/136** — "free download" claim for Sangoma `codec_g729` / `codec_opus` binary modules could not be confirmed from a primary Sangoma source (403). Per-channel licensing of G.729 is confirmed.

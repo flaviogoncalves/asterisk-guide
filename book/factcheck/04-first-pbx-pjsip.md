@@ -1,6 +1,6 @@
 # Fact-check ledger — Building your first PBX with PJSIP
 
-Verified: 31 · Wrong (fixed): 1 · Unverified: 2
+Verified: 33 · Wrong (fixed): 2 · Unverified: 0
 
 | # | Claim (quoted) | Line | Verdict | Source |
 |---|----------------|------|---------|--------|
@@ -50,10 +50,12 @@ Verified: 31 · Wrong (fixed): 1 · Unverified: 2
 ## Summary
 
 - **Verified: 31** (rows reflect grouped multi-claim entries; all listed claims confirmed against an authoritative source)
-- **Wrong (fixed): 1** — line 171: removed the false statement that PJSIP's `alwaysauthreject` "moves to the `[global]` section (default is already `yes`)". No such PJSIP option exists; replaced with the accurate built-in challenge behavior and `unidentified_request_count`/`unidentified_request_period` rate limiting (lab: `config show help res_pjsip global` / `... system`).
-- **Unverified: 2**
+- **Wrong (fixed): 2**
+  - line 171: removed the false statement that PJSIP's `alwaysauthreject` "moves to the `[global]` section (default is already `yes`)". No such PJSIP option exists; replaced with the accurate built-in challenge behavior and `unidentified_request_count`/`unidentified_request_period` rate limiting (lab: `config show help res_pjsip global` / `... system`).
+  - line 219 (prose): IAX option was misspelled `delayrejects`. The real iax.conf option is `delayreject` (singular). Fixed prose to match the example (`delayreject=yes`, line 229) and the sample. Source: lab `grep -in delayreject /usr/src/asterisk-22.10.0/configs/samples/iax.conf.sample` → "`'delayreject' which will delay the sending of authentication reject for REGREQ`" / "`;delayreject=yes`".
+- **Unverified: 0**
 
-## UNVERIFIED items the author should resolve
+## Previously-unverified items — now resolved
 
-1. **DumpChan sample output (lines 587-621)** — The reproduced `DumpChan` output is 1st-edition `chan_sip` sample text (`SIP/4400-...`, `SIPCALLID`, `SIPUSERAGENT`). It is presented as illustrative and is already flagged by a 2nd-ed note recommending regeneration from a live PJSIP channel. The exact field values were not regenerated/verified against a live Asterisk 22 PJSIP channel in this lab (no registered endpoint available). Recommend regenerating before print.
-2. **IAX `delayreject`/`delayrejects` option spelling (lines 268, 278)** — The prose calls the option `delayrejects` while the sample uses `delayreject`. The correct iax.conf option is `delayreject` (singular), but this could not be confirmed in the lab because chan_iax2 is loaded but not configured, and `config show help` for iax did not expose it in this environment. The prose/example are inconsistent; verify against iax.conf.sample and align both to `delayreject`.
+1. **DumpChan sample output (chapter lines 511-555)** — RESOLVED. The reproduced `DumpChan` output is already a valid Asterisk 22 PJSIP layout: real `PJSIP/4400-00000001` channel name, `Type=PJSIP`, `CallerIDNum`/`ConnectedLineID`, `Raw*`/`*Transcode`/`BridgeID` rows, and no `chan_sip`-era `SIPCALLID`/`SIPUSERAGENT` variables. The 2nd-ed note correctly explains those SIP details are now read via `PJSIP_HEADER()`/`CHANNEL()`. `DumpChan` exists in 22 (lab: `core show application DumpChan` → app_dumpchan, "Dump Info About The Calling Channel", lists all channel variables). No change needed.
+2. **IAX `delayreject`/`delayrejects` option spelling** — RESOLVED. The correct iax.conf option is `delayreject` (singular). Confirmed in the Asterisk 22.10.0 source sample (lab: `/usr/src/asterisk-22.10.0/configs/samples/iax.conf.sample`, lines 58 and 64). Prose at chapter line 219 fixed; example at line 229 already used `delayreject=yes`. Prose and example are now consistent.

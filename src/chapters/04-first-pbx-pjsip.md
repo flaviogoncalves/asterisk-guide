@@ -216,7 +216,7 @@ You may also create IAX extensions. This protocol is native to the Asterisk, and
 - bindaddr: Address to be bound to Asterisk SIP listener. If you set it up as 0.0.0.0 (default), it will bind to all interfaces.
 - context: Sets the default context for all clients unless changed in the client section. We used dummy for security reasons. Unauthenticated users get into this context when the option allowguest is set to yes.
 - bindport: SIP UDP port to listen.
-- delayrejects: When set to yes, delays sending the authentication rejects, which improves the security against brute force password attacks.
+- delayreject: When set to yes, delays the sending of an authentication reject for a REGREQ or AUTHREQ, which improves the security against brute-force password attacks.
 - bandwidth: When set to high, it allows the selection of high bandwidth codecs, such as the g711 in their variants ulaw and alaw.
 
 The following is a sample of the [general] section of the file iax.conf.

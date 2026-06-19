@@ -20,7 +20,7 @@ Asterisk does not need a lot of hardware to run, however there are some tips to 
 
 - Total number of registered users. Define how many registrations per second you need to support
 - Total number of simultaneous calls. Define how many network conversations you need to process in the network adapter and bridge on the Asterisk server
-- Which codecs you need to support. High complexity codecs will require a lot of CPU/FPU power in your server, a single iLBC session can require as much as 18MIPS
+- Which codecs you need to support. High complexity codecs will require a lot of CPU/FPU power in your server; iLBC, for example, was measured by its creator (Global IP Sound) at roughly 18 MIPS per channel for 30 ms frames (and about 15 MIPS for 20 ms frames) on a TI C54x DSP
 - Echo cancellation. Echo cancellation may take a lot of CPU/FPU, in some cases you should choose hardware echo cancellation using DSPs in the telephony interface card
 - Availability. Use RAID1 or 5 to increase availability. Remember, Asterisk is 24x7 application.
 
@@ -61,10 +61,10 @@ Here you can see three Digium cards, each in their own IRQ. If this is the case 
 
 ## Choosing a Linux distribution
 
-Asterisk was initially developed to run on Linux. However, it can also run on BSD Unix or macOS. If you are new to Asterisk, try using Linux first since it is much easier. Asterisk officially targets the RHEL family (CentOS/RHEL/Fedora), Ubuntu, and Debian. Good practical choices today are **Debian 12**, **Ubuntu 22.04 LTS / 24.04 LTS**, and **Rocky Linux 9 / AlmaLinux 9** — CentOS Linux is end-of-life, so prefer Rocky or AlmaLinux on RHEL-family systems. For this book I will use Ubuntu 24.04 LTS. You can download the distribution from the address below:
+Asterisk was initially developed to run on Linux. However, it can also run on BSD Unix or macOS. If you are new to Asterisk, try using Linux first since it is much easier. Asterisk officially targets the RHEL family (CentOS/RHEL/Fedora), Ubuntu, and Debian. Good practical choices today are **Debian 12**, **Ubuntu 22.04 LTS / 24.04 LTS**, and **Rocky Linux 9 / AlmaLinux 9** — CentOS Linux is end-of-life, so prefer Rocky or AlmaLinux on RHEL-family systems. For this book I will use Ubuntu 24.04 LTS. Download the latest 24.04 point-release server image from the official releases directory below (the exact filename includes the current point release, e.g. `ubuntu-24.04.4-live-server-amd64.iso`):
 
 ```
-https://releases.ubuntu.com/24.04/ubuntu-24.04-live-server-amd64.iso
+https://releases.ubuntu.com/24.04/
 ```
 
 ### Preparing Linux for Asterisk
@@ -218,7 +218,7 @@ ldconfig
 
 - **chan_pjsip** (under *Channel Drivers*) is the modern SIP channel and is enabled by default; it is the only SIP channel in Asterisk 22.
 - **codec_opus** (under *Codec Translators*) is an **external** module (its menuselect entry reads "Download the Opus codec from Digium"); enabling it makes `make` fetch the free, closed-source binary from Sangoma/Digium. Opus pass-through itself needs no extra module. Sangoma's **codec_g729** module is also available — the binary is free to download, but lawful G.729 transcoding requires a purchased per-channel license.
-- Use the **Add Default Sources** option in *Core Sound Packages* / *Music On Hold* if you want the bundled prompts downloaded automatically during `make`.
+- Select the sound formats and languages you want in the *Core Sound Packages*, *Music On Hold File Packages*, and *Extras Sound Packages* menus; anything you check there is downloaded and installed automatically during `make install`.
 
 After making your selections, choose **Save & Exit** and continue with `make`.
 

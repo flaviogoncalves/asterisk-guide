@@ -45,7 +45,7 @@ Historically, Digium offered Asterisk under three types of license agreements:
 
 - General Public License (GPL) Asterisk. This is the most used version. It includes all features and is free to be used and modified according to the terms of the GPL license.
 - Asterisk Business Edition was a commercial version of Asterisk. Some companies used the business edition because they did not want or could not use the GPL license—usually because they did not want to release their source code together with Asterisk. **Note:** Asterisk Business Edition has been discontinued; today Asterisk is distributed solely under the GPL.
-- Asterisk OEM. This version was mostly used by PBX manufacturers who did not want to reveal to the public that their software was based on Asterisk.
+- Asterisk OEM licensing. After Digium stopped selling Asterisk Business Edition at retail, it continued to license that commercial edition to OEM customers — equipment vendors who wanted to build proprietary products on top of Asterisk without releasing their own source code under the GPL.
 
 ### The Zapata project and its relationship with Asterisk
 
@@ -83,7 +83,7 @@ Another Asterisk breakthrough is its powerful dial plan. In traditional PBXs, ev
 
 ### Open-source running on top of Linux
 
-One of the greatest features of Asterisk is its community. Several resources are available, including the official Asterisk documentation (docs.asterisk.org), the community-maintained VoIP-Info wiki (www.voip-info.org <http://www.voip-info.org>), e-mail distribution lists, and forums. As Asterisk becomes increasingly adopted, any bugs found and fixed quickly. Asterisk is probably the most tested PBX software in the world. From versions 1.0 to 1.2, more than 3,000 changes and bugs in the source code were corrected, thereby ensuring a code that is both stable and almost error free.
+One of the greatest features of Asterisk is its community. Several resources are available, including the official Asterisk documentation (docs.asterisk.org), the community-maintained VoIP-Info wiki (www.voip-info.org <http://www.voip-info.org>), e-mail distribution lists, and forums. As Asterisk becomes increasingly adopted, bugs are found and fixed quickly. With a large user base and an active development team, Asterisk is among the most widely tested PBX platforms in the world, which helps keep the code base stable and mature.
 
 ### Asterisk architecture limitations
 
@@ -95,7 +95,7 @@ It is common to hear objections to adopting Asterisk, which we will address here
 
 ### Asterisk’s market share is too small
 
-The market share is usually measured by the number of PBXs sold. These statistics are generally acquired from the biggest distributors. Asterisk is free software that does not appear in sales statistics. However, independent numbers prove that Asterisk “rocks the world”. According to VoIP-Supply, more than 300,000 systems run Asterisk, and Digium has sold more than 4 million voice interfaces. Some time ago, the Eastern Management Group concluded that open-source PBXs account for 18% of the market share, with the vast majority of them being Asterisk. In fact, 85% of the open-source PBX market is based on Asterisk, which now ranks second in terms of lines connected to an IP PBX.
+The market share is usually measured by the number of PBXs sold. These statistics are generally acquired from the biggest distributors. Asterisk is free software that can be downloaded and deployed without any sale being recorded, so it is systematically undercounted in those figures. Even so, Asterisk powers a very large installed base worldwide — from single-server office PBXs to large carrier and contact-center deployments — and remains the dominant engine behind the open-source PBX ecosystem (including turnkey distributions such as FreePBX).
 
 ### If it is free, how does the manufacturer survive?
 
@@ -107,7 +107,7 @@ Sangoma provides commercial technical support for Asterisk through its partner e
 
 ### Does Asterisk support more than 200 extensions?
 
-Yes, absolutely. Asterisk has been used in installations with more than 10,000 users. It is largely scalable using load balancing and failover systems. It is not uncommon to see more than a thousand users on a single server.
+Yes, absolutely. A single well-dimensioned Asterisk server can handle a large number of extensions, and Asterisk scales further by distributing users across multiple servers with load balancing and failover, allowing large multi-site deployments.
 
 ### Only “geeks” are able to install Asterisk
 
@@ -153,7 +153,7 @@ Miscellaneous channels:
 
 ### Codec and codec translation
 
-We usually try to put as many voice connections as possible in a data network. Codecs enable new features in digital voice, including compression, which is one of the most important features as it allows compression rates larger than 8 to 1. Other features include voice activity detection, packet loss concealment, and comfort noise generation. Several codecs are available for Asterisk and can be transparently translated from one to another. Internally, Asterisk uses slinear as the stream format when it needs to convert from one codec to another. Some codecs in Asterisk are supported only in pass-through mode; these codecs cannot be translated. To verify which codecs are installed in your system, you can use the console command:
+We usually try to put as many voice connections as possible in a data network. Codecs enable new features in digital voice, including compression, which is one of the most important features as it allows compression rates larger than 8 to 1. Many codecs also define features such as voice activity detection (silence suppression), packet loss concealment, and comfort noise generation, though Asterisk itself does not generate comfort noise or perform silence suppression. Several codecs are available for Asterisk and can be transparently translated from one to another. Internally, Asterisk uses slinear as the stream format when it needs to convert from one codec to another. Some codecs in Asterisk are supported only in pass-through mode; these codecs cannot be translated. To verify which codecs are installed in your system, you can use the console command:
 
 ```
 CLI>core show translation
@@ -296,7 +296,7 @@ The Asterisk architecture has the following main components:
 
 - CHANNELS: Analog, digital, or voice-over IP. In Asterisk 22 LTS, SIP is handled exclusively by chan_pjsip.
 - PROTOCOLS: Communication protocols, which are responsible for signaling the calls, including SIP (via PJSIP), H323, MGCP, and IAX2.
-- CODECS: Translate digital formats of voice allowing compressions, packet loss concealment, silence suppression, and comfort noise generation. Asterisk does not support silence suppression.
+- CODECS: Translate digital formats of voice allowing compression and packet loss concealment. Note that Asterisk itself does not perform silence suppression (voice activity detection) or comfort-noise generation; when endpoints use VAD, comfort noise should be disabled on the client side.
 - APPLICATIONS: Responsible for the Asterisk PBX functionality. Conference, voicemail, and fax are examples of Asterisk applications.
 
 Asterisk can be used in various scenarios, from a small IP PBX to a sophisticated contact center. You can easily find help at www.asterisk.org and docs.asterisk.org.

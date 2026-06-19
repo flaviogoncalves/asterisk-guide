@@ -1,6 +1,6 @@
 # Fact-check ledger — Introduction to Asterisk PBX
 
-Verified: 33 · Wrong (fixed): 1 · Unverified: 6
+Verified: 35 · Wrong (fixed): 1 · Unverified: 1 (minor, Opus lower bound) · Resolved (reworded/removed): 6
 
 Lab used: `docker compose -f /Users/flavio/crosscall/astbook/lab/docker-compose.yml exec -T asterisk asterisk -rx '<cmd>'` running **Asterisk 22.10.0** (`core show version`).
 
@@ -12,7 +12,7 @@ Lab used: `docker compose -f /Users/flavio/crosscall/astbook/lab/docker-compose.
 | 4 | "Digium's Mark Spencer created Asterisk in the late 1990s" | 293 | VERIFIED | https://en.wikipedia.org/wiki/Asterisk_(PBX) ("created in 1999 by Mark Spencer") — secondary |
 | 5 | "Digium produced telephony interface cards … created commercial products such as Switchvox (targeted at the SMB market)" | 42 | VERIFIED | https://docs.asterisk.org/About-the-Project/Sangoma-and-Digium-Join-Together-FAQ/ (FreePBX & Switchvox different markets); Switchvox is the Digium/Sangoma SMB UC product |
 | 6 | "Asterisk Business Edition has been discontinued; today Asterisk is distributed solely under the GPL" | 47 | VERIFIED | https://www.voip-info.org/asterisk-business-edition/ (new ABE license sales ended ~Aug 2010) — secondary; no current ABE product on asterisk.org |
-| 7 | "Asterisk OEM. This version was mostly used by PBX manufacturers…" | 48 | UNVERIFIED | No authoritative primary source located describing a distinct "Asterisk OEM" license tier. Historical/marketing characterization. |
+| 7 | "Asterisk OEM. This version was mostly used by PBX manufacturers…" | 48 | VERIFIED (reworded) | Digium offered OEM licensing of Asterisk **Business Edition** to OEM customers (after withdrawing it from retail), and a commercial license was required to ship proprietary products built on Asterisk. Source: https://www.nojitter.com/digium-and-open-source-software ("Digium has decided to stop offering it as a 'retail' product and will license it for OEM customers only"). Reworded from a "secret OEM tier" characterization to the sourced OEM-licensing-of-ABE fact. |
 | 8 | "The Zapata project was developed by Jim Dixon" | 52 | VERIFIED | http://blogs.digium.com/2008/05/19/zaptel-project-being-renamed-to-dahdi/ ; https://www.zapatatelephony.org/ |
 | 9 | "an architecture called Zaptel, later renamed DAHDI (Digium/Asterisk Hardware Device Interface)" | 54 | VERIFIED | http://blogs.digium.com/2008/05/19/zaptel-project-being-renamed-to-dahdi/ (official Digium rename announcement, 2008-05-19; DAHDI = Digium Asterisk Hardware Device Interface) |
 | 10 | "Digium launched a coprocessor card that uses DSPs to encode and decode G.729 and G.723" (TC400B) | 54, 126 | VERIFIED | https://www.voip-info.org/dahdi/ and product references; the TC400B transcoder card is a known Digium/Sangoma DSP card (line 126 names it) |
@@ -40,23 +40,31 @@ Lab used: `docker compose -f /Users/flavio/crosscall/astbook/lab/docker-compose.
 | 32 | "Opus (5.3-510Kbps)" | 174 | VERIFIED | RFC 6716 Opus operating range 6–510 kbit/s; lab `core show codecs audio` → opus. (Lower bound ~6 kbps; "5.3" is marginally off — see Unverified note.) |
 | 33 | "the application dial() is used … to bridge calls" (and `core show applications`) | 187, 344 | VERIFIED | lab: `core show application Dial` → "Attempt to connect to another device or endpoint and bridge the call. Provided By app_dial". https://docs.asterisk.org/Asterisk_22_Documentation/API_Documentation/Dialplan_Applications/Dial/ |
 | 34 | "Asterisk wiki (www.voip-info.org)" | 86 | WRONG (fixed) | voip-info.org is a third-party community wiki, NOT the official Asterisk wiki. Official docs/wiki: https://docs.asterisk.org (chapter line 283 itself lists wiki.asterisk.org). Fixed: reworded to "official Asterisk documentation (docs.asterisk.org), the community-maintained VoIP-Info wiki". |
-| 35 | "more than 300,000 systems run Asterisk, and Digium has sold more than 4 million voice interfaces" (VoIP-Supply) | 98 | UNVERIFIED | Dated secondary marketing statistic; no authoritative primary source found. Could not corroborate. |
-| 36 | "Eastern Management Group concluded that open-source PBXs account for 18% … 85% of the open-source PBX market is based on Asterisk … now ranks second in terms of lines connected to an IP PBX" | 98 | UNVERIFIED | Dated analyst figures; original Eastern Management Group report not accessible as a verifiable primary source. |
-| 37 | "more than 3,000 changes and bugs … corrected" between Asterisk 1.0 and 1.2 | 86 | UNVERIFIED | No authoritative changelog tally located to confirm the exact "3,000" figure for 1.0→1.2. |
-| 38 | "Asterisk has been used in installations with more than 10,000 users" | 110 | UNVERIFIED | Plausible scalability claim but no citable authoritative deployment reference found. |
+| 35 | "more than 300,000 systems run Asterisk, and Digium has sold more than 4 million voice interfaces" (VoIP-Supply) | 98 | REMOVED | Dated (c. 2008–2012) secondary marketing statistic; exact figures not corroborated by any primary source (searched VoIP-Supply/Digium/Sangoma press releases). Removed and replaced with an undated, defensible statement about Asterisk's large installed base. |
+| 36 | "Eastern Management Group concluded that open-source PBXs account for 18% … 85% of the open-source PBX market is based on Asterisk … now ranks second in terms of lines connected to an IP PBX" | 98 | REMOVED | Dated (~2008–2012) analyst figures; original Eastern Management Group report not verifiable as a primary source. The 18%/~90% figures surface only in secondary 2012 articles. Removed to avoid aging the book; replaced with an undated statement that Asterisk dominates the open-source PBX ecosystem. |
+| 37 | "more than 3,000 changes and bugs … corrected" between Asterisk 1.0 and 1.2 | 86 | REMOVED | No authoritative changelog tally supports the "3,000" figure; ChangeLog-1.2.0 (downloads.asterisk.org) gives no aggregate count. Dated 1.0→1.2 (~2004–2005) stat with no value in a v22 book. Removed; reworded to a general statement about Asterisk being widely tested/stable. |
+| 38 | "Asterisk has been used in installations with more than 10,000 users" | 110 | REMOVED (reworded) | No citable authoritative deployment reference for the specific "10,000 users" figure. Reworded to a non-numeric scalability statement (single server handles many extensions; scales via multiple servers with load balancing/failover). |
 | 39 | "Opus (5.3-510Kbps)" lower bound 5.3 | 174 | UNVERIFIED (minor) | RFC 6716 states Opus 6–510 kbit/s; the "5.3" lower bound is slightly off (likely conflated with G.723.1's 5.3 kbps). Left for author — not unambiguously a typo in this codec list. |
-| 40 | "Asterisk does not support silence suppression" | 299 | UNVERIFIED | Internal/editorial summary claim. Asterisk does support comfort-noise/VAD-related features; "silence suppression" support status is not cleanly documented as a yes/no. Flagged for author. |
+| 40 | "Asterisk does not support silence suppression" | 299, 156 | VERIFIED (reworded) | Correct: Asterisk does **not** perform voice activity detection / silence suppression or generate comfort noise (RFC 3389); the standard guidance is to disable VAD on clients. Sources: https://www.asteriskguru.com/tutorials/comfort_noise_support_incomplete.html ("Asterisk does not (yet) support voice activity detection (and comfort noise generation)"); https://community.asterisk.org/t/enabling-silence-suppression-and-changing-codec-payload-size/35866 . Reworded L156 and L299 so the codec-feature list no longer implies Asterisk performs VAD/CNG, and the summary states the limitation accurately. |
 
 ## Unverified claims the author must resolve before print
 
-- **#35** Market-size statistics ("300,000 systems", "4 million interfaces", VoIP-Supply) — dated, no primary source.
-- **#36** Eastern Management Group market-share figures ("18%", "85%", "second in lines") — analyst report not verifiable.
-- **#37** "more than 3,000 changes and bugs" between Asterisk 1.0 and 1.2 — no authoritative changelog tally.
-- **#38** "more than 10,000 users" deployment claim — no citable reference.
-- **#39** Opus lower bitrate "5.3 Kbps" — RFC 6716 gives ~6 kbps; consider correcting to 6–510 kbps.
-- **#40** "Asterisk does not support silence suppression" — internal claim; verify intent.
-- **#7** "Asterisk OEM" license tier — historical claim, no authoritative primary source.
+- **#39** Opus lower bitrate "5.3 Kbps" — RFC 6716 gives ~6 kbps; consider correcting to 6–510 kbps. (Still open — minor, left for author.)
+
+### Resolved in this pass (previously unverified)
+
+- **#7** "Asterisk OEM" — VERIFIED + reworded to the sourced fact (OEM licensing of Asterisk Business Edition). Source: nojitter.com/digium-and-open-source-software.
+- **#35** "300,000 systems / 4M interfaces" (VoIP-Supply) — REMOVED (dated, unsourced).
+- **#36** Eastern Management Group "18% / 85% / second in lines" — REMOVED (dated analyst figures, not verifiable).
+- **#37** "3,000 changes 1.0→1.2" — REMOVED (no changelog tally; obsolete version).
+- **#38** "more than 10,000 users" — REMOVED + reworded to a non-numeric scalability statement.
+- **#40** "Asterisk does not support silence suppression" — VERIFIED (correct) + reworded for accuracy. Sources: asteriskguru.com comfort-noise tutorial; community.asterisk.org thread 35866.
 
 ## Fixes applied
 
 - **Line 86** (ledger #34): changed "Asterisk wiki (www.voip-info.org)" to clarify that the official documentation is docs.asterisk.org and VoIP-Info is a community-maintained wiki. Source: https://docs.asterisk.org and the chapter's own line 283 (wiki.asterisk.org).
+- **Line 48** (ledger #7): reworded the "Asterisk OEM" bullet to the sourced fact — Digium licensed Asterisk Business Edition to OEM customers, requiring a commercial license to ship proprietary products built on Asterisk. Source: https://www.nojitter.com/digium-and-open-source-software.
+- **Line 86** (ledger #37): removed the unsourced "more than 3,000 changes and bugs … from 1.0 to 1.2" claim; reworded to a general stability/testing statement.
+- **Line 98** (ledger #35, #36): removed the dated VoIP-Supply ("300,000 systems / 4 million interfaces") and Eastern Management Group ("18% / 85% / second in lines") statistics; replaced with an undated statement about Asterisk's large installed base and dominance of the open-source PBX ecosystem.
+- **Line 110** (ledger #38): removed the unsourced "more than 10,000 users" figure; reworded to a non-numeric scalability statement.
+- **Lines 156 & 299** (ledger #40): reworded the codec-feature list and the summary so they accurately state that Asterisk does not perform silence suppression (VAD) or generate comfort noise. Sources: https://www.asteriskguru.com/tutorials/comfort_noise_support_incomplete.html ; https://community.asterisk.org/t/enabling-silence-suppression-and-changing-codec-payload-size/35866.
