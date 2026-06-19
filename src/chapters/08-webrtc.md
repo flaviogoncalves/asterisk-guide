@@ -2,8 +2,9 @@
 
 WebRTC (Web Real-Time Communication) lets a web browser place and receive calls
 with no plugin and no external softphone — just JavaScript, a microphone, and a
-secure connection to Asterisk. Since Asterisk 11 the PJSIP stack has been able to
-act as a WebRTC server, and in Asterisk 22 the configuration has settled into a
+secure connection to Asterisk. Asterisk has been able to act as a WebRTC server
+since Asterisk 11, and since the PJSIP stack (`res_pjsip`) arrived in Asterisk 12
+it has been the recommended way to do it; in Asterisk 22 the configuration has settled into a
 handful of well-understood options. This chapter shows how to turn a PJSIP
 endpoint into a browser phone, how the secure media path works, and when you
 should reach for Asterisk's built-in WebRTC support versus a dedicated gateway.

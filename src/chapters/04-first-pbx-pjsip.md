@@ -168,7 +168,7 @@ alwaysauthreject=yes
 
 #### Modern PJSIP (`pjsip.conf`) — the transport
 
-In PJSIP, the listener configuration that `chan_sip`'s `[general]` section used to hold (bind address, port, protocol) lives in a `transport` object. Globals such as `alwaysauthreject` move to the `[global]` section (default is already `yes`). A minimal UDP transport equivalent to the example above:
+In PJSIP, the listener configuration that `chan_sip`'s `[general]` section used to hold (bind address, port, protocol) lives in a `transport` object. PJSIP has no `alwaysauthreject` option; the equivalent protection against username guessing is built in — PJSIP always returns an identical authentication challenge for unknown and known users, and repeated unidentified requests from one IP are rate-limited via the `[global]` options `unidentified_request_count`/`unidentified_request_period`. A minimal UDP transport equivalent to the example above:
 
 ```
 [global]
