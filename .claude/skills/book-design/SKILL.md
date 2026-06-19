@@ -1,6 +1,6 @@
 ---
 name: book-design
-description: Professional book design for the generated book — acts as Art Director, Cover Designer, and Interior Designer/Typesetter in one. Elevates the PDF (and EPUB) from default Pandoc output to a publishable, KDP-ready book: a coherent visual identity, a real cover (front/spine/back), and properly typeset interior pages (typography, code blocks, figures, headings, running heads, TOC, spacing). Use when asked to improve the look of the book/PDF, design a cover, or fix typesetting.
+description: Professional book design for the generated book — acts as Art Director, Cover Designer, Interior Designer/Typesetter, and Illustrator in one. Elevates the PDF (and EPUB) from default Pandoc output to a publishable, KDP-ready book: a coherent visual identity, a real cover (front/spine/back), properly typeset interior pages (typography, code blocks, headings, running heads, TOC, spacing), and clean on-brand figures (redraw dated diagrams as vector art, CLI screenshots → text, reshoot GUI). Use when asked to improve the look of the book/PDF, design a cover, fix typesetting, or fix/redraw figures.
 ---
 
 # Book design — Art Director · Cover Designer · Interior Designer
@@ -82,6 +82,37 @@ Markdown. Create `book/template/interior.latex` (a customised Pandoc LaTeX templ
 - **TOC:** clean, with parts emphasized and front matter handled; dot leaders consistent.
 - **Notes/callouts:** give `[2nd-ed note]` blockquotes (or a custom env) a recognisable,
   unobtrusive style so they read as editorial asides, not body text.
+
+## Role 4 — Illustrator (figures & diagrams)
+
+The figures are a big part of a technical book's quality, and right now they are the
+weakest part: low-resolution PDF extractions and dated 2006-era clip-art (toy phone
+icons, "Inside" Asterisk boxes). Bring them up to the standard of the rest of the design.
+
+- **Figure inventory first.** Walk every `![...](../images/...)` in the chapters and
+  classify each: **conceptual diagram** (architecture, network topology, SIP/PJSIP object
+  model, call flow), **CLI screenshot**, **GUI screenshot**, or **photo**. Record the
+  disposition of each in `book/design/figures.md`.
+- **Disposition by type:**
+  - *Conceptual diagram* → **redraw** clean and on-brand. Prefer **reproducible, editable
+    vector source** in the repo: TikZ (LaTeX-native — renders crisp in the PDF, versioned,
+    uses the brand palette/fonts) for topology/architecture/flows; or SVG drawn to the
+    style guide and converted to PDF. Never ship the old clip-art if a redraw is feasible.
+  - *CLI screenshot* → replace with a real captured **text** code block (sharper in print,
+    copyable) — capture from the Asterisk 22 lab.
+  - *GUI screenshot* → **reshoot** against current software (the author uses **SipPulse
+    Softphone**); crop tight, no desktop chrome, consistent window size, ≥300 dpi.
+  - *Photo* → keep only if still relevant; otherwise drop.
+- **Illustration style system** (document in the style guide): one icon set with a single
+  line weight, the brand accent for emphasis and near-black for structure, a clean sans for
+  in-figure labels matching the heading font, generous whitespace, and **grayscale-safe**
+  contrast. Every diagram in the book should look like it came from the same hand.
+- **Production hygiene:** trim whitespace (`book/trim-figures.py`), cap to text width,
+  embed/卷 vector where possible; for raster keep ≥300 dpi at print size; consistent
+  captions ("Figure N. …"). Keep editable source (`.tex`/`.svg`) next to the exported asset.
+- **When a redraw needs a human or an AI image tool,** specify it precisely (what the
+  diagram must show, labels, style) as a `[2nd-ed note]` or a stub in `figures.md` rather
+  than shipping something wrong.
 
 ## Process
 
