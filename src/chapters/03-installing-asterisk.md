@@ -24,7 +24,7 @@ Asterisk does not need a lot of hardware to run, however there are some tips to 
 - Echo cancellation. Echo cancellation may take a lot of CPU/FPU, in some cases you should choose hardware echo cancellation using DSPs in the telephony interface card
 - Availability. Use RAID1 or 5 to increase availability. Remember, Asterisk is 24x7 application.
 
-The main component for an Asterisk Server is the network adapter. A good server network adapter is recommended. CPU is important when you need to support high complexity codecs such as g.729 and iLBC and echo cancellation. You may choose to use dedicated DSPs, Sangoma (formerly Digium) provides a DSP card named TC400B capable to support 120 g729 simultaneous calls. The best practice is to choose a new, server class, computer from a known manufacturer. To know exactly how many simultaneous calls or how many registered users a specific machine can support, you should test this hardware with a stress test tool such as SIPP (http://sipp.sourceforge.net). Some hardware manufacturers such as Xorcom (http://www.xorcom.com) publish its results in the website. Note: Some Asterisk applications, such as ConfBridge and music on hold, require a clock source. Usually, the clock source is a telephony interface card. If your system does not use a telephony interface card, you will have to load dahdi_dummy to provide a clock source.
+The main component for an Asterisk Server is the network adapter. A good server network adapter is recommended. CPU is important when you need to support high complexity codecs such as g.729 and iLBC and echo cancellation. You may choose to use dedicated DSPs, Sangoma (formerly Digium) provides a DSP card named TC400B capable to support 120 g729 simultaneous calls. The best practice is to choose a new, server class, computer from a known manufacturer. To know exactly how many simultaneous calls or how many registered users a specific machine can support, you should test this hardware with a stress test tool such as SIPP (http://sipp.sourceforge.net). Some hardware manufacturers such as Xorcom (http://www.xorcom.com) publish its results in the website. Note: Some Asterisk applications, such as ConfBridge and music on hold, need an internal timing source. On modern Linux this is provided automatically by the built-in `res_timing_timerfd` module — no telephony hardware is required. (The old `dahdi_dummy` software timer no longer exists; its functionality was folded into the main `dahdi` kernel module in DAHDI Linux 2.3.0.) You can confirm the active timer with the CLI command `timing test`.
 
 ### Hardware configuration
 
@@ -198,7 +198,7 @@ Step 4: Select the modules to build
 make menuselect
 ```
 
-Use make menuselect to install only the necessary modules. In Asterisk 22 the SIP channel is **chan_pjsip** (built by default); the old **chan_sip** was removed in Asterisk 21 and no longer exists. The Opus codec module **codec_opus** is now bundled and freely distributed by Sangoma, so you can enable it directly in menuselect without downloading a separate binary. See "Selecting modules with menuselect" below for details.
+Use make menuselect to install only the necessary modules. In Asterisk 22 the SIP channel is **chan_pjsip** (built by default); the old **chan_sip** was removed in Asterisk 21 and no longer exists. Opus *pass-through* works out of the box (the in-tree `res_format_attr_opus` module handles SDP negotiation), but the **codec_opus** transcoding module is still an external, closed-source binary from Sangoma/Digium — selecting it in menuselect downloads it from Digium's servers. The binary is free of charge. See "Selecting modules with menuselect" below for details.
 
 Step 5: Build and install Asterisk, then create the default config and sample files
 
@@ -210,14 +210,14 @@ make config
 ldconfig
 ```
 
-`make install` installs the binaries and modules, `make samples` writes the sample configuration files into `/etc/asterisk`, `make config` installs the startup scripts (systemd unit and/or init script), and `ldconfig` refreshes the shared-library cache.
+`make install` installs the binaries and modules, `make samples` writes the sample configuration files into `/etc/asterisk`, `make config` installs the SysV init startup script for your detected distribution (e.g. `/etc/init.d/asterisk` on Debian/Ubuntu), and `ldconfig` refreshes the shared-library cache. A systemd unit also ships in the source tree at `contrib/systemd/asterisk.service`, but `make config` does not install it automatically — copy it into place yourself if you prefer to run Asterisk under systemd (see below).
 
 ### Selecting modules with menuselect
 
 `make menuselect` opens a text-based menu where you choose exactly which applications, codecs, channels, and resources to build. A few notes specific to Asterisk 22:
 
 - **chan_pjsip** (under *Channel Drivers*) is the modern SIP channel and is enabled by default. There is no longer a chan_sip option — it was removed in Asterisk 21.
-- **codec_opus** (under *Codec Translators*) is now bundled and free; enable it if you want Opus support. Sangoma's **codec_g729** module is also available — the binary is free to download, but lawful G.729 use requires a purchased per-channel license.
+- **codec_opus** (under *Codec Translators*) is an **external** module (its menuselect entry reads "Download the Opus codec from Digium"); enabling it makes `make` fetch the free, closed-source binary from Sangoma/Digium. Opus pass-through itself needs no extra module. Sangoma's **codec_g729** module is also available — the binary is free to download, but lawful G.729 transcoding requires a purchased per-channel license.
 - Use the **Add Default Sources** option in *Core Sound Packages* / *Music On Hold* if you want the bundled prompts downloaded automatically during `make`.
 
 After making your selections, choose **Save & Exit** and continue with `make`.
@@ -240,7 +240,7 @@ CLI>core stop now
 
 ### Starting Asterisk with systemd
 
-On modern Linux distributions (Debian 12, Ubuntu 22.04/24.04, Rocky/AlmaLinux 9), the system service manager is **systemd**. The `make config` step installs a systemd unit file, so the recommended way to run Asterisk in production is through `systemctl`:
+On modern Linux distributions (Debian 12, Ubuntu 22.04/24.04, Rocky/AlmaLinux 9), the system service manager is **systemd**. Asterisk ships a systemd unit at `contrib/systemd/asterisk.service` in the source tree; copy it to `/etc/systemd/system/asterisk.service` and run `systemctl daemon-reload`. Once installed, the recommended way to run Asterisk in production is through `systemctl`:
 
 ```
 systemctl start asterisk      # start the service
@@ -675,7 +675,7 @@ In this chapter, you have learned about the minimum hardware requirements as wel
    - A. True
    - B. False
 5. What is the recommended way to install the build dependencies for Asterisk 22?
-6. If you don't have a TDM interface card you will need a clock source for synchronization, and the `dahdi_dummy` driver fills this role. This is necessary because some applications such as ________ and ________ require a time reference.
+6. If you don't have a TDM interface card you will still have an internal timing source for synchronization, provided by the `res_timing_timerfd` module on Linux. This timing is used by applications such as ________ and ________.
 7. When installing Asterisk it is better to leave desktop environments such as GNOME or KDE out, because graphical interfaces consume CPU cycles.
    - A. True
    - B. False
