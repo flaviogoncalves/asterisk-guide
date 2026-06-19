@@ -190,9 +190,8 @@ Codec G.729 (8 Kbps)
 - PPP (PPP+IP+UDP+RTP+G.729) = 26.4 Kbps
 - Frame-Relay (FR+IP+UDP+RTP+G.729) = 26.8 Kbps
 
-You can easily calculate other bandwidth requirements using an online VoIP bandwidth calculator.
+You can easily calculate other bandwidth requirements using an online VoIP bandwidth calculator such as <https://www.voip.school/bandcalc/bandcalc.php>.
 
-> **[2nd-ed note]** The original calculator URL (http://www.voip.school/bandcalc/bandcalc.php) may no longer be active; verify and replace with a current resource.
 
 ## Traffic Engineering
 
@@ -239,7 +238,7 @@ Let’s arbitrate GoS=0.01
 - Headquarters to Branch #1 - BHT=300 minutes/60 = 5 Erlangs
 - Headquarters to Branch #2 – BHT=170 minutes/60 = 2.83 Erlangs
 
-Using an Erlang Calculator (www.erlang.com)
+Using an Erlang calculator such as <https://www.erlang.com>
 
 - For the Headquarters to Branch #1, 11 lines are required.
 - For the Headquarters to Branch #2, 8 lines are required

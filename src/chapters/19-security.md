@@ -297,7 +297,7 @@ I’m not going to generate a client certificate because we are not going to use
 
 Step 3: Install a TLS-capable SIP softphone (the author uses the SipPulse Softphone). Step 4: Copy the certificate authority to the computer running the softphone. After installing it, copy the file /etc/asterisk/keys/ca.crt to the computer running the softphone (use scp, or WinSCP on Windows) if you are using a self-signed certificate. Step 5: Create the account in the softphone. In the account screen add the account normally like any other sip account. Use the right password, the authentication is still based on the password. Step 6: Set TLS as the transport in the account settings. In the SipPulse Softphone account screen (below), choose **TLS** as the transport and use port 5061. Adjust your firewall to open TCP port 5061.
 
-![The SipPulse Softphone account screen — enter the Server (your Asterisk IP or domain), Username, Password, and Display Name, then choose the Transport (UDP, TCP, or TLS).](../images/softphone/sipphone-account.png)
+![The SipPulse Softphone account screen — enter the Server (your Asterisk IP or domain), Username, Password, and Display Name, then choose the Transport (UDP, TCP, or TLS).](../images/softphone/sipphone-account.png){width=35%}
 
 Step 7: Trust the certificate authority. If your Asterisk TLS certificate is signed by a public CA (for example Let's Encrypt — see the *Deployment* chapter), a modern softphone such as the SipPulse Softphone trusts it automatically through the system certificate store, with no manual import. If you use a self-signed certificate, import its CA (`/etc/asterisk/keys/ca.crt`) into the client or the operating-system trust store, or accept it when prompted.
 
@@ -467,7 +467,7 @@ Step 2: Softphone configuration
 
 In the softphone, enable SRTP for the account media (set the **SRTP (Media Encryption)** option to *Mandatory*) so that voice is encrypted.
 
-![The SipPulse Softphone account settings (lower section) — set **Transport** to TLS and **SRTP (Media Encryption)** to *Mandatory* so signaling and media are both encrypted.](../images/softphone/sipphone-config.png)
+![The SipPulse Softphone account settings (lower section) — set **Transport** to TLS and **SRTP (Media Encryption)** to *Mandatory* so signaling and media are both encrypted.](../images/softphone/sipphone-config.png){width=35%}
 
 ## Enabling two way authentication for international calls
 
