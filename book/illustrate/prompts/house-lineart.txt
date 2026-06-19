@@ -1,0 +1,7 @@
+Design a publication-quality technical diagram for a print book, based on the uploaded reference image. Style: minimal MONOLINE LINE ART — uniform thin black strokes on a pure white background, no fills, no color, no shading, no gradients. Use for simple figures or when the figure must read in pure grayscale. Format 16:9 for book layouts. All labels clear, legible, accurate and current (Asterisk 22 terminology). Accuracy is more important than aesthetics.
+
+
+# Always pass the original figure with --ref, and append a specific subject line, e.g.:
+#   Subject: a peer-to-peer botnet of compromised PCs sending thousands of SIP REGISTER
+#   attempts at one Asterisk server, labelled 'Peer-to-Peer Botnet' and 'SIP scan'.
+# Run: python3 book/illustrate/nanobanana.py --ref <orig.png> --out <orig.png> --variations 2 --prompt-file <this file + subject>

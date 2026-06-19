@@ -57,11 +57,27 @@ reads as a single, coherent work. Treat a chapter's figures as a *set*, not one-
   it — uniform export width is what makes figures *appear* the same size on the page.
 - Never upscale a low-res original; if it's too small or fuzzy, **regenerate** it (PATH 1/2).
 
-**Style (fixes "lack of standardization"):** pull from `book/design/tokens.yaml` /
-`book/design/STYLE.md` and keep it identical across figures —
-- white background; ink = near-black; **one** brand accent for emphasis only;
-- one sans for labels, one mono for code/config/CLI; consistent stroke weight, corner radius,
-  and arrowheads; a minimum label size that stays legible at 6×9 print and in grayscale.
+**Style — the decided house standard (fixes "lack of standardization"):**
+- **Default = flat vector.** White background; near-black shapes and labels; a **single blue
+  accent `#1C5D99`** used only for the key flow/arrow/highlight; simple geometric icons with
+  consistent stroke weight; **no gradients, no 3D, no clip-art.** (This is style "V2" from the
+  style tests in `book/illustrate/style-tests/`.)
+- **Isometric is an allowed variant — use with discretion.** Only when the figure is
+  inherently *spatial* and 3D depth genuinely aids understanding: **network topologies, rack/
+  physical layouts, multi-tier deployment diagrams.** Never use isometric for abstract,
+  conceptual, or flow diagrams — those stay flat. When isometric is used, keep arrows **solid
+  (not gradient)** so they survive grayscale. (Style "V3" from the style tests.)
+- **Line art (pure B/W) is also sanctioned** for simple figures or when no accent is needed —
+  uniform black monoline on white, no color. Ideal for small/simple diagrams and the safest
+  choice if a figure must read in pure grayscale. (Style "V1" from the style tests.)
+- **Selection rule:** default to **flat + accent (V2)**; switch to **isometric (V3)** only for
+  spatial/network figures; drop to **line art (V1)** for simple figures or pure-B/W needs. All
+  three share the same white background, accent `#1C5D99`, and typographic standard, so the
+  book stays coherent whichever is used. Pick **one** per figure and stay consistent within a
+  related group of figures.
+- One sans for labels, one mono for code/config/CLI; consistent corner radius and arrowheads;
+  a minimum label size that stays legible at 6×9 print and in grayscale. Pull any further
+  tokens from `book/design/tokens.yaml` / `book/design/STYLE.md`.
 
 **Currency (fixes "outdated content"):** every label must use **Asterisk 22** terminology —
 PJSIP / `pjsip.conf` / current CLI, never `chan_sip`/`sip.conf`/removed apps — and match the
@@ -111,13 +127,27 @@ path — minimize it.**
   The book-design Art Director's palette/style (when set) should feed back into the prompt.
 - **Per-figure cap:** ≤ 3 generations (~$0.20). Log every spend. If 3 tries don't produce a
   usable result, fall back to PATH 1/2 or flag for a human designer — do **not** keep paying.
-- Base template prompt (fill in `[palette]`, aspect, and the figure's specific content;
-  always carry a real reference image so the model preserves the meaning):
+- **Definitive house prompts** (decided from the style tests; saved in
+  `book/illustrate/prompts/house-*.txt`). Always carry a real reference image so the model
+  preserves the meaning, and append the figure's specific `Subject:` line. Pick by the
+  selection rule above:
 
-  > Design a publication-quality diagram based on the uploaded reference image. Style: clean,
-  > modern, and instructional. Background: white. Use a consistent color palette of [black and
-  > white]. All labels and text must be clear, legible, and accurate. Format: 16:9 for book
-  > layouts. Accuracy is more important than aesthetics.
+  **Default — flat + accent** (`house-flat.txt`):
+  > Design a publication-quality technical diagram for a print book, based on the uploaded
+  > reference image. Style: clean FLAT VECTOR infographic — white background, near-black shapes
+  > and labels, a SINGLE blue accent (hex #1C5D99) used only for the key flow/arrows/highlight,
+  > simple geometric icons with consistent stroke weight, no gradients, no 3D, no clip-art.
+  > Format 16:9 for book layouts. All labels clear, legible, accurate and current (Asterisk 22
+  > terminology). Accuracy is more important than aesthetics. Subject: <describe the figure>.
+
+  **Spatial/network only — isometric + accent** (`house-isometric.txt`):
+  > …Style: light ISOMETRIC technical illustration — white background, restrained grayscale
+  > shading for subtle depth, a SINGLE blue accent (hex #1C5D99) for the key flow/connections,
+  > SOLID (non-gradient) arrows so it survives grayscale, modern and clean, not cartoonish.…
+
+  **Simple / pure-B&W — line art** (`house-lineart.txt`):
+  > …Style: minimal MONOLINE LINE ART — uniform thin black strokes on a pure white background,
+  > no fills, no color, no shading, no gradients.…
 
 - **Run it** with the helper (reads the API key from `.env` itself — never print the key):
 
