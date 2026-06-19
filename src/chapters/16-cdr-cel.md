@@ -364,5 +364,8 @@ In this chapter we have learned how to implement CDR recording in text files and
 9. Voicemail passwords are specified in a separate section of `voicemail.conf` and are not the same as the voicemail users.
    - A. False
    - B. True
+10. Channel Event Logging (CEL) replaces CDR in Asterisk 22 — once CEL is enabled, CDR billing summaries are no longer produced.
+    - A. False
+    - B. True
 
-**Answers:** 1 — B · 2 — A, B, C, D, E · 3 — A · 4 — A, B, E, F · 5 — `Set(CDR(accountcode)=...)`; `${CDR(accountcode)}` · 6 — B · 7 — A · 8 — A, B, C · 9 — B
+**Answers:** 1 — B · 2 — A, B, C, D, E · 3 — A · 4 — A, B, E, F · 5 — `Set(CDR(accountcode)=...)`; `${CDR(accountcode)}` · 6 — B · 7 — A · 8 — A, B, C · 9 — B · 10 — A

@@ -551,10 +551,10 @@ Application maps allow you to add new features by using the `[applicationmap]` s
    - B. *2
    - C. #3
    - D. #1
-10. In ConfBridge, to admit users in listen-only mode, you assign them a user profile with ___:
+10. In ConfBridge, which `confbridge.conf` user-profile option makes a participant join muted (they can hear the conference but cannot be heard until unmuted)?
     - A. startmuted=yes
     - B. listen=only
     - C. muteall=yes
     - D. quiet=yes
 
-**Answers:** 1 — B, C, D · 2 — pickup group; `chan_dahdi.conf` · 3 — blind; attended · 4 — B · 5 — ConfBridge() · 6 — A · 7 — B · 8 — pickup · 9 — A · 10 — A
+**Answers:** 1 — B, C · 2 — pickup group; `chan_dahdi.conf` · 3 — blind; attended · 4 — B · 5 — ConfBridge() · 6 — A · 7 — B · 8 — pickup · 9 — A · 10 — A
