@@ -389,37 +389,46 @@ In this chapter you have learned how to use an ACD, its architecture, and how to
 
 ## Quiz
 
-1. Name four strategies for routing a call in a queue.
-2. You can record a conversation between an agent and a customer using the ___ option in the `queues.conf` file.
-3. To log in an agent you use the application `AgentLogin([agentnumber])`. When the agent finishes a call, they can:
-   - A. Disconnect and stay in the queue
+1. Which of the following are valid queue distribution strategies in `queues.conf` (choose all that apply)?
+   - A. ringall
+   - B. roundrobin
+   - C. leastrecent
+   - D. fewestcalls
+   - E. rrmemory
+   - F. linear
+2. You can record a conversation between an agent and a customer from within the queue by setting the ___ option in the `queues.conf` file.
+3. Which `strategy` rings members in the exact order they are listed in `queues.conf`?
+   - A. random
+   - B. wrandom
+   - C. linear
+   - D. fewestcalls
+4. When the agent finishes a call in the telemarketing example, which actions can they take (choose all that apply)?
+   - A. Press `*` to disconnect and stay in the queue
    - B. Hang up the phone and disconnect from the queue
-   - C. Press #8000 to transfer to call audit
-   - D. Press # to hang up
-4. The required tasks to configure a call queue are:
+   - C. Press `#8000` to transfer the call for auditing
+   - D. Press `#` to log off all queues immediately
+5. Which two tasks are *required* to get a working queue (choose all that apply)?
    - A. Create the queue
    - B. Create the agents
-   - C. Configure the agents
+   - C. Configure agent parameters
    - D. Configure recording
    - E. Put the queue in the dial plan
-5. In a call queue you can define options the caller can dial. This is done by including a(n) ___ in `queues.conf`:
-   - A. Agent
-   - B. Menu
-   - C. Context
-   - D. Application
-6. The support applications AddQueueMember(), AgentLogin(), and RemoveQueueMember() should be placed in the ___:
-   - A. Dial plan
-   - B. Command-line interface
+6. In a call queue you can offer a single-digit menu the caller can dial while waiting. This is enabled by defining a(n) ___ in the queue's `queues.conf` section:
+   - A. agent
+   - B. menu
+   - C. context
+   - D. application
+7. The support applications `AddQueueMember()` and `RemoveQueueMember()` are used in the ___ to add or remove members at runtime:
+   - A. dial plan
+   - B. command-line interface
    - C. queues.conf
    - D. agents.conf
-7. It is possible to record agents, but doing so requires an external recorder.
+8. Since chan_sip was removed in Asterisk 21, a static queue member must reference a channel such as ___ rather than `SIP/1001`.
+9. The `wrapuptime` parameter is the minimum time after an agent disconnects a call before the queue will send that agent a new call.
    - A. True
    - B. False
-8. The `wrapuptime` parameter is the time an agent needs after ending a call to finish the business process related to it.
-   - A. True
-   - B. False
-9. A call can be prioritized depending on the caller ID within the same queue.
-   - A. True
-   - B. False
+10. A caller can be given a higher position in the same queue by setting the `QUEUE_PRIO` channel variable before calling `Queue()`.
+    - A. True
+    - B. False
 
-**Answers:** 1 — ringall, leastrecent, random, rrmemory (among others) · 2 — MixMonitor (via `monitor-type`) · 3 — D · 4 — A, E · 5 — B · 6 — A · 7 — B · 8 — A · 9 — A
+**Answers:** 1 — A, C, D, E, F (roundrobin was replaced by rrmemory and no longer exists) · 2 — `monitor-format` (recording from the queue is enabled by specifying `monitor-format`; `monitor-type` selects MixMonitor vs Monitor) · 3 — C (linear) · 4 — A, B, C (`*` disconnects and stays; `#` is not a log-off-all key) · 5 — A, E · 6 — C (the `context` option) · 7 — A (the dial plan) · 8 — `PJSIP/1001` (any `PJSIP/` interface) · 9 — True · 10 — True
