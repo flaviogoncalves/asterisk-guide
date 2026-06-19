@@ -4,7 +4,7 @@
 
 In this chapter, you will learn how to perform a basic Asterisk PBX configuration. The main objective here is to see the PBX running for the first time, be able to dial between extensions, dial a message being played, and dial to a single analog or SIP trunk. The idea behind this chapter is to ensure that your Asterisk is up and running as soon as possible. After completing the work in this chapter, you will have sufficient background to prepare for subsequent chapters, where we will delve more deeply into configuration details.
 
-### Objectives
+## Objectives
 
 By the end of this chapter, you should be able to:
 
@@ -16,7 +16,7 @@ By the end of this chapter, you should be able to:
 - Dial between phones and external destinations; and
 - Configure an auto attendant.
 
-### Understanding the configuration files
+## Understanding the configuration files
 
 Asterisk is controlled by text configuration files located in /etc/asterisk. The file format is similar to the Windows “.ini” files. A semicolon is used as a remark character, the signs “=” and “=>” are equivalent, and spaces are ignored.
 
@@ -32,7 +32,7 @@ Key => value; Object declaration
 
 Asterisk interprets “=” and “=>” in the same way. Differences in syntax are used to distinguish between objects and variables. Use “=” when you want to declare a variable and “=>” to designate an object. The syntax is the same between all files, but three types of grammar are used, as discussed below.
 
-### Grammars
+## Grammars
 
 | Grammar | How the object is created | Conf. file | Example |
 |---------|---------------------------|------------|---------|
@@ -42,7 +42,7 @@ Asterisk interprets “=” and “=>” in the same way. Differences in syntax 
 
 > **[2nd-ed note]** The `Dial(SIP/4000)` example was updated to `Dial(PJSIP/4000)`. The Complex Entity example was updated from the legacy `sip.conf` `type=friend`/`secret`/`host` form to the modern `pjsip.conf` `type=endpoint` form. Please verify the rebuilt table matches the original figure layout.
 
-#### Simple Group
+### Simple Group
 
 The simple group format used in extensions.conf, meetme.conf, and voicemail.conf is the most basic grammar. Each object is declared with options in the same line. Example:
 
@@ -54,7 +54,7 @@ Object 2=> op1b,op2b,op3b
 
 In this example, object 1 is created with options op1, op2, and op3 while object 2 is created with options op1, op2, and op3.
 
-#### Object options inheritance grammar
+### Object options inheritance grammar
 
 This format is used by the files chan_dahdi.conf and agents.conf, where numerous options are available, and most interfaces and objects share the same options. Typically, one or more sections have objects and channels declarations. Options to the object are declared above the object and can be changed to another object. Although this concept is hard to understand, it is very easy to use. Example:
 
@@ -69,7 +69,7 @@ object => 2
 
 The first two lines configure the value of the options op1 and op2 to “bas” and “adv”, respectively. When object 1 is instanced, it is created using option 1 as “bas” and option 2 as “adv”. After defining object 1, we change option 1 to “int”. Next, we create object 2 with option 1 as “int” and option 2 as “adv”.
 
-#### Complex entity object
+### Complex entity object
 
 This format is used by iax.conf, sip.conf, and other configuration files in which numerous entities with many options exist. Typically, this format does not share a large volume of common configurations. Each entity receives a context. Sometimes reserved contexts exist, like [general] for global configurations. Options are declared in the context declarations. Example:
 
@@ -84,21 +84,38 @@ op2=value4
 
 The entity [entity1] has values “value1” and “value2” for options op1 and op2, respectively. The entity [entity2] has values “value3” and “value4” for options op1 and op2.
 
-### Options to build a LAB for Asterisk
+## Options to build a LAB for Asterisk
 
 To configure a PBX, you will need some basic hardware. It is not hard or expensive, but there are some options to be considered. All you will need are two phones and a connection to the public network. Some options and combinations are possible when creating your lab, which we will discuss below.
 
-#### Option 1: Complete LAB
+### Option 1: Complete LAB
 
-With the complete LAB, it is possible to test all the scenarios available and compare solutions such as ATA, IP-phones, and soft-phones. You can also learn about analog and SIP trunks. Qty. Description SIP Analog Telephone Adapter IP Phone Dedicated Server for the Asterisk Server Workstation with the soft-phone Analog Interface Card with at least two interfaces: 1 FXO and 1 FXS VoIP provider Account
+With the complete LAB, it is possible to test all the scenarios available and compare solutions such as ATA, IP-phones, and soft-phones. You can also learn about analog and SIP trunks. You will need:
 
-#### Option 2: Economy LAB
+- A SIP analog telephone adapter (ATA)
+- An IP phone
+- A dedicated server for Asterisk
+- A workstation with a soft-phone
+- An analog interface card with at least two interfaces (1 FXO and 1 FXS)
+- A VoIP provider account
 
-With the economy LAB, we simplify it a bit. We use the ATA, which is usually less expensive than the IP-phone, and a single FXO card, which is really inexpensive. We won’t be able to use analog phones connected directly to the server, but this does not commonly occur in practice. Qty. Description SIP Analog Telephone Adapter Dedicated Server for Asterisk Workstation for the soft-phone Analog Interface Card with 1 FXO Account in a VoIP provider
+### Option 2: Economy LAB
 
-#### Option 3: Super economy lab
+With the economy LAB, we simplify it a bit. We use the ATA, which is usually less expensive than the IP-phone, and a single FXO card, which is really inexpensive. We won’t be able to use analog phones connected directly to the server, but this does not commonly occur in practice. You will need:
 
-The third LAB uses a virtualized server in the student’s own notebook. The problem with this model is the conflicts generated by the UDP port. Sometimes both the Asterisk server and the soft-phone try to access the same port, preventing Asterisk from binding the address port. Another issue is the quality of the calls; virtual environments are not indicated for real-time applications such as Asterisk. Use a free soft-phone for the server and workstation and a trunk connection to a SIP provider. Qty. Description Laptop with 1 GB memory and a soft-phone Virtual Machine (VMWare, Xen, or other) to install Asterisk and a soft-phone Account in a VoIP provider
+- A SIP analog telephone adapter (ATA)
+- A dedicated server for Asterisk
+- A workstation for the soft-phone
+- An analog interface card with 1 FXO
+- An account with a VoIP provider
+
+### Option 3: Super economy lab
+
+The third LAB uses a virtualized server in the student’s own notebook. The problem with this model is the conflicts generated by the UDP port. Sometimes both the Asterisk server and the soft-phone try to access the same port, preventing Asterisk from binding the address port. Another issue is the quality of the calls; virtual environments are not indicated for real-time applications such as Asterisk. Use a free soft-phone for the server and workstation and a trunk connection to a SIP provider. You will need:
+
+- A laptop running a soft-phone
+- A virtual machine (VirtualBox, VMware, or similar) to install Asterisk
+- An account with a VoIP provider
 
 ## Installation Sequence
 
@@ -260,7 +277,7 @@ disallow = all
 allow = ulaw
 ```
 
-#### IAX Clients
+### IAX Clients
 
 After finishing the general sections, it is time to set up the IAX clients.
 
@@ -452,9 +469,9 @@ command save dialplan.
 
 Warning: If you issue a save dialplan command from the CLI, you will end up losing any remarks and comments in the file.
 
-- autofallthrough: If autofallthrough is set, then if an extension runs out of things to do, it will terminate the call with BUSY, CONGESTION, or HANGUP depending on Asterisk's best guess. This is the default. If autofallthrough is not set, then if an extension runs out of things to do, Asterisk will wait for a new extension to be dialed. In version 1.4, the default is yes.
+- autofallthrough: If autofallthrough is set, then if an extension runs out of things to do, it will terminate the call with BUSY, CONGESTION, or HANGUP depending on Asterisk's best guess. This is the default. If autofallthrough is not set, then if an extension runs out of things to do, Asterisk will wait for a new extension to be dialed.
 - clearglobalvars: If clearglobalvars is set, global variables will be cleared and reparsed into an dialplan reload or Asterisk reload. If clearglobalvars is not set, then global variables will persist through reloads and—even if deleted from the extensions.conf or one of its included files—they will remain set to the previous value.
-- extenpatternmatchnew (new in the 1.6 version): This uses a new algorithm to match the extension from 1.5 to 300 times faster than the existing one, particularly if you have a large number of extensions. It is a new feature and should be used with care; it defaults to no.
+- extenpatternmatchnew: Uses a faster pattern-matching algorithm, which helps noticeably when you have a large number of extensions. Defaults to no.
 - userscontext: This is the context where the entries from the users.conf are registered.
 
 ### The section [globals]
@@ -708,7 +725,7 @@ exten=9002,n,hangup
 
 ## Functions
 
-After version 1.2, some applications were replaced by functions to allow the processing of certain variables in a more advanced way than only expressions. You can see the full list of functions by issuing the following console command:
+Some applications have been replaced by functions, which allow the processing of variables in a more advanced way than expressions alone. You can see the full list of functions by issuing the following console command:
 
 ```
 CLI>core show functions
@@ -1023,10 +1040,56 @@ exten=>6004,1,Dial(IAX2/6004)
 
 In the file menu1.gsm, record the message “press the extension or wait for the operator”. When the user dials the number 6000, he will be sent to extension 6000. At this point, you should have a clear understanding of the use of several applications, including answer(), background(), goto(), hangup(), and playback(). If you do not have a clear understanding, please read this chapter again until you feel comfortable with the content. You will use the background application very often. Once you understand the basics of extensions, priorities, and applications, it will be easy to create a simple dial plan. These concepts will be explored in greater depth later in the book, and you will see that the dial plan will become more powerful.
 
-### Summary
+## Summary
 
-In this chapter, you’ve learned that configuration files are stored in the /etc/asterisk directory. To use Asterisk, it is first necessary to configure the channels (e.g., sip, dahdi, iax). Three different grammars exist for configuration files: simple group, object inheritance, and complex entity. The dial plan is created in the file extensions.conf and is a set of contexts and extensions. In the dial plan, each extension triggers an application. You’ve learned to use playback, background, dial, goto, hangup, and answer applications.
+In this chapter, you’ve learned that configuration files are stored in the /etc/asterisk directory. To use Asterisk, it is first necessary to configure the channels (e.g., pjsip, dahdi, iax). Three different grammars exist for configuration files: simple group, object inheritance, and complex entity. The dial plan is created in the file extensions.conf and is a set of contexts and extensions. In the dial plan, each extension triggers an application. You’ve learned to use playback, background, dial, goto, hangup, and answer applications.
 
-### Quiz
+## Quiz
 
-1. The channel configuration files are: A. /etc/dahdi/system.conf B. /etc/asterisk/chan_dahdi.conf C. sip.conf D. iax.conf 2. It is important to define a context in the channel configuration file as this will define the incoming context for a call. In the extensions configuration file extensions.conf, a call from this channel will be processed in the matching incoming context. A. True B. False 3. The main differences between the playback() and background() applications are (choose two): A. Playback simply plays a prompt, but does not wait for digits. B. Background simply plays a prompt, but does not wait for digits. C. Background plays a message and waits for digits to be pressed. D. Playback plays message and waits for digits to be pressed. 4. When a call gets into Asterisk using a telephony interface card (FXO), this call is handled in the special extension: A. ‘0’ B. ‘9’ C. ‘s’ D. ‘i’ 5. Valid formats for the goto() application are (choose three): A. Goto(context,extension, priority) B. Goto(priority, context, extension) C. Goto(extension,priority) D. Goto(priority) 6. An extension cannot be defined as (choose all correct answers): A. An alphanumeric literal B. A numeric literal C. A pattern beginning with a “.” (dot) character D. A pattern starting with a “_” (underscore) character 7. The pattern _7[1-5]XX matches (choose all correct answers): A. 7100 B. 7600 C. 7630 D. 7230 8. An incoming context for a DAHDI-compatible telephony interface is defined in the _________ configuration file: A. /etc/dahdi/system.conf B. /etc/asterisk/chan_dahdi.conf C. /etc/asterisk/asterisk.conf D. /etc/asterisk/modules.conf 9. In the Options Inheritance grammar used by chan_dahdi.conf, you: A. Define the object in a single line. B. Define options first and declare the objects below the defined options. C. Define a context for each object. 10. Priorities must be consecutive! A. False B. True Answers: 1-BCD, 2-A,3-AC,4-C,5-ACD,6-C,7-AD,8-B,9-B,10-B
+1. The channel configuration files are:
+   - A. `/etc/dahdi/system.conf`
+   - B. `/etc/asterisk/chan_dahdi.conf`
+   - C. `pjsip.conf`
+   - D. `iax.conf`
+2. Defining a context in the channel configuration file matters because it sets the incoming context for calls from that channel — a call from the channel is processed in the matching context in `extensions.conf`.
+   - A. True
+   - B. False
+3. The main differences between the `playback()` and `background()` applications are (choose two):
+   - A. Playback simply plays a prompt but does not wait for digits.
+   - B. Background simply plays a prompt but does not wait for digits.
+   - C. Background plays a message and waits for digits to be pressed.
+   - D. Playback plays a message and waits for digits to be pressed.
+4. When a call enters Asterisk through a telephony interface card (FXO), it is handled in the special extension:
+   - A. `0`
+   - B. `9`
+   - C. `s`
+   - D. `i`
+5. Valid formats for the `goto()` application are (choose three):
+   - A. `Goto(context,extension,priority)`
+   - B. `Goto(priority,context,extension)`
+   - C. `Goto(extension,priority)`
+   - D. `Goto(priority)`
+6. An extension cannot be defined as (choose all correct answers):
+   - A. An alphanumeric literal
+   - B. A numeric literal
+   - C. A pattern beginning with a "." (dot) character
+   - D. A pattern starting with a "_" (underscore) character
+7. The pattern `_7[1-5]XX` matches (choose all correct answers):
+   - A. 7100
+   - B. 7600
+   - C. 7630
+   - D. 7230
+8. An incoming context for a DAHDI-compatible telephony interface is defined in the ___ configuration file:
+   - A. `/etc/dahdi/system.conf`
+   - B. `/etc/asterisk/chan_dahdi.conf`
+   - C. `/etc/asterisk/asterisk.conf`
+   - D. `/etc/asterisk/modules.conf`
+9. In the option-inheritance grammar used by `chan_dahdi.conf`, you:
+   - A. Define the object in a single line.
+   - B. Define options first and declare the objects below the defined options.
+   - C. Define a context for each object.
+10. Priorities must be consecutive.
+    - A. False
+    - B. True
+
+**Answers:** 1 — B, C, D · 2 — A · 3 — A, C · 4 — C · 5 — A, C, D · 6 — C · 7 — A, D · 8 — B · 9 — B · 10 — B
