@@ -27,14 +27,17 @@ By the end of this chapter, you should be able to:
 
 On every current Linux distribution — Debian 12, Ubuntu 22.04/24.04, Rocky/AlmaLinux
 9 — the service manager is **systemd**. The install chapter showed that the
-`make config` step (run during `make install`) drops a systemd unit file into place;
-that unit is the supported, production way to run Asterisk. Cross-reference
-*Installing Asterisk 22* for the build itself; here we focus on what the unit gives
+`make config` step (run during `make install`) installs a distribution init script
+(`/etc/init.d/asterisk` on Debian, an `rc.d` script on RedHat), which systemd then
+wraps automatically as a service; Asterisk also ships a native systemd unit under
+`contrib/systemd/asterisk.service` that you can install in its place for finer control.
+Either way, systemd is the supported, production way to run Asterisk. Cross-reference
+*Installing Asterisk 22* for the build itself; here we focus on what the service gives
 you and how to operate it.
 
 ### The service unit and its lifecycle
 
-Once `make config` has installed the unit, the lifecycle is ordinary systemd:
+Once `make config` has installed the service, the lifecycle is ordinary systemd:
 
 ```
 systemctl enable asterisk     # start automatically at boot
