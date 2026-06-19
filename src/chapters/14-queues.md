@@ -383,10 +383,37 @@ In this chapter you have learned how to use an ACD, its architecture, and how to
 
 ## Quiz
 
-1. Cite four strategies for routing a call in a queue. 2. It is possible to record a conversation between an agent and a customer using the statement _________________ in the queues.conf file. 3. To log in an agent, you will use the application agentlogin([agentnumber]).When the agent finishes the call, he/she can: A. disconnect and stay in the queue B. hang up the phone and disconnect from the queue C. press #8000 to transfer to call audit D. press # to hang up 4. The required tasks to configure a call queue are: A. Create the queue B. Create the agents C. Configure the agents D. Configure the recording E. Put the queue in the dial plan 5. When in a call queue, you can define a certain number of options that the user can dial. This is done by including a(n) ____________ in the file queues.conf. A. Agent B. Menu C. Context
+1. Name four strategies for routing a call in a queue.
+2. You can record a conversation between an agent and a customer using the ___ option in the `queues.conf` file.
+3. To log in an agent you use the application `AgentLogin([agentnumber])`. When the agent finishes a call, they can:
+   - A. Disconnect and stay in the queue
+   - B. Hang up the phone and disconnect from the queue
+   - C. Press #8000 to transfer to call audit
+   - D. Press # to hang up
+4. The required tasks to configure a call queue are:
+   - A. Create the queue
+   - B. Create the agents
+   - C. Configure the agents
+   - D. Configure recording
+   - E. Put the queue in the dial plan
+5. In a call queue you can define options the caller can dial. This is done by including a(n) ___ in `queues.conf`:
+   - A. Agent
+   - B. Menu
+   - C. Context
+   - D. Application
+6. The support applications AddQueueMember(), AgentLogin(), and RemoveQueueMember() should be placed in the ___:
+   - A. Dial plan
+   - B. Command-line interface
+   - C. queues.conf
+   - D. agents.conf
+7. It is possible to record agents, but doing so requires an external recorder.
+   - A. True
+   - B. False
+8. The `wrapuptime` parameter is the time an agent needs after ending a call to finish the business process related to it.
+   - A. True
+   - B. False
+9. A call can be prioritized depending on the caller ID within the same queue.
+   - A. True
+   - B. False
 
-```
-Application
-```
-
-6. The support applications AddQueueMember(), AgentLogin(), and RemoveQueueMember() should be included in the __________. A. Dial plan B. Command line interface C. queues.conf D. agents.conf 7. It is possible to record the agents, but doing so requires an external recorder. A. True B. False 8. The parameter wrapuptime is the time the user needs after ending the call to complete business process related to that call. A. True B. False 9. A call can be prioritized depending on the caller ID inside the same queue. A. True B. False Answers: 1-ringall, leastrecent, random, rrmemory 2 – mixmonitor 3 – D 4 – AE 5 – B 6 – A 7-B 8-A 9 -A
+**Answers:** 1 — ringall, leastrecent, random, rrmemory (among others) · 2 — MixMonitor (via `monitor-type`) · 3 — D · 4 — A, E · 5 — B · 6 — A · 7 — B · 8 — A · 9 — A
