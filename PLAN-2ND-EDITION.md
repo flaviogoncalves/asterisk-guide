@@ -88,8 +88,9 @@ File numbering interleaves unnumbered Part dividers (`NN-partN.md`), so on disk:
   all files, fixed PDF-wrapped titles. Build switched to `commonmark_x`. CI green (358-pp PDF).
 - **Phase 3 — Verify:** run every config/CLI example against the lab; capture real Asterisk 22
   output; convert CLI screenshots to text blocks; resolve technical `[2nd-ed note]` markers.
-- **Phase 4 — New chapters:** draft WebRTC, SIP trunking/DID/PSTN, and Deployment/monitoring/
-  scaling — each lab-verified.
+- **Phase 4 — New chapters:** WebRTC ✅ DONE (lab-verified: http.conf TLS + wss transport +
+  `webrtc=yes` endpoint confirmed on Asterisk 22.10.0; SIP.js client in `lab/webrtc/`).
+  Remaining: SIP trunking/DID/PSTN, Deployment/monitoring/scaling — each lab-verified.
 - **Phase 5 — Polish:** reshoot GUI figures, redraw diagrams, branding sweep to VoIP School
   Blackbelt, front matter + new ISBN/edition.
 - **Phase 6 — Produce:** Pandoc → LaTeX 6×9 print PDF + EPUB; proof; (optionally) publish the
