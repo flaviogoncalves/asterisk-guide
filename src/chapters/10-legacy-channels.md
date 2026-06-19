@@ -1266,28 +1266,31 @@ The following sequence illustrates a call originating from an Asterisk’s exten
 
 The project initiated by Moises Silva was inspired on the Unicall channel driver written by Steve Underwood. The OpenR2 library is currently the most stable software solution for Asterisk. With this solution, we may use any digital card compatible with DAHDI. Previously, only proprietary solutions were available for MFC/R2, one of the best I have used is the one made available by Khomp, www.khomp.com.br. In Asterisk 22, MFC/R2 support via libopenR2 is built in when the library is present at compile time — no external patch is required. The steps below show the historical manual installation for reference; on modern systems, install `libopenr2-dev` from your distribution's package manager before running `./configure`, then enable `chan_dahdi` in `make menuselect`.
 
-> **[2nd-ed note]** The SVN repository referenced below (`svn.digium.com`) is no longer active. The patched Asterisk 1.4 tree is obsolete. For Asterisk 22, libopenr2 support is integrated in the main source tree. Consider condensing or removing the legacy patch steps below.
+> **[2nd-ed note]** The patched Asterisk 1.4 tree from the 1st edition is obsolete; for Asterisk 22, MFC/R2 support via libopenr2 is integrated in the main source tree, and the steps below now use the current Git repositories instead of the retired `svn.digium.com`. Consider condensing these historical build steps for the final edition.
 
 Step 1: Check the patches for the version of Asterisk you want to install.
 
 ```
-apt-get install subversion
+apt-get install git
 ```
 
 Step2: Download the modified Asterisk code with the patch installed.
 
-> **[2nd-ed note]** The SVN URL below is from the Asterisk 1.4 era and is no longer reachable. For Asterisk 22, skip this step — libopenr2 support is included in the main Asterisk source tree.
+> **[2nd-ed note]** The original Asterisk 1.4 SVN patch tree has been replaced below by the current Git repositories. On Asterisk 22 the MFC/R2 patch is unnecessary — `chan_dahdi` builds R2 support directly against libopenr2 — so you only need the openr2 library plus a normal Asterisk build.
 
 ```
 cd /usr/src
-svn checkout http://svn.digium.com/svn/asterisk/team/moy/mfcr2/asterisk-1.4-openr2
+git clone https://github.com/moises-silva/openr2.git
+git clone https://github.com/asterisk/asterisk.git
 ```
 
 Step 3: Compile and install Please, BACK UP your server before proceeding.
 
 ```
-cd asterisk-1.4-openr2
-./configure && make && make install
+cd /usr/src/openr2
+./configure && make && make install && ldconfig
+cd /usr/src/asterisk
+./configure && make menuselect && make && make install
 ```
 
 Note: Do not execute “make samples” to avoid overwriting your configuration files.
