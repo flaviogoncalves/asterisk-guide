@@ -1,9 +1,10 @@
 % ===== Interior design (xelatex / TeX Live only) — loaded for the PDF build =====
 % Fonts: TeX Gyre family ships with texlive-fonts-recommended (installed in CI).
 \usepackage{fontspec}
-\setmainfont{TeX Gyre Pagella}      % body — Palatino-like, warm and readable at 10pt
-\setsansfont{TeX Gyre Heros}        % headings/labels — Helvetica-like
-\setmonofont{TeX Gyre Cursor}[Scale=0.86]   % code
+% Load by file name (not display name) so CI's minimal TeX Live finds them in texmf.
+\setmainfont{texgyrepagella}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]   % body, Palatino-like
+\setsansfont{texgyreheros}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic]      % headings, Helvetica-like
+\setmonofont{texgyrecursor}[Extension=.otf,UprightFont=*-regular,BoldFont=*-bold,ItalicFont=*-italic,BoldItalicFont=*-bolditalic,Scale=0.86]   % code
 
 \usepackage{microtype}
 
