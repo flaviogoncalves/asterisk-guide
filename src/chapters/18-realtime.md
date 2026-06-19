@@ -417,5 +417,10 @@ In this chapter, you have learned that Asterisk Real Time allows you to put your
 9. The database must be created with every field that exists in the configuration file.
    - A. True
    - B. False
+10. On Asterisk 22, what is the recommended, version-correct way to create the PJSIP realtime tables (`ps_endpoints`, `ps_aors`, `ps_auths`, `ps_contacts`)?
+    - A. Hand-write the `CREATE TABLE` statements for each `ps_*` table
+    - B. Import the legacy `mysql_config.sql` from `contrib/realtime/`
+    - C. Run the Alembic `config` migrations under `contrib/ast-db-manage` (`alembic -c config.ini upgrade head`)
+    - D. The tables are created automatically the first time Asterisk starts
 
-**Answers:** 1 — A · 2 — C · 3 — A, B · 4 — A · 5 — A · 6 — A · 7 — A · 8 — B · 9 — B
+**Answers:** 1 — A · 2 — C · 3 — A, B · 4 — A · 5 — A · 6 — A · 7 — A · 8 — B · 9 — B · 10 — C
