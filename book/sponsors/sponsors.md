@@ -1,19 +1,46 @@
 # Sponsors {.unnumbered}
 
-The free EPUB and PDF editions of *Asterisk Guide* are made possible by the sponsors below.
-Their support keeps the Markdown source, the reproducible Asterisk 22 lab, and the digital
-book free and open for everyone. *(The paid Amazon paperback stays ad-free.)*
+The free PDF edition of *Asterisk Guide* is made possible by the sponsors below. Their support
+keeps the Markdown source, the reproducible Asterisk 22 lab, and this digital book free and
+open for everyone. *(The paid Amazon paperback stays ad-free.)*
 
-## Founding sponsor {.unnumbered}
+## Founding sponsor — SipPulse {.unnumbered}
 
-![](book/sponsors/sippulse-banner.png){width=58%}
+![](book/sponsors/sippulse-hero.png){width=100%}
 
-**SipPulse Tecnologia Ltda** builds white-label SIP softphones and VoIP infrastructure for
-service providers and enterprises. The **SipPulse Softphone** used throughout this book runs
-on Android, iOS, desktop, and the web, and registers to any standards-based Asterisk / PJSIP
-system over UDP, TCP, or TLS — with SRTP media encryption.
+**SipPulse is the SIP authority** — the telecom infrastructure behind **120+ Brazilian
+operators**. Where this book teaches you Asterisk, SipPulse is what carriers run when a single
+PBX is no longer enough: an integrated platform that combines **SoftSwitch, SBC, contact
+center, multitenant PBX, billing, and AI fraud classification** into one stack.
 
-Learn more at <https://www.sippulse.com>.
+*Operadoras que usam SipPulse faturam mais, gastam menos e dormem tranquilas.*
+
+### The platform {.unnumbered}
+
+| Product | What it does |
+|---------|--------------|
+| **SoftSwitch** | Carrier-grade voice routing and switching — up to **1000 CAPS**. |
+| **SBC** | Session Border Controller securing the edge — up to **4000 simultaneous calls**. |
+| **BCW** | Multitenant PBX / virtual PABX and contact-center platform. |
+| **NIVA** | IVR / voice-response automation. |
+| **BCORE** | BSS — billing and business support for operators. |
+| **CPA Classifier** | Call-fraud detection with **99.9% accuracy**. |
+
+### The SipPulse Softphone {.unnumbered}
+
+The **SipPulse Softphone** used throughout this book is a professional, **white-label**
+softphone for operators — voice, video, and messaging on **Android, iOS, Windows, macOS,
+Linux, and the web (WebRTC)**. It registers to any standards-based Asterisk / PJSIP system
+over **UDP, TCP, or TLS**, with **SRTP** media encryption and **RFC 8599** push notifications
+(FCM / APNs) for battery-efficient, reliable delivery. Codecs include **Opus, G.722, G.711,
+iLBC, GSM, and Speex** (audio) plus **H.264 / VP8** (video).
+
+- Datasheet: <https://sippulse.com/datasheets/crosscall-v1.pdf>
+- Try the web version: <https://softphone.sippulse.com.br/crosscall/>
+- Products: <https://www.sippulse.com/produtos>
+
+SipPulse is led by **Flavio E. Gonçalves** — this book's author, CEO of SipPulse, and a
+founding member of the **OpenSIPS Foundation**. Learn more at <https://www.sippulse.com>.
 
 ## Lab sponsors {.unnumbered}
 
@@ -28,5 +55,5 @@ Sign up at <https://voip.ms>.
 
 Sponsorship keeps this book free and puts your brand in front of working Asterisk developers,
 integrators, and ITSPs worldwide. The paid Amazon paperback stays ad-free; sponsor placements
-appear only in the free EPUB and PDF. See the tiers at <https://voip.school> or write to
+appear only in the free PDF. See the tiers at <https://voip.school> or write to
 flavio@voip.school.

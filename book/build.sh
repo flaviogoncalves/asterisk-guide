@@ -38,8 +38,10 @@ build_variant() {            # $1 = output name; remaining args = source files i
   local name="$1"; shift
   local xf=()
   [ -n "${EXTRA_FILTER:-}" ] && xf=( --lua-filter="$EXTRA_FILTER" )   # per-chapter sponsor credits
-  echo "→ $name : EPUB"
-  pandoc "${COMMON[@]}" "${xf[@]}" -o "$OUT/$name.epub" "$@"
+  if [ "${PDF_ONLY:-0}" != "1" ]; then          # sponsored build is PDF-only (PDF_ONLY=1)
+    echo "→ $name : EPUB"
+    pandoc "${COMMON[@]}" "${xf[@]}" -o "$OUT/$name.epub" "$@"
+  fi
   echo "→ $name : PDF (xelatex)"
   pandoc "${COMMON[@]}" "${xf[@]}" --pdf-engine=xelatex --include-in-header="$INTERIOR" -o "$OUT/$name.pdf" "$@"
 }
@@ -53,7 +55,9 @@ if [ "$want" != "sponsored" ]; then
 fi
 
 if [ "$want" != "clean" ]; then
-  EXTRA_FILTER="$ROOT/book/inject-sponsors.lua" build_variant "asterisk-guide-sponsored" "${SPONSORED[@]}"
+  # Sponsored = the free GitHub download. PDF ONLY (no EPUB), sponsor pages + per-chapter credits.
+  EXTRA_FILTER="$ROOT/book/inject-sponsors.lua" PDF_ONLY=1 \
+    build_variant "asterisk-guide-sponsored" "${SPONSORED[@]}"
 fi
 
 echo "Done. Artifacts in $OUT:"

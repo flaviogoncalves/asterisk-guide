@@ -8,10 +8,15 @@ to building an IP PBX with **Asterisk 22 LTS**. The Markdown source and the lab 
 
 ## Download the book
 
-Every push and pull request builds the book in three formats. Grab them from:
+The book is **free to download**. Tagged releases (`v*`) attach:
 
-- **Releases** — tagged versions (`v*`) attach the PDF, EPUB and LaTeX. *(downloads here)*
-- **Actions → latest run → Artifacts** — the build for any branch or PR.
+- **`asterisk-guide-sponsored.pdf`** — the **free, sponsored PDF** (this is the one to grab).
+  Sponsored by **[SipPulse](https://www.sippulse.com)** — the SIP authority powering 120+
+  Brazilian operators — plus per-lab sponsors. Sponsor pages appear only in this PDF.
+- **`asterisk-guide.pdf` / `.epub` / `.tex`** — the clean, ad-free editions (also used for the
+  paid Amazon paperback).
+
+Grab them from **Releases**, or build any branch from **Actions → latest run → Artifacts**.
 
 ## Build locally
 

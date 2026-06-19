@@ -44,7 +44,6 @@ jobs:
         with:
           files: |
             build/asterisk-guide-sponsored.pdf
-            build/asterisk-guide-sponsored.epub
             build/asterisk-guide.pdf
             build/asterisk-guide.epub
             build/asterisk-guide.tex

@@ -1,0 +1,7 @@
+Nano Banana Pro (gemini-3-pro-image-preview), 1K, no --ref. Chosen: v3.
+A clean, modern, publication-quality FLAT VECTOR illustration for a technology sponsor page.
+Subject: an integrated telecom / SIP communications platform for carriers — central server
+stack (softswitch) + cloud, connected by pulse/ECG-waveform signal links to an IP phone, a
+session-border/proxy shield node, and a contact-center headset. Palette deep navy #14375F +
+single bright blue accent #1C5D99, white background, thin clean lines, pulse motif (ties to
+the SipPulse name), no gradients/3D/clip-art, ABSOLUTELY NO TEXT. 16:9.
