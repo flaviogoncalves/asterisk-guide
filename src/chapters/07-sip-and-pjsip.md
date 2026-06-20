@@ -675,7 +675,7 @@ This command lists the configured Address of Record objects and their contacts, 
 
 The command below shows the registrations made by our own server.
 
-![Output of `pjsip show registrations`: the outbound registration siptrunk/sip:1020@sip.api4com.com:5600 is shown with status Registered](../images/07-sip-and-pjsip-fig17.png)
+![Output of `pjsip show registrations`: the outbound registration siptrunk/sip:1020@sip.flagonc.com:5600 is shown with status Registered](../images/07-sip-and-pjsip-fig17.png)
 
 #### pjsip list
 
