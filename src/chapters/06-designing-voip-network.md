@@ -112,7 +112,7 @@ In Asterisk 22 the PJSIP stack models every phone, trunk, or gateway as a single
 object in `pjsip.conf`. One endpoint both places and receives calls; its credentials live in an
 `auth` object, its registered address in an `aor`, and its network path in a `transport`. You
 configure one endpoint per device and attach the pieces it needs — there is no separate "user"
-versus "peer" role to reason about. (The full object model is covered in *SIP and PJSIP*.)
+versus "peer" role to reason about. (The full object model is covered in *SIP & PJSIP in depth*.)
 
 ## Codecs and codec translation
 
@@ -233,7 +233,7 @@ You can read these measures from a call logger and use them to design your netwo
 
 ![Erlang B calculator results: 5 Erlangs at 1% blocking requires 11 lines (headquarters to branch #1), and 2.83 Erlangs at 1% blocking requires 8 lines (headquarters to branch #2).](../images/06-voip-network-fig07.png)
 
-Another important variable is Grade of Service (GoS), which defines the probability of blocking calls by line shortage. You can arbitrate this parameter, which is usually 0.05 (5% calls lost) or 0.01 (1% calls lost). Example #1: Using the same example from 5.10.1, we will give you some data about traffic patterns. From the call logger, we discovered these data: Data from call logger (Call minutes and BHT):
+Another important variable is Grade of Service (GoS), which defines the probability of blocking calls by line shortage. You can arbitrate this parameter, which is usually 0.05 (5% calls lost) or 0.01 (1% calls lost). Example #1: Using the same headquarters-and-two-branches example introduced earlier in this section, we will give you some data about traffic patterns. From the call logger, we discovered these data: Data from call logger (Call minutes and BHT):
 
 - Headquarters to Branch #1 = 2,000 minutes, BHT = 300 minutes
 - Headquarters to Branch #2 = 1,000 minutes, BHT = 170 minutes
@@ -292,7 +292,7 @@ The number after the colon is the packetization interval in milliseconds — how
 
 ## Summary
 
-In this chapter, you have learned that Asterisk treats VoIP using channels. It supports SIP (via `chan_pjsip` in Asterisk 22) and IAX2; H.323 is available only through the community `ooh323` add-on, and the older MGCP and SCCP (Skinny) channels are no longer part of a standard Asterisk 22 build. You compared and learned how to choose a signaling protocol and a codec for VoIP channels. The IAX2 is more bandwidth efficient and can traverse NAT easily. SIP/PJSIP is the most supported protocol by third-party phone and gateway vendors and is the only SIP channel driver in Asterisk 22. The H.323 protocol is the oldest one and should be used to connect to legacy VoIP infrastructures. In section 5.11, we learned how to design and dimension a VoIP network.
+In this chapter, you have learned that Asterisk treats VoIP using channels. It supports SIP (via `chan_pjsip` in Asterisk 22) and IAX2; H.323 is available only through the community `ooh323` add-on, and the older MGCP and SCCP (Skinny) channels are no longer part of a standard Asterisk 22 build. You compared and learned how to choose a signaling protocol and a codec for VoIP channels. The IAX2 is more bandwidth efficient and can traverse NAT easily. SIP/PJSIP is the most supported protocol by third-party phone and gateway vendors and is the only SIP channel driver in Asterisk 22. The H.323 protocol is the oldest one and should be used to connect to legacy VoIP infrastructures. In the Traffic Engineering section, we learned how to design and dimension a VoIP network.
 
 ## Quiz
 
