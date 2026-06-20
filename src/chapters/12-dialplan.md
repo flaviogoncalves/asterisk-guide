@@ -244,8 +244,8 @@ There are some functions, applications, and CLI commands that work with AstDB:
 Examples:
 
 ```
-exten=_*21*XXXX,1,Set(DB(CFBS/${CALLERID(num)})=${EXTEN:4})
-exten=s,1,Set(temp=${DB(CFBS/${EXTEN})})
+exten=_*21*XXXX,1,Set(DB(CFIM/${CALLERID(num)})=${EXTEN:4})
+exten=s,1,Set(temp=${DB(CFIM/${EXTEN})})
 ```
 
 Some applications can be used to manipulate AstDB:
@@ -614,7 +614,7 @@ This lab was tested using a SIP softphone.
 2. Edit the `extensions.conf` and create an extension to record a voicemail to 4401 extensions.
 
 ```
-exten=9008,n,voicemail(b4401)
+exten=9008,1,voicemail(4401,b)
 ```
 
 3. Go to the console and reload.
