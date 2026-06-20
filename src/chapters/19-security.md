@@ -118,7 +118,7 @@ All of the option names above are confirmed against Asterisk 22.10: the `type=tr
 Instead of discovering all vulnerabilities associated with all Asterisk protocols, let us simplify the problem removing the unnecessary ports. To list all ports open by the Asterisk server use:
 
 ```
-netstat –pantu |grep asterisk
+netstat -pantu |grep asterisk
 ```
 
 The output of the command is shown below.
@@ -132,7 +132,7 @@ You may notice Asterisk binding a high-numbered UDP port. This comes from `res_p
 To remove the unnecessary ports, disable the modules you don't use. Edit the file modules.conf and add `noload` lines for the channels and protocols you are not using. **Do not** noload `res_pjsip`, `res_pjproject`, or `chan_pjsip` — those are required for SIP in Asterisk 22:
 
 ```
-; res_pjsip / res_pjproject / chan_pjsip are REQUIRED in Asterisk 22 — keep them loaded
+; res_pjsip / res_pjproject / chan_pjsip are REQUIRED in Asterisk 22 - keep them loaded
 noload => chan_iax2.so
 noload => chan_unistim.so
 ```
@@ -283,7 +283,15 @@ I will split this section in two. In the first part we will cover TLS to encrypt
 
 #### TLS
 
-TLS (Transport Layer Security) is the encryption mechanism defined to protect the SIP signaling. Type of attack Protection Signaling Attacks YES TLS assures the integrity of the messages Man In the Middle YES TLS checks the server certificate Eavesdropping NO TLS encrypts signaling, not media. For media (voice/video) encryption use SRTP.
+TLS (Transport Layer Security) is the encryption mechanism defined to protect the SIP signaling. The table below summarizes which attacks TLS protects against:
+
+| Type of attack | Protected? | Notes |
+|----------------|-----------|-------|
+| Signaling attacks | Yes | TLS assures the integrity of the messages |
+| Man in the middle | Yes | TLS checks the server certificate |
+| Eavesdropping | No | TLS encrypts signaling, not media |
+
+For media (voice/video) encryption use SRTP.
 
 #### Self-signed digital certificates
 
@@ -302,15 +310,7 @@ Below is a step-by-step guide on how to implement TLS. We first generate the cer
 ```
 mkdir /etc/asterisk/keys
 cd /usr/src/asterisk-22.0.0/contrib/scripts
-/ast_tls_cert -C 192.168.0.74 -O "Asteriskguide" -d /etc/asterisk/keys
-root@asterisk:/usr/src/asterisk-22.0.0/contrib/scripts#
-./ast_tls_cert
--C
-192.168.0.74
--O
-"AsteriskGuide"
--d
-/etc/asterisk/keys
+root@asterisk:/usr/src/asterisk-22.0.0/contrib/scripts# ./ast_tls_cert -C 192.168.0.74 -O "AsteriskGuide" -d /etc/asterisk/keys
 No config file specified, creating '/etc/asterisk/keys/tmp.cfg'
 You can use this config file to create additional certs without
 re-entering the information for the fields in the certificate
@@ -382,7 +382,7 @@ method=tlsv1_2
 
 Use `method=tlsv1_2` (or `tlsv1_3` if your OpenSSL/PJSIP build supports it) — TLS 1.0/1.1 are obsolete and insecure and should not be used.
 
-Step 3: Configure the endpoint for blink Edit the pjsip.conf end edit the section for blink. Let pjsip choose automatically the transport.
+Step 3: Configure the endpoint for blink. Edit `pjsip.conf` and edit the section for blink. Let PJSIP choose the transport automatically.
 
 ```
 [blink]
@@ -405,7 +405,7 @@ username=blink
 password=supersecret
 ```
 
-Step 4: Verifying To verify if the registration happened over TLS use the following command in Asterisk console.
+Step 4: Verifying. To verify that the registration happened over TLS, use the following command in the Asterisk console.
 
 ```text
 asterisk*CLI> pjsip show aor blink
