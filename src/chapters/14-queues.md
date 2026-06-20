@@ -305,11 +305,14 @@ monitor-join = yes
 
 ## Queue operation
 
-The following examples explains how to use the queue. Step 1: Agent login Example: An agent in the telemarketing queue picks up the phone and dials #9000. The agent hears an invalid login message and is asked for his/her name and password. The auditing queue follows the same procedure. Step 2: Queue Once in the queue, the agent will hear MOH, if defined. When a call comes in to the telemarketing queue, the agent will hear a beep and will be connected to that call. Step 3: Call ending When the agent finishes the call, he/she can:
+The following examples explains how to use the queue.
 
-- Press ‘*’ to disconnect and stay in the queue.
-- Disconnect the phone, thereby disconnecting from the queue.
-- Press #8000 to transfer the call for auditing.
+1. Agent login. Example: An agent in the telemarketing queue picks up the phone and dials #9000. The agent hears an invalid login message and is asked for his/her name and password. The auditing queue follows the same procedure.
+2. Queue. Once in the queue, the agent will hear MOH, if defined. When a call comes in to the telemarketing queue, the agent will hear a beep and will be connected to that call.
+3. Call ending. When the agent finishes the call, he/she can:
+   - Press ‘*’ to disconnect and stay in the queue.
+   - Disconnect the phone, thereby disconnecting from the queue.
+   - Press #8000 to transfer the call for auditing.
 
 ## Advanced resources
 

@@ -119,7 +119,18 @@ To help you understand the installation sequence, we outlined the sequence of st
 
 ![Reference lab layout: SIP/IAX soft-phones, an IP phone and analog adapters as extensions (1), the Asterisk server with ETH0/FXO/FXS interfaces (3), and the trunks to the PSTN through a VoIP provider or a broadband link (2).](../images/04-first-pbx-fig01.png)
 
-1. Extensions configuration a. SIP extensions (ATA, Soft-phone, IP Phone) b. IAX extensions c. FXS extensions 2. Trunk configuration a. Configuration of a SIP trunk b. Configuration of a FXO trunk 3. Building a basic dial plan a. Dialing between extensions b. Dialing external destinations c. Receiving a call from in the operator extension d. Receiving a call in an auto-attendant
+1. Extensions configuration
+   - a. SIP extensions (ATA, Soft-phone, IP Phone)
+   - b. IAX extensions
+   - c. FXS extensions
+2. Trunk configuration
+   - a. Configuration of a SIP trunk
+   - b. Configuration of a FXO trunk
+3. Building a basic dial plan
+   - a. Dialing between extensions
+   - b. Dialing external destinations
+   - c. Receiving a call from in the operator extension
+   - d. Receiving a call in an auto-attendant
 
 ## Configuration of the extensions
 
@@ -276,7 +287,11 @@ Display Name: 6000  User Name: 6000  Password: #MySecret1#7  Authorization User 
 
 IAX2 is a legacy protocol (see the *Legacy channels* chapter), and the SipPulse Softphone is SIP-only, so it cannot register an IAX account. If you need to test IAX2, use a soft-phone that still supports it. Create a new IAX account,
 
-3. Select new IAX account. 4. Insert the related options for the 6003 phone and optionally for the 6004. 5. Save the configuration and check if the phone is registered using iax2 show peers. Important: Use one account for SIP and another one for IAX. If you want to configure the system to ring both IAX and SIP at the same time, we will show you how to do so in the dial plan section.
+3. Select new IAX account.
+4. Insert the related options for the 6003 phone and optionally for the 6004.
+5. Save the configuration and check if the phone is registered using `iax2 show peers`.
+
+Important: Use one account for SIP and another one for IAX. If you want to configure the system to ring both IAX and SIP at the same time, we will show you how to do so in the dial plan section.
 
 ### Configuring a PSTN interface
 
@@ -603,7 +618,16 @@ When Asterisk finds an expression in the dial plan, it changes the entire expres
 
 ### Operators
 
-The following operators can be used to build expressions. It is important to observe operator precedence. 1. Parentheses “()” 2. Unary operators “! -“ 3. Regular expression “: =~ 4. Multiplicative operators “* / %” 5. Additive operators “+ -“ 6. Comparison operators 7. Logical operators 8. Conditional operators
+The following operators can be used to build expressions. It is important to observe operator precedence.
+
+1. Parentheses “()”
+2. Unary operators “! -“
+3. Regular expression “: =~
+4. Multiplicative operators “* / %”
+5. Additive operators “+ -“
+6. Comparison operators
+7. Logical operators
+8. Conditional operators
 
 #### Math Operators
 

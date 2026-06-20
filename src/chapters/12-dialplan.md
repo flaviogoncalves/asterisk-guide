@@ -598,13 +598,19 @@ In PJSIP the mailbox hint is set with the `mailboxes` option inside the endpoint
 
 ### Lab: Message Notification in the Phone
 
-This lab was tested using a SIP softphone. 1. Edit `pjsip.conf` and add `mailboxes=4401` in the endpoint section for the device named 4401. 2. Edit the extensions.conf and create an extension to record a voicemail to 4401 extensions.
+This lab was tested using a SIP softphone.
+
+1. Edit `pjsip.conf` and add `mailboxes=4401` in the endpoint section for the device named 4401.
+2. Edit the `extensions.conf` and create an extension to record a voicemail to 4401 extensions.
 
 ```
 exten=9008,n,voicemail(b4401)
 ```
 
-3. Go to the CLI > console and reload. 4. In the SipPulse Softphone, open the SIP account settings and enable voicemail (message-waiting) checking for the account. 5. Dial 9008 and leave a message. 6. Observe the message icon on the phone.
+3. Go to the CLI > console and reload.
+4. In the SipPulse Softphone, open the SIP account settings and enable voicemail (message-waiting) checking for the account.
+5. Dial 9008 and leave a message.
+6. Observe the message icon on the phone.
 
 ## Using the directory application
 
@@ -678,7 +684,9 @@ exten=9007,1,Directory(default,default)
 exten=9007,n,Hangup()
 ```
 
-3. Go to the console and reload 4. Dial 9006 and record a name for each extension (4400, 4401) 5. Dial 9007 and select the three letters of the last name for one extension (Eas=327). If this is the correct option, press ‘1’ to transfer to the name.
+3. Go to the console and reload
+4. Dial 9006 and record a name for each extension (4400, 4401)
+5. Dial 9007 and select the three letters of the last name for one extension (Eas=327). If this is the correct option, press ‘1’ to transfer to the name.
 
 ## Lab: Putting it all together
 

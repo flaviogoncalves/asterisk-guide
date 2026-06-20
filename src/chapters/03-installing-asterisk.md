@@ -88,7 +88,8 @@ cd /usr/src/asterisk-22.x.y
 ./contrib/scripts/install_prereq install
 ```
 
-Step 1: Login as root (or use `sudo`). Step 2: If you prefer to install the dependencies manually on a Debian/Ubuntu system, the equivalent package list is:
+1. Login as root (or use `sudo`).
+2. If you prefer to install the dependencies manually on a Debian/Ubuntu system, the equivalent package list is:
 
 ```
 apt-get install build-essential git wget openssl libssl-dev libxml2-dev \

@@ -1473,7 +1473,9 @@ Note: Some TELCOS do not accept calls without the caller ID. Please set the call
 
 #### Debugging OpenR2
 
-To detect errors in the calls, you can activate the debug. To do this, follow the steps below. Step 1: Edit the file chan_dahdi.conf and add the following three lines to the configuration:
+To detect errors in the calls, you can activate the debug. To do this, follow the steps below.
+
+1. Edit the file `chan_dahdi.conf` and add the following three lines to the configuration:
 
 ```
 mfcr2_logdir=span1
@@ -1481,7 +1483,10 @@ mfcr2_logging=all
 mfcr2_call_files=yes
 ```
 
-Step 2: Restart the Asterisk server Step 3: Test the call and check the call files at /var/log/asterisk/mfcr2/span1 Below is a trace for a normal call. Compare it to what you receive in your call.
+2. Restart the Asterisk server
+3. Test the call and check the call files at `/var/log/asterisk/mfcr2/span1`
+
+Below is a trace for a normal call. Compare it to what you receive in your call.
 
 ```
 [15:05:47:710] [Thread: 3078019984] [Chan 1] - Call started at Mon Jul  6 15:05:47 2009 on
@@ -1804,14 +1809,16 @@ Asterisk supports IP phones based on IAX such as the ATCOM and the old ATA from 
 directory.
 ```
 
-We will use an IAX2-capable soft-phone as an example. Step 1: Make a backup of the original iax.conf file using:
+We will use an IAX2-capable soft-phone as an example.
+
+1. Make a backup of the original `iax.conf` file using:
 
 ```
 #cd /etc/asterisk
 #mv iax.conf iax.conf.backup
 ```
 
-Step 2: Start editing a new iax.conf file:
+2. Start editing a new `iax.conf` file:
 
 ```
 [general]
@@ -1886,9 +1893,12 @@ secret=senha
 host=dynamic
 ```
 
-In the above commands, we have defined a friend named [2003]. The context is the default (in the first labs we always use the default context to avoid confusion; this context will be fully explained in chapter 9). The line “host=dynamic” provides a dynamic registration of the phone’s IP address. Step 3: Download and install an IAX2-capable soft-phone. You can choose any soft-phone that still supports the IAX2 protocol for the lab. Step 4: Configure an IAX account in the client (typically *Add account* → IAX). Note that the SipPulse Softphone is SIP-only and cannot register over IAX2, so for IAX testing you need a client that still supports the protocol.
+In the above commands, we have defined a friend named [2003]. The context is the default (in the first labs we always use the default context to avoid confusion; this context will be fully explained in chapter 9). The line “host=dynamic” provides a dynamic registration of the phone’s IP address.
 
-Step 5: Configure the extensions.conf file to test your IAX device.
+3. Download and install an IAX2-capable soft-phone. You can choose any soft-phone that still supports the IAX2 protocol for the lab.
+4. Configure an IAX account in the client (typically *Add account* → IAX). Note that the SipPulse Softphone is SIP-only and cannot register over IAX2, so for IAX testing you need a client that still supports the protocol.
+
+5. Configure the `extensions.conf` file to test your IAX device.
 
 ```
 [default]
@@ -2931,7 +2941,10 @@ All the previous scenarios assume that the Asterisk server has an external (vali
 
 ![Asterisk behind NAT: a firewall maps the public address 200.180.4.168 to the internal Asterisk server (192.168.1.100), forwarding SIP on UDP 5060 and the RTP range UDP 10000–20000 defined in rtp.conf](../images/07-sip-and-pjsip-fig13.png)
 
-Step 1: Configure the firewall to redirect the UDP port 5060 statically to the Asterisk server. Step 2: Configure the firewall to redirect the UDP ports from 10000 to 20000 statically. If you want to restrict the number of opened ports, you can edit the rtp.conf file to change the RTP port range. Another way is to use an intelligent firewall that supports the SIP protocol to open the RTP ports dynamically.
+1. Configure the firewall to redirect the UDP port 5060 statically to the Asterisk server.
+2. Configure the firewall to redirect the UDP ports from 10000 to 20000 statically.
+
+If you want to restrict the number of opened ports, you can edit the `rtp.conf` file to change the RTP port range. Another way is to use an intelligent firewall that supports the SIP protocol to open the RTP ports dynamically.
 
 ```
 ; RTP Configuration

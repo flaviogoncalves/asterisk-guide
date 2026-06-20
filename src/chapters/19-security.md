@@ -44,7 +44,9 @@ The DOS is applied usually thru techniques such as fuzzing and flooding. Floodin
 
 My recommendations are
 
-1. Do not expose your Asterisk server on the Internet, unless necessary with proper protection (SBC) 2. In the internal network use a Virtual LAN for voice, mainly if you are in a University, College where the number of users is high. 3. Use VPN or TLS for external access.
+1. Do not expose your Asterisk server on the Internet, unless necessary with proper protection (SBC)
+2. In the internal network use a Virtual LAN for voice, mainly if you are in a University, College where the number of users is high.
+3. Use VPN or TLS for external access.
 
 ### Internet Revenue Share Fraud
 
@@ -148,57 +150,63 @@ IPTABLES or netfilter is a standard firewall present in most Linux distributions
 3. Allow SIP traffic in UDP and TCP the ports 5060
 4. Allow RTP traffic in the UDP media port range. There is no single built-in default — Asterisk's own `rtp.conf` falls back to ports 5000–31000 when nothing is set, but the shipped `rtp.conf.sample` configures `rtpstart=10000` / `rtpend=20000`, so we use that example range here. Match your firewall rule to whatever `rtpstart`/`rtpend` you actually set in `rtp.conf`.
 
-Make sure you have console access to the server, you don't want to block yourself out of the system. Be careful. Step 1 - Install the package net-persistent.
+Make sure you have console access to the server, you don't want to block yourself out of the system. Be careful.
 
-```
-sudo apt-get install iptables-persistent
-```
+1. Install the package net-persistent.
 
-Step 2 - Allow all traffic from the loopback
+   ```
+   sudo apt-get install iptables-persistent
+   ```
 
-```
-sudo iptables -I INPUT -i lo -j ACCEPT
-sudo iptables -I OUTPUT -o lo -j ACCEPT
-```
+2. Allow all traffic from the loopback
 
-Step 3 - Allow established connections
+   ```
+   sudo iptables -I INPUT -i lo -j ACCEPT
+   sudo iptables -I OUTPUT -o lo -j ACCEPT
+   ```
 
-```
-sudo iptables -I INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-```
+3. Allow established connections
 
-Step 4 - Allow SSH/HTTPS traffic from the network 192.168.0.0
+   ```
+   sudo iptables -I INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+   ```
 
-```
-sudo iptables -I INPUT -p tcp -s 192.168.0.0/16 --dport 22 -m conntrack --ctstate
-NEW,ESTABLISHED -j ACCEPT
-sudo iptables -I INPUT -p tcp -s 192.168.0.0/16 --dport 443 -m conntrack --ctstate
-NEW,ESTABLISHED -j ACCEPT
-```
+4. Allow SSH/HTTPS traffic from the network 192.168.0.0
 
-Step 5 - Insert the Asterisk rules
+   ```
+   sudo iptables -I INPUT -p tcp -s 192.168.0.0/16 --dport 22 -m conntrack --ctstate
+   NEW,ESTABLISHED -j ACCEPT
+   sudo iptables -I INPUT -p tcp -s 192.168.0.0/16 --dport 443 -m conntrack --ctstate
+   NEW,ESTABLISHED -j ACCEPT
+   ```
 
-```
-sudo iptables -I INPUT -p udp -m udp --dport 5060 -j ACCEPT
-sudo iptables -I INPUT -p tcp -m tcp --dport 5060 -j ACCEPT
-sudo iptables -I INPUT -p tcp -m tcp --dport 5061 -j ACCEPT
-sudo iptables -I INPUT -p udp -m udp --dport 10000:20000 -j ACCEPT
-```
+5. Insert the Asterisk rules
 
-Note that port 5061 (SIP over TLS) is **TCP**, not UDP. The rules above open 5060 on both UDP and TCP and 5061 on TCP. If you only run TLS, you can drop the plain 5060 rules entirely. Only open the ports your PJSIP transports actually bind to.
+   ```
+   sudo iptables -I INPUT -p udp -m udp --dport 5060 -j ACCEPT
+   sudo iptables -I INPUT -p tcp -m tcp --dport 5060 -j ACCEPT
+   sudo iptables -I INPUT -p tcp -m tcp --dport 5061 -j ACCEPT
+   sudo iptables -I INPUT -p udp -m udp --dport 10000:20000 -j ACCEPT
+   ```
 
--I means PREPEND Step 6 - The last rule has to be a drop
+   Note that port 5061 (SIP over TLS) is **TCP**, not UDP. The rules above open 5060 on both UDP and TCP and 5061 on TCP. If you only run TLS, you can drop the plain 5060 rules entirely. Only open the ports your PJSIP transports actually bind to.
 
-```
-sudo iptables -A INPUT -j DROP
-```
+   `-I` means PREPEND
 
--A means APPEND Note: Take care when maintaining new rules, you have to add rules before the DROP. Use PREPEND for new rules -I Step 7 - Save the rules and restart iptables
+6. The last rule has to be a drop
 
-```
-sudo iptables-save >/etc/iptables/rules.v4
-sudo /etc/init.d/netfilter-persistent restart
-```
+   ```
+   sudo iptables -A INPUT -j DROP
+   ```
+
+   `-A` means APPEND. Note: Take care when maintaining new rules, you have to add rules before the DROP. Use PREPEND for new rules `-I`
+
+7. Save the rules and restart iptables
+
+   ```
+   sudo iptables-save >/etc/iptables/rules.v4
+   sudo /etc/init.d/netfilter-persistent restart
+   ```
 
 ### Using Fail2Ban to block multiple failed attempts to authenticate
 
@@ -231,38 +239,41 @@ failregex = ^SecurityEvent="(?:FailedACL|InvalidAccountID|ChallengeResponseFaile
 
 PBX distributions (FreePBX/Sangoma) ship equivalent filters. Prefer the packaged filter over hand-writing one, since the exact event strings are version-dependent. One caveat to be aware of: a now-patched advisory (GHSA-5743-x3p5-3rg7) showed that crafted PJSIP traffic could inject fake log lines — keep both Asterisk and your Fail2Ban filter current.
 
-Below I provide the instructions to install Fail2Ban Step 1 – Install fail2ban on Linux
+Below I provide the instructions to install Fail2Ban
 
-```
-sudo apt-get install fail2ban
-```
+1. Install fail2ban on Linux
 
-Step 2 - Activate fail2ban for Asterisk and SSH
+   ```
+   sudo apt-get install fail2ban
+   ```
 
-```
-sudo vi /etc/fail2ban/jails.d/defaults-debian.conf
-```
+2. Activate fail2ban for Asterisk and SSH
 
-Add the following lines to activate fail2ban for ssh and asterisk
+   ```
+   sudo vi /etc/fail2ban/jails.d/defaults-debian.conf
+   ```
 
-```
-[sshd]
-enabled = true
-[asterisk]
-enabled=true
-```
+   Add the following lines to activate fail2ban for ssh and asterisk
 
-Step 3 - Restart fail2ban
+   ```
+   [sshd]
+   enabled = true
+   [asterisk]
+   enabled=true
+   ```
 
-```
-/etc/init.d/fail2ban restart
-```
+3. Restart fail2ban
 
-Step 4 - Verify Change the secret from your softphone and try to re-register 10 times Using iptables -L, check if the softphone address was included as a blocked address. Step 5 - Remove the address from the ban (suppose the address is 192.168.0.5)
+   ```
+   /etc/init.d/fail2ban restart
+   ```
 
-```
-sudo fail2ban-client set asterisk unbanip 192.168.0.5
-```
+4. Verify. Change the secret from your softphone and try to re-register 10 times. Using `iptables -L`, check if the softphone address was included as a blocked address.
+5. Remove the address from the ban (suppose the address is 192.168.0.5)
+
+   ```
+   sudo fail2ban-client set asterisk unbanip 192.168.0.5
+   ```
 
 Note: In the command replace 192.168.0.5 by the ip address of your phone
 
@@ -280,7 +291,9 @@ There are two types of certificates you can use self-signed and commercial. Self
 
 #### Configuring TLS with self signed certificates
 
-Below is a step-by-step guide on how to implement TLS. We first generate the certificates, then configure the PJSIP TLS transport (see "Configuring TLS with chan_pjsip"), and finally point the softphone at it. We will use the SipPulse Softphone, which supports TLS and SRTP natively. (Any TLS/SRTP-capable SIP softphone works the same way.) Step 1. Create a private RSA key using 3DES encryption with length of 4096 bits for our certification authority. The command below present in /usr/src/asterisk-22.x.y/contrib/scripts will create the Certification Authority and The Asterisk Certificate. As usual adapt the instructions if required, versions change, directories change. Please, pay attention on what you are doing. Use your domain or IP address in the –C option. The command ast_tls_cert has three options.
+Below is a step-by-step guide on how to implement TLS. We first generate the certificates, then configure the PJSIP TLS transport (see "Configuring TLS with chan_pjsip"), and finally point the softphone at it. We will use the SipPulse Softphone, which supports TLS and SRTP natively. (Any TLS/SRTP-capable SIP softphone works the same way.)
+
+**Step 1.** Create a private RSA key using 3DES encryption with length of 4096 bits for our certification authority. The command below present in /usr/src/asterisk-22.x.y/contrib/scripts will create the Certification Authority and The Asterisk Certificate. As usual adapt the instructions if required, versions change, directories change. Please, pay attention on what you are doing. Use your domain or IP address in the –C option. The command ast_tls_cert has three options.
 
 - -C host or IP address (I have used 192.168.0.74, the IP address of my VM)
 - -O Organizational name
@@ -325,17 +338,25 @@ Combining key and crt into /etc/asterisk/keys/asterisk.pem
 root@asterisk:/usr/src/asterisk-22.0.0/contrib/scripts#
 ```
 
-I’m not going to generate a client certificate because we are not going to use the certificate to authenticate the client. The client is not required to present its own certificate. Step 2: Configure Asterisk to support our client over TLS. This is done in `pjsip.conf` (a TLS transport plus the endpoint settings) — the full configuration is shown in the next section, "Configuring TLS with chan_pjsip." We are not authenticating using certificates, just encrypting the traffic.
+I’m not going to generate a client certificate because we are not going to use the certificate to authenticate the client. The client is not required to present its own certificate.
 
-Step 3: Install a TLS-capable SIP softphone (the author uses the SipPulse Softphone). Step 4: Copy the certificate authority to the computer running the softphone. After installing it, copy the file /etc/asterisk/keys/ca.crt to the computer running the softphone (use scp, or WinSCP on Windows) if you are using a self-signed certificate. Step 5: Create the account in the softphone. In the account screen add the account normally like any other sip account. Use the right password, the authentication is still based on the password. Step 6: Set TLS as the transport in the account settings. In the SipPulse Softphone account screen (below), choose **TLS** as the transport and use port 5061. Adjust your firewall to open TCP port 5061.
+**Step 2.** Configure Asterisk to support our client over TLS. This is done in `pjsip.conf` (a TLS transport plus the endpoint settings) — the full configuration is shown in the next section, "Configuring TLS with chan_pjsip." We are not authenticating using certificates, just encrypting the traffic.
+
+**Step 3.** Install a TLS-capable SIP softphone (the author uses the SipPulse Softphone).
+
+**Step 4.** Copy the certificate authority to the computer running the softphone. After installing it, copy the file `/etc/asterisk/keys/ca.crt` to the computer running the softphone (use scp, or WinSCP on Windows) if you are using a self-signed certificate.
+
+**Step 5.** Create the account in the softphone. In the account screen add the account normally like any other sip account. Use the right password, the authentication is still based on the password.
+
+**Step 6.** Set TLS as the transport in the account settings. In the SipPulse Softphone account screen (below), choose **TLS** as the transport and use port 5061. Adjust your firewall to open TCP port 5061.
 
 ![The SipPulse Softphone account screen — enter the Server (your Asterisk IP or domain), Username, Password, and Display Name, then choose the Transport (UDP, TCP, or TLS).](../images/softphone/sipphone-account.png){width=35%}
 
-Step 7: Trust the certificate authority. If your Asterisk TLS certificate is signed by a public CA (for example Let's Encrypt — see the *Deployment* chapter), a modern softphone such as the SipPulse Softphone trusts it automatically through the system certificate store, with no manual import. If you use a self-signed certificate, import its CA (`/etc/asterisk/keys/ca.crt`) into the client or the operating-system trust store, or accept it when prompted.
+**Step 7.** Trust the certificate authority. If your Asterisk TLS certificate is signed by a public CA (for example Let's Encrypt — see the *Deployment* chapter), a modern softphone such as the SipPulse Softphone trusts it automatically through the system certificate store, with no manual import. If you use a self-signed certificate, import its CA (`/etc/asterisk/keys/ca.crt`) into the client or the operating-system trust store, or accept it when prompted.
 
-Step 8: You do **not** need a client certificate. A common misconception is that each phone needs its own certificate to authenticate — it does not. At this point Asterisk only *encrypts* the session; authentication is still username and password. Asterisk does not verify client certificates by default, so there is no need to distribute a per-client certificate.
+**Step 8.** You do **not** need a client certificate. A common misconception is that each phone needs its own certificate to authenticate — it does not. At this point Asterisk only *encrypts* the session; authentication is still username and password. Asterisk does not verify client certificates by default, so there is no need to distribute a per-client certificate.
 
-Step 9: After changing the certificate or transport, fully restart the softphone (quit and relaunch, not just close the window) so it reconnects over the new transport.
+**Step 9.** After changing the certificate or transport, fully restart the softphone (quit and relaunch, not just close the window) so it reconnects over the new transport.
 
 ### Configuring TLS with chan_pjsip
 
@@ -478,7 +499,9 @@ a=sendrecv
 
 #### Configuring SRTP on Asterisk
 
-To configure SRTP on Asterisk is very simple. Set `media_encryption=sdes` on the endpoint; you can also require it with `media_encryption_optimistic=no` so that unencrypted media is rejected rather than silently allowed. Note that SDES requires the signalling to run over TLS so the keys are not sent in the clear. Step 1: Asterisk configuration
+To configure SRTP on Asterisk is very simple. Set `media_encryption=sdes` on the endpoint; you can also require it with `media_encryption_optimistic=no` so that unencrypted media is rejected rather than silently allowed. Note that SDES requires the signalling to run over TLS so the keys are not sent in the clear.
+
+**Step 1.** Asterisk configuration
 
 Set the following on the `type=endpoint` section in `pjsip.conf`:
 
@@ -495,7 +518,7 @@ media_encryption=sdes
 media_encryption_optimistic=no
 ```
 
-Step 2: Softphone configuration
+**Step 2.** Softphone configuration
 
 In the softphone, enable SRTP for the account media (set the **SRTP (Media Encryption)** option to *Mandatory*) so that voice is encrypted.
 

@@ -448,20 +448,23 @@ To debug, use agi debug.
 
 ### Using AGI
 
-In this example, we will use php-cli, the php command line version. Install php-cli if it’s not already installed. Follow these steps to use php AGI scripts. Step 1: All AGI scripts are located in /var/lib/asterisk/agi-bin Step 2: Change the permissions to allow execution.
+In this example, we will use php-cli, the php command line version. Install php-cli if it’s not already installed. Follow these steps to use php AGI scripts.
+
+1. All AGI scripts are located in `/var/lib/asterisk/agi-bin`
+2. Change the permissions to allow execution.
 
 ```
 chmod 755 *.php
 ```
 
-Step 3: Shell interface (php specific). The script’s first lines have to be:
+3. Shell interface (php specific). The script’s first lines have to be:
 
 ```
 #!/usr/bin/php -q
 <?php
 ```
 
-Step 4: Open I/O channels:
+4. Open I/O channels:
 
 ```
 $stdin = fopen('php://stdin', 'r');
@@ -469,7 +472,7 @@ $stdout = fopen('php://stdout', 'w');
 $stdlog = fopen('agi.log', 'w');
 ```
 
-Step 5: Manage the Asterisk output. Asterisk sends the information set each time AGI is called.
+5. Manage the Asterisk output. Asterisk sends the information set each time AGI is called.
 
 ```
 agi_request:testephp
@@ -510,7 +513,9 @@ The previous script will create an array named $agi. Available options are:
 - agi_priority – Priority
 - agi_accountcode – Originating account code
 
-To call a variable named agi_extensions, use $agi[agi_extensions]. Step 6: Use channel AGI At this point, you can start talking to Asterisk. Use the fputs command to send commands to AGI. You can also use the echo command.
+To call a variable named agi_extensions, use $agi[agi_extensions].
+
+6. Use channel AGI. At this point, you can start talking to Asterisk. Use the fputs command to send commands to AGI. You can also use the echo command.
 
 ```
 fputs($stdout,"SAY NUMBER 4000 '79#' \n");
