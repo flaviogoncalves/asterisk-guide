@@ -363,6 +363,10 @@ contacts are reachable. From the lab:
  Endpoint:  6002                                                 Unavailable   0 of inf
      InAuth:  6002/6002
         Aor:  6002                                               1
+ Endpoint:  sipp                                                 Unavailable   0 of inf
+        Aor:  sipp                                               1
+   Identify:  sipp-identify/sipp
+        Match: 172.30.0.0/24
  Endpoint:  webrtc-1000                                          Unavailable   0 of inf
      InAuth:  webrtc-1000/webrtc-1000
         Aor:  webrtc-1000                                        1
