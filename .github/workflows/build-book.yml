@@ -23,8 +23,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             pandoc \
             texlive-xetex texlive-fonts-recommended texlive-latex-extra \
-            texlive-lang-cjk texlive-lang-chinese texlive-lang-japanese \
-            fonts-dejavu lmodern fonts-texgyre fonts-noto-cjk fonts-noto-core
+            texlive-lang-cjk texlive-lang-chinese texlive-lang-japanese texlive-lang-arabic \
+            fonts-dejavu lmodern fonts-texgyre fonts-noto-cjk fonts-noto-core fonts-hosny-amiri
           pandoc --version | head -1
 
       - name: Build English PDF, EPUB and LaTeX (+ sponsored PDF)
@@ -44,7 +44,7 @@ jobs:
             echo "GEMINI_API_KEY secret not set — skipping translated editions."
             exit 0
           fi
-          for L in pt es fr de it hi zh ja; do
+          for L in pt es fr de it hi zh ja ar; do
             python3 book/translate/translate.py --lang "$L" || { echo "::warning::translate $L failed"; continue; }
             python3 book/translate/translate.py --lang "$L" --src book/sponsors --only sponsors.md --out "i18n/$L" \
               || echo "::warning::sponsor-page translate $L failed"
@@ -84,3 +84,5 @@ jobs:
             build/asterisk-guide-sponsored-zh.epub
             build/asterisk-guide-sponsored-ja.pdf
             build/asterisk-guide-sponsored-ja.epub
+            build/asterisk-guide-sponsored-ar.pdf
+            build/asterisk-guide-sponsored-ar.epub

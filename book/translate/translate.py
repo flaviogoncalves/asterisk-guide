@@ -40,7 +40,8 @@ DEFAULT_MODEL = os.environ.get("GEMINI_TRANSLATE_MODEL", "gemini-flash-lite-late
 KEY_NAMES = ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY")
 LANG_NAMES = {"pt": "Brazilian Portuguese (pt-BR)", "es": "Latin American Spanish (es)",
               "fr": "French", "de": "German", "it": "Italian", "hi": "Hindi",
-              "zh": "Simplified Chinese (Mandarin)", "ja": "Japanese"}
+              "zh": "Simplified Chinese (Mandarin)", "ja": "Japanese",
+              "ar": "Modern Standard Arabic"}
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 

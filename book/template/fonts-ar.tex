@@ -1,0 +1,15 @@
+% Arabic edition — RIGHT-TO-LEFT. The document metadata (lang: ar, dir: rtl) makes pandoc's
+% xelatex template load polyglossia with Arabic as the main language plus the bidi package, so
+% the body flows right-to-left automatically. This header points the Arabic typesetting at an
+% Arabic-capable font (Amiri, from fonts-hosny-amiri) for body text and headings; code blocks,
+% inline code, and URLs keep the Latin monospace font set in interior.tex.
+%
+% Loaded AFTER interior.tex, so these \setmainfont/\setsansfont calls override the TeX Gyre
+% Latin faces for the Arabic build only.
+\setmainfont{Amiri}[Script=Arabic]
+\setsansfont{Amiri}[Script=Arabic]
+\newfontfamily\arabicfont[Script=Arabic]{Amiri}
+% Latin words that appear inside Arabic prose (mostly product/option names) — give polyglossia
+% a Latin face so they don't fall back to a missing glyph.
+\setotherlanguage{english}
+\newfontfamily\englishfont{TeX Gyre Pagella}

@@ -14,18 +14,19 @@ INTERIOR="$ROOT/book/template/interior.tex"
 mkdir -p "$OUT"
 
 # Language selection: en (default) or a translated edition under i18n/<lang>/.
-# Supported: en pt es fr de it hi zh ja.  hi/zh/ja add a Devanagari/CJK font header.
+# Supported: en pt es fr de it hi zh ja ar.  hi/zh/ja add a Devanagari/CJK font header;
+# ar adds an Arabic (RTL) font header.
 BOOK_LANG="${BOOK_LANG:-en}"
 FONTHDR=""
 case "$BOOK_LANG" in
   en) SRC="$ROOT/src/chapters"; META="$ROOT/book/metadata.yaml"; SUF="" ;;
-  pt|es|fr|de|it|hi|zh|ja)
+  pt|es|fr|de|it|hi|zh|ja|ar)
       SRC="$ROOT/i18n/$BOOK_LANG/chapters"
       META="$ROOT/book/metadata-$BOOK_LANG.yaml"
       SUF="-$BOOK_LANG" ;;
-  *)  echo "Unknown BOOK_LANG '$BOOK_LANG' (use en|pt|es|fr|de|it|hi|zh|ja)" >&2; exit 1 ;;
+  *)  echo "Unknown BOOK_LANG '$BOOK_LANG' (use en|pt|es|fr|de|it|hi|zh|ja|ar)" >&2; exit 1 ;;
 esac
-case "$BOOK_LANG" in hi|zh|ja) FONTHDR="$ROOT/book/template/fonts-$BOOK_LANG.tex" ;; esac
+case "$BOOK_LANG" in hi|zh|ja|ar) FONTHDR="$ROOT/book/template/fonts-$BOOK_LANG.tex" ;; esac
 # Sponsor page: English source, or the translated one for a translated edition.
 SPONSORS="$ROOT/book/sponsors/sponsors.md"
 [ "$BOOK_LANG" != "en" ] && SPONSORS="$ROOT/i18n/$BOOK_LANG/sponsors.md"

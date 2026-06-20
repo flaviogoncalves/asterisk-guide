@@ -22,8 +22,8 @@ Grab them from **Releases**, or build any branch from **Actions → latest run �
 
 ### Translated editions (preview — off by default)
 
-The book also builds in **8 more languages** (pt, es, fr, de, it, hi, zh, ja) — machine-translated
-with Gemini, figures kept in English. **These are gated off until the translations are verified**:
+The book also builds in **9 more languages** (pt, es, fr, de, it, hi, zh, ja, ar) — machine-translated
+with Gemini, figures kept in English. Arabic (ar) is typeset right-to-left. **These are gated off until the translations are verified**:
 CI builds and releases them only when the repo variable **`BUILD_TRANSLATIONS`** is set to `true`
 (and the `GEMINI_API_KEY` secret exists). Until then, every release is **English only**. Build one
 locally any time with `BOOK_LANG=pt bash book/build.sh` (sponsored PDF + EPUB).
