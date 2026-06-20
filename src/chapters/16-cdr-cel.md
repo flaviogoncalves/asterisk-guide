@@ -34,10 +34,12 @@ Asterisk generates a call detail record (CDR) for each call. These records are s
 | Amaflags | Flags (DEFAULT, OMIT, BILLING, DOCUMENTATION) | String |
 | Userfield | User-defined field | String |
 
-Sample of a CSV file. Each line is one record; the fields are, in order:
-`accountcode,src,dst,dcontext,clid,channel,dstchannel,lastapp,lastdata,start,answer,end,duration,billsec,disposition,amaflags`.
+Sample of a CSV file. Each line is one record; the fields appear in the same
+order as the table above (`accountcode` first, `amaflags` last):
 
 ```text
+# accountcode,src,dst,dcontext,clid,channel,dstchannel,lastapp,lastdata,
+#   start,answer,end,duration,billsec,disposition,amaflags
 "1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-5f30","PJSIP/8584-9153","Dial","PJSIP/8584,30,tT","2006-03-27 16:05:00","2006-03-27 16:05:00","2006-03-27 16:05:00","0","0","ANSWERED","DOCUMENTATION"
 "1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-96f5","PJSIP/8584-3312","Dial","PJSIP/8584,30,tT","2006-03-27 16:16:00","2006-03-27 16:16:00","2006-03-27 16:16:00","0","0","ANSWERED","BILLING"
 "1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-74ac","PJSIP/8584-297b","Dial","PJSIP/8584,30,tT","2006-03-27 16:22:00","2006-03-27 16:22:00","2006-03-27 16:22:00","0","0","ANSWERED","BILLING"
