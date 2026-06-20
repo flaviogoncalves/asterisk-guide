@@ -173,7 +173,7 @@ The PSTN baseline is **G.711** — it is the reference for "toll" quality and tr
 
 ## Overhead caused by protocol headers
 
-Despite the fact that codecs make little use of bandwidth, we have to consider the overhead caused by protocol headers like Ethernet, IP, UDP, and RTP.As such, we could say that bandwidth depends upon the headers used. If we are in an Ethernet network, the bandwidth requirement is higher than in a PPP network because the PPP header is shorter than the Ethernet one. Let’s look through some examples: Ethernet Destination G.729 coded (20) UDP Header (8) Ethernet Type (2) Ethernet Source IP Header (20) RTP Header (12) Voice Payload Checksum (4) Address (6) Address (6) Ethernet Codec g.711 (64 Kbps)
+Despite the fact that codecs make little use of bandwidth, we have to consider the overhead caused by protocol headers such as Ethernet, IP, UDP, and RTP. As such, the bandwidth actually consumed depends on the headers used. On an Ethernet network the requirement is higher than on a PPP network, because the PPP header is shorter than the Ethernet one. A single G.729 voice packet, for example, carries only 20 bytes of payload but is wrapped in roughly 58 bytes of Ethernet, IP, UDP, and RTP headers — so the headers, not the codec, dominate the bandwidth (see the figure below).
 
 ![A single g.729 voice packet on Ethernet: 20 bytes of payload wrapped in 58 bytes of Ethernet, IP, UDP, and RTP headers — a g.729 conversation consumes 31.2 Kbps.](../images/06-voip-network-fig05.png)
 
@@ -288,7 +288,7 @@ Example:
 allow=ulaw:30
 ```
 
-The permitted values are: Name Min Max Default Increment g723 gsm ulaw alaw g726 ADPCM SLIN lpc10 g729 speex ilbc
+The number after the colon is the packetization interval in milliseconds — how much voice is carried in each RTP packet. A larger value amortizes the fixed header overhead across more audio (less bandwidth) at the cost of added latency. Each codec has its own minimum, maximum, and default frame size; G.711 (`ulaw`/`alaw`), for instance, defaults to 20 ms.
 
 ## Summary
 
