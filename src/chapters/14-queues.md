@@ -1,6 +1,6 @@
 # Call Queues
 
-Call queues also know as ACD (Automatic Call Distribution) are becoming increasingly important for answering customer calls efficiently. An automatic call distributor can help reduce costs, increase service, and improve sales as call distributors affect how your business works—not for a few days, but for many years. In a call center environment, the number one factor is people; they are the most expensive resource. It takes time, money, and patience to hire, train, and motivate agents. With an ACD, you can maximize agents’ productivity by precisely dimensioning the number of agents required, controlling good and bad attendants, and analyzing the call flow.
+Call queues, also known as ACD (Automatic Call Distribution) are becoming increasingly important for answering customer calls efficiently. An automatic call distributor can help reduce costs, increase service, and improve sales as call distributors affect how your business works—not for a few days, but for many years. In a call center environment, the number one factor is people; they are the most expensive resource. It takes time, money, and patience to hire, train, and motivate agents. With an ACD, you can maximize agents’ productivity by precisely dimensioning the number of agents required, controlling good and bad attendants, and analyzing the call flow.
 
 ## Objectives
 
@@ -35,7 +35,7 @@ The ACD architecture is formed by queues and agents. One agent can be in two que
 
 ## Queues
 
-Queues are defined in the queues.conf configuration file. Agents are attendants who log in and are members of queues. Agents are defined in the agents.conf file. The queue system has grown significantly over many releases, making the configuration file extensive. We will explain some of the major parameters. General parameters
+Queues are defined in the queues.conf configuration file. Agents are attendants who log in and are members of queues. Agents are defined in the agents.conf file. The queue system has grown significantly over many releases, making the configuration file extensive. We will explain some of the major parameters. One general parameter worth highlighting is `autofill`:
 
 ```
 autofill=yes
@@ -57,13 +57,13 @@ You can configure your agents in the file agents.conf. Agents can log in from an
 Dial(agent/<name>)
 ```
 
-#### Agents
+#### Agent login
 
-Agent 300
+The login flow for Agent 300 works like this:
 
-- You can check the status of the agents using the command `agent show all`
-- the command agentlogin is executed and the agent is associated with the current channel.
-- The user dials an extension with the application agentlogin .
+- The user dials an extension that runs the `AgentLogin()` application.
+- `AgentLogin()` is executed and the agent is associated with the current channel.
+- You can check the status of the agents using the command `agent show all`.
 
 ![Agents: a user logs in by dialing an extension that runs the agentlogin application, which binds Agent 300 to the current channel; you can check agent status with `agent show all`](../images/14-queues-fig04.png)
 
@@ -107,7 +107,7 @@ Calls are distributed among members according to one of these strategies:
 - rrordered: Same as rrmemory, except the queue member order from the config file is preserved.
 - linear: Rings members in the order they are listed in queues.conf; for dynamic members, in the order they were added.
 
-The older `roundrobin` strategy was deprecated back in Asterisk 1.4 and removed; it no longer exists in Asterisk 22. Use `rrmemory` (or `rrordered`) instead. The strategies above are the complete set accepted by the `strategy` option in the Asterisk 22 `queues.conf`.
+The older `roundrobin` strategy was deprecated back in Asterisk 1.4. It is no longer a documented strategy and should not be used: in Asterisk 22 the parser still accepts the word `roundrobin`, but only as a backward-compatibility alias that maps to `rrmemory`. Use `rrmemory` (or `rrordered`) explicitly instead. The list above is the set of documented strategies for the `strategy` option in the Asterisk 22 `queues.conf`.
 
 ## Agents
 
@@ -117,13 +117,11 @@ Agents are implemented as proxy channels. They can be used inside the queues. An
 
 ### Agent Groups
 
-You may choose to use agent groups. This function does not take ACD strategies into consideration. You will probably prefer to list all agents individually. If you want to transfer to an agent group, you
+You may choose to use agent groups. This function does not take ACD strategies into consideration. You will probably prefer to list all agents individually. If you want to transfer to an agent group, you can use `queues.conf`:
 
 ```
-can use queues.conf:
-member=>agent/@1 ;any agent in group 1
-member=>agent/:1,1 ;any agent in group 1, wait for first available, ;do not
-use agent groups.
+member => agent/@1    ; any agent in group 1
+member => agent/:1,1  ; any agent in group 1, wait for first available
 ```
 
 ### The configuration file for agents
@@ -138,7 +136,7 @@ The Asterisk queue system makes several applications available to implement the 
 
 ### The application queue()
 
-This applications queues incoming calls into a particular call queue as defined in queues.conf. The option string may contain zero or more of the following characters: In addition to transferring the call, a call may be parked and then picked up by another user. The optional URL will be sent to the called party if the channel supports it. The optional AGI parameter will set up an AGI script to be executed on the calling party's channel once they are connected to a queue member. The timeout will cause the queue to fail out after a specified number of seconds, checked between each timeout and retry cycle. This application sets the QUEUE status variable upon completion:
+This application queues incoming calls into a particular call queue as defined in queues.conf. The option string may contain zero or more single-letter options (shown in the figure below). In addition to transferring the call, a call may be parked and then picked up by another user. The optional URL will be sent to the called party if the channel supports it. The optional AGI parameter will set up an AGI script to be executed on the calling party's channel once they are connected to a queue member. The timeout will cause the queue to fail out after a specified number of seconds, checked between each timeout and retry cycle. This application sets the QUEUE status variable upon completion:
 
 ![The queue() application: its syntax `Queue(queuename[|options[|URL][|announceoverride][|timeout][|AGI]])` and the available single-letter options (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
 
@@ -267,10 +265,9 @@ agent => 600,600,Test Ver - 600
 agent => 601,601,Test Ver . 601
 ```
 
-Step 4: Insert the queue in the dial plan
+Step 4: Insert the queue in the dial plan, in the file `extensions.conf`:
 
 ```
-In the file extensions.conf:
 ; Telemarketing queue.
 exten=>_0800XXXXXXX,1,Answer
 exten=>_0800XXXXXXX,2,Set(CHANNEL(musicclass)=default)
@@ -279,7 +276,7 @@ exten=>_0800XXXXXXX,4,Set(TIMEOUT(response)=10)
 exten=>_0800XXXXXXX,5,Background(welcome)
 exten=>_0800XXXXXXX,6,Queue(telemarketing)
 ; Transfer to the queue auditing
-exten => 8000,1,Queue,(auditing)
+exten => 8000,1,Queue(auditing)
 exten => 8000,2,Playback(demo-echotest); No auditor available
 exten => 8000,3,Goto(8000,1) ; Verify auditor again
 ; Agent login for the telemarketing and auditing queues
@@ -289,11 +286,7 @@ exten => 9000,2,AgentLogin()
 
 ### Configure queue recording
 
-Calls may be recorded using Asterisk's MixMonitor application. (The standalone Monitor application was removed in Asterisk 22, and the queues.conf `monitor-type` option now accepts only MixMonitor.) Recording can be enabled from within the queue application, beginning when the call is actually picked up. Only successful calls are recorded, and no recordings are performed while people are listening to MOH. To enable monitoring, simply specify monitor-format. This feature is otherwise disabled. You can set the filename for the recording using Set (MONITOR_FILENAME=<filename>); otherwise
-
-```
-it will use MONITOR_FILENAME=${UNIQUEID}.
-```
+Calls may be recorded using Asterisk's MixMonitor application. (The standalone Monitor application was removed in Asterisk 22, and the queues.conf `monitor-type` option now accepts only MixMonitor.) Recording can be enabled from within the queue application, beginning when the call is actually picked up. Only successful calls are recorded, and no recordings are performed while people are listening to MOH. To enable monitoring, simply specify monitor-format. This feature is otherwise disabled. You can set the filename for the recording using `Set(MONITOR_FILENAME=<filename>)`; otherwise it will use `MONITOR_FILENAME=${UNIQUEID}`.
 
 In the file queues.conf:
 
@@ -433,4 +426,4 @@ In this chapter you have learned how to use an ACD, its architecture, and how to
     - A. True
     - B. False
 
-**Answers:** 1 — A, C, D, E, F (roundrobin was replaced by rrmemory and no longer exists) · 2 — `monitor-format` (recording from the queue is enabled by specifying `monitor-format`; `monitor-type` selects MixMonitor vs Monitor) · 3 — C (linear) · 4 — A, B, C (`*` disconnects and stays; `#` is not a log-off-all key) · 5 — A, E · 6 — C (the `context` option) · 7 — A (the dial plan) · 8 — `PJSIP/1001` (any `PJSIP/` interface) · 9 — True · 10 — True
+**Answers:** 1 — A, C, D, E, F (roundrobin is not a documented strategy; in Asterisk 22 it survives only as a deprecated alias for rrmemory) · 2 — `monitor-format` (recording from the queue is enabled by specifying `monitor-format`; in Asterisk 22 `monitor-type` only supports MixMonitor) · 3 — C (linear) · 4 — A, B, C (`*` disconnects and stays; `#` is not a log-off-all key) · 5 — A, E · 6 — C (the `context` option) · 7 — A (the dial plan) · 8 — `PJSIP/1001` (any `PJSIP/` interface) · 9 — True · 10 — True
