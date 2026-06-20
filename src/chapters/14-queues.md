@@ -138,7 +138,7 @@ The Asterisk queue system makes several applications available to implement the 
 
 This application queues incoming calls into a particular call queue as defined in queues.conf. The option string may contain zero or more single-letter options (shown in the figure below). In addition to transferring the call, a call may be parked and then picked up by another user. The optional URL will be sent to the called party if the channel supports it. The optional AGI parameter will set up an AGI script to be executed on the calling party's channel once they are connected to a queue member. The timeout will cause the queue to fail out after a specified number of seconds, checked between each timeout and retry cycle. This application sets the QUEUE status variable upon completion:
 
-![The queue() application: its syntax `Queue(queuename[|options[|URL][|announceoverride][|timeout][|AGI]])` and the available single-letter options (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
+![The queue() application: its syntax `Queue(queuename,options,URL,announceoverride,timeout,AGI)` — Asterisk 22 separates the arguments with commas (the older pipe `|` form is gone) — and the available single-letter options (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
 
 - TIMEOUT
 - FULL
