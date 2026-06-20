@@ -188,7 +188,7 @@ aors=6000
 
 [6000-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=6000
 password=#MySecret1#7
 
@@ -206,7 +206,7 @@ aors=6001
 
 [6001-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=6001
 password=Mys3cr3t#
 
@@ -247,10 +247,13 @@ allow = ulaw
 
 After finishing the general sections, it is time to set up the IAX clients.
 
-- [name]: When a SIP device connects to Asterisk, it uses the username part of the SIP URI to find the peer/user.
-- type: Configures the connection class. Options are peer, user, and friend. o peer: Asterisk sends calls to a peer. o user: Asterisk receives calls from a user. o friend: Both occur at the same time.
-- host: IP address or host name. The most common option is dynamic, which is used when the host registers to Asterisk.
-- secret: Password to authenticate peers and users.
+- `[name]`: The section name is the IAX peer/user name; an incoming IAX connection is matched to it by name.
+- `type`: The connection class — `peer`, `user`, or `friend`:
+  - `peer`: Asterisk sends calls to a peer.
+  - `user`: Asterisk receives calls from a user.
+  - `friend`: both directions at once.
+- `host`: IP address or host name. The most common value is `dynamic`, used when the device registers to Asterisk.
+- `secret`: Password to authenticate peers and users.
 
 Warning: Use strong passwords with at least 8 characters, alphanumeric and numeric characters, and at least one symbol. Reports of hacked servers have appeared in the mailing lists, and brute force password crackers for SIP md5 hashes are available for script kiddies. Toll fraud costs thousands of dollars for consumers and providers. Example:
 
@@ -258,19 +261,17 @@ Warning: Use strong passwords with at least 8 characters, alphanumeric and numer
 [guest]
 type=user
 context=dummy
-callerid=”Guest IAX User”
+callerid="Guest IAX User"
 [6003]
-context=from-internal
 type=friend
+context=from-internal
 secret=#sup3rs3cr3t#
 host=dynamic
-context=from-internal
 [6004]
-context=from-internal
 type=friend
+context=from-internal
 secret=#s3cr3ts3cr3t#
 host=dynamic
-context=from-internal
 ```
 
 ## Configuring the SIP devices
@@ -304,13 +305,13 @@ To connect to the PSTN, you will need an interface foreign exchange office (FXO)
 You can buy an analog card compatible with the DAHDI from several manufacturers. X100P was one of the first Digium cards and had already been discontinued. Some manufacturers still produce similar clones. In addition to the price of the X100P, we have found several issues between these cards and new motherboards, so use it with care. X100P, in my opinion, is not a good choice for a production environment. Any card compatible with DAHDI should work. Thanks to the team of DAHDI developers, we now have a tool for detecting and configuring the interface cards almost automatically. If you have just installed the DAHDI drivers, please don’t forget to run make config and reboot the machine to load it automatically. You can use the commands below to detect and configure your card. Step 1: To detect your hardware, use:
 
 ```
-dahdi_hardware.
+dahdi_hardware
 ```
 
 Step 2: To configure use:
 
 ```
-dahdi_genconf.
+dahdi_genconf
 ```
 
 The command above will generate two files /etc/dahdi/system.conf and /etc/asterisk/dahdi-channels.conf. The default parameters for dahdi_genconf are usually fine, but you can change them in the file /etc/dahdi/genconf_parameters. By default, it will insert the lines (FXO) in the context from-pstn and the phones (FXS) in the context from-internal. Step 3: After running dahdi_genconf, in the last line of the file /etc/asterisk/chan_dahdi.conf insert the following line:
@@ -322,7 +323,7 @@ The command above will generate two files /etc/dahdi/system.conf and /etc/asteri
 Step 4: Edit the file /etc/dahdi/modules and comment for all the unused drivers. Reboot before proceeding and check if the channels are being recognized using:
 
 ```
-CLI>dahdi show channels
+*CLI> dahdi show channels
 ```
 
 ### Connecting to the PSTN using a VoIP provider
@@ -333,7 +334,7 @@ If your budget is really limited, you can configure a SIP trunk to connect to th
 - password: secret
 - Provider’s domain: domain
 - UDP port: 5060
-- Allowed codecs:g729, ilbc, alaw
+- Allowed codecs: g729, ilbc, alaw
 
 Two parameters should be determined by you.
 
@@ -358,7 +359,7 @@ from_domain=domain
 
 [siptrunk-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=login
 password=secret
 
@@ -402,13 +403,13 @@ The extensions.conf file is separated into sections. The first is the [general] 
 
 The general section sits at the top of the file. Before starting to configure the dial plan, it is helpful to know the general options that control certain dial plan behaviors. These options are:
 
-- static and write protect: If static=yes and writeprotect=no, you can use the CLI
+- static and write protect: If `static=yes` and `writeprotect=no`, you can save the running dial plan back to disk with the CLI command:
 
 ```
-command save dialplan.
+*CLI> dialplan save
 ```
 
-Warning: If you issue a save dialplan command from the CLI, you will end up losing any remarks and comments in the file.
+Warning: If you issue a `dialplan save` command from the CLI, you will lose any remarks and comments in the file.
 
 - autofallthrough: If autofallthrough is set, then if an extension runs out of things to do, it will terminate the call with BUSY, CONGESTION, or HANGUP depending on Asterisk's best guess. This is the default. If autofallthrough is not set, then if an extension runs out of things to do, Asterisk will wait for a new extension to be dialed.
 - clearglobalvars: If clearglobalvars is set, global variables will be cleared and reparsed into an dialplan reload or Asterisk reload. If clearglobalvars is not set, then global variables will persist through reloads and—even if deleted from the extensions.conf or one of its included files—they will remain set to the previous value.
@@ -420,7 +421,7 @@ Warning: If you issue a save dialplan command from the CLI, you will end up losi
 In the [globals] section you will define global variables and their initial values. You can access the variable in the dial plan using ${GLOBAL(variable)}. You can even access variables defined in the linux/unix environment using ${ENV(variable)}. Global variables are not case sensitive. A few examples could be:
 
 ```
-INCOMING>DAHDI/8&DAHDI/9
+INCOMING=>DAHDI/8&DAHDI/9
 RINGTIME=>3
 ```
 
@@ -527,9 +528,9 @@ Channel-specific variables are configured using the application set(). Each chan
 Other channel-specific variables are all uppercase. You can see the content of several variables using the dumpchan() application. Below is a simple excerpt of dump-channel variables.
 
 ```
-exten=9001,1,dumnpchan()
-exten=9001,n,echo()
-exten=9001,n,hangup()
+exten=9001,1,DumpChan()
+exten=9001,n,Echo()
+exten=9001,n,Hangup()
 ```
 
 Dumpchan output:
@@ -584,7 +585,7 @@ Environment-specific variables can be used to access variables defined in the op
 
 ```
 ${ENV(LANG)}
-Set(ENV(LANG))=en_US
+Set(ENV(LANG)=en_US)
 ```
 
 ### Application-specific variables
@@ -684,7 +685,7 @@ exten=9002,n,hangup
 Some applications have been replaced by functions, which allow the processing of variables in a more advanced way than expressions alone. You can see the full list of functions by issuing the following console command:
 
 ```
-CLI>core show functions
+*CLI> core show functions
 ```
 
 String length: ${LEN(string)} returns the string length
@@ -739,13 +740,13 @@ ${longdistanceprefix}555${number}
 To build a dial plan, we need to understand the concept of applications. You will use applications to handle the channel in the dial plan. Applications are implemented in several modules. Available applications depend on modules. You can show all Asterisk applications using the console command:
 
 ```
-CLI>core show applications
+*CLI> core show applications
 ```
 
 Alternatively, you can show details of a specific application using the following example:
 
 ```
-CLI>core show application dial
+*CLI> core show application Dial
 ```
 
 To build a simple dial plan, you need to know a few applications. We will discuss more advanced examples later in the book.
@@ -764,9 +765,9 @@ The following description can be obtained by issuing the show application dial i
 
 ```
 ;dial to a single channel
-Dial(type/identifier,timeout,options, URL)
-;Dialing to multiple channels
-Dial(Technology/resource[&Tech2/resource2...][|timeout][|options][|URL]):
+Dial(Technology/resource,timeout,options,URL)
+;dialing to multiple channels
+Dial(Technology/resource[&Tech2/resource2...],timeout,options,URL)
 ```
 
 This application will place calls to one or more specified channels. As soon as one of the requested channels answers, the originating channel will be answered—if it has not already been answered. These two channels will then be active in a bridged call. All other requested channels will then be hung up. Unless a timeout is specified, the Dial application will wait indefinitely until one of the called channels answers, the user hangs up, or all of the called channels are busy or unavailable. The execution of the dial plan will continue if no requested channels can be called or if the timeout expires. This application sets the following channel variables upon completion:
