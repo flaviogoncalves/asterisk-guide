@@ -179,7 +179,7 @@ To get a complete description of the command you can use core show application c
 
 ![Output of `core show application confbridge`, showing the synopsis, syntax, and the bridge_profile, user_profile, and menu arguments](../images/13-pbx-features-fig06.png)
 
-![Several PJSIP endpoints join one named ConfBridge conference (101); one participant is the admin. The mixing and timing are handled by `res_confbridge` and the built-in `res_timing_*` timer — no DAHDI required.](../images/13-pbx-features-fig09.png)
+![Several PJSIP endpoints join one named ConfBridge conference (101); one participant is the admin. The mixing and timing are handled by `app_confbridge` together with `bridge_softmix` and the built-in `res_timing_*` timer — no DAHDI required.](../images/13-pbx-features-fig09.png)
 
 As you can see above there are three important arguments, each mapping to a section type in `confbridge.conf`. **bridge_profile** (a `type=bridge` section): here you select the maximum number of participants (`max_members`), recording (`record_conference`), `video_mode`, and many other bridge-wide parameters.
 
@@ -236,7 +236,7 @@ If you are coming from MeetMe, the admin functions you used through `MeetMeAdmin
 - `participant_count` -- announce the number of participants
 - `leave_conference` -- leave the bridge and continue in the dialplan
 
-These replace the MeetMe `MeetMe()` option flags (`a`, `A`, `m`, `M`, `l`, `x`, …) and the `MeetMeAdmin()` commands (`k`, `K`, `L`, `M`, `N`, …). On a modern PJSIP install you won't be loading `app_meetme` at all; all conference configuration lives in `confbridge.conf`, and changes are applied with `module reload res_confbridge.so`.
+These replace the MeetMe `MeetMe()` option flags (`a`, `A`, `m`, `M`, `l`, `x`, …) and the `MeetMeAdmin()` commands (`k`, `K`, `L`, `M`, `N`, …). On a modern PJSIP install you won't be loading `app_meetme` at all; all conference configuration lives in `confbridge.conf`, and changes are applied with `module reload app_confbridge.so` (the ConfBridge logic lives in `app_confbridge`; there is no `res_confbridge` module).
 
 ### ConfBridge example
 
