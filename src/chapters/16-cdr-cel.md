@@ -34,23 +34,16 @@ Asterisk generates a call detail record (CDR) for each call. These records are s
 | Amaflags | Flags (DEFAULT, OMIT, BILLING, DOCUMENTATION) | String |
 | Userfield | User-defined field | String |
 
-Sample of a CSV file imported into a table.
+Sample of a CSV file. Each line is one record; the fields are, in order:
+`accountcode,src,dst,dcontext,clid,channel,dstchannel,lastapp,lastdata,start,answer,end,duration,billsec,disposition,amaflags`.
 
-| AccountCode | CallerID No. | Extension | Context | CallerID text | Src | Dst |
-|-------------|--------------|-----------|---------|---------------|-----|-----|
-| 1234 | 4830258576 | *72*1234*8584 | admin | "Joana D'Arc" <4830258576> | PJSIP/8576-5f30 | PJSIP/8584-9153 |
-| 1234 | 4830258576 | *72*1234*8584 | admin | "Joana D'Arc" <4830258576> | PJSIP/8576-96f5 | PJSIP/8584-3312 |
-| 1234 | 4830258576 | *72*1234*8584 | admin | "Joana D'Arc" <4830258576> | PJSIP/8576-74ac | PJSIP/8584-297b |
-| 1234 | 4830258576 | 2012348584 | admin | "Joana D'Arc" <4830258576> | PJSIP/8576-2c5d | PJSIP/8584-9870 |
-| 1234 | 4830258584 | 2012348576 | default | "Luis Sample" <4830258584> | PJSIP/8584-03fd | PJSIP/8576-645c |
-
-| Application | Appdata | Start | Answer | End | Dur | Bil | Disposition | Amaflags |
-|-------------|---------|-------|--------|-----|-----|-----|-------------|----------|
-| Dial | PJSIP/8584,30,tT | 27/3/2006 16:05 | 27/3/2006 16:05 | 27/3/2006 16:05 | | | ANSWERED | DOCUMENTATION |
-| Dial | PJSIP/8584,30,tT | 27/3/2006 16:16 | 27/3/2006 16:16 | 27/3/2006 16:16 | | | ANSWERED | BILLING |
-| Dial | PJSIP/8584,30,tT | 27/3/2006 16:22 | 27/3/2006 16:22 | 27/3/2006 16:22 | | | ANSWERED | BILLING |
-| Dial | PJSIP/8584,30,tT | 27/3/2006 16:37 | 27/3/2006 16:37 | 27/3/2006 16:37 | | | ANSWERED | BILLING |
-| Dial | PJSIP/8576,30,tT | 27/3/2006 16:37 | 27/3/2006 16:37 | 27/3/2006 16:37 | | | ANSWERED | BILLING |
+```text
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-5f30","PJSIP/8584-9153","Dial","PJSIP/8584,30,tT","2006-03-27 16:05:00","2006-03-27 16:05:00","2006-03-27 16:05:00","0","0","ANSWERED","DOCUMENTATION"
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-96f5","PJSIP/8584-3312","Dial","PJSIP/8584,30,tT","2006-03-27 16:16:00","2006-03-27 16:16:00","2006-03-27 16:16:00","0","0","ANSWERED","BILLING"
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-74ac","PJSIP/8584-297b","Dial","PJSIP/8584,30,tT","2006-03-27 16:22:00","2006-03-27 16:22:00","2006-03-27 16:22:00","0","0","ANSWERED","BILLING"
+"1234","4830258576","2012348584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-2c5d","PJSIP/8584-9870","Dial","PJSIP/8584,30,tT","2006-03-27 16:37:00","2006-03-27 16:37:00","2006-03-27 16:37:00","0","0","ANSWERED","BILLING"
+"1234","4830258584","2012348576","default","""Luis Sample"" <4830258584>","PJSIP/8584-03fd","PJSIP/8576-645c","Dial","PJSIP/8576,30,tT","2006-03-27 16:37:00","2006-03-27 16:37:00","2006-03-27 16:37:00","0","0","ANSWERED","BILLING"
+```
 
 ## Account codes and automated message accounting
 

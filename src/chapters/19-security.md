@@ -407,44 +407,27 @@ password=supersecret
 
 Step 4: Verifying To verify if the registration happened over TLS use the following command in Asterisk console.
 
-```
-CLI>pjsip show aor blink
+```text
 asterisk*CLI> pjsip show aor blink
-      Aor:  <Aor..............................................>  <MaxContact>
-    Contact:
-```
 
-- <Aor/ContactUri............................>
+      Aor:  <Aor.............................................>  <MaxContact>
+    Contact:  <Aor/ContactUri........................> <Hash....> <Status> <RTT(ms)..>
+==========================================================================================
 
-```
-<Hash....>
-<Status> <RTT(ms)..>
-============================================================================
-==============
       Aor:  blink                                                2
-    Contact:  blink/sip:03694827@192.168.0.67:56295;transp 620d91556d NonQual
-nan
+    Contact:  blink/sip:03694827@192.168.0.67:56295;transp 620d91556d NonQual    nan
  ParameterName        : ParameterValue
  ====================================================================
  authenticate_qualify : false
-```
-
-- contact
-- :
-
-```
-sip:03694827@192.168.0.67:56295;transport=tls
+ contact              : sip:03694827@192.168.0.67:56295;transport=tls
  default_expiration   : 3600
- mailboxes            :
  max_contacts         : 2
  maximum_expiration   : 7200
  minimum_expiration   : 60
- outbound_proxy       :
  qualify_frequency    : 0
  qualify_timeout      : 3.000000
  remove_existing      : true
  support_path         : false
- voicemail_extension  :
 ```
 
 ### Making secure calls using SRTP

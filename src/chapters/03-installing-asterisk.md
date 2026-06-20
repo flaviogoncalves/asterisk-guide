@@ -312,7 +312,9 @@ Valid Options:
 
 Asterisk is installed on several directories, which can be modified in the asterisk.conf file. For training purposes I would change the verbose from 3 to 15, for production keep it in 3. The option max_calls and max_load are good options to protect your system from overloading.
 
-### asterisk.conf
+### asterisk.conf (excerpt)
+
+The `[directories]` section defines where Asterisk keeps its configuration, modules, data, spool, and logs:
 
 ```
 [directories](!) ; remove the (!) to enable this
@@ -327,315 +329,51 @@ astspooldir => /var/spool/asterisk
 astrundir => /var/run/asterisk
 astlogdir => /var/log/asterisk
 astsbindir => /usr/sbin
+```
+
+The `[options]` section holds runtime tuning. The most useful options to know are shown below (uncomment to enable); the file ships with many more, each documented by an inline comment:
+
+```
 [options]
-;verbose = 3
-;debug = 3
-;refdebug = yes                 ; Enable reference count debug logging.
-;alwaysfork = yes               ; Same as -F at startup.
-;nofork = yes                   ; Same as -f at startup.
-;quiet = yes                    ; Same as -q at startup.
-;timestamp = yes                ; Same as -T at startup.
-;execincludes = yes             ; Support #exec in config files.
-;console = yes                  ; Run as console (same as -c at startup).
-;highpriority = yes             ; Run realtime priority (same as -p at
-                                ; startup).
-;initcrypto = yes               ; Initialize crypto keys (same as -i at
-                                ; startup).
-;nocolor = yes                  ; Disable console colors.
-;dontwarn = yes                 ; Disable some warnings.
-;dumpcore = yes                 ; Dump core on crash (same as -g at startup).
-;languageprefix = yes           ; Use the new sound prefix path syntax.
-;systemname = my_system_name    ; Prefix uniqueid with a system name for
-                                ; Global uniqueness issues.
-;autosystemname = yes           ; Automatically set systemname to hostname,
-                                ; uses 'localhost' on failure, or systemname if
-                                ; set.
-;mindtmfduration = 80           ; Set minimum DTMF duration in ms (default 80
-ms)
-                                ; If we get shorter DTMF messages, these will
-be
-                                ; changed to the minimum duration
-;maxcalls = 10                  ; Maximum amount of calls allowed.
-;maxload = 0.9                  ; Asterisk stops accepting new calls if the
-                                ; load average exceed this limit.
-;maxfiles = 1000                ; Maximum amount of openfiles.
-;minmemfree = 1                 ; In MBs, Asterisk stops accepting new calls if
-                                ; the amount of free memory falls below this
-                                ; watermark.
-;cache_media_frames = yes       ; Cache media frames for performance
-                                ; Disable this option to help track down media
-frame
-                                ; mismanagement when using valgrind or
-MALLOC_DEBUG.
-                                ; The cache gets in the way of determining if
-the
-                                ; frame is used after being freed and who freed
-it.
-                                ; NOTE: This option has no effect when Asterisk
-is
-                                ; compiled with the LOW_MEMORY compile time
-option
-                                ; enabled because the cache code does not
-exist.
-                                ; Default yes
-;cache_record_files = yes       ; Cache recorded sound files to another
-                                ; directory during recording.
-;record_cache_dir = /tmp        ; Specify cache directory (used in conjunction
-                                ; with cache_record_files).
-;transmit_silence = yes         ; Transmit silence while a channel is in a
-                                ; waiting state, a recording only state, or
-                                ; when DTMF is being generated.  Note that the
-                                ; silence internally is generated in raw signed
-                                ; linear format. This means that it must be
-                                ; transcoded into the native format of the
-                                ; channel before it can be sent to the device.
-                                ; It is for this reason that this is optional,
-                                ; as it may result in requiring a temporary
-                                ; codec translation path for a channel that may
-                                ; not otherwise require one.
-;transcode_via_sln = yes        ; Build transcode paths via SLINEAR, instead of
-                                ; directly.
-;runuser = asterisk             ; The user to run as.
-;rungroup = asterisk            ; The group to run as.
-;lightbackground = yes          ; If your terminal is set for a light-colored
-                                ; background.
-;forceblackbackground = yes     ; Force the background of the terminal to be
-                                ; black, in order for terminal colors to show
-                                ; up properly.
-;defaultlanguage = en           ; Default language
-documentation_language = en_US  ; Set the language you want documentation
-                                ; displayed in. Value is in the same format as
-                                ; locale names.
-;hideconnect = yes              ; Hide messages displayed when a remote console
-                                ; connects and disconnects.
-;lockconfdir = no               ; Protect the directory containing the
-                                ; configuration files (/etc/asterisk) with a
-                                ; lock.
-;live_dangerously = no          ; Enable the execution of 'dangerous' dialplan
-                                ; functions from external sources (AMI,
-                                ; etc.) These functions (such as SHELL) are
-                                ; considered dangerous because they can allow
-                                ; privilege escalation.
-                                ; Default no
-;entityid=00:11:22:33:44:55     ; Entity ID.
-                                ; This is in the form of a MAC address.
-                                ; It should be universally unique.
-                                ; It must be unique between servers
-communicating
-                                ; with a protocol that uses this value.
-                                ; This is currently is used by DUNDi and
-                                ; Exchanging Device and Mailbox State
-                                ; using protocols: XMPP, Corosync and PJSIP.
-;rtp_use_dynamic = yes          ; When set to "yes" RTP dynamic payload types
-                                ; are assigned dynamically per RTP instance vs.
-                                ; allowing Asterisk to globally initialize them
-                                ; to pre-designated numbers (defaults to
-"yes").
-;rtp_pt_dynamic = 35            ; Normally the Dynamic RTP Payload Type numbers
-                                ; are 96-127, which allow just 32 formats. The
-                                ; starting point 35 enables the range 35-63 and
-                                ; allows 29 additional formats. When you use
-                                ; more than 32 formats in the dynamic range and
-                                ; calls are not accepted by a remote
-                                ; implementation, please report this and go
-                                ; back to value 96.
-; Changing the following lines may compromise your security.
-;[files]
-;astctlpermissions = 0660
-;astctlowner = root
-;astctlgroup = apache
-;astctl = asterisk.ctl
+;verbose = 3      ; Console verbosity (raise to 15 for training, keep 3 in production)
+;debug = 3        ; Debug level
+;maxcalls = 10    ; Maximum number of simultaneous calls allowed
+;maxload = 0.9    ; Stop accepting new calls when load average exceeds this
+;maxfiles = 1000  ; Maximum number of open files
+;runuser = asterisk   ; The user to run as
+;rungroup = asterisk  ; The group to run as
 ```
 
 ## Log files and log rotation
 
-Asterisk PBX logs its messages on the /var/log/asterisk directory. The file that controls the logs
+Asterisk PBX logs its messages in `/var/log/asterisk`. Logging is controlled by `logger.conf`. The key part is the `[logfiles]` section, where each line defines a log channel and the message levels it captures (excerpt):
 
-```
-is the logger.conf.
-;
-; Logging Configuration
-;
-; In this file, you configure logging to files or to
-; the syslog system.
-;
-; "logger reload" at the CLI will reload configuration
-; of the logging system.
+```ini
+; logger.conf (excerpt)
 [general]
-;
-; Customize the display of debug message time stamps
-; this example is the ISO 8601 date format (yyyy-mm-dd HH:MM:SS)
-;
-; see strftime(3) Linux manual for format specifiers.  Note that there is also
-; a fractional second parameter which may be used in this field.  Use %1q
-; for tenths, %2q for hundredths, etc.
-;
-;dateformat=%F %T       ; ISO 8601 date format
-;dateformat=%F %T.%3q   ; with milliseconds
-;
-;
-; This makes Asterisk write callids to log messages
-; (defaults to yes)
-;use_callids = no
-;
-; This appends the hostname to the name of the log files.
-;appendhostname = yes
-;
-; This determines whether or not we log queue events to a file
-; (defaults to yes).
-;queue_log = no
-;
-; Determines whether the queue_log always goes to a file, even
-; when a realtime backend is present (defaults to no).
-;queue_log_to_file = yes
-;
-; Set the queue_log filename
-; (defaults to queue_log)
-;queue_log_name = queue_log
-;
-; When using realtime for the queue log, use GMT for the timestamp
-; instead of localtime.  The default of this option is 'no'.
-;queue_log_realtime_use_gmt = yes
-;
-; Log rotation strategy:
-; none:  Do not perform any logrotation at all.  You should make
-;        very sure to set up some external logrotate mechanism
-;        as the asterisk logs can get very large, very quickly.
-; sequential:  Rename archived logs in order, such that the newest
-;              has the highest sequence number [default].  When
-;              exec_after_rotate is set, ${filename} will specify
-;              the new archived logfile.
-; rotate:  Rotate all the old files, such that the oldest has the
-;          highest sequence number [this is the expected behavior
-;          for Unix administrators].  When exec_after_rotate is
-;          set, ${filename} will specify the original root filename.
-; timestamp:  Rename the logfiles using a timestamp instead of a
-;             sequence number when "logger rotate" is executed.
-;             When exec_after_rotate is set, ${filename} will
-;             specify the new archived logfile.
-;rotatestrategy = rotate
-;
-; Run a system command after rotating the files.  This is mainly
-; useful for rotatestrategy=rotate. The example allows the last
-; two archive files to remain uncompressed, but after that point,
-; they are compressed on disk.
-;
-; exec_after_rotate=gzip -9 ${filename}.2
-;
-;
-; For each file, specify what to log.
-;
-; For console logging, you set options at start of
-; Asterisk with -v for verbose and -d for debug
-; See 'asterisk -h' for more information.
-;
-; Directory for log files is configures in asterisk.conf
-; option astlogdir
-;
-; All log messages go to a queue serviced by a single thread
-; which does all the IO.  This setting controls how big that
-; queue can get (and therefore how much memory is allocated)
-; before new messages are discarded.
-; The default is 1000
-;logger_queue_limit = 250
-;
-;
+;dateformat = %F %T.%3q          ; ISO 8601 timestamps, with milliseconds
+
 [logfiles]
-;
-; Format is:
-;
-; logger_name => [formatter]levels
-;
-; The name of the logger dictates not only the name of the logging
-; channel, but also its type. Valid types are:
-;   - 'console'  - The root console of Asterisk
-;   - 'syslog'   - Linux syslog, with facilities specified afterwards with
-;                  a period delimiter, e.g., 'syslog.local0'
-;   - 'filename' - The name of the log file to create. This is the default
-;                  for log channels.
-;
-; Filenames can either be relative to the standard Asterisk log directory
-; (see 'astlogdir' in asterisk.conf), or absolute paths that begin with
-; '/'.
-;
-; An optional formatter can be specified prior to the log levels sent
-; to the log channel. The formatter is defined immediately preceeding the
-; levels, and is enclosed in square brackets. Valid formatters are:
-;   - [default] - The default formatter, this outputs log messages using a
-;                 human readable format.
-;   - [json]    - Log the output in JSON. Note that JSON formatted log entries,
-;                 if specified for a logger type of 'console', will be formatted
-;                 per the 'default' formatter for log messages of type VERBOSE.
-;                 This is due to the remote consoles intepreting verbosity
-;                 outside of the logging subsystem.
-;
-; Log levels include the following, and are specified in a comma delineated
-; list:
-;    debug
-;    notice
-;    warning
-;    error
-;    verbose(<level>)
-;    dtmf
-;    fax
-;    security
-;
-; Verbose takes an optional argument, in the form of an integer level.
-; Verbose messages with higher levels will not be logged to the file.  If
-; the verbose level is not specified, it will log verbose messages following
-; the current level of the root console.
-;
-; Special level name "*" means all levels, even dynamic levels registered
-; by modules after the logger has been initialized (this means that loading
-; and unloading modules that create/remove dynamic logger levels will result
-; in these levels being included on filenames that have a level name of "*",
-; without any need to perform a 'logger reload' or similar operation).
-; Note that there is no value in specifying both "*" and specific level names
-; for a filename; the "*" level means all levels.  The only exception is if
-; you need to specify a specific verbose level. e.g, "verbose(3),*".
-;
-; We highly recommend that you DO NOT turn on debug mode if you are simply
-; running a production system.  Debug mode turns on a LOT of extra messages,
-; most of which you are unlikely to understand without an understanding of
-; the underlying code.  Do NOT report debug messages as code issues, unless
-; you have a specific issue that you are attempting to debug.  They are
-; messages for just that -- debugging -- and do not rise to the level of
-; something that merit your attention as an Asterisk administrator.  Debug
-; messages are also very verbose and can and do fill up logfiles quickly;
-; this is another reason not to have debug mode on a production system unless
-; you are in the process of debugging a specific issue.
-;
-;debug => debug
-;security => security
-console => notice,warning,error
-;console => notice,warning,error,debug
+; <logger_name> => [formatter]<levels>
+console  => notice,warning,error
 messages => notice,warning,error
-;full => notice,warning,error,debug,verbose,dtmf,fax
-;
-;full-json => [json]debug,verbose,notice,warning,error,dtmf,fax
-;
-;syslog keyword : This special keyword logs to syslog facility
-;
-;syslog.local0 => notice,warning,error
+full     => notice,warning,error,verbose,dtmf,fax
+security => security              ; PJSIP/auth security events (used by Fail2Ban)
 ```
 
-; Some console commands are associated with the logger process.
+After editing, apply the change with `logger reload` and confirm the channels with `logger show channels`:
 
+```text
+*CLI> logger show channels
+Channel                       Type   Formatter  Status   Configuration
+/var/log/asterisk/security    File   default    Enabled  - SECURITY
+/var/log/asterisk/full        File   default    Enabled  - NOTICE WARNING ERROR VERBOSE DTMF FAX
+/var/log/asterisk/messages    File   default    Enabled  - NOTICE WARNING ERROR
 ```
-CLI> logger show channels
-Logger queue limit: 1000
 
-Channel                             Type     Formatter  Status    Configuration
--------                             ----     ---------  ------    -------------
-/var/log/asterisk/security          File     default    Enabled    - SECURITY
-/var/log/asterisk/full              File     default    Enabled    - NOTICE WARNING ERROR VERBOSE DTMF FAX
-/var/log/asterisk/messages          File     default    Enabled    - NOTICE WARNING ERROR
-CLI> logger rotate
-  == Parsing '/etc/asterisk/logger.conf': Found
-Asterisk Event Logger restarted
-Asterisk Queue Logger restarted
-You can control the log rotation using the logrotate daemon. Edit the file
-/etc/logrotate.d and include the content below to start rotating the log files.
+The log files can grow quickly, so rotate them with the system `logrotate` daemon — add a file under `/etc/logrotate.d/`:
+
+```text
 /var/log/asterisk/messages /var/log/asterisk/*log {
    missingok
    rotate 5

@@ -148,14 +148,15 @@ Codec selection depends on several options, such as:
 
 The following table compares the most popular codecs. The quality of these codecs is considered “toll”—in other words, similar to PSTN.
 
-| Codec | G.711 (ulaw/alaw) | G.722 | Opus | G.729A | iLBC | GSM 06.10 |
+| Codec | G.711 | G.722 | Opus | G.729A | iLBC | GSM |
 |---|---|---|---|---|---|---|
-| Audio band | Narrowband | Wideband (HD) | Narrow→fullband | Narrowband | Narrowband | Narrowband |
-| Bandwidth (Kbps) | 64 | 64 | 6–510 (variable) | 8 | 13.33 | 13 |
-| Asterisk 22 module | `codec_ulaw`/`codec_alaw` (core) | `codec_g722` (core) | `codec_opus` (external) | `codec_g729` (external) | `codec_ilbc` (core) | `codec_gsm` (core) |
-| Cost (per channel) | Free | Free | Free (binary download) | License purchase required¹ | Free | Free |
-| Resistance to frame erasure² | None | Low | Excellent (built-in FEC/PLC) | ~3% | ~5% | ~3% |
-| Relative CPU cost | Very low | Low | Moderate–high | High | High | Low |
+| Audio band | Narrow | Wide (HD) | Narrow–full | Narrow | Narrow | Narrow |
+| Bandwidth (Kbps) | 64 | 64 | 6–510 | 8 | 13.33 | 13 |
+| Cost/channel | Free | Free | Free | License¹ | Free | Free |
+| Frame-erasure² | None | Low | Excellent | ~3% | ~5% | ~3% |
+| CPU cost | Very low | Low | Mod.–high | High | High | Low |
+
+The Asterisk 22 modules are: G.711 `codec_ulaw` / `codec_alaw` (core), G.722 `codec_g722` (core), Opus `codec_opus` (external), G.729 `codec_g729` (external), iLBC `codec_ilbc` (core), and GSM `codec_gsm` (core). Opus is "Narrow–full" because it scales from narrowband up to fullband; its bandwidth (6–510 Kbps) is variable, and its frame-erasure resistance comes from built-in FEC/PLC.
 
 The PSTN baseline is **G.711** — it is the reference for "toll" quality and transcodes for free inside Asterisk. **G.722** delivers wideband (HD) voice at the same 64 Kbps and is a good LAN/internal choice. **Opus** is the modern default for WebRTC and capable SIP endpoints: it adapts its bitrate, has built-in forward error correction, and resists packet loss well; it ships as the external `codec_opus` binary (free to download). **G.729** stays useful on low-bandwidth WAN trunks, but lawful use requires either Sangoma's licensed `codec_g729` (free to download, per-channel license to use) or the open-source **bcg729** implementation as an alternative.
 

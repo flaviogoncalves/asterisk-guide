@@ -138,7 +138,19 @@ exten=>31,1,Dial(DAHDI/5)
 exten=>32,1,Dial(DAHDI/6)
 ```
 
-When you dial this company, the welcome message is played first. After that, Asterisk waits for a digit to be dialed. Dialed number Asterisk Action Immediately calls Dial(DAHDI/1) Waits for the timeout, then goes to Dial(DAHDI/2) Immediately calls (DAHDI/3) Immediately calls (DAHDI/4) Waits for the timeout, then disconnects Immediately calls Dial(DAHDI/5) Immediately calls Dial(DAHDI/6) Immediately disconnects It is important to avoid ambiguity in the menus. Everybody wants to be answered quickly. For this reason, you should not use numbers 2, 21, or 22.
+When you dial this company, the welcome message is played first. After that, Asterisk waits for a digit to be dialed:
+
+| Dialed number | Asterisk action |
+|---------------|-----------------|
+| 1 | Immediately calls `Dial(DAHDI/1)` |
+| 2 | Waits for the timeout, then calls `Dial(DAHDI/2)` |
+| 21 | Immediately calls `Dial(DAHDI/3)` |
+| 22 | Immediately calls `Dial(DAHDI/4)` |
+| 3 | Waits for the timeout, then disconnects |
+| 31 | Immediately calls `Dial(DAHDI/5)` |
+| 32 | Immediately calls `Dial(DAHDI/6)` |
+
+It is important to avoid ambiguity in the menus. Everybody wants to be answered quickly. For this reason, you should not use numbers 2, 21, or 22.
 
 ### Lab: Using the Read() application
 
