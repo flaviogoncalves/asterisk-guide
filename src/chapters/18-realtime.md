@@ -414,7 +414,7 @@ Step 7: Dial 6007 from an existing phone; the `bria` phone should ring.
 
 ## Summary
 
-In this chapter, you have learned that Asterisk Real Time allows you to put your configurations into a database. Asterisk ships native realtime drivers for ODBC (which reaches any UnixODBC-supported database, including MySQL/MariaDB and SQLite), MySQL, and PostgreSQL, plus an LDAP realtime driver for directory backends. The configuration is divided into static and real time. Static configuration replaces the configuration files, while the real-time configuration creates dynamic objects that are loaded only when a call or other related event happens. We concluded with a practical lab on how to install and configure ARA.
+In this chapter, you have learned that Asterisk Real Time allows you to put your configurations into a database. Asterisk ships native realtime drivers for ODBC (which reaches any UnixODBC-supported database, including MySQL/MariaDB and SQLite) and PostgreSQL, plus an LDAP realtime driver for directory backends. MySQL/MariaDB is reached through ODBC, as we did in this chapter (a dedicated `res_config_mysql` add-on also exists, but it lives outside the core build, so ODBC is the common path). The configuration is divided into static and real time. Static configuration replaces the configuration files, while the real-time configuration creates dynamic objects that are loaded only when a call or other related event happens. We concluded with a practical lab on how to install and configure ARA.
 
 ## Quiz
 
