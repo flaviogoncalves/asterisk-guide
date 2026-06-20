@@ -30,13 +30,13 @@ Asterisk has different ways to interface with external programs. In this chapter
 An application can easily call Asterisk from the Linux shell using the following command.
 
 ```
-asterisk –rx <command>
+asterisk -rx <command>
 ```
 
 Example:
 
 ```
-asterisk –rx “stop now”
+asterisk -rx "stop now"
 ```
 
 Even a command with an output can be called:
@@ -62,8 +62,7 @@ Endpoint:  <Endpoint/CID.....................................>  <State.....>  <C
 The system() application enables Asterisk to call an external application.
 
 ```
-asterisk*CLI> show application system
-asterisk*CLI>
+asterisk*CLI> core show application System
   -= Info about application 'System' =-
 [Synopsis]
 Execute a system command
@@ -234,7 +233,6 @@ Action Privilege Synopsis
   Queues           <none>           Queues
   AgentLogoff      agent,all        Sets an agent as no longer logged in
   Agents           agent,all        Lists agents and their status
-  UnpauseMonitor   call,all         Unpause monitoring of a channel
   PlayDTMF                        call,all         Play DTMF signal on a specific channel.
   PJSIPShowEndpoints              system,reportin  Lists PJSIP endpoints
   PJSIPShowEndpoint               system,reportin  Detail listing of an endpoint
@@ -245,11 +243,10 @@ Action Privilege Synopsis
 
 ```
   AGI              agi,all          Add an AGI command to execute by Async AGI
-  StopMonitor      call,all         Stop monitoring a channel
-  PauseMonitor     call,all         Pause monitoring of a channel
-  ChangeMonitor    call,all         Change monitoring filename of a channel
+  MixMonitor       system,all       Record a call and mix the audio during recording
+  StopMixMonitor   system,call,all  Stop recording a call through MixMonitor
+  MixMonitorMute   system,call,all  Mute / unMute a Mixmonitor recording
   ShowDialPlan     config,reportin  List dialplan
-  Monitor          call,all         Monitor a channel
   DBDelTree        system,all       Delete DB Tree
   DBDel            system,all       Delete DB Entry
   DBPut            system,all       Put DB Entry
@@ -363,7 +360,7 @@ bridge"). The older `Link`/`Unlink` events were removed in Asterisk 12.
 
 ## Asterisk Gateway Interface
 
-AGI is a gateway interface to Asterisk similar to CGI used by web servers. It allows the use of high- level languages like Perl, PHP, and Python to extend Asterisk’s functionality. The main application for CGIs is IVR building. There are four types of AGI:
+AGI is a gateway interface to Asterisk similar to CGI used by web servers. It allows the use of high-level languages like Perl, PHP, and Python to extend Asterisk’s functionality. The main application for CGIs is IVR building. There are four types of AGI:
 
 - Normal AGI, which calls a program inside Asterisk’s box.
 - Fast AGI, which calls an AGI in another server using TCP sockets.
@@ -373,8 +370,7 @@ AGI is a gateway interface to Asterisk similar to CGI used by web servers. It al
 Application format:
 
 ```
-asterisk*CLI> core show application agi
-asterisk*CLI>
+asterisk*CLI> core show application AGI
   -= Info about application 'AGI' =-
 [Synopsis]
 Executes an AGI compliant application
