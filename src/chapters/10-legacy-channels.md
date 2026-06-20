@@ -4,6 +4,16 @@ In a 2026 pure-VoIP world, the channel types in this chapter are increasingly ra
 
 This chapter also collects the **legacy SIP** material: the old `chan_sip` driver and its `sip.conf` configuration — removed in Asterisk 21 and gone in Asterisk 22 — together with a complete guide to migrating an existing `sip.conf` system to PJSIP. If you are running a pure-SIP shop on PJSIP with no telephony cards, no IAX2 trunks, and no legacy `sip.conf` to convert, you can safely skip this chapter.
 
+## Objectives
+
+By the end of this chapter, you should be able to:
+
+- Connect Asterisk to analog lines and phones with FXO/FXS interfaces through DAHDI;
+- Recognize digital TDM connectivity (E1/T1, ISDN PRI/BRI) and how it is configured;
+- Configure IAX2 (`chan_iax2`) for server-to-server trunks and understand why it is now legacy;
+- Identify the retired `chan_sip` driver and the `sip.conf` syntax you may still encounter; and
+- Migrate an existing `chan_sip`/`sip.conf` system to PJSIP.
+
 ## Analog channels (FXO/FXS)
 
 As of Asterisk 22, DAHDI and analog telephony cards remain fully supported, and DAHDI still builds against current kernels. The majority of new deployments are nonetheless pure VoIP (SIP trunks, PJSIP), so analog/TDM hardware is now a niche choice — found mainly in legacy environments, rural PSTN connectivity, or regulated markets. Everything below still applies to those scenarios.
@@ -3294,6 +3304,10 @@ qualify_frequency=15
 ```
 
 Full PJSIP configuration is covered in the *SIP & PJSIP in depth* chapter, and the official documentation at docs.asterisk.org has full coverage of the channel. In our companion labs at voip.school, lab 5 lets you practice what you have just learned.
+
+## Summary
+
+This chapter gathered the channel technologies that predate today's pure-VoIP deployments but that Asterisk 22 still supports. You saw how **analog** lines and phones attach through **FXO/FXS** interfaces on DAHDI, how **digital TDM** links (E1/T1 and ISDN PRI/BRI) are provisioned, and how **IAX2** (`chan_iax2`) still serves as an efficient, NAT-friendly server-to-server trunk even though it is now firmly legacy. You also revisited the retired **`chan_sip`** driver and its `sip.conf` syntax — which you will meet in older systems but which no longer exists in Asterisk 22 — and worked through migrating such a system to PJSIP with the concept-mapping table and the `sip_to_pjsip.py` script. The rule of thumb: reach for anything in this chapter only when real hardware or an existing legacy system forces your hand; everything green-field is PJSIP over IP.
 
 ## Quiz
 

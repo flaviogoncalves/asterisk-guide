@@ -394,6 +394,10 @@ exten => 6601,1,MusicOnHold(default,30)
 
 Application maps allow you to add new features by using the `[applicationmap]` section of the features.conf file. Suppose you need to identify the type of customer you are answering to a call center. You could create an application map for each customer type, which could count the number of answered customers per type.
 
+## Summary
+
+In this chapter you learned where Asterisk's PBX features live — some in the core, some in the dial plan, and some on the phone — and how the DTMF feature codes are mapped in the `[featuremap]` section of `features.conf`. You configured **call transfer** (blind and attended) and **call parking** (`res_parking.conf`, with the `k`/`K` Dial options and the `parkedcalls` lot), **call pickup** by group, and **conferencing** with **ConfBridge** (`confbridge.conf` bridge/user/menu profiles), which replaces the old MeetMe. You set up **one-touch recording** with MixMonitor (`automixmon`, the `X`/`x` Dial options, and `DYNAMIC_FEATURES`), configured **music on hold**, and saw how **application maps** let you bind your own dialplan logic to a DTMF sequence. With these building blocks you can deliver the everyday features users expect from a business PBX.
+
 ## Quiz
 
 1. Which statements are true about call parking?

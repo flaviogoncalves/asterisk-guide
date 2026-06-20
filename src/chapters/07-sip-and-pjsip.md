@@ -2,6 +2,17 @@
 
 SIP is the protocol; PJSIP is how Asterisk 22 speaks it. **PJSIP** (`chan_pjsip`, configured via `pjsip.conf`) is the only SIP channel driver in Asterisk 22 LTS. This chapter covers the SIP protocol fundamentals (which are protocol-level and remain 100% valid) and the PJSIP object model and configuration that you use every day. The retired legacy driver and a migration guide are covered in the *Legacy channels* chapter.
 
+## Objectives
+
+By the end of this chapter, you should be able to:
+
+- Explain the role of the SIP user agents, proxies, registrar, and gateways;
+- Follow a basic SIP call flow (REGISTER, INVITE, provisional and final responses, ACK, BYE) and read a SIP message;
+- Describe how SDP negotiates the media session and how NAT affects SIP signaling and RTP;
+- Map the PJSIP object model — `endpoint`, `auth`, `aor`, `transport`, `identify`, and `registration` — and how the objects reference one another;
+- Configure SIP phones and trunks in `pjsip.conf`, including the NAT-traversal options; and
+- Verify and troubleshoot endpoints with the `pjsip show …` CLI commands.
+
 ## SIP protocol fundamentals
 
 Session Initiation Protocol (SIP) is a text-based protocol similar to HTTP and SMTP that was designed to initialize, keep, and terminate interactive communication sessions between users. These sessions may include voice, video, chat, interactive games, and others. SIP was defined by the IETF and has become the de facto standard for voice communications. It is very important to understand how SIP works. On Asterisk 22 the SIP configuration lives in `pjsip.conf`, which is one of the most frequently edited files on a SIP-based system (just after `extensions.conf`).
@@ -707,6 +718,12 @@ Very easy, isn’t it? You may also clear the history whenever you want using `p
 > driver and a complete **sip.conf → pjsip.conf migration guide** (including the
 > concept-mapping table and the `sip_to_pjsip.py` conversion script) are covered
 > in the *Legacy channels* chapter.
+
+## Summary
+
+SIP is the IETF signaling protocol that sets up, modifies, and tears down media sessions. Its user agents, proxies, registrar, and gateways exchange text-based messages — REGISTER, INVITE, the provisional and final responses, ACK, and BYE — while SDP negotiates the codecs and RTP carries the media. That protocol theory is timeless and applies to any SIP implementation.
+
+In Asterisk 22 you speak SIP through **PJSIP** (`chan_pjsip`), configured in `pjsip.conf`. Instead of one monolithic peer, a device is modeled as a set of small, cross-referenced objects: `endpoint` (call behaviour and codecs), `auth` (credentials), `aor` (where it is reachable), and `transport` (the listener), plus `identify` (match a trunk by IP) and `registration` (register outbound) for service providers. You saw how these objects fit together, how to configure both phones and trunks, how the NAT-traversal options (`force_rport`, `rewrite_contact`, `rtp_symmetric`, `direct_media`, and the transport's `external_*`/`local_net`) solve real-world deployments, and how to inspect it all with `pjsip show endpoints`, `aors`, `contacts`, and `registrations`.
 
 ## Quiz
 
