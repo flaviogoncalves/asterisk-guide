@@ -50,7 +50,7 @@ callwaiting=425/50,0/1000
 
 #### Address Signaling
 
-You can use two kinds of signaling for dialing. The first and most common is dual tone multi- frequency (dtmf) while the other is pulse dialing (used in old rotary dial phones). Phones have a keypad for dialing, and each button is associated with two frequencies: one high and one low. In the case of dtmf signaling, the combination of these tones indicates what digit is being pressed. MFC/R2 uses a multi-frequency tone different from dtmf.
+You can use two kinds of signaling for dialing. The first and most common is dual tone multi-frequency (dtmf) while the other is pulse dialing (used in old rotary dial phones). Phones have a keypad for dialing, and each button is associated with two frequencies: one high and one low. In the case of dtmf signaling, the combination of these tones indicates what digit is being pressed. MFC/R2 uses a multi-frequency tone different from dtmf.
 
 #### Information signaling
 
@@ -217,11 +217,14 @@ Note: Analog signaling is a bit confusing; it is always the inverse of the card.
 
 Now you have to load the chan_dahdi module and the related card kernel driver. Use dahdi_hardware to detect your card and the driver name. For example:
 
-- Card Driver Description
-- TE410P wct4xxp 4xE1/T1-3.3V PCI
-- TE405P wct4xxp 4xE1/T1-5V PCI
-- TDM400P wctdm 4 FXS/FXO
-- T100P wct1xxp 1 T1 E100P wctlxxp 1 E1 X100P wcfxo 1 FXO
+| Card | Driver | Description |
+| --- | --- | --- |
+| TE410P | wct4xxp | 4xE1/T1 - 3.3V PCI |
+| TE405P | wct4xxp | 4xE1/T1 - 5V PCI |
+| TDM400P | wctdm | 4 FXS/FXO |
+| T100P | wct1xxp | 1 T1 |
+| E100P | wct1xxp | 1 E1 |
+| X100P | wcfxo | 1 FXO |
 
 Commands to load the drivers:
 
@@ -355,7 +358,7 @@ It is important to understand that you will have to insert the instruction fxotu
 ```
 #modprobe dahdi
 #modprobe wctdm
-#fxotune-s
+#fxotune -s
 ```
 
 ### Echo cancellation
@@ -457,20 +460,18 @@ DAHDI channels use the following format in the dial plan:
 
 ```
 DAHDI/[g]<identifier>[c][r<cadence>]
-<identifier>- Physical channel numeric identifier
-[g] – Group identifier
-[c] – Answer confirmation. A number is not considered until the callee press
-“#”
-[r] – customized ringing
-[cadence] Integer from 1 to 4
+<identifier> - Physical channel numeric identifier
+[g] - Group identifier
+[c] - Answer confirmation. A number is not considered until the callee presses "#"
+[r] - customized ringing
+[cadence] - Integer from 1 to 4
 ```
 
 For example:
 
 ```
-DAHDI/2
-- channel 2
-DAHDI/g1  - First available channel in group 1
+DAHDI/2     - channel 2
+DAHDI/g1    - First available channel in group 1
 ```
 
 ## Digital channels (E1/T1/PRI / TDM)
@@ -530,13 +531,24 @@ It is important to understand that T1/E1 lines may be delivered using different 
 
 ISDN is often used in Europe and the US. It is a digital voice network, standardized by the International Telecommunications Union (ITU) in 1984. ISDN provides two kinds of channels:
 
-- Bearer channels o Voice o Data
-- Data channels o Out of band signaling o LAPD signaling o Q.931
+- Bearer channels
+  - Voice
+  - Data
+- Data channels
+  - Out of band signaling
+  - LAPD signaling
+  - Q.931
 
 Usually, an ISDN line is provided using two physical means:
 
-- Basic rate interface (BRI) o Known as 2B+D o Two bearer (64K) channels and a data (16K) channel o Uses a pair of copper wires with 148Kbps.
-- Primary rate interface (PRI) o Delivered using a T1/E1 trunk o 23B+D for T1s o 30B+D for E1s
+- Basic rate interface (BRI)
+  - Known as 2B+D
+  - Two bearer (64K) channels and a data (16K) channel
+  - Uses a pair of copper wires with 148Kbps.
+- Primary rate interface (PRI)
+  - Delivered using a T1/E1 trunk
+  - 23B+D for T1s
+  - 30B+D for E1s
 
 Sometimes, E1 circuits use a CAS signaling scheme called MFC/R2, which was defined by the ITU as a standard known as Q.421/Q441. This is frequently found in Latin America and Asia. Several telephony companies in these countries use customized variants of MFC/R2. Hence, you will need to know the correct country variation in order to make it work.
 
@@ -552,15 +564,23 @@ There are several manufacturers for digital cards compatible with Asterisk. The 
 
 There are several types of bus on your PC. It is very important that you have the right card for your server. The following overview outlines the most frequently used cards:
 
-- 32 Bits PCI 5V found in most computers, including desktops o Sangoma (formerly Digium) TE405, TE407, TE205, TE207, TE120, TE122, B410, TDM2400, TDM800, TDM410, and TC400 o Sangoma A101, A102, and A104
-- 32/64 bits PCI 3.3V, basically found in servers o Sangoma (formerly Digium) TE410, TE412, TE210, TE212, TE120, TE122, B410, TDM2400, TDM800, TDM410, and TC400
-- PCI Express found on desktops and servers o Sangoma (formerly Digium) TE420, TE220, TE121, AEX2400, and AEX800 o Sangoma A101, A102, and A104
+- 32 Bits PCI 5V found in most computers, including desktops
+  - Sangoma (formerly Digium) TE405, TE407, TE205, TE207, TE120, TE122, B410, TDM2400, TDM800, TDM410, and TC400
+  - Sangoma A101, A102, and A104
+- 32/64 bits PCI 3.3V, basically found in servers
+  - Sangoma (formerly Digium) TE410, TE412, TE210, TE212, TE120, TE122, B410, TDM2400, TDM800, TDM410, and TC400
+- PCI Express found on desktops and servers
+  - Sangoma (formerly Digium) TE420, TE220, TE121, AEX2400, and AEX800
+  - Sangoma A101, A102, and A104
 
 These card families originated at Digium, which Sangoma acquired in 2018; they are now sold and supported under the Sangoma brand. Many of the older SKUs listed here have been discontinued, so confirm current model availability at www.sangoma.com before purchasing.
 
-- MiniPCI found on embedded systems o OpenVOX A100M(FXO), B100M(ISDN BRI), B200M(ISDN BRI), and B400M(ISDN BRI)
-- USB 2.0 found in most modern PCs. Solutions based on USB allow a great density of analog and digital channels. This bus supports 480 Mbps, and each voice channel occupies 64 Kbps. When using USB hubs, it is possible to get densities up to a thousand analog ports in a single port. o Xorcom Astribank (FXS, FXO, E1-ISDN, E1-R2)
-- Etherne t. The biggest advantage of Ethernet is to allow the card to be connected by more than one server. High availability solutions are usually the core application for these devices. The strength of this solution is the use of servers without free PCI slots or blade servers. o Redfone FoneBridge (up to four E1 circuits)
+- MiniPCI found on embedded systems
+  - OpenVOX A100M(FXO), B100M(ISDN BRI), B200M(ISDN BRI), and B400M(ISDN BRI)
+- USB 2.0 found in most modern PCs. Solutions based on USB allow a great density of analog and digital channels. This bus supports 480 Mbps, and each voice channel occupies 64 Kbps. When using USB hubs, it is possible to get densities up to a thousand analog ports in a single port.
+  - Xorcom Astribank (FXS, FXO, E1-ISDN, E1-R2)
+- Ethernet. The biggest advantage of Ethernet is to allow the card to be connected by more than one server. High availability solutions are usually the core application for these devices. The strength of this solution is the use of servers without free PCI slots or blade servers.
+  - Redfone FoneBridge (up to four E1 circuits)
 
 ### Using hardware echo cancellation
 
@@ -707,7 +727,7 @@ Best: 100.000000 -- Worst: 99.987793 -- Average: 99.999061
 Step 5: Using the dahdi_cfg utility This is the correct output for dahdi_cfg for one fractional E1 (15 ports) span and two FXO ports.
 
 ```
-#./dahdi_cfg –vvvv
+#./dahdi_cfg -vvvv
 Dahdi configuration
 ======================
 SPAN 1: CCS/HDB3 Build-out: 0 db (CSU)/0-133 feet (DSX-1)
@@ -734,7 +754,7 @@ Channel 16: D-channel (Default) (Slaves: 16)
 Step 6: Configuration of DAHDI into the file /etc/asterisk/chan_dahdi.conf Example #1 (2xT1)
 
 ```
-callerid=”John Doe”<(555)555-1111>
+callerid="John Doe"<(555)555-1111>
 switchtype=national
 signalling =pri_cpe
 context=from-pstn
@@ -747,7 +767,7 @@ channel => 25-47
 Example #2 (2xE1)
 
 ```
-callerid=”Flavio Eduardo” <4830258580>
+callerid="Flavio Eduardo" <4830258580>
 switchtype=euroisdn
 signalling = pri_cpe
 group = 1
@@ -774,7 +794,7 @@ After configuring the drivers, you may simply restart the server. If you have in
 
 ```
 modprobe wct11xp
-dahdi_cfg –vvvvv
+dahdi_cfg -vvvvv
 ```
 
 The first command loads the driver and the second, dahdi_cfg, applies the configuration to the kernel driver.
@@ -784,7 +804,7 @@ The first command loads the driver and the second, dahdi_cfg, applies the config
 Sometimes things don’t work the first time. Let’s check some resources for troubleshooting DAHDI. Step 1: Check if the card is being recognized by the operation system. Sangoma/Digium cards are usually recognized as the ISDN modem.
 
 ```
-lspci –v
+lspci -v
 00:00.0 Host bridge: Intel Corporation E7230/3000/3010 Memory Controller Hub
 00:01.0 PCI bridge: Intel Corporation E7230/3000/3010 PCI Express Root Port
 00:1c.0 PCI bridge: Intel Corporation 82801G (ICH7 Family) PCI Express Port 1 (rev 01)
@@ -916,7 +936,7 @@ Check a specific channel. dahdi show channel x:
 
 ```
 vtsvoffice*CLI> dahdi show channel 1
-Channel: 1*CLI>
+Channel: 1
 File Descriptor: 21
 Span: 1
 Extension:
@@ -968,7 +988,7 @@ Plan (E.164/E.163) (1)
 > [70 09 a1 33 32 32 34 38 35 38 30]
 > Called Number (len=11) [ Ext: 1  TON: National Number (2)  NPI: ISDN/Telephony Numbering
 Plan (E.164/E.163) (1) '32248580' ]
-> [a1]fice*CLI>
+> [a1]
 > Sending Complete (len= 1)
 < Protocol Discriminator: Q.931 (8)  len=10
 < Call Ref: len= 2 (reference 65/0x41) (Terminator)
@@ -1385,7 +1405,7 @@ defaultzone=br
 Step 5: Run the command dahdi_cfg to apply the changes to the driver:
 
 ```
-dahdi_cfg –vvvvvvvv
+dahdi_cfg -vvvvvvvv
 Dahdi Version:SVN-branch-1.4-r4348
 Echo Canceller: MG2
 Configuration
@@ -1460,7 +1480,7 @@ context=from-mfcr2
 channel => 1-15,17-31
 ```
 
-Step 6: Change the dial plan in the file extensions .conf
+Step 6: Change the dial plan in the file extensions.conf
 
 ```
 vim /etc/asterisk/extensions.conf
@@ -1702,25 +1722,18 @@ DAHDI channels use the following format in the dial plan:
 
 ```
 DAHDI/[g]<identifier>[c][r<cadence>]
-<identifier>- Physical channel numeric identifier
-[g] – Group identifier
-[c] – Answer confirmation. A number is not considered until the callee press
-“#”
-[r] – customized ringing
-[cadence] Integer from 1 to 4
+<identifier> - Physical channel numeric identifier
+[g] - Group identifier
+[c] - Answer confirmation. A number is not considered until the callee presses "#"
+[r] - customized ringing
+[cadence] - Integer from 1 to 4
 ```
 
 Examples:
 
 ```
-DAHDI/2
-- channel 2
-DAHDI/g1  - First available channel in group 1
-[g] – Group identifier
-[c] – Answer confirmation; A number is not considered until the callee press
-“#”
-[r] – customized ringing
-[cadence] Integer from 1 to 4
+DAHDI/2     - channel 2
+DAHDI/g1    - First available channel in group 1
 ```
 
 ## The IAX2 protocol
@@ -1772,13 +1785,21 @@ It is important to understand channel-naming conventions as you will use these n
 IAX/[<user>[:<secret>]@]<peer>[:<portno>][/<exten>[@<context>][/<options>]
 ```
 
-<user> UserID on remote peer, or name of client configured in iax.conf <secret> The password. Alternatively it can be the filename for an RSA key without the trailing extension (.key or .pub) and enclosed in square brackets <peer> Name of server to connect to <portno> Port number for connection <exten> Extension in the remote Asterisk server <context> Context in the remote Asterisk server <options> The only option available is ‘a’ meaning ‘request autoanswer’
+- `<user>` — UserID on remote peer, or name of client configured in iax.conf
+- `<secret>` — The password. Alternatively it can be the filename for an RSA key without the trailing extension (.key or .pub) and enclosed in square brackets
+- `<peer>` — Name of server to connect to
+- `<portno>` — Port number for connection
+- `<exten>` — Extension in the remote Asterisk server
+- `<context>` — Context in the remote Asterisk server
+- `<options>` — The only option available is 'a', meaning 'request autoanswer'
 
 #### Outbound channels example:
 
-Outbound channels are seen in the Asterisk console. IAX2/8590:secret@myserver/8590@default Call the 8590 extension in myserver. It uses 8590:secret as the name/password pair
+Outbound channels are seen in the Asterisk console.
 
-IAX2/iaxphone Call "iaxphone" IAX2/judy:[judyrsa]@somewhere.com Call somewhere.com using judy as the username and a RSA key for authentication
+- `IAX2/8590:secret@myserver/8590@default` — Call the 8590 extension in myserver. It uses 8590:secret as the name/password pair
+- `IAX2/iaxphone` — Call "iaxphone"
+- `IAX2/judy:[judyrsa]@somewhere.com` — Call somewhere.com using judy as the username and a RSA key for authentication
 
 #### The format of an incoming IAX channel is:
 
@@ -1788,7 +1809,14 @@ Inbound channels are seen in the Asterisk console.
 IAX2/[<username>@]<host>]-<callno>
 ```
 
-<username> Username if known <host> Host connecting <callno> Local call number Incoming channel example: IAX2[flavio@8.8.30.34]/10 Call number 10 from IP address 8.8.30.34 using flavio as the user. IAX2[8.8.30.50]/11 Call number 11 from IP address 8.8.30.50.
+- `<username>` — Username if known
+- `<host>` — Host connecting
+- `<callno>` — Local call number
+
+Incoming channel example:
+
+- `IAX2[flavio@8.8.30.34]/10` — Call number 10 from IP address 8.8.30.34 using flavio as the user.
+- `IAX2[8.8.30.50]/11` — Call number 11 from IP address 8.8.30.50.
 
 ### Using IAX
 
@@ -1803,7 +1831,7 @@ You may use IAX in several ways. In this section, we will show you how to config
 
 #### Connecting a soft-phone using IAX
 
-Asterisk supports IP phones based on IAX such as the ATCOM and the old ATA from Digium (called IAXy) as well as soft-phones that still implement the IAX2 protocol. The process for soft-phones, ATAs, and hard- phones is similar. To configure an IAX device, you need to edit the iax.conf file in /etc/asterisk
+Asterisk supports IP phones based on IAX such as the ATCOM and the old ATA from Digium (called IAXy) as well as soft-phones that still implement the IAX2 protocol. The process for soft-phones, ATAs, and hard-phones is similar. To configure an IAX device, you need to edit the iax.conf file in /etc/asterisk
 
 ```
 directory.
@@ -1968,8 +1996,8 @@ exten=>*98,1,Dial(IAX2/name:secret@hostname/*98,20,r)
 Go to the Asterisk CLI and issue a reload. To verify if Asterisk is registered with the provider, use the next command.
 
 ```
-CLI>reload
-CLI>iax2 show register
+*CLI>reload
+*CLI>iax2 show register
 ```
 
 Now simply dial *98 on the soft-phone connected to the Asterisk server.
@@ -2151,7 +2179,32 @@ Asterisk will try to authenticate the call using only the corresponding entry in
 
 #### IP address restrictions
 
-permit = <ipaddr>/<netmask> Rules are interpreted in sequence, and all are evaluated (this concept is different from ACLs deny = <ipaddr>/<netmask> usually found in routers and firewalls). Example #1 permit=0.0.0.0/0.0.0.0 deny=192.168.0.0/255.255.255.0 Will deny any packet from 192.168.0.0/24 network Example #2 deny=192.168.0.0/255.255.255.0 permit=0.0.0.0/0.0.0.0 It will permit any packet. The last instruction supersedes the first.
+Access is controlled with `permit` and `deny` lines:
+
+```
+permit = <ipaddr>/<netmask>
+deny = <ipaddr>/<netmask>
+```
+
+Rules are interpreted in sequence, and all of them are evaluated (this concept is different from the ACLs usually found in routers and firewalls). The last matching instruction supersedes the previous ones.
+
+Example #1:
+
+```
+permit=0.0.0.0/0.0.0.0
+deny=192.168.0.0/255.255.255.0
+```
+
+This will deny any packet from the 192.168.0.0/24 network.
+
+Example #2:
+
+```
+deny=192.168.0.0/255.255.255.0
+permit=0.0.0.0/0.0.0.0
+```
+
+This will permit any packet, because the last instruction supersedes the first.
 
 #### Outbound connections
 
@@ -2300,7 +2353,15 @@ The file iax.conf has several parameters; discussing each parameter one by one w
 
 #### [General] Section
 
-Server addresses bindport = <portnum> Configures the IAX UDP port. Default is 4569. bindaddr = <ipaddr> Use 0.0.0.0 to bind Asterisk to all interfaces or specify the IP address of a specific interface. Codec selection bandwidth = [low|medium|high] High = all codecs Medium = all codecs except ulaw and alaw Low = low bandwidth codecs allow/disallow = Codec selection fine tuning [alaw|ulaw|gsm|g.729| etc.]
+Server addresses:
+
+- `bindport = <portnum>` — Configures the IAX UDP port. Default is 4569.
+- `bindaddr = <ipaddr>` — Use 0.0.0.0 to bind Asterisk to all interfaces, or specify the IP address of a specific interface.
+
+Codec selection:
+
+- `bandwidth = [low|medium|high]` — High = all codecs; Medium = all codecs except ulaw and alaw; Low = low bandwidth codecs.
+- `allow/disallow = [alaw|ulaw|gsm|g.729| etc.]` — Codec selection fine tuning.
 
 ### Jitter buffer
 
@@ -2551,7 +2612,7 @@ Step 3: Create a route to the provider in the dial plan We will choose the digit
 
 ```
 exten=>_010.,1,Set(CALLERID(num)=username)
-exten=>_010.,n,Set(CALLERID(Name)=”Flavio Gonçalves”)
+exten=>_010.,n,Set(CALLERID(Name)="Flavio Gonçalves")
 exten=>_010.,n,Dial(SIP/${EXTEN:3}@provider)
 exten=>_010.,n,Hangup
 ```
@@ -2871,7 +2932,7 @@ secret=secret, remotesecret=secret
 This parameter configures the secret for authentication use secret for inbound requests and remotesecret for outbound requests. If you do not want to present the secrets in text files, you can use md5secret to include a hash instead of the secret. To generate the MD5 secret, you can use:
 
 ```
-echo –n “username:realm:secret” |md5sum
+echo -n "username:realm:secret" |md5sum
 ```
 
 Then use the following statement:
