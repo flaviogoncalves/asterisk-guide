@@ -14,7 +14,7 @@ By the end of this chapter you should be able to:
 
 ## What is Asterisk
 
-Asterisk is an open-source PBX software once installed in a PC’s hardware along with the correct interfaces—can be used as a full-featured PBX for home users, enterprises, VoIP service providers, and phone companies. Asterisk is also both an open-source community and a project sponsored by Sangoma Technologies (which acquired Digium in 2018). You are free to use and modify Asterisk to suit your needs. Asterisk allows real-time connectivity between PSTN and VoIP networks. Since Asterisk is much more than a PBX, you not only have an exceptional upgrade to your existing PBX, but you can also do new things in telephony, such as:
+Asterisk is open-source PBX software that turns an ordinary computer into a full-featured PBX for home users, enterprises, VoIP service providers, and phone companies. Asterisk is also both an open-source community and a project sponsored by Sangoma Technologies (which acquired Digium in 2018). You are free to use and modify Asterisk to suit your needs. Asterisk allows real-time connectivity between PSTN and VoIP networks. Since Asterisk is much more than a PBX, you not only have an exceptional upgrade to your existing PBX, but you can also do new things in telephony, such as:
 
 - Connect employees working from home to an Office PBX over broadband Internet;
 - Connect several offices in different places over an IP network, private network, or even through the Internet itself;
@@ -214,25 +214,23 @@ All functions are integrated in the Asterisk platform in the same or in differen
 
 ## Building a test system
 
-When implementing an Asterisk solution, our first step is generally to build a test machine. The easiest test machine is the 1x1 PBX, including at least one phone and one line. There are several ways to do this.
+When implementing an Asterisk solution, our first step is generally to build a test system. The goal is a minimal **1×1 PBX** — one phone that can call another — so you can try out endpoints, dialplan, and features before touching production. Today this is entirely software: you do not need any telephony hardware.
 
 ![A simple Asterisk test system](../images/01-introduction-fig05.png)
 
-### One FXO, one FXS
+### The modern way: a software lab (recommended)
 
-The first and simplest way to build a test machine is to purchase a card with one FXO and one FXS interface. Connect the FXO port to an existing line and connect one FXS to an analog phone. Thus, you have a 1x1 PBX.
+The fastest test system is Asterisk 22 running in a container or virtual machine, with **softphones** for the endpoints and, optionally, a **SIP trunk** to reach the public network:
 
-### VoIP Service Provider: ATA
+- **Asterisk 22** on a small Linux box, VM, or Docker container. This book ships a ready-made Docker lab (see the lab guide) that boots a fully configured Asterisk 22 with a single command — no compilation, no hardware.
+- **Two softphones** registered as PJSIP endpoints, so you can place a real call between them. Throughout this book we use the **SipPulse Softphone** (free download: <https://www.sippulse.com/produtos/softphone>), available for desktop and mobile.
+- **A SIP trunk** (optional) from a VoIP provider, for when you want to reach the PSTN. No card and no analog line — just credentials.
 
-This is the VoIP option. In this case, you would sign up with a voice service provider to have the SIP trunks and will have to purchase a SIP analog telephony adapter. You will probably spend less than a hundred dollars if you already have the PC.
+This is how every example in this book is built and verified, and you can reproduce it on any laptop.
 
-### Inexpensive FXO card or ATA
+### The legacy way: analog/digital cards
 
-I started with an inexpensive FXO card. Some inexpensive V.90 fax/modems work with Asterisk as an FXO card. Some of the first Digium cards were created using these cards (e.g., X100P and X101P), which are old modems based on Motorola and Intel chipsets (Motorola 68202-51, Intel 537PU, Intel 537PG, and Intel Ambient MD3200 are known to work). These modems are often incompatible with new motherboards. Recently some manufacturers started to sell these cards as
-
-X100P clones. Some of the incompatibilities can be solved using a patch, more information can be found at:
-
-- http://www.voip.school/mediawiki/index.php/Asterisk_patch_for_the_X100P_card
+Before VoIP, a test PBX needed physical interfaces: an **FXO** port to connect to an existing telephone line and an **FXS** port to connect an analog phone, which together gave you a 1×1 PBX. A single card carrying one FXO and one FXS interface was the classic starter kit. These DAHDI-based cards (from Sangoma, formerly Digium) still exist for sites that must terminate analog or T1/E1 lines, but they are niche today — most deployments are pure VoIP. If you only need to connect analog phones or lines, see the *Legacy Channels* chapter; otherwise you can skip telephony hardware entirely.
 
 ## Asterisk scenarios
 
@@ -300,8 +298,8 @@ Asterisk is software licensed according to the GPL that enables an ordinary PC t
 
 The Asterisk architecture has the following main components:
 
-- CHANNELS: Analog, digital, or voice-over IP. In Asterisk 22 LTS, SIP is handled exclusively by chan_pjsip.
-- PROTOCOLS: Communication protocols, which are responsible for signaling the calls, including SIP (via PJSIP), H323, MGCP, and IAX2.
+- CHANNELS: Analog, digital, or voice-over IP. In Asterisk 22 LTS, SIP is handled exclusively by `chan_pjsip`.
+- PROTOCOLS: Communication protocols, which are responsible for signaling the calls, including SIP (via PJSIP), H.323, MGCP, and IAX2.
 - CODECS: Translate digital formats of voice allowing compression and packet loss concealment. Note that Asterisk itself does not perform silence suppression (voice activity detection) or comfort-noise generation; when endpoints use VAD, comfort noise should be disabled on the client side.
 - APPLICATIONS: Responsible for the Asterisk PBX functionality. Conference, voicemail, and fax are examples of Asterisk applications.
 
