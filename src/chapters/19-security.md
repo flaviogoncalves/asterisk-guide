@@ -324,7 +324,7 @@ Verifying - Enter pass phrase for /etc/asterisk/keys/ca.key:
 Creating CA certificate /etc/asterisk/keys/ca.crt
 Enter pass phrase for /etc/asterisk/keys/ca.key:
 Creating certificate /etc/asterisk/keys/asterisk.key
-Generating RSA private key, 1024 bit long modulus
+Generating RSA private key, 2048 bit long modulus
 ........................++++++
 ......................++++++
 e is 65537 (0x010001)
