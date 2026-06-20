@@ -3018,7 +3018,7 @@ disallow=all
 allow=ulaw
 alwaysauthreject=yes
 allowguest=no
-register=>1020:supersecret@sip.api4com.com:5600/9999
+register=>1020:supersecret@sip.flagonc.com:5600/9999
 [alice]
 type=friend
 secret=#supersecret#
@@ -3039,9 +3039,9 @@ defaultuser=1020
 secret=supersecret
 port=5600 ; nor 5060, 5600
 insecure=invite
-host=sip.api4com.com
+host=sip.flagonc.com
 fromuser=1020
-fromdomain=sip.api4com.com
+fromdomain=sip.flagonc.com
 context=from-siptrunk
 ```
 
@@ -3068,17 +3068,17 @@ Non mapped elements end
 type = transport
 protocol = udp
 bind = 0.0.0.0:5060
-[reg_sip.api4com.com]
+[reg_sip.flagonc.com]
 type = registration
 retry_interval = 20
 max_retries = 10
 contact_user = 9999
 expiration = 120
 transport = transport-udp
-outbound_auth = auth_reg_sip.api4com.com
-client_uri = sip:1020@sip.api4com.com:5600
-server_uri = sip:sip.api4com.com:5600
-[auth_reg_sip.api4com.com]
+outbound_auth = auth_reg_sip.flagonc.com
+client_uri = sip:1020@sip.flagonc.com:5600
+server_uri = sip:sip.flagonc.com:5600
+[auth_reg_sip.flagonc.com]
 type = auth
 password = supersecret
 username = 1020
@@ -3116,11 +3116,11 @@ outbound_auth = bob
 aors = bob
 [siptrunk]
 type = aor
-contact = sip:1020@sip.api4com.com:5600
+contact = sip:1020@sip.flagonc.com:5600
 [siptrunk]
 type = identify
 endpoint = siptrunk
-match = sip.api4com.com
+match = sip.flagonc.com
 [siptrunk]
 type = auth
 username = siptrunk
@@ -3131,7 +3131,7 @@ context = from-siptrunk
 disallow = all
 allow = ulaw
 from_user = 1020
-from_domain = sip.api4com.com
+from_domain = sip.flagonc.com
 auth = siptrunk
 outbound_auth = siptrunk
 aors = siptrunk

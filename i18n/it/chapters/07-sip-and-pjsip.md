@@ -662,7 +662,7 @@ Questo comando elenca gli oggetti Address of Record configurati e i loro contatt
 
 Il comando qui sotto mostra le registrazioni effettuate dal nostro server.
 
-![Output di `pjsip show registrations`: la registrazione in uscita siptrunk/sip:1020@sip.api4com.com:5600 viene mostrata con stato Registered](../images/07-sip-and-pjsip-fig17.png)
+![Output di `pjsip show registrations`: la registrazione in uscita siptrunk/sip:1020@sip.flagonc.com:5600 viene mostrata con stato Registered](../images/07-sip-and-pjsip-fig17.png)
 
 #### pjsip list
 

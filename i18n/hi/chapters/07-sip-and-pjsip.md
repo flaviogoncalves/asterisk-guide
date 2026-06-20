@@ -662,7 +662,7 @@ module reload res_pjsip.so
 
 नीचे दी गई कमांड हमारे अपने सर्वर द्वारा किए गए पंजीकरणों को दिखाती है।
 
-![`pjsip show registrations` का आउटपुट: आउटबाउंड पंजीकरण siptrunk/sip:1020@sip.api4com.com:5600 को Registered स्थिति के साथ दिखाया गया है](../images/07-sip-and-pjsip-fig17.png)
+![`pjsip show registrations` का आउटपुट: आउटबाउंड पंजीकरण siptrunk/sip:1020@sip.flagonc.com:5600 को Registered स्थिति के साथ दिखाया गया है](../images/07-sip-and-pjsip-fig17.png)
 
 #### pjsip list
 

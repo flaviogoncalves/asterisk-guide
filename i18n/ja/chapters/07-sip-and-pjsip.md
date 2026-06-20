@@ -662,7 +662,7 @@ module reload res_pjsip.so
 
 以下のコマンドは、自サーバーによって行われた登録を表示します。
 
-![`pjsip show registrations`の出力：アウトバウンド登録 siptrunk/sip:1020@sip.api4com.com:5600 が Registered ステータスで表示されている](../images/07-sip-and-pjsip-fig17.png)
+![`pjsip show registrations`の出力：アウトバウンド登録 siptrunk/sip:1020@sip.flagonc.com:5600 が Registered ステータスで表示されている](../images/07-sip-and-pjsip-fig17.png)
 
 #### pjsip list
 

@@ -662,7 +662,7 @@ module reload res_pjsip.so
 
 下面的命令显示了我们自己的服务器进行的注册。
 
-![`pjsip show registrations` 的输出：出站注册 siptrunk/sip:1020@sip.api4com.com:5600 显示状态为 Registered](../images/07-sip-and-pjsip-fig17.png)
+![`pjsip show registrations` 的输出：出站注册 siptrunk/sip:1020@sip.flagonc.com:5600 显示状态为 Registered](../images/07-sip-and-pjsip-fig17.png)
 
 #### pjsip list
 

@@ -662,7 +662,7 @@ Dieser Befehl listet die konfigurierten Address-of-Record-Objekte und deren Kont
 
 Der Befehl unten zeigt die von unserem eigenen Server vorgenommenen Registrierungen.
 
-![Ausgabe von `pjsip show registrations`: Die ausgehende Registrierung siptrunk/sip:1020@sip.api4com.com:5600 wird mit dem Status Registered angezeigt](../images/07-sip-and-pjsip-fig17.png)
+![Ausgabe von `pjsip show registrations`: Die ausgehende Registrierung siptrunk/sip:1020@sip.flagonc.com:5600 wird mit dem Status Registered angezeigt](../images/07-sip-and-pjsip-fig17.png)
 
 #### pjsip list
 
