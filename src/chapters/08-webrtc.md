@@ -168,7 +168,7 @@ auth=webrtc-1000
 
 [webrtc-1000]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=webrtc-1000
 password=Lab-webrtc-secret
 
