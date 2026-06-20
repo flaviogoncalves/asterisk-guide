@@ -583,7 +583,7 @@ Step 9: Kill the locked (zombie) processes If your script fails for some reason,
  // main program
  echo "VERBOSE \"Start here!\" 2\n";
  read();
- errlog("Call from ".$agi['channel']." – Phone ringing ");
+ errlog("Call from ".$agi['channel']." - Phone ringing ");
  read();
  write("SAY DIGITS 22 X"); // X is the escape digit. since X is not DTMF, no ex
 it is possible
