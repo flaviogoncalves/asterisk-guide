@@ -224,9 +224,9 @@ PJSIP allows the `endpoint`, `auth`, and `aor` sections to share the same sectio
 You may also create IAX extensions. This protocol is native to the Asterisk, and we will have an entire section devoted to it later in this book. For now, let’s create a few extensions using the protocol. As the first section to be configured, the section [general] has certain parameters to be configured. The main options are:
 
 - allow/disallow: Defines which codecs are going to be used.
-- bindaddr: Address to be bound to Asterisk SIP listener. If you set it up as 0.0.0.0 (default), it will bind to all interfaces.
+- bindaddr: Address the IAX2 listener binds to. If you set it up as 0.0.0.0 (default), it will bind to all interfaces.
 - context: Sets the default context for all clients unless changed in the client section. We used dummy for security reasons. Unauthenticated users get into this context when the option allowguest is set to yes.
-- bindport: SIP UDP port to listen.
+- bindport: IAX2 UDP port to listen on (default 4569).
 - delayreject: When set to yes, delays the sending of an authentication reject for a REGREQ or AUTHREQ, which improves the security against brute-force password attacks.
 - bandwidth: When set to high, it allows the selection of high bandwidth codecs, such as the g711 in their variants ulaw and alaw.
 
@@ -255,7 +255,7 @@ After finishing the general sections, it is time to set up the IAX clients.
 - `host`: IP address or host name. The most common value is `dynamic`, used when the device registers to Asterisk.
 - `secret`: Password to authenticate peers and users.
 
-Warning: Use strong passwords with at least 8 characters, alphanumeric and numeric characters, and at least one symbol. Reports of hacked servers have appeared in the mailing lists, and brute force password crackers for SIP md5 hashes are available for script kiddies. Toll fraud costs thousands of dollars for consumers and providers. Example:
+Warning: Use strong passwords with at least 8 characters, alphanumeric and numeric characters, and at least one symbol. Reports of hacked servers have appeared in the mailing lists, and brute force password crackers for IAX md5 hashes are available for script kiddies. Toll fraud costs thousands of dollars for consumers and providers. Example:
 
 ```
 [guest]
