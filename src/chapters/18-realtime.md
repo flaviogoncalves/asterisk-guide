@@ -258,13 +258,13 @@ In this lab, we will prepare the database to receive Asterisk parameters. We wil
 Step 1: Get into the MySQL database as root.
 
 ```
-mysql –u root –p
+mysql -u root -p
 ```
 
 Step 2: Log in to the MySQL server created in the CDR labs.
 
 ```
-mysql –u astdb –p
+mysql -u astdb -p
 ```
 
 When asked for the password, type supersecret.
@@ -285,7 +285,7 @@ Use supersecret as the password.
 Step 4: Verify the creation of the tables.
 
 ```
-mysql –u astdb –p astdb
+mysql -u astdb -p astdb
 mysql>use astdb;
 mysql>show tables;
 ```
@@ -405,7 +405,7 @@ switch => realtime/test@extensions
 Reload the extensions to activate the change.
 
 ```
-asterisk-server*CLI>extensions reload
+asterisk-server*CLI> extensions reload
 ```
 
 Step 6: Reconfigure one of the phones to the username `bria`, if you have not already done so.
