@@ -1822,22 +1822,22 @@ Incoming channel example:
 
 You may use IAX in several ways. In this section, we will show you how to configure IAX for several scenarios, including:
 
-- Connecting a soft-phone using IAX
+- Connecting a softphone using IAX
 - Connecting IAX to a VoIP provider using IAX
 - Connecting two servers using IAX
 - Connecting two servers using IAX in trunk mode
 - Debugging an IAX connection
 - Using RSA pair keys for authentication
 
-#### Connecting a soft-phone using IAX
+#### Connecting a softphone using IAX
 
-Asterisk supports IP phones based on IAX such as the ATCOM and the old ATA from Digium (called IAXy) as well as soft-phones that still implement the IAX2 protocol. The process for soft-phones, ATAs, and hard-phones is similar. To configure an IAX device, you need to edit the iax.conf file in /etc/asterisk
+Asterisk supports IP phones based on IAX such as the ATCOM and the old ATA from Digium (called IAXy) as well as softphones that still implement the IAX2 protocol. The process for softphones, ATAs, and hard-phones is similar. To configure an IAX device, you need to edit the iax.conf file in /etc/asterisk
 
 ```
 directory.
 ```
 
-We will use an IAX2-capable soft-phone as an example.
+We will use an IAX2-capable softphone as an example.
 
 1. Make a backup of the original `iax.conf` file using:
 
@@ -1923,7 +1923,7 @@ host=dynamic
 
 In the above commands, we have defined a friend named [2003]. The context is the default (in the first labs we always use the default context to avoid confusion; this context will be fully explained in chapter 9). The line “host=dynamic” provides a dynamic registration of the phone’s IP address.
 
-3. Download and install an IAX2-capable soft-phone. You can choose any soft-phone that still supports the IAX2 protocol for the lab.
+3. Download and install an IAX2-capable softphone. You can choose any softphone that still supports the IAX2 protocol for the lab.
 4. Configure an IAX account in the client (typically *Add account* → IAX). Note that the SipPulse Softphone is SIP-only and cannot register over IAX2, so for IAX testing you need a client that still supports the protocol.
 
 5. Configure the `extensions.conf` file to test your IAX device.
@@ -2000,7 +2000,7 @@ Go to the Asterisk CLI and issue a reload. To verify if Asterisk is registered w
 *CLI>iax2 show register
 ```
 
-Now simply dial *98 on the soft-phone connected to the Asterisk server.
+Now simply dial *98 on the softphone connected to the Asterisk server.
 
 #### Connecting two Asterisk servers through an IAX trunk
 
@@ -2555,7 +2555,7 @@ vtsvoffice*CLI>iax2 no debug
 
 ### Summary
 
-This chapter has reviewed the strengths and weaknesses of the IAX protocol. It has demonstrated how IAX works in several scenarios, such as soft-phones and a trunk between two Asterisk servers. Trunk mode allows you to save bandwidth by carrying more than one call in a single packet. Finally, you learned console commands that you can use to check the status and debug the protocol.
+This chapter has reviewed the strengths and weaknesses of the IAX protocol. It has demonstrated how IAX works in several scenarios, such as softphones and a trunk between two Asterisk servers. Trunk mode allows you to save bandwidth by carrying more than one call in a single packet. Finally, you learned console commands that you can use to check the status and debug the protocol.
 
 ## Legacy SIP: chan_sip and sip.conf (removed in Asterisk 21+)
 
@@ -2842,14 +2842,14 @@ exten=_20XX,1,dial(SIP/${EXTEN})
 exten=_20XX,n,Hangup()
 ```
 
-Step 2: Now configure the soft-phone to use presence. We will show you how to configure the SipPulse Softphone.
+Step 2: Now configure the softphone to use presence. We will show you how to configure the SipPulse Softphone.
 
 - Sequence: right-click->SIP Account Settings->Properties->Presence
-- Change the presence model from peer-to-peer to presence agent, which will make the soft-phone subscribe Asterisk for SIP events.
+- Change the presence model from peer-to-peer to presence agent, which will make the softphone subscribe Asterisk for SIP events.
 
-Step 3: Add the contact to other soft-phones. In this example, the SipPulse Softphone is account 2000, so we will add a contact for account 2001. Sequence: Open the right panel (presence panel in the softphone)->Click in Contacts->Add a contact. Fill the name 2001. Display as 2001 and don’t forget to check the box Show this contact’s availability.
+Step 3: Add the contact to other softphones. In this example, the SipPulse Softphone is account 2000, so we will add a contact for account 2001. Sequence: Open the right panel (presence panel in the softphone)->Click in Contacts->Add a contact. Fill the name 2001. Display as 2001 and don’t forget to check the box Show this contact’s availability.
 
-Step 4: Now call extension 2001 and check the status of the phone in the right panel of the soft-phone. Use the console command `core show hints` to see the presence status changing in the server (in legacy chan_sip, `sip show inuse` showed how many calls you had on each line). On Asterisk 22, use `pjsip show endpoints` to inspect endpoint and channel state. The presence/BLF status appears in the softphone's contacts or BLF panel — exactly how it is shown depends on the client.
+Step 4: Now call extension 2001 and check the status of the phone in the right panel of the softphone. Use the console command `core show hints` to see the presence status changing in the server (in legacy chan_sip, `sip show inuse` showed how many calls you had on each line). On Asterisk 22, use `pjsip show endpoints` to inspect endpoint and channel state. The presence/BLF status appears in the softphone's contacts or BLF panel — exactly how it is shown depends on the client.
 
 #### Codec configuration
 
