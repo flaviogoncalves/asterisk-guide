@@ -39,7 +39,7 @@ The application filter will allow you to filter all characters from the dialed n
 
 ## Receiving calls using an IVR menu.
 
-In the last section, you received all calls using DID or forwarding to the operator. Now you will learn how to implement an IVR menu as well as create an auto-attendant service. Before getting into the specifics, , let’s examine some new applications. We put the output of the command show application below simply to make it easier for readers. You can obtain these descriptions using show application application_name. 1 http://downloads.asterisk.org/pub/security/AST-2010-002.pdf
+In the last section, you received all calls using DID or forwarding to the operator. Now you will learn how to implement an IVR menu as well as create an auto-attendant service. Before getting into the specifics, let’s examine some new applications. We put the output of the command `core show application` below simply to make it easier for readers. You can obtain these descriptions yourself using `core show application <application_name>`.
 
 ### The Background() application
 
@@ -125,7 +125,7 @@ When dialing the 9004 extension, processing jumps to the menu in the `s` extensi
 
 ### Matching as you dial
 
-This is a company setup menu for receiving calls. The background application reads the current context and defines the maximum length for each number for any possible combination.
+This is a company setup menu for receiving calls. The `Background()` application plays the welcome prompt and then waits for digits, matching what the caller dials against the extensions defined in the current context.
 
 ```
 [incoming]
@@ -244,8 +244,8 @@ There are some functions, applications, and CLI commands that work with AstDB:
 Examples:
 
 ```
-exten=_*21*XXXX,1,set(DB(CFBS/${CALLERID(num)}=${EXTEN:4}))
-exten=s,1,set(temp=${DB(CFBS/${EXTEN})})
+exten=_*21*XXXX,1,Set(DB(CFBS/${CALLERID(num)})=${EXTEN:4})
+exten=s,1,Set(temp=${DB(CFBS/${EXTEN})})
 ```
 
 Some applications can be used to manipulate AstDB:
@@ -288,9 +288,9 @@ Use the CLI command database show to see the families, keys, and values added.
 
 ![10-dialplan-advanced-features figure 10](../images/10-dialplan-advanced-features-img10.png)
 
-### Call Forward. BlackList, DND
+### Call Forward, Blacklist, DND
 
-The above subroutine verifies if the database contains the key:value pairs corresponding to CFIM, CFBS, or DND, and then handles them appropriately. The follow subroutine calls the dialing routine:
+The subroutine verifies whether the database contains the key:value pairs corresponding to CFIM, CFBS, or DND, and then handles them appropriately. The following subroutine calls the dialing routine:
 
 ```
 exten=_4XXX,1,gosub(stdexten,s,1(${EXTEN}))
@@ -326,13 +326,13 @@ exten=>_#31#X.,2,Hangup()
 You can also insert the numbers in the blacklist using the console CLI:
 
 ```
-CLI>database put blacklist <name/number> 1
+*CLI>database put blacklist <name/number> 1
 ```
 
 Note: Any value can be associated with the key. The `DB_EXISTS()` test searches for the key, not the value. To erase the number from the blacklist, you can use:
 
 ```
-CLI>database del blacklist <name/number>
+*CLI>database del blacklist <name/number>
 ```
 
 ## Time-based contexts
@@ -367,7 +367,7 @@ This application can replace the time-based context and seems easier to understa
 - <daysofweek>=<dayname>|<dayname>'-'<dayname>|"*"
 - <dayname>="sun"|"mon"|"tue"|"wed"|"thu"|"fri"|"sat"
 - <daysofmonth>=<daynum>|<daynum>'-'<daynum> |"*"
-- <daynum>=number from 1 to31
+- <daynum>=number from 1 to 31
 - <hour>=number from 0 to 23
 - <minute>=number from 0 to 59
 - <months>=<monthname>|<monthname>'-'<monthname>|"*"
@@ -405,7 +405,7 @@ Asterisk 22 uses commas as argument separators (the pipe form was deprecated in 
 
 ## Limit simultaneous calls
 
-The GROUP() function allows you to count how many active channels you have in one group at the same time. Example: You have a branch in Rio de Janeiro, where phones follow the pattern “_214X”. This location is served by a leased line, with 64K reserved for voice bandwidth. In this case, the maximum number of allowed calls is 2 (G.729, 30r.2K per call). To limit calls to Rio by two:
+The GROUP() function allows you to count how many active channels you have in one group at the same time. Example: You have a branch in Rio de Janeiro, where phones follow the pattern “_214X”. This location is served by a leased line, with 64K reserved for voice bandwidth. In this case, the maximum number of allowed calls is 2 (G.729, about 31.2K per call). To limit calls to Rio by two:
 
 ```
 exten=>_214X,1,set(GROUP()=Rio)
@@ -462,11 +462,9 @@ Please check for advanced options in the file `voicemail.conf`.
 
 **Step 3: Configure the file `extensions.conf`.**
 
-Below, you have the instructions to create the subroutine and the call that implement voicemail in `extensions.conf`. We use the value of the channel variable `${DIALSTATUS}` to redirect the call flow to the proper voicemail menu.
+The `stdexten` subroutine shown earlier (under *Subroutines with GOSUB*) is exactly the call/voicemail handler you need here: it dials the extension and uses the value of the channel variable `${DIALSTATUS}` to redirect the call flow to the proper voicemail greeting (`b` for busy, `u` for unavailable). Call it with `Gosub(stdexten,s,1(PJSIP/<device>,<mailbox>))` from each extension in `extensions.conf`.
 
-### Voicemail Subroutine
-
-## Using the Voicemailmain() application
+## Using the VoiceMailMain() application
 
 The application voicemailmain() is used to configure the voicemail mailbox. Users can dial the application, record their greeting, and listen to their voicemail. To call the application in the dial plan, use:
 
@@ -619,7 +617,7 @@ This lab was tested using a SIP softphone.
 exten=9008,n,voicemail(b4401)
 ```
 
-3. Go to the CLI > console and reload.
+3. Go to the console and reload.
 4. In the SipPulse Softphone, open the SIP account settings and enable voicemail (message-waiting) checking for the account.
 5. Dial 9008 and leave a message.
 6. Observe the message icon on the phone.
@@ -715,7 +713,7 @@ Thus far, you have learned several dial plan concepts. Let’s put all the appli
 
 ### Step 1 – Configuring channels
 
-Analog trunks (chan_dahdi.conf) First, we will configure the analog trunks in the DAHDI channel configuration file chan_dahdi.conf. In this case, we will use a T400P Digium card with 4 FXO interfaces. Let’s assume that the driver is already loaded and the driver configuration file (/etc/dahdi/system.conf) is correctly configured.
+**Analog trunks (`chan_dahdi.conf`).** First, we will configure the analog trunks in the DAHDI channel configuration file `chan_dahdi.conf`. In this case, we will use a T400P Digium card with 4 FXO interfaces. Let’s assume that the driver is already loaded and the driver configuration file (/etc/dahdi/system.conf) is correctly configured.
 
 ![10-dialplan-advanced-features figure 16](../images/10-dialplan-advanced-features-img16.png)
 
@@ -727,10 +725,10 @@ group=1
 channel => 1-4
 ```
 
-SIP channels (pjsip.conf) We have chosen the dial plan numbering from 2000 to 2099. Two codecs will be used: G.729 and G.711 ulaw. The first one will be used for phones using Asterisk over the Internet or WAN while the second one will be used for phones using the local network. In `pjsip.conf`, we will arbitrate which devices will belong to each class of service (restrict, ld, ldi). To reduce the vulnerability to brute force attacks, we will use the phone’s MAC addresses as device names. I strongly advise that you use strong passwords to avoid brute force attacks!
+**SIP channels (`pjsip.conf`).** We have chosen the dial plan numbering from 2000 to 2099. Two codecs will be used: G.729 and G.711 ulaw. The first one will be used for phones using Asterisk over the Internet or WAN while the second one will be used for phones using the local network. In `pjsip.conf`, we will arbitrate which devices will belong to each class of service (restrict, ld, ldi). To reduce the vulnerability to brute force attacks, we will use the phone’s MAC addresses as device names. I strongly advise that you use strong passwords to avoid brute force attacks!
 
 We define a transport and three reusable templates — an endpoint base with the
-shared codecs, a userpass auth, and a single-contact AOR — then attach each device
+shared codecs, a digest auth, and a single-contact AOR — then attach each device
 to the templates and override only what differs (its class-of-service context and
 credentials). `host=dynamic` becomes an AOR that the phone registers against, and
 `directmedia` becomes `direct_media`:
@@ -748,9 +746,9 @@ disallow=all
 allow=ulaw,gsm
 direct_media=yes
 
-[auth-userpass](!)
+[auth-digest](!)
 type=auth
-auth_type=userpass
+auth_type=digest
 
 [aor-single](!)
 type=aor
@@ -761,7 +759,7 @@ context=restrict
 auth=00001A000002
 aors=00001A000002
 mailboxes=20
-[00001A000002](auth-userpass)
+[00001A000002](auth-digest)
 username=00001A000002
 password=#s2cr2t#
 [00001A000002](aor-single)
@@ -772,7 +770,7 @@ dtmf_mode=rfc4733
 auth=00001A000003
 aors=00001A000003
 mailboxes=20
-[00001A000003](auth-userpass)
+[00001A000003](auth-digest)
 username=00001A000003
 password=#s3cr3t#
 [00001A000003](aor-single)
@@ -783,7 +781,7 @@ dtmf_mode=rfc4733
 auth=00001A000004
 aors=00001A000004
 mailboxes=20
-[00001A000004](auth-userpass)
+[00001A000004](auth-digest)
 username=00001A000004
 password=#s3cr3t#
 [00001A000004](aor-single)
