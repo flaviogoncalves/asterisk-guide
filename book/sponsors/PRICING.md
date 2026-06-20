@@ -39,8 +39,7 @@ translation funding) can be negotiated.
 ## Current sponsors
 
 - **SipPulse Tecnologia Ltda** — founding sponsor.
-- **voip.ms** — founding **SIP Trunk Lab** sponsor. *(Launch offer: the first three months
-  are complimentary.)*
+- **SIP Trunk Lab** — *open for sponsorship.*
 
 ## Reach
 

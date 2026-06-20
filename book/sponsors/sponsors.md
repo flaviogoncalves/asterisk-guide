@@ -42,12 +42,10 @@ founding member of the **OpenSIPS Foundation**. Learn more at <https://www.sippu
 
 ## Lab sponsors {.unnumbered}
 
-Several hands-on labs are sponsored by the providers that power them, so you can complete the
-exercises against real services.
-
-**voip.ms — SIP Trunk Lab.** voip.ms is a SIP trunking and DID provider. Use a voip.ms trunk
-to register, place, and receive real PSTN calls in the *SIP Trunking & DID* labs of this book.
-Sign up at <https://voip.ms>.
+Several hands-on labs are designed to run against real services, so you can complete the
+exercises end to end. **The SIP Trunk Lab sponsorship is currently open.** If you are a SIP
+trunking or DID provider and would like your service featured in the *SIP Trunking & DID*
+labs of this book, get in touch at flavio@voip.school.
 
 ## Sponsor the next edition {.unnumbered}
 
