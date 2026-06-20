@@ -4,9 +4,9 @@ Q: My softphones are not connecting to the server\
 A: Please check the network settings in the VM, make sure your adapter is in **bridged** mode. Check also if your server has a valid IP address (use ifconfig).
 
 Q: Can't register in the remote SIP server. \
-A: Please check the port. The port in the remote server is 5600 instead of 5060. I use this port to avoid having logs full of messages of people scanning the server (friendly scanner). Check also if you can ping sip.api4com.com.
+A: Please check the port. The port in the remote server is 5600 instead of 5060. I use this port to avoid having logs full of messages of people scanning the server (friendly scanner). Check also if you can ping sip.flagonc.com.
 
-register=>1040:supersecret@sip.api4com.com:5600/9999
+register=>1040:supersecret@sip.flagonc.com:5600/9999
 
 Q: I have installed Asterisk in the Cloud (Amazon AWS or any other where the server is behind NAT) and I'm having problems. \
 A: This is not a supported configuration, but it can work if you use in sip.conf

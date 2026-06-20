@@ -8,8 +8,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Least privilege: the default token is read-only. Only the `release` job (tags only)
+# is granted contents: write to attach files to the GitHub Release.
 permissions:
-  contents: write   # needed to attach files to Releases on tags
+  contents: read
 
 jobs:
   build:
@@ -30,7 +32,7 @@ jobs:
       - name: Build English PDF, EPUB and LaTeX (+ sponsored PDF)
         run: bash book/build.sh
 
-      # Translated editions (pt es fr de it hi zh ja) — built ONLY when the repo variable
+      # Translated editions (pt es fr de it hi zh ja ar) — built ONLY when the repo variable
       # BUILD_TRANSLATIONS == 'true'. Off by default, so until the machine translations are
       # verified, every release ships the verified ENGLISH editions only. Flip the variable on
       # (Settings → Secrets and variables → Actions → Variables) once the translations are signed
@@ -58,11 +60,24 @@ jobs:
           path: build/*
           if-no-files-found: error
 
-      # On a version tag (e.g. v2.0.0), publish every edition as a GitHub Release.
-      # Missing files (e.g. translations skipped) are ignored so the release still succeeds.
+  # On a version tag (e.g. v2.0.0), publish every edition as a GitHub Release.
+  # Separate job so contents: write is granted ONLY here, never to the PR/push build job.
+  # Missing files (e.g. translations skipped) are ignored so the release still succeeds.
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download built editions
+        uses: actions/download-artifact@v4
+        with:
+          name: asterisk-guide
+          path: build
+
       - name: Publish Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2 (SHA-pinned)
         with:
           fail_on_unmatched_files: false
           files: |
