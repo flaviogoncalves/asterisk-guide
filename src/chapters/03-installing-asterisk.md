@@ -24,7 +24,11 @@ Asterisk does not need a lot of hardware to run, however there are some tips to 
 - Echo cancellation. Echo cancellation may take a lot of CPU/FPU, in some cases you should choose hardware echo cancellation using DSPs in the telephony interface card
 - Availability. Use RAID1 or 5 to increase availability. Remember, Asterisk is 24x7 application.
 
-The main component for an Asterisk Server is the network adapter. A good server network adapter is recommended. CPU is important when you need to support high complexity codecs such as g.729 and iLBC and echo cancellation. You may choose to use dedicated DSPs, Sangoma (formerly Digium) provides a DSP card named TC400B capable to support 120 g729 simultaneous calls. The best practice is to choose a new, server class, computer from a known manufacturer. To know exactly how many simultaneous calls or how many registered users a specific machine can support, you should test this hardware with a stress test tool such as SIPP (http://sipp.sourceforge.net). Some hardware manufacturers such as Xorcom (http://www.xorcom.com) publish its results in the website. Note: Some Asterisk applications, such as ConfBridge and music on hold, need an internal timing source. On modern Linux this is provided automatically by the built-in `res_timing_timerfd` module — no telephony hardware is required. (The old `dahdi_dummy` software timer no longer exists; its functionality was folded into the main `dahdi` kernel module in DAHDI Linux 2.3.0.) You can confirm the active timer with the CLI command `timing test`.
+The main component for an Asterisk Server is the network adapter. A good server network adapter is recommended. CPU is important when you need to support high complexity codecs such as g.729 and iLBC and echo cancellation. You may choose to use dedicated DSPs, Sangoma (formerly Digium) provides a DSP card named TC400B capable to support 120 g729 simultaneous calls.
+
+The best practice is to choose a new, server class, computer from a known manufacturer. To know exactly how many simultaneous calls or how many registered users a specific machine can support, you should test this hardware with a stress test tool such as SIPP (http://sipp.sourceforge.net). Some hardware manufacturers such as Xorcom (http://www.xorcom.com) publish its results in the website.
+
+Note: Some Asterisk applications, such as ConfBridge and music on hold, need an internal timing source. On modern Linux this is provided automatically by the built-in `res_timing_timerfd` module — no telephony hardware is required. (The old `dahdi_dummy` software timer no longer exists; its functionality was folded into the main `dahdi` kernel module in DAHDI Linux 2.3.0.) You can confirm the active timer with the CLI command `timing test`.
 
 ### Hardware configuration
 
@@ -268,11 +272,40 @@ You can access the Asterisk console by executing the following command. Please n
 
 You can show the available runtime options using asterisk –h
 
-```
+```text
 sipast:/usr/src/asterisk-22.x.y# asterisk -h
+Asterisk 22.10.0, Copyright (C) 1999 - 2025, Sangoma Technologies Corporation and others.
+Usage: asterisk [OPTIONS]
+Valid Options:
+   -V              Display version number and exit
+   -C <configfile> Use an alternate configuration file
+   -G <group>      Run as a group other than the caller
+   -U <user>       Run as a user other than the caller
+   -c              Provide console CLI
+   -d              Increase debugging (multiple d's = more debugging)
+   -f              Do not fork
+   -F              Always fork
+   -g              Dump core in case of a crash
+   -h              This help screen
+   -i              Initialize crypto keys at startup
+   -L <load>       Limit the maximum load average before rejecting new calls
+   -M <value>      Limit the maximum number of calls to the specified value
+   -m              Mute debugging and console output on the console
+   -n              Disable console colorization. Can be used only at startup.
+   -p              Run as pseudo-realtime thread
+   -q              Quiet mode (suppress output)
+   -r              Connect to Asterisk on this machine
+   -R              Same as -r, except attempt to reconnect if disconnected
+   -s <socket>     Connect to Asterisk via socket <socket> (only valid with -r)
+   -t              Record soundfiles in /var/tmp and move them where they
+                   belong after they are done
+   -T              Display the time in [Mmm dd hh:mm:ss] format for each line
+                   of output to the CLI. Cannot be used with remote console mode.
+   -v              Increase verbosity (multiple v's = more verbose)
+   -x <cmd>        Execute command <cmd> (implies -r)
+   -X              Enable use of #exec in asterisk.conf
+   -W              Adjust terminal colors to compensate for a light background
 ```
-
-Asterisk 22.10.0, Copyright (C) 1999 - 2025, Sangoma Technologies Corporation and others. Usage: asterisk [OPTIONS] Valid Options: -V Display version number and exit -C <configfile> Use an alternate configuration file -G <group> Run as a group other than the caller -U <user> Run as a user other than the caller -c Provide console CLI -d Increase debugging (multiple d's = more debugging) -f Do not fork -F Always fork -g Dump core in case of a crash -h This help screen -i Initialize crypto keys at startup -L <load> Limit the maximum load average before rejecting new calls -M <value> Limit the maximum number of calls to the specified value -m Mute debugging and console output on the console -n Disable console colorization. Can be used only at startup. -p Run as pseudo-realtime thread -q Quiet mode (suppress output) -r Connect to Asterisk on this machine -R Same as -r, except attempt to reconnect if disconnected -s <socket> Connect to Asterisk via socket <socket> (only valid with -r) -t Record soundfiles in /var/tmp and move them where they belong after they are done -T Display the time in [Mmm dd hh:mm:ss] format for each line of output to the CLI. Cannot be used with remote console mode. -v Increase verbosity (multiple v's = more verbose) -x <cmd> Execute command <cmd> (implies -r) -X Enable use of #exec in asterisk.conf -W Adjust terminal colors to compensate for a light background
 
 ## Installation directories
 

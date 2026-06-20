@@ -469,7 +469,16 @@ Asterisk uses some extension names as standard extensions.
 
 ![Asterisk special extensions: `i` (invalid), `s` (start), `h` (hangup), `t` (timeout), `T` (absolute timeout), `o` (operator), `a` (pressed `*` in voicemail), `fax` (fax detection), and `Talk` (used with BackgroundDetect).](../images/04-first-pbx-fig07.png)
 
-Description: s: Start. It is used to handle a call when there is no dialed number. It is useful for FXO trunks and in- menu processing. t: Timeout. It is used when calls remain inactive after a prompt has been played. It is also used to hang up an inactive line. T: AbsoluteTimeout. If you establish a call limit using the `TIMEOUT(absolute)` dialplan function, once the call exceeds the limit defined, it will be sent to the T extension. h: Hangup. It is called after the user disconnects the call. i: Invalid. It is triggered when you call an non-existent extension in the context. Using these extensions can affect the content of CDR records—specifically, the dst that does not contain the number dialed. o: Operator. It is used to go to operator when the user presses “0” during the voicemail. The use of these extensions can change the content of the billing records (CDR)—in particular, the field dst will not have the number dialed. To work around this problem, you should use the option g in the dial() application and consider the functions resetcdr(w) and/or nocdr()
+Description:
+
+- **s**: Start. It is used to handle a call when there is no dialed number. It is useful for FXO trunks and in-menu processing.
+- **t**: Timeout. It is used when calls remain inactive after a prompt has been played. It is also used to hang up an inactive line.
+- **T**: AbsoluteTimeout. If you establish a call limit using the `TIMEOUT(absolute)` dialplan function, once the call exceeds the limit defined, it will be sent to the T extension.
+- **h**: Hangup. It is called after the user disconnects the call.
+- **i**: Invalid. It is triggered when you call an non-existent extension in the context. Using these extensions can affect the content of CDR records—specifically, the dst that does not contain the number dialed.
+- **o**: Operator. It is used to go to operator when the user presses "0" during the voicemail.
+
+The use of these extensions can change the content of the billing records (CDR)—in particular, the field dst will not have the number dialed. To work around this problem, you should use the option g in the dial() application and consider the functions resetcdr(w) and/or nocdr()
 
 ## Variables
 

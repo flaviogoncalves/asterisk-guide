@@ -12,7 +12,45 @@ By the end of this chapter, the reader should be able to:
 
 ## Asterisk CDR Format
 
-Asterisk generates a call detail record (CDR) for each call. These records are stored, by default, in a text file in a comma separated value (CSV) in the /var/log/asterisk/cdr-csv. The file is organized in the following fields: CDR Description Type Size Accountcode Account Number to use String Src Caller ID Number String Dst Destination Extension String Dcontext Destination Context String Caller ID with Text String Channel Channel Used String Dstchannel Destination channel String Lastapp Last application String Lastdata Last application data String Start Start of call Date/Time Answer Answer of call Date/Time End End of Call Date/Time Duration Time, from dial to hang up Integer (seconds) Billsec Time, from answer to hang up Integer (seconds) Disposition What Happened to the call String (ANSWERED, NO ANSWER, BUSY, FAILED, CONGESTION) Amaflags Flags (DEFAULT, OMIT, BILLING, DOCUMENTATION) String User field User defined field String Sample of csv file imported into a table. AccountCode CallerID No. Extension Context CallerID text Src Dst 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-5f30 PJSIP/8584-9153 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-96f5 PJSIP/8584-3312 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-74ac PJSIP/8584-297b 1234 4830258576 2012348584 admin "Joana D’Arc" <4830258576> PJSIP/8576-2c5d PJSIP/8584-9870 1234 4830258584 2012348576 default "Luis Sample" <4830258584> PJSIP/8584-03fd PJSIP/8576-645c Application Appdata Start Answer End Dur Bil Disposition Amaflags Dial PJSIP/8584,30,tT 27/3/2006 16:05 27/3/2006 16:05 27/3/2006 16:05 ANSWERED DOCUMENTATION Dial PJSIP/8584,30,tT 27/3/2006 16:16 27/3/2006 16:16 27/3/2006 16:16 ANSWERED BILLING Dial PJSIP/8584,30,tT 27/3/2006 16:22 27/3/2006 16:22 27/3/2006 16:22 ANSWERED BILLING Dial PJSIP/8584,30,tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING Dial PJSIP/8576,30,tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING
+Asterisk generates a call detail record (CDR) for each call. These records are stored, by default, in a text file in a comma separated value (CSV) in the /var/log/asterisk/cdr-csv. The file is organized in the following fields:
+
+| Field | Description | Type |
+|-------|-------------|------|
+| Accountcode | Account number to use | String |
+| Src | Caller ID number | String |
+| Dst | Destination extension | String |
+| Dcontext | Destination context | String |
+| Clid | Caller ID with text | String |
+| Channel | Channel used | String |
+| Dstchannel | Destination channel | String |
+| Lastapp | Last application | String |
+| Lastdata | Last application data | String |
+| Start | Start of call | Date/Time |
+| Answer | Answer of call | Date/Time |
+| End | End of call | Date/Time |
+| Duration | Time, from dial to hang up | Integer (seconds) |
+| Billsec | Time, from answer to hang up | Integer (seconds) |
+| Disposition | What happened to the call (ANSWERED, NO ANSWER, BUSY, FAILED, CONGESTION) | String |
+| Amaflags | Flags (DEFAULT, OMIT, BILLING, DOCUMENTATION) | String |
+| Userfield | User-defined field | String |
+
+Sample of a CSV file imported into a table.
+
+| AccountCode | CallerID No. | Extension | Context | CallerID text | Src | Dst |
+|-------------|--------------|-----------|---------|---------------|-----|-----|
+| 1234 | 4830258576 | *72*1234*8584 | admin | "Joana D'Arc" <4830258576> | PJSIP/8576-5f30 | PJSIP/8584-9153 |
+| 1234 | 4830258576 | *72*1234*8584 | admin | "Joana D'Arc" <4830258576> | PJSIP/8576-96f5 | PJSIP/8584-3312 |
+| 1234 | 4830258576 | *72*1234*8584 | admin | "Joana D'Arc" <4830258576> | PJSIP/8576-74ac | PJSIP/8584-297b |
+| 1234 | 4830258576 | 2012348584 | admin | "Joana D'Arc" <4830258576> | PJSIP/8576-2c5d | PJSIP/8584-9870 |
+| 1234 | 4830258584 | 2012348576 | default | "Luis Sample" <4830258584> | PJSIP/8584-03fd | PJSIP/8576-645c |
+
+| Application | Appdata | Start | Answer | End | Dur | Bil | Disposition | Amaflags |
+|-------------|---------|-------|--------|-----|-----|-----|-------------|----------|
+| Dial | PJSIP/8584,30,tT | 27/3/2006 16:05 | 27/3/2006 16:05 | 27/3/2006 16:05 | | | ANSWERED | DOCUMENTATION |
+| Dial | PJSIP/8584,30,tT | 27/3/2006 16:16 | 27/3/2006 16:16 | 27/3/2006 16:16 | | | ANSWERED | BILLING |
+| Dial | PJSIP/8584,30,tT | 27/3/2006 16:22 | 27/3/2006 16:22 | 27/3/2006 16:22 | | | ANSWERED | BILLING |
+| Dial | PJSIP/8584,30,tT | 27/3/2006 16:37 | 27/3/2006 16:37 | 27/3/2006 16:37 | | | ANSWERED | BILLING |
+| Dial | PJSIP/8576,30,tT | 27/3/2006 16:37 | 27/3/2006 16:37 | 27/3/2006 16:37 | | | ANSWERED | BILLING |
 
 ## Account codes and automated message accounting
 

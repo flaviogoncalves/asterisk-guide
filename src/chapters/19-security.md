@@ -56,7 +56,12 @@ An IPRN is a number that you can allocate for free in some specific internet pho
 
 ![An IPRN provider price list showing per-country payout rates and test numbers](../images/19-security-fig03.png)
 
-After the allocation phase, the hacker tries to find any open Asterisk server capable to dial the allocated IPRN. The PBX from the victim, controlled by the hacker, will make hundreds of calls to the IPRN number generating a large pay back for the hacker and a huge phone bill for the victim. Many times, higher then hundreds of thousands of dollars in a single weekend. Main tools used by hackers to attack a PBX 1. SIPVicious: http://code.google.com/p/sipvicious/. Sipvicious is a security tool set easy to use. Its main objective is to recognize vulnerable PBXs and crack the SIP passwords using a brute force attack. The most used tool is svcrack. The tool is capable to test thousands of passwords per second. 2. Phone vulnerabilities. Another point frequently used by hackers as an attack vector is the phone itself. Many people installing Asterisk do not change the default password in the web interface of the phone. Once these phones are open on the Internet, hackers can try to use the default interface password to download the configuration where they can often find the secret SIP password. .
+After the allocation phase, the hacker tries to find any open Asterisk server capable to dial the allocated IPRN. The PBX from the victim, controlled by the hacker, will make hundreds of calls to the IPRN number generating a large pay back for the hacker and a huge phone bill for the victim. Many times, higher then hundreds of thousands of dollars in a single weekend.
+
+Main tools used by hackers to attack a PBX:
+
+1. **SIPVicious**: http://code.google.com/p/sipvicious/. Sipvicious is a security tool set easy to use. Its main objective is to recognize vulnerable PBXs and crack the SIP passwords using a brute force attack. The most used tool is svcrack. The tool is capable to test thousands of passwords per second.
+2. **Phone vulnerabilities**. Another point frequently used by hackers as an attack vector is the phone itself. Many people installing Asterisk do not change the default password in the web interface of the phone. Once these phones are open on the Internet, hackers can try to use the default interface password to download the configuration where they can often find the secret SIP password.
 
 #### TFTPTheft:
 
@@ -80,7 +85,17 @@ You can prevent eavesdropping by encrypting your VoIP traffic. The other way is 
 
 ## Security policy for Asterisk
 
-The best way to implement security is to create a security policy. For this training I will suggest a security policy for most Asterisk installations. Use it as the base starting point and change it according to your needs. The suggested security policy follows below: 1. No unnecessary UDP/TCP ports open 2. No access to any administrative interface (SSH/HTTPS) open on the Internet. 3. To access SSH and/or HTTP/HTTPS there should be an explicit exceptions in IPTABLES firewall 4. Strong passwords with 12 characters and at least one special character 5. Ban IP addresses failing more than 10 times in the authentication using Fail2ban 6. Password confirmation for International calls 7. Limit access to the SIP port to your known range of IP address If you require to have external access to your PBX, there are two possibilities. Use a SBC (Session Border Controller) to protect your server against DOS/DDOS or use a VPN whenever you want external access. If you leave the port 5060 open on the Internet without a SBC or VPN, you are open to a DOS/DDOS attack. The risk is yours.
+The best way to implement security is to create a security policy. For this training I will suggest a security policy for most Asterisk installations. Use it as the base starting point and change it according to your needs. The suggested security policy follows below:
+
+1. No unnecessary UDP/TCP ports open
+2. No access to any administrative interface (SSH/HTTPS) open on the Internet.
+3. To access SSH and/or HTTP/HTTPS there should be an explicit exceptions in IPTABLES firewall
+4. Strong passwords with 12 characters and at least one special character
+5. Ban IP addresses failing more than 10 times in the authentication using Fail2ban
+6. Password confirmation for International calls
+7. Limit access to the SIP port to your known range of IP address
+
+If you require to have external access to your PBX, there are two possibilities. Use a SBC (Session Border Controller) to protect your server against DOS/DDOS or use a VPN whenever you want external access. If you leave the port 5060 open on the Internet without a SBC or VPN, you are open to a DOS/DDOS attack. The risk is yours.
 
 ### PJSIP-era hardening (Asterisk 22)
 
@@ -126,7 +141,14 @@ noload => chan_unistim.so
 
 ### Implementing the security police with IPTABLES
 
-IPTABLES or netfilter is a standard firewall present in most Linux distributions. In this lab we will configure iptables and fail2ban. The objective is to implement the recommended security policy for Asterisk and block all unnecessary traffic. Follow the steps below: 1 – Block all external traffic 2 – Allow SSH traffic from an internal network or single host 3 – Allow SIP traffic in UDP and TCP the ports 5060 4 – Allow RTP traffic in the UDP media port range. There is no single built-in default — Asterisk's own `rtp.conf` falls back to ports 5000–31000 when nothing is set, but the shipped `rtp.conf.sample` configures `rtpstart=10000` / `rtpend=20000`, so we use that example range here. Match your firewall rule to whatever `rtpstart`/`rtpend` you actually set in `rtp.conf`. Make sure you have console access to the server, you don't want to block yourself out of the system. Be careful. Step 1 - Install the package net-persistent.
+IPTABLES or netfilter is a standard firewall present in most Linux distributions. In this lab we will configure iptables and fail2ban. The objective is to implement the recommended security policy for Asterisk and block all unnecessary traffic. Follow the steps below:
+
+1. Block all external traffic
+2. Allow SSH traffic from an internal network or single host
+3. Allow SIP traffic in UDP and TCP the ports 5060
+4. Allow RTP traffic in the UDP media port range. There is no single built-in default — Asterisk's own `rtp.conf` falls back to ports 5000–31000 when nothing is set, but the shipped `rtp.conf.sample` configures `rtpstart=10000` / `rtpend=20000`, so we use that example range here. Match your firewall rule to whatever `rtpstart`/`rtpend` you actually set in `rtp.conf`.
+
+Make sure you have console access to the server, you don't want to block yourself out of the system. Be careful. Step 1 - Install the package net-persistent.
 
 ```
 sudo apt-get install iptables-persistent

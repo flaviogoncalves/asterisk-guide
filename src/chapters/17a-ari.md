@@ -295,7 +295,11 @@ This single feature is what turns Asterisk into a front-end for AI: the telephon
 
 ## Summary
 
-ARI is the modern, recommended interface for building telephony applications on Asterisk 22. It splits the work cleanly: Asterisk is the media engine, and your application — speaking JSON over HTTP and a WebSocket — provides the call-control logic. You enable it through `http.conf` (the built-in web server on port 8088) and `ari.conf` (which turns ARI on and defines users). The `Stasis()` dialplan application hands a channel to your app, raising `StasisStart` when it enters and `StasisEnd` when it leaves. From there you manipulate a small set of REST resources — channels, bridges, playbacks, recordings, endpoints, and device states — to answer, play, record, bridge, and hang up. We built a minimal Python Stasis app that answers a call, plays a prompt, and hangs up, and we saw how the `externalMedia` channel streams live RTP to an external program — the foundation for AI and voicebot integrations.
+ARI is the modern, recommended interface for building telephony applications on Asterisk 22. It splits the work cleanly: Asterisk is the media engine, and your application — speaking JSON over HTTP and a WebSocket — provides the call-control logic. You enable it through `http.conf` (the built-in web server on port 8088) and `ari.conf` (which turns ARI on and defines users).
+
+The `Stasis()` dialplan application hands a channel to your app, raising `StasisStart` when it enters and `StasisEnd` when it leaves. From there you manipulate a small set of REST resources — channels, bridges, playbacks, recordings, endpoints, and device states — to answer, play, record, bridge, and hang up.
+
+We built a minimal Python Stasis app that answers a call, plays a prompt, and hangs up, and we saw how the `externalMedia` channel streams live RTP to an external program — the foundation for AI and voicebot integrations.
 
 ## Quiz
 

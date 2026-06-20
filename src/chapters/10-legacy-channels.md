@@ -1,6 +1,8 @@
 # Legacy channels: analog, TDM & IAX2
 
-In a 2026 pure-VoIP world, the channel types in this chapter are increasingly rare: most new deployments are SIP trunks and PJSIP endpoints over Ethernet, with no telephony hardware at all. Asterisk 22 nonetheless still supports most of them fully. Analog (FXO/FXS) and digital TDM (E1/T1/ISDN PRI/BRI) connectivity is provided through DAHDI — the driver stack originally developed by Digium, which was acquired by Sangoma in 2018, after the earlier Zaptel drivers were renamed following a trademark dispute. Server-to-server connectivity over IAX2 is provided by `chan_iax2`, which is still shipped and supported but is now firmly a legacy protocol. This chapter also collects the **legacy SIP** material: the old `chan_sip` driver and its `sip.conf` configuration — removed in Asterisk 21 and gone in Asterisk 22 — together with a complete guide to migrating an existing `sip.conf` system to PJSIP. If you are running a pure-SIP shop on PJSIP with no telephony cards, no IAX2 trunks, and no legacy `sip.conf` to convert, you can safely skip this chapter.
+In a 2026 pure-VoIP world, the channel types in this chapter are increasingly rare: most new deployments are SIP trunks and PJSIP endpoints over Ethernet, with no telephony hardware at all. Asterisk 22 nonetheless still supports most of them fully. Analog (FXO/FXS) and digital TDM (E1/T1/ISDN PRI/BRI) connectivity is provided through DAHDI — the driver stack originally developed by Digium, which was acquired by Sangoma in 2018, after the earlier Zaptel drivers were renamed following a trademark dispute. Server-to-server connectivity over IAX2 is provided by `chan_iax2`, which is still shipped and supported but is now firmly a legacy protocol.
+
+This chapter also collects the **legacy SIP** material: the old `chan_sip` driver and its `sip.conf` configuration — removed in Asterisk 21 and gone in Asterisk 22 — together with a complete guide to migrating an existing `sip.conf` system to PJSIP. If you are running a pure-SIP shop on PJSIP with no telephony cards, no IAX2 trunks, and no legacy `sip.conf` to convert, you can safely skip this chapter.
 
 ## Analog channels (FXO/FXS)
 
@@ -27,7 +29,13 @@ Most analog implementations use a pair of cooper lines named tip and ring. When 
 
 #### Supervision signaling
 
-The main supervision signalings are on-hook, off-hook, and ringing. On-Hook – When a user puts the phone on the hook, the PBX interrupts and does not allow the electric current to pass. In this state, the circuit is named on-hook. In this position, only the ringer is active. Off-Hook – Before starting a phone call, the phone needs to pass to the off-hook state. Removing the handset from the hook closes the loop and indicates to the PBX that the user intends to make a call. Upon receiving this indication, the PBX generates a dial tone, indicating to the user that it is ready to accept the destination address (i.e., phone number). Ringing – When a user calls another phone, it generates a voltage to the ringer that warns the other user about a call being received. Signaling varies by country, with different tones for different countries. You can personalize Asterisk tones to your country by modifying the indications.conf file. For example:
+The main supervision signalings are on-hook, off-hook, and ringing.
+
+- **On-Hook** – When a user puts the phone on the hook, the PBX interrupts and does not allow the electric current to pass. In this state, the circuit is named on-hook. In this position, only the ringer is active.
+- **Off-Hook** – Before starting a phone call, the phone needs to pass to the off-hook state. Removing the handset from the hook closes the loop and indicates to the PBX that the user intends to make a call. Upon receiving this indication, the PBX generates a dial tone, indicating to the user that it is ready to accept the destination address (i.e., phone number).
+- **Ringing** – When a user calls another phone, it generates a voltage to the ringer that warns the other user about a call being received. Signaling varies by country, with different tones for different countries.
+
+You can personalize Asterisk tones to your country by modifying the indications.conf file. For example:
 
 ```
 [br]
@@ -366,7 +374,12 @@ The echo cancellation in Asterisk is controlled by three parameters in the file 
 dahdi.conf.
 ```
 
-echocancel: Disables or enables echo cancellation. You should keep this feature enabled. It accepts “yes” or the number of taps. Explanation: How does echo canceling work? Most echo canceling algorithms operate by generating multiple copies of a received signal, with each being delayed by a small interval. This little flow is called a “tap”. The number of taps determines the echo delay that can be cancelled. These copies are delayed, adjusted, and subtracted from the original signal. The trick is to adjust the delayed signal exactly to what is necessary to remove the echo. echocancelwhenbridged: Enables or disables the echo canceller during a pure TDM call. This is usually not necessary. rxgain: Adjusts the audio reception gain to either increase or decrease reception volume (-100% to 100%). txgain: Adjusts audio transmission gain to either increase or decrease the transmission volume (- 100% to 100%). For example:
+- **echocancel**: Disables or enables echo cancellation. You should keep this feature enabled. It accepts "yes" or the number of taps. (Explanation: How does echo canceling work? Most echo canceling algorithms operate by generating multiple copies of a received signal, with each being delayed by a small interval. This little flow is called a "tap". The number of taps determines the echo delay that can be cancelled. These copies are delayed, adjusted, and subtracted from the original signal. The trick is to adjust the delayed signal exactly to what is necessary to remove the echo.)
+- **echocancelwhenbridged**: Enables or disables the echo canceller during a pure TDM call. This is usually not necessary.
+- **rxgain**: Adjusts the audio reception gain to either increase or decrease reception volume (-100% to 100%).
+- **txgain**: Adjusts audio transmission gain to either increase or decrease the transmission volume (-100% to 100%).
+
+For example:
 
 ```
 echocancel=yes
@@ -417,7 +430,16 @@ hanguponpolarityswitch=yes
 
 #### Options for phones
 
-These options are used for phones connected to the FXS interfaces. All the functionalities delivered to analog phones connected directly to the DAHDI interfaces are controlled by Asterisk. Adsi (Analog Display Services Interface): This is a set of telecom standards used by some telcos to offer services such as ticket buying. cancallforward: Enables or disables call forwarding (*72 to enable and *73 to disable). calleridcallwaiting: Enables callerid received during a call waiting indication (Yes/No). immediate: In immediate mode, instead of providing a dial tone, the channel jumps immediately to the “s” extension in the defined context. This is used to create hotlines. threewaycalling: Enables or disables three-way conferencing. mailbox: Warns the user about available voicemail messages. It can be an audible sign or a visual indicator (if the telephone supports this feature). The argument is the mailbox number. callgroup: Group phones to dial or to pick up. pickupgroup: Group of phones for call pickup.
+These options are used for phones connected to the FXS interfaces. All the functionalities delivered to analog phones connected directly to the DAHDI interfaces are controlled by Asterisk.
+
+- **adsi** (Analog Display Services Interface): This is a set of telecom standards used by some telcos to offer services such as ticket buying.
+- **cancallforward**: Enables or disables call forwarding (*72 to enable and *73 to disable).
+- **calleridcallwaiting**: Enables callerid received during a call waiting indication (Yes/No).
+- **immediate**: In immediate mode, instead of providing a dial tone, the channel jumps immediately to the "s" extension in the defined context. This is used to create hotlines.
+- **threewaycalling**: Enables or disables three-way conferencing.
+- **mailbox**: Warns the user about available voicemail messages. It can be an audible sign or a visual indicator (if the telephone supports this feature). The argument is the mailbox number.
+- **callgroup**: Group phones to dial or to pick up.
+- **pickupgroup**: Group of phones for call pickup.
 
 ### Useful DAHDI CLI commands
 
@@ -455,7 +477,11 @@ DAHDI/g1  - First available channel in group 1
 
 As of Asterisk 22, DAHDI and libpri remain fully supported, but TDM digital trunks (E1/T1/ISDN PRI) are increasingly replaced by SIP trunks in new deployments. This section remains fully applicable where TDM connectivity is required; in greenfield environments, SIP trunking (Chapter 3) usually delivers the same channel density without telephony hardware.
 
-Digital channels are extremely common, so you will need to learn how to implement these channels if you want to focus on large customers. When the number of channels is high—usually more than 8—it is fairly common to use digital interfaces such as T1/E1/J1. T1 is very common in the US, whereas E1 is common in Europe and J1 in Japan. These types of channels allow for a good density of circuits—24 per T1 channel and 30 for E1 channels. In Latin America, China, and Africa, it is common to use a type of channel associated signaling (CAS) known as MFC/R2. This chapter will examine how to implement MFC/R2 using the library OpenR2. In the US and Europe, Integrated Services Digital Networks (ISDN) PRI is the most common signaling. The chapter will also discuss ISDN Basic Rate Interface (BRI), which is very common in Europe in mid-range applications. All examples in the book concentrate on DAHDI channels. Some cards are implemented using proprietary channels, so please check with your manufacturer for further details on how to configure your specific card.
+Digital channels are extremely common, so you will need to learn how to implement these channels if you want to focus on large customers. When the number of channels is high—usually more than 8—it is fairly common to use digital interfaces such as T1/E1/J1. T1 is very common in the US, whereas E1 is common in Europe and J1 in Japan. These types of channels allow for a good density of circuits—24 per T1 channel and 30 for E1 channels.
+
+In Latin America, China, and Africa, it is common to use a type of channel associated signaling (CAS) known as MFC/R2. This chapter will examine how to implement MFC/R2 using the library OpenR2. In the US and Europe, Integrated Services Digital Networks (ISDN) PRI is the most common signaling. The chapter will also discuss ISDN Basic Rate Interface (BRI), which is very common in Europe in mid-range applications.
+
+All examples in the book concentrate on DAHDI channels. Some cards are implemented using proprietary channels, so please check with your manufacturer for further details on how to configure your specific card.
 
 ### Objectives
 
@@ -1162,7 +1188,14 @@ Note: Most TELCOs mandate that you configure your correct caller ID. If you do n
 
 #### Audio quality options
 
-These options adjust certain Asterisk parameters that affect audio quality in DAHDI channels. echocancel: Disable or enable echo cancellation. You should keep this feature enabled. It accepts “yes” or the number of taps. Explanation: How does echo canceling work? Most echo canceling algorithms operate by generating multiple copies of a received signal, with each being delayed by a small interval. This little flow is named “tap”. The number of taps determines the echo delay that can be cancelled. These copies are delayed, adjusted, and subtracted from the original signal. The trick is to adjust the delayed signal exactly to what is necessary to remove the echo. echocancelwhenbridged: Enables or disables the echo canceller during a pure TDM call. This is usually not required. rxgain: Adjusts the audio reception gain to either increase or decrease reception volume (-100% to 100%). txgain: Adjusts audio transmission gain to either increase or decrease the transmission volume (- 100% to 100%). Example:
+These options adjust certain Asterisk parameters that affect audio quality in DAHDI channels.
+
+- **echocancel**: Disable or enable echo cancellation. You should keep this feature enabled. It accepts "yes" or the number of taps. (Explanation: How does echo canceling work? Most echo canceling algorithms operate by generating multiple copies of a received signal, with each being delayed by a small interval. This little flow is named "tap". The number of taps determines the echo delay that can be cancelled. These copies are delayed, adjusted, and subtracted from the original signal. The trick is to adjust the delayed signal exactly to what is necessary to remove the echo.)
+- **echocancelwhenbridged**: Enables or disables the echo canceller during a pure TDM call. This is usually not required.
+- **rxgain**: Adjusts the audio reception gain to either increase or decrease reception volume (-100% to 100%).
+- **txgain**: Adjusts audio transmission gain to either increase or decrease the transmission volume (-100% to 100%).
+
+Example:
 
 ```
 echocancel=yes
@@ -1687,7 +1720,11 @@ DAHDI/g1  - First available channel in group 1
 
 ## The IAX2 protocol
 
-In this chapter, we will learn about the Inter-Asterisk eXchange (IAX) protocol, including its strengths and weaknesses. Details such as trunk mode and the interconnection of two Asterisk servers will also be covered. All references in this document correspond to IAX version 2. The IAX protocol provides media transport and signaling for voice and video. IAX is very innovative; it saves bandwidth in trunk mode and is much simpler than SIP when you need to traverse NAT. The primary use for IAX nowadays is to interconnect Asterisk servers. IAX was created primarily for voice, but it can also accommodate video and other multimedia streams. IAX was inspired from other VoIP protocols, such as SIP and MGCP. Instead of using two separate protocols for signaling and media, IAX unified them to make a unique protocol. IAX does not use RTP for media transport; instead, it embeds the media in the same UDP connection.
+In this chapter, we will learn about the Inter-Asterisk eXchange (IAX) protocol, including its strengths and weaknesses. Details such as trunk mode and the interconnection of two Asterisk servers will also be covered. All references in this document correspond to IAX version 2.
+
+The IAX protocol provides media transport and signaling for voice and video. IAX is very innovative; it saves bandwidth in trunk mode and is much simpler than SIP when you need to traverse NAT. The primary use for IAX nowadays is to interconnect Asterisk servers. IAX was created primarily for voice, but it can also accommodate video and other multimedia streams.
+
+IAX was inspired from other VoIP protocols, such as SIP and MGCP. Instead of using two separate protocols for signaling and media, IAX unified them to make a unique protocol. IAX does not use RTP for media transport; instead, it embeds the media in the same UDP connection.
 
 **Status in Asterisk 22.** `chan_iax2` is still included and fully supported in Asterisk 22 LTS, so everything in this section remains valid. IAX2 is, however, a legacy protocol that sees relatively little new deployment: the industry has largely converged on SIP (via `chan_pjsip` in Asterisk 22) for both provider trunking and server interconnection. IAX2's main remaining advantage is its single-port design — all signaling and media flow over a single UDP port (4569 by default), which simplifies firewall and NAT configuration compared to SIP plus its separate RTP streams. For a new Asterisk-to-Asterisk trunk where NAT is not a concern, a PJSIP trunk is the recommended modern approach; IAX2 is covered here because it remains a valid choice, especially where only one UDP port can be opened through a firewall.
 
@@ -2056,7 +2093,21 @@ Now let’s analyze the IAX authentication process from the practical standpoint
 
 ![The IAX authentication decision flow for an incoming call: Asterisk branches on whether a username is provided, whether it matches a section, whether the source IP is allowed, and whether the secret (plaintext, MD5, or RSA) matches — accepting the call with that section's context and peer options, or denying it.](../images/10-legacy-fig16.png)
 
-When Asterisk receives an incoming connection, the initial information can include a user name (from the field “username=”) or not. The incoming connection has an IP address too, which Asterisk uses for authentication as well. If a user is provided, Asterisk: 1. Searches iax.conf for an entry with type=user (or type=friend with a section name matching the username). If it did not find it, Asterisk refuses the connection. 2. If the entry found has deny/allow configurations, it compares the IP address from the caller to determine whether to accept the call or not depending on the deny/allow clauses. 3. It checks the password (secret) using plaintext, md5, or RSA. 4. It accepts the connection and sends the call to the context specified in the line “context=” from the iax.conf file. If a username is not provided, Asterisk: 1. Searches for an entry containing type=user (or type=friend) in the iax.conf file without a specified secret. It checks deny/allow clauses as well. If an entry is found, the connection is accepted and the section name is used as the user’s name. 2. Searches for an entry containing type=user (or type=friend) in the iax.conf file with a secret or RSA key specified. It checks deny/allow clauses. If an entry is found, it tries to authenticate the caller using the specified secret; if it matches, it accepts the connection. Section name is the user’s name. Let’s suppose your iax.conf file has the following entries:
+When Asterisk receives an incoming connection, the initial information can include a user name (from the field "username=") or not. The incoming connection has an IP address too, which Asterisk uses for authentication as well.
+
+If a user is provided, Asterisk:
+
+1. Searches iax.conf for an entry with type=user (or type=friend with a section name matching the username). If it did not find it, Asterisk refuses the connection.
+2. If the entry found has deny/allow configurations, it compares the IP address from the caller to determine whether to accept the call or not depending on the deny/allow clauses.
+3. It checks the password (secret) using plaintext, md5, or RSA.
+4. It accepts the connection and sends the call to the context specified in the line "context=" from the iax.conf file.
+
+If a username is not provided, Asterisk:
+
+1. Searches for an entry containing type=user (or type=friend) in the iax.conf file without a specified secret. It checks deny/allow clauses as well. If an entry is found, the connection is accepted and the section name is used as the user's name.
+2. Searches for an entry containing type=user (or type=friend) in the iax.conf file with a secret or RSA key specified. It checks deny/allow clauses. If an entry is found, it tries to authenticate the caller using the specified secret; if it matches, it accepts the connection. Section name is the user's name.
+
+Let's suppose your iax.conf file has the following entries:
 
 ```
 [guest]

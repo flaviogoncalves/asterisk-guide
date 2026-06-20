@@ -28,7 +28,9 @@ In the new Real Time architecture, all database-specific code was moved to chann
 
 - UPDATE: Used to update objects.
 
-On Asterisk 22, SIP endpoints are handled by the **PJSIP** stack (`res_pjsip`), which is built on the **Sorcery** object model. With the `realtime` wizard, Sorcery loads each PJSIP object from the database on demand, and those objects then exist as ordinary configured PJSIP objects — not as the throwaway realtime peers the old SIP driver discarded after each call. Because they are real objects, NAT traversal, qualify, and message waiting indication (MWI) all work normally for realtime endpoints. (Sorcery can additionally be told to cache objects in memory via a `memory_cache` wizard, but that is opt-in and separate from realtime loading.) When you change an object in the database, the change is picked up on the next lookup; you do not need to reload after every edit. (The retired `chan_sip` realtime model, with its `sippeers`/`sipusers` families, is covered only in the *Legacy Channels* chapter.)
+On Asterisk 22, SIP endpoints are handled by the **PJSIP** stack (`res_pjsip`), which is built on the **Sorcery** object model. With the `realtime` wizard, Sorcery loads each PJSIP object from the database on demand, and those objects then exist as ordinary configured PJSIP objects — not as the throwaway realtime peers the old SIP driver discarded after each call.
+
+Because they are real objects, NAT traversal, qualify, and message waiting indication (MWI) all work normally for realtime endpoints. (Sorcery can additionally be told to cache objects in memory via a `memory_cache` wizard, but that is opt-in and separate from realtime loading.) When you change an object in the database, the change is picked up on the next lookup; you do not need to reload after every edit. (The retired `chan_sip` realtime model, with its `sippeers`/`sipusers` families, is covered only in the *Legacy Channels* chapter.)
 
 ## Configuring Asterisk Real Time
 
