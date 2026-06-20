@@ -318,9 +318,12 @@ This command sets a user field in the CDR. When using `cdr_adaptive_odbc`, the u
 
 Earlier editions stored CDRs in MySQL with the `cdr_addon_mysql` module (`cdr_mysql.conf`). That module was removed in Asterisk 19, so it is not available on Asterisk 22. The supported path is now `cdr_adaptive_odbc` with a MySQL ODBC driver, which stores the user field — and any other custom column — natively through its adaptive column mapping.
 
-### AppendCDRUserField(Value)
+### Appending to the user field
 
-Append data to the user field on the CDR.
+Earlier editions used the `AppendCDRUserField()` application to append data to the
+CDR user field. That application was removed from Asterisk; on Asterisk 22 you append
+to the user field by reading and re-setting it with the `CDR` function, for example
+`Set(CDR(userfield)=${CDR(userfield)}extra)`.
 
 ![13-call-detail-records figure 1](../images/13-call-detail-records-img01.png)
 
