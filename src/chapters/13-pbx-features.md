@@ -89,16 +89,11 @@ The DTMF feature codes (including one-step `parkcall`) remain in the `[featurema
 ```
 ; features.conf
 [featuremap]
-;blindxfer => #1                ; Blind transfer  (default is #) -- Make sure to set the T and/or t
-option in the Dial() or Queue() app call!
-;disconnect => *0               ; Disconnect  (default is *) -- Make sure to set the H and/or h option
-in the Dial() or Queue() app call!
-;atxfer => *2                   ; Attended transfer  -- Make sure to set the T and/or t option in the
-Dial() or Queue()  app call!
-;parkcall => #72        ; Park call (one step parking)  -- Make sure to set the K and/or k option in
-the Dial() app call!
-;automixmon => *3               ; One Touch Record a.k.a. Touch MixMonitor -- Make sure to set the X
-and/or x option in the Dial() or Queue() app call!
+;blindxfer => #1                ; Blind transfer  (default is #) -- Make sure to set the T and/or t option in the Dial() or Queue() app call!
+;disconnect => *0               ; Disconnect  (default is *) -- Make sure to set the H and/or h option in the Dial() or Queue() app call!
+;atxfer => *2                   ; Attended transfer  -- Make sure to set the T and/or t option in the Dial() or Queue()  app call!
+;parkcall => #72                ; Park call (one step parking)  -- Make sure to set the K and/or k option in the Dial() app call!
+;automixmon => *3               ; One Touch Record a.k.a. Touch MixMonitor -- Make sure to set the X and/or x option in the Dial() or Queue() app call!
 ```
 
 ## Call Transfer
@@ -139,11 +134,7 @@ Step 2: Test the call parking feature by dialing #700. Notes:
 
 ## Call pickup
 
-Call pickup allows you to capture a call from a colleague in the same call group. This would help avoid, for example, having to wake up to take a call that is ringing to another person in your room, but who is not present. By dialing *8, you can capture a call within your call group. This number can be modified in the
-
-```
-features.conf file.
-```
+Call pickup allows you to capture a call from a colleague in the same call group. This would help avoid, for example, having to wake up to take a call that is ringing to another person in your room, but who is not present. By dialing *8, you can capture a call within your call group. This number can be modified in the `features.conf` file.
 
 ![Call pickup: members can only capture calls within their own group; the operator (pickupgroup=1,2,3) can pick up calls from every group](../images/13-pbx-features-fig05.png)
 
@@ -174,7 +165,7 @@ There are different ways to implement a conference on Asterisk. The first option
 
 ConfBridge supports HD voice conferences and video conferencing. There are some limitations for video conferencing such as no transcoding — all participants have to use the same codec and profile. The video conference uses a follow-the-talker mode, displaying the image of the last person to speak. You may easily configure new DTMF menus in ConfBridge.
 
-ConfBridge replaces the old MeetMe application, which was deprecated in Asterisk 19 and removed in Asterisk 21. Unlike MeetMe, ConfBridge does **not** require DAHDI or a hardware timing source: it relies on Asterisk's built-in timing interface (`res_timing_timerfd` on Linux, or `res_timing_pthread`), so no `dahdi_dummy` module is needed. If you are migrating from an older system that used `MeetMe()` and `meetme.conf`, replace those with `ConfBridge()` and `confbridge.conf` as described below.
+ConfBridge replaces the old MeetMe application, which was deprecated in Asterisk 19. MeetMe still ships in the Asterisk 22 source tree, but it depends on DAHDI and is not built by default, so on a typical PJSIP install it is simply unavailable — ConfBridge is the supported conference application. Unlike MeetMe, ConfBridge does **not** require DAHDI or a hardware timing source: it relies on Asterisk's built-in timing interface (`res_timing_timerfd` on Linux, or `res_timing_pthread`), so no `dahdi_dummy` module is needed. If you are migrating from an older system that used `MeetMe()` and `meetme.conf`, replace those with `ConfBridge()` and `confbridge.conf` as described below.
 
 ### ConfBridge
 
@@ -245,7 +236,7 @@ If you are coming from MeetMe, the admin functions you used through `MeetMeAdmin
 - `participant_count` -- announce the number of participants
 - `leave_conference` -- leave the bridge and continue in the dialplan
 
-These replace the MeetMe `MeetMe()` option flags (`a`, `A`, `m`, `M`, `l`, `x`, …) and the `MeetMeAdmin()` commands (`k`, `K`, `L`, `M`, `N`, …). There is no `meetme.conf` in Asterisk 22; all conference configuration lives in `confbridge.conf`, and changes are applied with `module reload res_confbridge.so`.
+These replace the MeetMe `MeetMe()` option flags (`a`, `A`, `m`, `M`, `l`, `x`, …) and the `MeetMeAdmin()` commands (`k`, `K`, `L`, `M`, `N`, …). On a modern PJSIP install you won't be loading `app_meetme` at all; all conference configuration lives in `confbridge.conf`, and changes are applied with `module reload res_confbridge.so`.
 
 ### ConfBridge example
 
@@ -280,7 +271,7 @@ Record a call and mix the audio during the recording. Syntax: `MixMonitor(filena
 - W(<x>) - Adjusts both audible and spoken volumes by a factor of <x> (ranging from -4 to 4)
 - <command> will be executed when the recording is over. Any strings matching ^{X} will be unescaped to ${X} and all variables will be evaluated at that time. The variable MIXMONITOR_FILENAME will contain the filename used to record.
 
-An interesting resource is the one-touch recording feature `automixmon`, which lets a party dial a DTMF code (default `*3`) during a call to immediately start (and toggle off) recording. It is built on MixMonitor, so it writes a single mixed file. Example:
+An interesting resource is the one-touch recording feature `automixmon`, which lets a party dial a DTMF code (the `features.conf` sample suggests `*3`; there is no built-in default, so you must set it) during a call to immediately start (and toggle off) recording. It is built on MixMonitor, so it writes a single mixed file. Example:
 
 ```
 exten => _4XXX,1,Set(DYNAMIC_FEATURES=automixmon)
@@ -370,11 +361,16 @@ directory=/var/lib/asterisk/moh
 
 Now, to use music on hold, set the MOH class in the channel configuration files (chan_dahdi.conf, pjsip.conf, iax.conf, and so on). For PJSIP endpoints, set `moh_suggest` in the endpoint section of `pjsip.conf` (the legacy `musicclass` option name applies to chan_dahdi and other channel drivers, not to PJSIP). The freeplay tunes installed are now in wav format. At the time of installation, you can select (using make menuselect) the MOH file formats available. If you want to add new MOH files, you will have to supply them in the required formats. For example:
 
+In `/etc/asterisk/chan_dahdi.conf`, add the `musiconhold` line:
+
 ```
-In /etc/asterisk/chan_dahdi.conf, add the line:
 [channels]
 musiconhold=default
-Edit the file /etc/asterisk/musiconhold.conf
+```
+
+Then edit `/etc/asterisk/musiconhold.conf` to define that class:
+
+```
 [default]
 mode=files
 directory=/var/lib/asterisk/moh
@@ -422,7 +418,7 @@ Application maps allow you to add new features by using the `[applicationmap]` s
    - A. True
    - B. False
 8. To pick up a call from a specific call group, you must be in the matching ___ group.
-9. You can record a call with the MixMonitor() application or the one-touch recording (`automixmon`) feature. By default, `automixmon` uses the ___ DTMF sequence.
+9. You can record a call with the MixMonitor() application or the one-touch recording (`automixmon`) feature. In the `features.conf` sample, `automixmon` is mapped to the ___ DTMF sequence.
    - A. *1
    - B. *2
    - C. *3
