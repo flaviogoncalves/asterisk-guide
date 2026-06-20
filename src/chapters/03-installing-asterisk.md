@@ -74,7 +74,7 @@ cd /usr/src/asterisk-22.x.y
 ```
 apt-get install build-essential git wget openssl libssl-dev libxml2-dev \
   libsqlite3-dev uuid-dev libjansson-dev libedit-dev libncurses-dev \
-  libcurl4-openssl-dev pkg-config autoconf
+  libcurl4-openssl-dev pkg-config autoconf-archive
 ```
 
 Note that Asterisk source is now hosted on Git, so `subversion` is no longer needed, and modern Debian/Ubuntu ship `libncurses-dev` rather than the versioned `libncurses5-dev`. Prefer `./contrib/scripts/install_prereq install` over a hand-maintained list, since the script always tracks the correct package names for your distribution.
@@ -290,7 +290,7 @@ Valid Options:
 
 ## Installation directories
 
-Asterisk is installed on several directories, which can be modified in the asterisk.conf file. For training purposes I would change the verbose from 3 to 15, for production keep it in 3. The option max_calls and max_load are good options to protect your system from overloading.
+Asterisk is installed on several directories, which can be modified in the asterisk.conf file. For training purposes I would change the verbose from 3 to 15, for production keep it in 3. The options `maxcalls` and `maxload` are good options to protect your system from overloading.
 
 ### asterisk.conf (excerpt)
 
