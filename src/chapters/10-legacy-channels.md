@@ -1921,7 +1921,7 @@ secret=senha
 host=dynamic
 ```
 
-In the above commands, we have defined a friend named [2003]. The context is the default (in the first labs we always use the default context to avoid confusion; this context will be fully explained in chapter 9). The line “host=dynamic” provides a dynamic registration of the phone’s IP address.
+In the above commands, we have defined a friend named [2003]. The context is the default (in the first labs we always use the default context to avoid confusion; this context will be fully explained when we cover the dial plan). The line “host=dynamic” provides a dynamic registration of the phone’s IP address.
 
 3. Download and install an IAX2-capable softphone. You can choose any softphone that still supports the IAX2 protocol for the lab.
 4. Configure an IAX account in the client (typically *Add account* → IAX). Note that the SipPulse Softphone is SIP-only and cannot register over IAX2, so for IAX testing you need a client that still supports the protocol.
