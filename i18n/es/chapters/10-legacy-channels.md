@@ -1,25 +1,37 @@
-# Canales heredados: analógicos, TDM e IAX2
+# Canales heredados: analógico, TDM e IAX2
 
-En un mundo puramente VoIP en 2026, los tipos de canales de este capítulo son cada vez más raros: la mayoría de las implementaciones nuevas son trunks SIP y endpoints PJSIP sobre Ethernet, sin ningún hardware de telefonía. No obstante, Asterisk 22 sigue siendo totalmente compatible con la mayoría de ellos. La conectividad analógica (FXO/FXS) y digital TDM (E1/T1/ISDN PRI/BRI) se proporciona a través de DAHDI, la pila de controladores desarrollada originalmente por Digium, que fue adquirida por Sangoma en 2018, después de que los controladores Zaptel anteriores fueran renombrados tras una disputa de marcas registradas. La conectividad entre servidores a través de IAX2 es proporcionada por `chan_iax2`, que todavía se distribuye y es compatible, pero que ahora es firmemente un protocolo heredado. Este capítulo también recopila el material de **SIP heredado**: el antiguo controlador `chan_sip` y su configuración `sip.conf` —eliminados en Asterisk 21 y ausentes en Asterisk 22— junto con una guía completa para migrar un sistema `sip.conf` existente a PJSIP. Si usted está ejecutando una infraestructura puramente SIP en PJSIP sin tarjetas de telefonía, sin trunks IAX2 y sin `sip.conf` heredado que convertir, puede saltarse este capítulo con seguridad.
+En un mundo puro‑VoIP de 2026, los tipos de canal de este capítulo son cada vez más raros: la mayoría de los despliegues nuevos son trunks SIP y endpoints PJSIP sobre Ethernet, sin hardware de telefonía en absoluto. Asterisk 22, sin embargo, sigue soportando la mayor parte de ellos completamente. La conectividad analógica (FXO/FXS) y digital TDM (E1/T1/ISDN PRI/BRI) se proporciona a través de DAHDI — la pila de controladores originalmente desarrollada por Digium, que fue adquirida por Sangoma en 2018, después de que los controladores Zaptel fueran renombrados tras una disputa de marca registrada. La conectividad servidor‑a‑servidor sobre IAX2 la proporciona `chan_iax2`, que aún se envía y soporta pero ahora es firmemente un protocolo heredado.
+
+Este capítulo también recopila el material **legacy SIP**: el antiguo controlador `chan_sip` y su configuración `sip.conf` — eliminados en Asterisk 21 y desaparecidos en Asterisk 22 — junto con una guía completa para migrar un sistema `sip.conf` existente a PJSIP. Si estás ejecutando una tienda pura‑SIP en PJSIP sin tarjetas de telefonía, sin trunks IAX2 y sin legacy `sip.conf` que convertir, puedes omitir este capítulo con seguridad.
+
+## Objetivos
+
+Al final de este capítulo, deberías ser capaz de:
+
+- Conectar Asterisk a líneas y teléfonos analógicos con interfaces FXO/FXS a través de DAHDI;
+- Reconocer la conectividad digital TDM (E1/T1, ISDN PRI/BRI) y cómo se configura;
+- Configurar IAX2 (`chan_iax2`) para trunks de servidor a servidor y entender por qué ahora es legado;
+- Identificar el controlador retirado `chan_sip` y la sintaxis `sip.conf` que aún puedes encontrar; y
+- Migrar un sistema existente `chan_sip`/`sip.conf` a PJSIP.
 
 ## Canales analógicos (FXO/FXS)
 
-A partir de Asterisk 22, DAHDI y las tarjetas de telefonía analógica siguen siendo totalmente compatibles, y DAHDI todavía se compila con los kernels actuales. Sin embargo, la mayoría de las nuevas implementaciones son puramente VoIP (trunks SIP, PJSIP), por lo que el hardware analógico/TDM es ahora una opción de nicho, encontrada principalmente en entornos heredados, conectividad PSTN rural o mercados regulados. Todo lo que se detalla a continuación sigue siendo aplicable a esos escenarios.
+A partir de Asterisk 22, las tarjetas de telefonía analógica y DAHDI siguen totalmente soportadas, y DAHDI aún se compila contra los núcleos actuales. La mayoría de los nuevos despliegues son sin embargo puramente VoIP (troncales SIP, PJSIP), por lo que el hardware analógico/TDM ahora es una opción de nicho — encontrado principalmente en entornos heredados, conectividad PSTN rural o mercados regulados. Todo lo siguiente sigue aplicándose a esos escenarios.
 
-Existen varias formas de conectarse a la red telefónica pública conmutada (PSTN). La mejor manera depende de cómo la compañía telefónica haga disponible esta conexión en su área. La forma más sencilla es utilizar una línea analógica, similar a la línea que utiliza en casa. En esta sección, le mostraremos cómo configurar tarjetas analógicas de Sangoma™ (anteriormente Digium™) y Xorcom™.
+Existen varias formas de conectar la red telefónica pública conmutada (PSTN). La mejor manera depende de cómo la compañía telefónica ofrece esta conexión en su zona. La forma más simple es usar una línea analógica, similar a la línea que usa en casa. En esta sección, le mostraremos cómo configurar tarjetas analógicas de Sangoma™ (anteriormente Digium™) y Xorcom™.
 
 ### Objetivos
 
-Al final de este capítulo, usted debería ser capaz de:
+Al final de este capítulo usted debería ser capaz de:
 
 - Reconocer los principales términos y acrónimos de telefonía;
-- Entender cuándo utilizar circuitos digitales y analógicos;
+- Entender cuándo usar circuitos digitales y analógicos;
 - Reconocer la diferencia entre FXS y FXO; y
 - Configurar Asterisk para FXS y FXO.
 
 ### Conceptos básicos de telefonía
 
-La mayoría de las implementaciones analógicas utilizan un par de líneas de cobre llamadas tip y ring. Cuando se cierra un bucle, el teléfono recibe el tono de marcado del switch de telecomunicaciones (o de la PBX privada). La señalización utilizada con más frecuencia es loop-start; otros tipos de señalización menos comunes incluyen ground start, que se utiliza en varios países. Las tres categorías de señalización son:
+La mayoría de las implementaciones analógicas usan un par de líneas cooper llamadas tip y ring. Cuando se cierra un bucle, el teléfono recibe el tono de marcación del conmutador de telecomunicaciones (o del PBX privado). La señalización más utilizada es loop‑start; existen otras, menos comunes, como ground start, que se usa en varios países. Las tres categorías de señalización son:
 
 - Señalización de supervisión
 - Señalización de dirección
@@ -27,7 +39,13 @@ La mayoría de las implementaciones analógicas utilizan un par de líneas de co
 
 #### Señalización de supervisión
 
-Las principales señalizaciones de supervisión son on-hook, off-hook y ringing. On-Hook: cuando un usuario coloca el teléfono en el gancho, la PBX interrumpe y no permite que pase la corriente eléctrica. En este estado, el circuito se denomina on-hook. En esta posición, solo el timbre está activo. Off-Hook: antes de iniciar una llamada telefónica, el teléfono necesita pasar al estado off-hook. Retirar el auricular del gancho cierra el bucle e indica a la PBX que el usuario tiene la intención de realizar una llamada. Al recibir esta indicación, la PBX genera un tono de marcado, indicando al usuario que está lista para aceptar la dirección de destino (es decir, el número de teléfono). Ringing: cuando un usuario llama a otro teléfono, genera un voltaje hacia el timbre que advierte al otro usuario sobre una llamada entrante. La señalización varía según el país, con diferentes tonos para diferentes países. Puede personalizar los tonos de Asterisk para su país modificando el archivo indications.conf. Por ejemplo:
+Las principales señalizaciones de supervisión son on‑hook, off‑hook y ringing.
+
+- **On‑Hook** – Cuando un usuario coloca el teléfono en el gancho, el PBX interrumpe y no permite que la corriente eléctrica pase. En este estado, el circuito se denomina on‑hook. En esta posición, solo el timbre está activo.
+- **Off‑Hook** – Antes de iniciar una llamada, el teléfono debe pasar al estado off‑hook. Retirar el auricular del gancho cierra el bucle e indica al PBX que el usuario pretende realizar una llamada. Al recibir esta indicación, el PBX genera un tono de marcación, indicando al usuario que está listo para aceptar la dirección de destino (es decir, el número de teléfono).
+- **Ringing** – Cuando un usuario llama a otro teléfono, se genera un voltaje al timbre que avisa al otro usuario de que se está recibiendo una llamada. La señalización varía según el país, con tonos diferentes para cada uno.
+
+Puede personalizar los tonos de Asterisk para su país modificando el archivo indications.conf. Por ejemplo:
 
 ```
 [br]
@@ -40,98 +58,99 @@ congestion=425/250,0/250,425/750,0/250
 callwaiting=425/50,0/1000
 ```
 
-#### Señalización de dirección
+#### Señalización de Dirección
 
-Puede utilizar dos tipos de señalización para marcar. La primera y más común es dual tone multi-frequency (dtmf), mientras que la otra es pulse dialing (utilizada en los antiguos teléfonos de disco). Los teléfonos tienen un teclado para marcar, y cada botón está asociado con dos frecuencias: una alta y una baja. En el caso de la señalización dtmf, la combinación de estos tonos indica qué dígito se está presionando. MFC/R2 utiliza un tono multifrecuencia diferente al dtmf.
+Puedes usar dos tipos de señalización para marcar. El primero y más común es tono dual de múltiple frecuencia (dtmf) mientras que el otro es marcación por pulsos (usada en teléfonos de disco antiguos). Los teléfonos tienen un teclado para marcar, y cada botón está asociado a dos frecuencias: una alta y una baja. En el caso de la señalización dtmf, la combinación de estos tonos indica qué dígito se está presionando. MFC/R2 usa un tono de múltiple frecuencia diferente al dtmf.
 
 #### Señalización de información
 
 La señalización de información muestra el progreso de la llamada y diferentes eventos.
 
-- Tono de marcado
-- Tono de ocupado
-- Tono de retorno de llamada
-- Congestión
-- Número inválido
-- Tono de confirmación
+- tono de marcación
+- tono ocupado
+- tono de retorno
+- congestión
+- número inválido
+- tono de confirmación
 
 ### Interfaces PSTN
 
-Como en el caso de las antiguas PBX, a menudo se requiere conectar la PBX Asterisk a la PSTN. Aquí le mostraremos cómo hacerlo. Por lo general, tiene tres opciones para las líneas telefónicas.
+Como en el caso de los PBX antiguos, a menudo se requiere conectar el Asterisk PBX a la PSTN. Aquí le mostraremos cómo hacerlo. Normalmente tiene tres opciones para líneas telefónicas.
 
-- Analógica: La forma más común para hogares y pequeñas empresas, generalmente entregada con un par metálico de líneas de cobre.
-- Digital: Se utiliza cuando son necesarias muchas líneas. Una línea digital suele ser entregada por un CSU/DSU o un multiplexor de fibra. El conector del usuario final suele ser un RJ45. En algunos países, las líneas E1 se entregan utilizando dos conectores BNC coaxiales; en este caso, necesitará un balun para conectar el jack RJ45 a la placa de telefonía.
-- SIP: Esta opción se ha desarrollado recientemente. La línea telefónica se entrega utilizando una conexión de datos con señalización SIP (VoIP). Esta es una buena opción para usar con Asterisk, ya que no necesitará comprar una tarjeta de telefonía. Las llamadas telefónicas se entregarán directamente al puerto Ethernet. Otra ventaja es que puede liberar recursos de su CPU evitando la transcodificación de códecs.
+- Analógica: La forma más común para hogares y pequeñas empresas, generalmente entregada con un par metálico de líneas de cobre.  
+- Digital: Se usa cuando se requieren muchas líneas. Una línea digital suele entregarse mediante un CSU/DSU o un multiplexor de fibra. El conector del usuario final suele ser un RJ45. En algunos países, las líneas E1 se entregan usando dos conectores coaxiales BNC; en este caso necesitará un adaptador para conectar el conector RJ45 a la tarjeta de telefonía.  
+- SIP: Esta opción se ha desarrollado recientemente. La línea telefónica se entrega usando una conexión de datos con señalización SIP (VoIP). Es una buena opción para usar con Asterisk ya que no necesitará comprar una tarjeta de telefonía. Las llamadas telefónicas se entregarán directamente al puerto Ethernet. Otra ventaja es que podrá liberar recursos de su CPU evitando la transcodificación de códecs.
 
-### Interfaces analógicas FXS, FXO y E&M
+### Interfaces analógicas FXS, FXO y E&M interfaces
 
-Existen varios tipos de interfaces analógicas disponibles. Es fundamental comprender las diferencias entre estas interfaces para aprender a conectarse a la red telefónica, así como a otras PBX. Aquí, le mostraremos la interfaz E&M. Aunque actualmente no está disponible para Asterisk y ha sido descontinuada por varios proveedores, es posible que encuentre routers y PBX con este tipo de interfaz, por lo que es mejor saber con qué está tratando.
+Varios tipos de interfaces analógicas están disponibles. Es fundamental comprender las diferencias entre estas interfaces para aprender cómo conectarse a la red telefónica así como a otros PBX. Aquí, le mostraremos la interfaz E&M. Aunque actualmente no está disponible para Asterisk y ha sido descontinuada por varios proveedores, puede encontrar routers y PBX con este tipo de interfaz, por lo que es mejor saber con qué está tratando.
 
-#### Interfaces Foreign eXchange (FX)
+#### Interfaces de Intercambio Extranjero (FX) Interfaces
 
-Las interfaces FX son analógicas. El término "Foreign eXchange" se aplica a los trunks de acceso a una oficina central (CO) de la PSTN. Foreign eXchange Office (FXO)
+Las interfaces FX son analógicas. El término “Foreign eXchange” se aplica a los trunks de acceso a una central telefónica PSTN (CO). Foreign eXchange Office (FXO)
 
-![Asterisk entre un teléfono analógico (FXS) y la línea de la compañía telefónica (FXO): el lado FXS proporciona tono de marcado y timbre al teléfono, mientras que el lado FXO obtiene el tono de marcado de la oficina central.](../images/10-legacy-fig01.png)
+![Asterisk entre un teléfono analógico (FXS) y la línea telefónica (FXO): el lado FXS proporciona tono de marcado y timbre al teléfono, mientras que el lado FXO extrae tono de marcado de la central.](../images/10-legacy-fig01.png)
 
-La interfaz FXO se utiliza para conectarse a una oficina central (CO) o a la extensión de otra PBX. Se comunica directamente con una línea telefónica proveniente de la PSTN. Otra opción es conectar la interfaz FXO a una PBX existente, permitiendo la comunicación entre Asterisk y la PBX heredada. Conectar Asterisk a un puerto de PBX y entregar una extensión remota mediante VoIP a menudo se denomina extensión fuera de las instalaciones (OPX). Una interfaz FXO recibe un tono de marcado. Foreign eXchange Station (FXS): La interfaz FXS alimenta un teléfono analógico, módem o fax. El FXS proporciona el tono de marcado y la energía para un teléfono.
+La interfaz FXO se usa para conectar a una central (CO) o a la extensión de otro PBX. Comunica directamente con una línea telefónica proveniente de la PSTN. Otra opción es conectar la interfaz FXO a un PBX existente, permitiendo la comunicación entre Asterisk y el PBX heredado. Conectar Asterisk a un puerto de PBX y proporcionar una extensión remota usando VoIP se suele denominar extensión fuera de promesas (OPX). Una interfaz FXO recibe un tono de marcado. Estación de Intercambio Extranjero (FXS) La interfaz FXS alimenta un teléfono analógico, módem o fax. El FXS proporciona el tono de marcado y la energía para un teléfono.
 
-#### Señalización de trunk
+#### Señalización de tronco
 
-- Loop-Start
-- Ground-Start
-- Kewlstart
+- Inicio en bucle
+- Inicio de tierra
+- Inicio genial
 
-El uso de la señalización kewlstart en Asterisk es casi predeterminado. Kewlstart no es una señalización en sí misma, sino que añade inteligencia al circuito al monitorear lo que sucede en el otro lado. Kewlstart se basa en loop-start. La mayoría de los switches no admiten esta función, que se utiliza para obtener la notificación de colgado.
+El uso de la señalización kewlstart en Asterisk es casi predeterminado. Kewlstart no es señalización en sí, pero agrega inteligencia al circuito al monitorear lo que ocurre en el otro extremo. Kewlstart se basa en loop-start. La mayoría de los conmutadores no soportan esta característica, que se usa para obtener la notificación de colgado.
 
-- Loopstart: Utilizado en la mayoría de las líneas analógicas, permite que el teléfono indique "on-hook" y "off-hook" y que el switch indique "ring" y "no-ring". Esto es probablemente lo que la mayoría de la gente tiene en casa. El nombre proviene del hecho de que la línea siempre está abierta. Cuando cierra el bucle, el switch le proporciona un tono de marcado. Una llamada entrante se señala mediante un voltaje de timbre de 100V sobre el par abierto.
+- Loopstart: Usado en la mayoría de líneas analógicas, permite que el teléfono indique “on-hook” y “off-hook” y que el conmutador indique “ring” y “no-ring”. Probablemente sea lo que la mayoría de la gente tiene en casa. El nombre proviene del hecho de que la línea está siempre abierta. Cuando cierras el bucle, el conmutador te proporciona un tono de marcación. Una llamada entrante se señala con una tensión de timbre de 100 V sobre el par abierto.
 
-![Asterisk operando como un gateway VoIP: un puerto FXO se conecta a una extensión de PBX heredada mientras un Asterisk remoto entrega esa línea a un teléfono analógico sobre IP a través de un puerto FXS (una extensión fuera de las instalaciones, o OPX).](../images/10-legacy-fig02.png)
+![Asterisk funcionando como una pasarela VoIP: un puerto FXO se conecta a una extensión PBX heredada mientras un Asterisk remoto entrega esa línea a un teléfono analógico a través de IP mediante un puerto FXS (una extensión fuera de las instalaciones, o OPX).](../images/10-legacy-fig02.png)
 
-- Groundstart: Similar a Loopstart. Cuando desea realizar una llamada, un lado de la línea se cortocircuita. Cuando el switch identifica este estado, invierte el voltaje a través del par abierto y luego se cierra el bucle. En consecuencia, la línea primero se ocupa antes de ser ofrecida al llamante.
-- Kewlstart: Añade inteligencia a los circuitos, permitiendo el monitoreo del otro lado. Kewlstart incorpora muchas ventajas de loop-start.
+- Groundstart: Similar a Loopstart. Cuando deseas realizar una llamada, un lado de la línea está cortocircuitado. Cuando el conmutador identifica este estado, invierte la tensión a través del par abierto, y luego se cierra el bucle. En consecuencia, la línea primero queda ocupada antes de ser ofrecida al llamante.
+- Kewlstart: Añade inteligencia a los circuitos, permitiendo la monitorización del otro lado. Kewlstart incorpora muchas ventajas del loop-start.
 
 ### Configuración de canales de telefonía Asterisk
 
-Para configurar una tarjeta de interfaz de telefonía, son necesarios varios pasos. En este capítulo, mostraremos tres de los escenarios más comunes:
+Para configurar una tarjeta de interfaz telefónica, son necesarios varios pasos. En este capítulo, mostraremos tres de los escenarios más comunes:
 
 - Conexión analógica usando FXS
 - Conexión analógica usando FXO
 - Conexión de un Astribank™ con interfaces FXS y FXO
 
-### Procedimiento de configuración (válido en ambos casos)
+### Procedimiento de Configuración (válido en ambos casos)
 
-Antes de elegir hardware para Asterisk, debe considerar el número de llamadas simultáneas, servicios y códecs que se van a instalar y habilitar. Asterisk es una aplicación intensiva en CPU, por lo que recomendamos una máquina dedicada para Asterisk. El número de tarjetas de interfaz instaladas dentro de la computadora está limitado por el número de ranuras e interrupciones disponibles. Es preferible instalar una sola tarjeta con ocho interfaces de voz que dos tarjetas con cuatro. Otra opción es utilizar un banco de canales USB, como el Xorcom Astribank. Recientemente, algunos fabricantes (por ejemplo, CIANET) han comenzado a producir bancos de canales TDMoE, lo que hace aún más fácil conectar docenas de interfaces analógicas.
+Antes de elegir el hardware para Asterisk, debe considerar la cantidad de llamadas simultáneas, servicios y códecs que se instalarán y habilitarán. Asterisk es una aplicación intensiva en CPU, por lo que recomendamos una máquina dedicada para Asterisk. La cantidad de tarjetas de interfaz instaladas en la computadora está limitada por el número de ranuras e interrupciones disponibles. Es preferible instalar una sola tarjeta con ocho interfaces de voz que dos tarjetas con cuatro. Otra opción es usar un banco de canales USB, como el Xorcom Astribank. Recientemente, algunos fabricantes (p. ej., CIANET) han comenzado a producir bancos de canales TDMoE, lo que facilita aún más conectar decenas de interfaces analógicas.
 
-![Un Xorcom Astribank: un banco de canales USB de montaje en rack de 19 pulgadas que expone docenas de puertos FXS/FXO (aquí una unidad de 32 puertos) sin consumir ranuras PCI en el host.](../images/10-legacy-fig03.png)
+![A Xorcom Astribank: un banco de canales USB de montaje en rack de 19 pulgadas que expone docenas de puertos FXS/FXO (aquí una unidad de 32 puertos) sin consumir ranuras PCI en el host.](../images/10-legacy-fig03.png)
 
 #### Ejemplo 1: Instalación de un FXO y un FXS
 
-En este ejemplo, utilizaremos una tarjeta de interfaz de telefonía Sangoma TDM400 (anteriormente vendida como Digium TDM400) con un módulo FXS y uno FXO. Los pasos requeridos se enumeran a continuación:
+En este ejemplo, utilizaremos una tarjeta de interfaz telefónica Sangoma TDM400 (anteriormente vendida como Digium TDM400) con un módulo FXS y un módulo FXO. Los pasos requeridos se enumeran a continuación:
 
-1. Instale la tarjeta analógica FXS, FXO o ambas.
-2. Configure el archivo `/etc/dahdi/system.conf` (anteriormente `/etc/zaptel.conf`).
-3. Genere los archivos de configuración usando `dahdi_genconf`.
-4. Cargue el controlador para la interfaz DAHDI.
-5. Ejecute `dahdi_test` para verificar las pérdidas de interrupción.
-6. Ejecute `dahdi_cfg` para configurar el controlador.
+1. Instale la tarjeta analógica FXS, FXO, o ambas.  
+2. Configure el archivo `/etc/dahdi/system.conf` (anteriormente `/etc/zaptel.conf`).  
+3. Genere los archivos de configuración usando `dahdi_genconf`.  
+4. Cargue el controlador para la interfaz DAHDI.  
+5. Ejecute `dahdi_test` para verificar pérdidas de interrupción.  
+6. Ejecute `dahdi_cfg` para configurar el controlador.  
 7. Configure el canal DAHDI en el archivo `chan_dahdi.conf`, luego cargue Asterisk.
 
 ##### Paso 1: Instalar la placa TDM400
 
-La tarjeta TDM404P contiene módulos FXS y FXO. Conecte los módulos FXS (S110M, verde) y FXO (X100M, rojo). Si está utilizando módulos FXS, conecte la tarjeta directamente a la fuente de alimentación usando un conector molex. Por favor, utilice protección electrostática antes de manipular tarjetas de interfaz para evitar daños al hardware. Las tarjetas analógicas Sangoma (anteriormente Digium) también admiten un módulo de cancelación de eco de hardware VPMADT032.
+La tarjeta TDM404P contiene módulos FXS y FXO. Conecte los módulos FXS (S110M, verde) y FXO (X100M, rojo). Si está usando módulos FXS, conecte la tarjeta directamente a la fuente de alimentación usando un conector molex. Por favor, use protección electrostática antes de manipular tarjetas de interfaz para evitar daños al hardware. Las tarjetas analógicas de Sangoma (anteriormente Digium) también soportan un módulo de cancelación de eco hardware VPMADT032.
 
 ##### Paso 2: Generar la configuración con dahdi_genconf
 
-La buena noticia sobre la configuración es la nueva utilidad `dahdi_genconf`, que detecta y genera automáticamente la configuración para las interfaces DAHDI. La utilidad genera dos archivos:
+La buena noticia sobre la configuración es la nueva utilidad `dahdi_genconf`, que detecta automáticamente y genera la configuración para interfaces DAHDI. La utilidad genera dos archivos:
 
 - `/etc/dahdi/system.conf`
 - `/etc/asterisk/dahdi-channels.conf`
 - `/etc/asterisk/users.conf` (con la opción `users`)
-- Todos estos archivos utilizan la opción `chan_dahdi full`
+- Todos estos archivos usan la opción `chan_dahdi full`
 
-Antes de que pueda ejecutar `dahdi_genconf`, es importante configurar el archivo `genconf_parameters` (a menudo referido como `gen_parameters.conf`):
+Before you can execute `dahdi_genconf`, it is important to configure the file `genconf_parameters` (often referred to as `gen_parameters.conf`):
+--- END MARKDOWN ---
 
-![Una tarjeta analógica Sangoma/Digium TDM404P: hasta cuatro módulos FXS o FXO se conectan a los puertos numerados, con una tarjeta hija opcional de cancelación de eco de hardware y un conector de alimentación dedicado de 12 V para módulos FXS.](../images/10-legacy-fig04.png)
+![Una tarjeta analógica Sangoma/Digium TDM404P: hasta cuatro módulos FXS o FXO se conectan a los puertos numerados, con una tarjeta hija opcional de cancelación de eco de hardware y un conector de alimentación dedicado de 12 V para módulos FXS.](../images/10-legacy-fig04.png)
 
 ```
 #
@@ -179,7 +198,7 @@ Antes de que pueda ejecutar `dahdi_genconf`, es importante configurar el archivo
 # SPAN/4              NT
 ```
 
-El archivo `genconf_parameters` le permite personalizar su configuración. Los parámetros más importantes para las líneas analógicas son:
+El archivo `genconf_parameters` le permite personalizar su configuración. Los parámetros más importantes para líneas analógicas son:
 
 ```
 base_exten          4000
@@ -197,44 +216,47 @@ group_lines         5
 echo_can            MG2
 ```
 
-Advertencia: Es necesario que configure al menos el algoritmo de cancelación de eco para los canales. El parámetro base_exten define el dialplan básico para las extensiones FXS. En este caso, el primer canal FXS recibirá el número de extensión 4000, el segundo 4001, y así sucesivamente. El contexto en el que se crean las líneas (context_phones) y los trunks (context_lines) es muy importante. Después de generar los archivos, debe incluir el archivo `/etc/asterisk/dahdi-channels.conf` en el archivo `/etc/asterisk/chan_dahdi.conf`:
+Warning: Es necesario que configure al menos el algoritmo de cancelación de eco para los canales. El parámetro base_exten define el plan de marcación básico para extensiones FXS. En este caso, el primer canal FXS recibirá el número de extensión 4000, el segundo 4001, y así sucesivamente. El contexto en el que se crean las líneas (context_phones) y los trunks (context_lines) es muy importante. Después de generar los archivos, debe incluir el archivo `/etc/asterisk/dahdi-channels.conf` en el archivo `/etc/asterisk/chan_dahdi.conf`:
 
 ```
 #include dahdi-channels.conf
 ```
 
-Nota: La señalización analógica es un poco confusa; siempre es la inversa de la tarjeta. Las tarjetas FXS se señalan con FXO, mientras que las tarjetas FXO se señalan con FXS. Asterisk habla con estos dispositivos como si estuviera en el lado opuesto.
+Note: La señalización analógica es un poco confusa; siempre es la inversa de la tarjeta. Las tarjetas FXS se señalan con FXO mientras que las tarjetas FXO se señalan con FXS. Asterisk habla con estos dispositivos como si estuviera en el lado opuesto.
 
-##### Paso 3: Cargar los controladores del kernel
+##### Step 3: Load kernel drivers
 
-Ahora tiene que cargar el módulo chan_dahdi y el controlador del kernel de la tarjeta relacionada. Use dahdi_hardware para detectar su tarjeta y el nombre del controlador. Por ejemplo:
+Now you have to load the chan_dahdi module and the related card kernel driver. Use dahdi_hardware to detect your card and the driver name. For example:
 
-- Descripción del controlador de tarjeta
-- TE410P wct4xxp 4xE1/T1-3.3V PCI
-- TE405P wct4xxp 4xE1/T1-5V PCI
-- TDM400P wctdm 4 FXS/FXO
-- T100P wct1xxp 1 T1 E100P wctlxxp 1 E1 X100P wcfxo 1 FXO
+| Card | Driver | Description |
+| --- | --- | --- |
+| TE410P | wct4xxp | 4xE1/T1 - PCI de 3.3V |
+| TE405P | wct4xxp | 4xE1/T1 - PCI de 5V |
+| TDM400P | wctdm | 4 FXS/FXO |
+| T100P | wct1xxp | 1 T1 |
+| E100P | wct1xxp | 1 E1 |
+| X100P | wcfxo | 1 FXO |
 
-Comandos para cargar los controladores:
+Commands to load the drivers:
 
 ```
 modprobe dahdi
 modprobe wctdm
 ```
 
-##### Paso 4: Usar la utilidad dahdi_test
+##### Paso 4: Use la utilidad dahdi_test
 
-Una utilidad importante es dahdi_test, que se utiliza para verificar las pérdidas de interrupción en la tarjeta DAHDI. Los problemas de calidad de audio a menudo están relacionados con conflictos de interrupción. Para verificar que su tarjeta DAHDI no esté compartiendo una interrupción con otras tarjetas, use el siguiente comando:
+Una utilidad importante es dahdi_test, que se usa para verificar pérdidas de interrupciones en la tarjeta DAHDI. Los problemas de calidad de audio a menudo están relacionados con conflictos de interrupciones. Para verificar que su tarjeta DAHDI no está compartiendo una interrupción con otras tarjetas, use el siguiente comando:
 
 ```
 #cat /proc/interrupts
 ```
 
-Puede verificar el número de pérdidas de interrupción usando la utilidad dahdi_test compilada con las tarjetas DAHDI. Un número por debajo del 99.987% indica posibles problemas.
+Puedes verificar el número de interrupciones perdidas usando la utilidad dahdi_test compilada con las tarjetas DAHDI. Un número por debajo del 99.987 % indica posibles problemas.
 
-##### Paso 5: Usar la utilidad dahdi_cfg para configurar el controlador
+##### Paso 5: Usa la utilidad dahdi_cfg para configurar el controlador
 
-DAHDI tiene un sistema inusual para cargar los controladores. Primero configure /etc/dahdi/system.conf, y luego aplique esas configuraciones al controlador DAHDI usando dahdi_cfg. En este caso, dahdi_cfg se utiliza para configurar la señalización para las interfaces FX. Para ver los resultados, puede añadir "-vvvvv" al comando para obtener información detallada.
+DAHDI tiene un sistema inusual para cargar los controladores. Primero configura el archivo /etc/dahdi/system.conf y luego aplica esas configuraciones al controlador DAHDI usando dahdi_cfg. En este caso, dahdi_cfg se utiliza para configurar la señalización de las interfaces FX. Para ver los resultados, puedes añadir “-vvvvv” al comando para obtener salida detallada.
 
 ```
 #
@@ -247,7 +269,7 @@ Channel 02: FXO Kewlstart (Default) (Slaves: 02)
 2 channels configured.
 ```
 
-Si los canales se cargaron correctamente, verá una salida similar a la que se muestra arriba. Los usuarios a menudo configuran incorrectamente chan_dahdi.conf con señalización invertida entre canales. Si esto sucede, verá un mensaje como el que se muestra a continuación:
+If the channels were loaded successfully, you will see an output similar to the one shown above. Users often incorrectly configure chan_dahdi.conf with inverted signaling between channels. If this happens, you will see a message like the one shown below:
 
 ```
 DAHDI_CHANCONFIG failed on channel 1: Invalid argument (22)
@@ -255,11 +277,11 @@ Did you forget that FXS interfaces are configured with FXO signalling
 and that FXO interfaces use FXS signalling?
 ```
 
-Después de configurar correctamente el hardware, puede proceder a la configuración de Asterisk.
+After successfully configuring the hardware, you can proceed to Asterisk configuration.
 
-##### Paso 6: Configurar el archivo /etc/asterisk/chan_dahdi.conf
+##### Step 6: Configure the /etc/asterisk/chan_dahdi.conf file
 
-Suena extraño, pero después de configurar /etc/dahdi/system.conf, usted configuró la tarjeta en sí. DAHDI se puede utilizar para otros fines, como el enrutamiento y SS7. Para usarlo con Asterisk, debe configurar los canales DAHDI de Asterisk. Cada canal en Asterisk tiene que ser definido; los canales SIP/PJSIP se definen en pjsip.conf (nota: chan_sip y sip.conf fueron eliminados en Asterisk 21), mientras que los canales TDM se definen en chan_dahdi.conf. Esto crea los canales TDM lógicos que se utilizarán en su dialplan.
+It sounds strange, but after configuring the /etc/dahdi/system.conf, you configured the card itself. DAHDI can be used for other purposes, like routing and SS7. To use it with Asterisk, you must configure the Asterisk DAHDI channels. Every channel in Asterisk has to be defined; SIP/PJSIP channels are defined in pjsip.conf (note: chan_sip and sip.conf were removed in Asterisk 21) while TDM channels are defined in chan_dahdi.conf. This creates the logical TDM channels to be used in your dial plan.
 
 ```
 signalling=fxs_ks;                  ; FXS signaling for the FXO interface
@@ -274,17 +296,17 @@ channel => 2                        ; channel number
 
 ### Opciones de configuración
 
-Hay varias opciones disponibles en el archivo chan_dahdi.conf. Una descripción de todas las opciones sería aburrida y contraproducente; en su lugar, nos centraremos en los principales grupos de opciones disponibles para una fácil comprensión.
+Hay varias opciones disponibles en el archivo chan_dahdi.conf. Una descripción de todas las opciones sería aburrida e improductiva; en su lugar, nos centraremos en los principales grupos de opciones disponibles para una fácil comprensión.
 
 #### Opciones generales (independientes del canal)
 
-Estas opciones funcionan para cualquier canal: context: Define el contexto entrante.
+Estas opciones funcionan para cualquier canal: context: Define el contexto de entrada.
 
 ```
 context=default
 ```
 
-channel: Define el canal o rango de canales. Cada definición de canal heredará las opciones definidas antes de la declaración. Los canales pueden identificarse individualmente o en la misma línea mediante separación por comas. Los rangos pueden definirse usando "-".
+channel: Define canal o rango de canales. Cada definición de canal heredará las opciones definidas antes de la declaración. Los canales pueden identificarse individualmente o en la misma línea mediante separación por comas. Los rangos pueden definirse usando “-”.
 
 ```
 Channel=>1-15
@@ -292,34 +314,34 @@ Channel=>16
 Channel=>17,18
 ```
 
-group: Permite que los canales sean manejados como un grupo. Si marca un número de grupo en lugar de un número de canal, se utiliza el primer canal disponible. Si los canales son teléfonos, cuando llama a un grupo, todos los teléfonos sonarán simultáneamente. Con comas, puede especificar más de un grupo para el mismo canal.
+group: Permite que los canales se manejen como un grupo. Si marca un número de grupo en lugar de un número de canal, se utiliza el primer canal disponible. Si los canales son teléfonos, cuando llama a un grupo, todos los teléfonos sonarán simultáneamente. Con comas, puede especificar más de un grupo para el mismo canal.
 
 ```
 group=1
 group=3,5
 ```
 
-language: Activa la internacionalización y configura un idioma. Esta función configurará los mensajes del sistema para un idioma específico. El inglés es el único idioma con prompts completos disponibles a través de la instalación estándar. musiconhold: Selecciona la clase de música en espera.
+language: Activa la internacionalización y configura un idioma. Esta función configurará los mensajes del sistema para un idioma específico. English es el único idioma con indicaciones completas disponibles mediante la instalación estándar. musiconhold: Selecciona la clase de música en espera.
 
 #### Opciones de Caller ID
 
-Hay muchas opciones de callerid. Algunas pueden desactivarse, aunque la mayoría están habilitadas por defecto. usecallerid: Habilita o deshabilita la transmisión de callerid para los canales subsiguientes (Yes/No). Nota: Si su sistema recibe dos timbres antes de responder, intente desactivar esta función. Debería responder inmediatamente. hidecallerid: Define si ocultar o no el callerid saliente (Yes/No). callerid: Configura una cadena de callerid para un canal específico. El llamante puede configurarse con asreceived. Esto se utiliza principalmente en interfaces de trunk para indicar el callerid entrante.
+Existen muchas opciones de callerid. Algunas pueden desactivarse, aunque la mayoría están habilitadas por defecto. usecallerid: Habilita o deshabilita la transmisión del callerid para los canales subsecuentes (Yes/No). Nota: Si su sistema recibe dos timbres antes de contestar, intente desactivar esta función. Debería contestar inmediatamente. hidecallerid: Define si se debe ocultar o no el callerid saliente (Yes/No). callerid: Configura una cadena de callerid para un canal específico. El caller puede configurarse con asreceived. Esto se usa principalmente en interfaces de trunk para indicar el callerid entrante.
 
 ```
 callerid = "Flavio Eduardo Gonçalves" <48 30258500>
 ```
 
-callwaitingcallerid: Admite callerid durante la llamada en espera. useincomingcalleridondahditransfer: Utiliza el callerid entrante en una transferencia.
+callwaitingcallerid: Soporta la identificación de llamada durante la espera de llamada. useincomingcalleridondahditransfer: Usa la identificación de llamada entrante en una transferencia.
 
-#### Llamada en espera
+#### Espera de Llamada
 
-Asterisk admite la llamada en espera en canales FXS. El usuario recibirá un tono de espera si alguien intenta llamar a la extensión. Para habilitar la llamada en espera:
+Asterisk soporta la espera de llamada en canales FXS. El usuario recibirá un tono de espera si alguien intenta la extensión. Para habilitar la espera de llamada:
 
 ```
 callwaiting=yes
 ```
 
-Para admitir callerid en la llamada en espera:
+Para soportar la identificación de llamadas en la espera de llamada:
 
 ```
 callwaitingcallerid=yes
@@ -327,13 +349,13 @@ callwaitingcallerid=yes
 
 #### Opciones de calidad de audio
 
-Ajustar la cancelación de eco es mitad técnica, mitad arte. Estas opciones ajustan ciertos parámetros de Asterisk que afectan la calidad de audio en los canales DAHDI. Pueden ayudar a mejorar la calidad de audio en interfaces analógicas.
+Ajustar la cancelación de eco es medio técnico, medio arte. Estas opciones modifican ciertos parámetros de Asterisk que afectan la calidad de audio en los canales DAHDI. Pueden ayudar a mejorar la calidad de audio en interfaces analógicas.
 
 #### La utilidad fxotune
 
-El fxotune es una utilidad utilizada para ajustar con precisión ciertos parámetros para los módulos FXO. Este ajuste fino es necesario para corregir el desajuste de impedancia causado por el híbrido. La utilidad tiene tres modos de operación:
+La fxotune es una utilidad usada para afinar ciertos parámetros de los módulos FXO. Este afinamiento es necesario para ajustar el desajuste de impedancia causado por el híbrido. La utilidad tiene tres modos de operación:
 
-- Detección (-i): detecta y corrige los canales FXO existentes y guarda la configuración en
+- Detection (-i): detects and fixes the existing FXO channels and saves the configuration to
 
 ```
 fxotune.conf
@@ -342,31 +364,36 @@ fxotune.conf
 - Modo de volcado (-d): genera los archivos de forma de onda en fxotune_dump.vals
 - Modo de inicio (-s): lee el archivo fxotune.conf y lo aplica a los módulos FXO
 
-Es importante entender que tendrá que insertar la instrucción fxotune –s en la carga del sistema antes de iniciar Asterisk:
+Es importante entender que deberá insertar la instrucción fxotune –s en la carga del sistema antes de iniciar Asterisk:
 
 ```
 #modprobe dahdi
 #modprobe wctdm
-#fxotune-s
+#fxotune -s
 ```
 
 ### Cancelación de eco
 
-La mayoría de los algoritmos de cancelación de eco operan generando múltiples copias de la señal recibida, en las cuales cada una se retrasa por una cantidad específica de tiempo. El número de taps del filtro determina el tamaño del retraso de eco que necesita ser cancelado. Estas copias retrasadas se ajustan y se restan de la señal recibida. El truco es ajustar solo la señal retrasada para eliminar el eco sin usar demasiados ciclos de CPU. Desde la perspectiva de los usuarios, es importante elegir un algoritmo de cancelación de eco apropiado. El predeterminado es MG2; sin embargo, hay otras dos opciones disponibles: la High Performance Echo Cancellation (HPEC) de Sangoma (anteriormente Digium) y la cancelación de eco de código abierto (OSLEC) desarrollada por David Rowe.
+La mayoría de los algoritmos de cancelación de eco operan generando múltiples copias de la señal recibida, en las que cada una está retrasada una cantidad específica de tiempo. La cantidad de taps del filtro determina el tamaño del retardo del eco que debe cancelarse. Estas copias retrasadas se ajustan y se restan de la señal recibida. El truco consiste en ajustar solo la señal retrasada para eliminar el eco sin usar demasiados ciclos de CPU. Desde la perspectiva del usuario, es importante elegir un algoritmo de cancelación de eco apropiado. El predeterminado es MG2; sin embargo, hay dos opciones adicionales disponibles: la Cancelación de Eco de Alto Rendimiento (HPEC) de Sangoma (anteriormente Digium) y la cancelación de eco de código abierto (OSLEC) desarrollada por David Rowe.
 
-OSLEC (https://www.rowetel.com/?page_id=454) se ha fusionado en el kernel de Linux —vive en el área `drivers/staging/echo` del kernel— y DAHDI se compila con él en lugar de enviar una descarga separada. Para cambiar el algoritmo de cancelación de eco, establezca el parámetro `echo_can` en `/etc/dahdi/system.conf`. Por ejemplo:
+OSLEC (https://www.rowetel.com/?page_id=454) se ha fusionado con el kernel de Linux — reside en el área `drivers/staging/echo` del kernel — y DAHDI se compila contra él en lugar de distribuir una descarga separada. Para cambiar el algoritmo de cancelación de eco, establezca el parámetro `echo_can` en `/etc/dahdi/system.conf`. Por ejemplo:
 
 ```
 echo_can=oslec
 ```
 
-La cancelación de eco en Asterisk está controlada por tres parámetros en el archivo /etc/asterisk/chan-
+La cancelación de eco en Asterisk se controla mediante tres parámetros en el archivo /etc/asterisk/chan-
 
 ```
 dahdi.conf.
 ```
 
-echocancel: Deshabilita o habilita la cancelación de eco. Debe mantener esta función habilitada. Acepta "yes" o el número de taps. Explicación: ¿Cómo funciona la cancelación de eco? La mayoría de los algoritmos de cancelación de eco operan generando múltiples copias de una señal recibida, siendo cada una retrasada por un pequeño intervalo. Este pequeño flujo se llama "tap". El número de taps determina el retraso de eco que puede ser cancelado. Estas copias se retrasan, ajustan y restan de la señal original. El truco es ajustar la señal retrasada exactamente a lo que es necesario para eliminar el eco. echocancelwhenbridged: Habilita o deshabilita el cancelador de eco durante una llamada TDM pura. Esto generalmente no es necesario. rxgain: Ajusta la ganancia de recepción de audio para aumentar o disminuir el volumen de recepción (-100% a 100%). txgain: Ajusta la ganancia de transmisión de audio para aumentar o disminuir el volumen de transmisión (-100% a 100%). Por ejemplo:
+- **echocancel**: Desactiva o activa la cancelación de eco. Debe mantener esta función activada. Acepta "yes" o el número de taps. (Explanation: How does echo canceling work? Most echo canceling algorithms operate by generating multiple copies of a received signal, with each being delayed by a small interval. This little flow is called a "tap". The number of taps determines the echo delay that can be cancelled. These copies are delayed, adjusted, and subtracted from the original signal. The trick is to adjust the delayed signal exactly to what is necessary to remove the echo.)
+- **echocancelwhenbridged**: Activa o desactiva el cancelador de eco durante una llamada TDM pura. Esto usualmente no es necesario.
+- **rxgain**: Ajusta la ganancia de recepción de audio para aumentar o disminuir el volumen de recepción (-100% a 100%).
+- **txgain**: Ajusta la ganancia de transmisión de audio para aumentar o disminuir el volumen de transmisión (-100% a 100%).
+
+For example:
 
 ```
 echocancel=yes
@@ -377,23 +404,23 @@ rxgain=10%
 
 #### Opciones de facturación
 
-Estas opciones cambian cómo se registra la información de la llamada en la base de datos de registros de detalle de llamadas (CDR). amaflags: Configura las banderas AMA que afectan la categorización de CDR. Acepta los siguientes valores:
+Estas opciones cambian cómo se registra la información de llamadas en la base de datos de registros de detalle de llamadas (CDR). amaflags: Configura los indicadores AMA que afectan la categorización del CDR. Acepta los siguientes valores:
 
 - billing
 - documentation
 - omit
 - default
 
-accountcode: Configura un código de cuenta para un canal específico. Puede contener cualquier valor alfanumérico, generalmente el departamento o nombre de usuario.
+accountcode: Configura un código de cuenta para un canal específico. Puede contener cualquier valor alfanumérico—usualmente el nombre del departamento o del usuario.
 
 ```
 accountcode=finance
 amaflags=billing
 ```
 
-### Opciones de progreso de llamada
+### Opciones de progreso de la llamada
 
-Estos elementos se utilizan para adquirir información sobre el progreso de la llamada. En interfaces públicas, puede ser útil detectar el progreso de la llamada y determinar si fue contestada o estaba ocupada. La detección de ocupado es altamente experimental y está regulada por parámetros específicos.
+Estos elementos se utilizan para obtener información sobre el progreso de la llamada. En interfaces públicas, puede ser útil detectar el progreso de la llamada y determinar si fue contestada o está ocupada. La detección de ocupado es altamente experimental y está regulada por parámetros específicos.
 
 ```
 busydetect=yes
@@ -403,13 +430,13 @@ callprogress=yes
 progzone=br
 ```
 
-Estos parámetros (arriba) especifican si la interfaz intentará detectar el tono de ocupado, cuántos tonos se utilizarán para una detección exitosa y cuál es el patrón de ocupado. La detección de ocupado es en gran medida experimental, y algunos parámetros adicionales pueden cambiarse en el Makefile. Para detectar la respuesta de una llamada, lo cual es esencial para una facturación precisa, es posible utilizar la inversión de polaridad para señalar el tiempo exacto de respuesta. Esto es importante si planea cobrar por la llamada o simplemente desea tener una facturación precisa para comparación. Por lo general, tiene que contactar a la compañía telefónica para solicitar este servicio.
+Estos parámetros (arriba) especifican si la interfaz intentará detectar el tono de ocupado, cuántos tonos se usarán para una detección exitosa y cuál es el patrón de ocupado. La detección de ocupado es en gran medida experimental, y algunos parámetros adicionales pueden modificarse en el Makefile. Para detectar la respuesta de una llamada, lo cual es esencial para una facturación precisa, es posible usar la inversión de polaridad para señalar el momento exacto de la respuesta. Esto es importante si planeas cobrar la llamada o simplemente deseas una facturación precisa para comparaciones. Normalmente debes contactar a la compañía telefónica para solicitar este servicio.
 
 ```
 answeronpolarityswitch=yes
 ```
 
-En algunos países, es posible detectar el colgado de la llamada utilizando también la inversión de polaridad.
+En algunos países, también es posible detectar la finalización de la llamada mediante la inversión de polaridad.
 
 ```
 hanguponpolarityswitch=yes
@@ -417,11 +444,20 @@ hanguponpolarityswitch=yes
 
 #### Opciones para teléfonos
 
-Estas opciones se utilizan para teléfonos conectados a las interfaces FXS. Todas las funcionalidades entregadas a los teléfonos analógicos conectados directamente a las interfaces DAHDI están controladas por Asterisk. Adsi (Analog Display Services Interface): Este es un conjunto de estándares de telecomunicaciones utilizados por algunas compañías telefónicas para ofrecer servicios como la compra de boletos. cancallforward: Habilita o deshabilita el desvío de llamadas (*72 para habilitar y *73 para deshabilitar). calleridcallwaiting: Habilita el callerid recibido durante una indicación de llamada en espera (Yes/No). immediate: En modo inmediato, en lugar de proporcionar un tono de marcado, el canal salta inmediatamente a la extensión "s" en el contexto definido. Esto se utiliza para crear líneas directas. threewaycalling: Habilita o deshabilita la conferencia a tres bandas. mailbox: Advierte al usuario sobre mensajes de correo de voz disponibles. Puede ser una señal audible o un indicador visual (si el teléfono admite esta función). El argumento es el número de buzón. callgroup: Agrupa teléfonos para marcar o para contestar. pickupgroup: Grupo de teléfonos para la captura de llamadas.
+Estas opciones se usan para teléfonos conectados a las interfaces FXS. Todas las funcionalidades entregadas a teléfonos analógicos conectados directamente a las interfaces DAHDI son controladas por Asterisk.
 
-### Comandos CLI útiles de DAHDI
+- **adsi** (Analog Display Services Interface): Este es un conjunto de normas de telecomunicaciones usadas por algunas telcos para ofrecer servicios como la compra de boletos.
+- **cancallforward**: Habilita o deshabilita el desvío de llamadas (*72 para habilitar y *73 para deshabilitar).
+- **calleridcallwaiting**: Habilita la identificación de llamada recibida durante una indicación de llamada en espera (Sí/No).
+- **immediate**: En modo inmediato, en lugar de proporcionar un tono de marcado, el canal salta inmediatamente a la extensión "s" en el contexto definido. Esto se usa para crear líneas directas.
+- **threewaycalling**: Habilita o deshabilita la conferencia de tres vías.
+- **mailbox**: Advierte al usuario sobre mensajes de buzón de voz disponibles. Puede ser una señal audible o un indicador visual (si el teléfono soporta esta función). El argumento es el número del buzón.
+- **callgroup**: Agrupa teléfonos para marcar o para recoger.
+- **pickupgroup**: Grupo de teléfonos para recogida de llamadas.
 
-Una vez que Asterisk está ejecutándose con los canales DAHDI cargados, puede inspeccionar el estado del canal desde la CLI de Asterisk. Estos comandos siguen siendo actuales en Asterisk 22:
+### Comandos útiles de la CLI de DAHDI
+
+Una vez que Asterisk está en ejecución con los canales DAHDI cargados, puedes inspeccionar el estado de los canales desde la CLI de Asterisk. Estos comandos siguen vigentes en Asterisk 22:
 
 ```
 *CLI> dahdi show channels
@@ -431,37 +467,39 @@ Una vez que Asterisk está ejecutándose con los canales DAHDI cargados, puede i
 
 ### Formato de canal DAHDI
 
-Los canales DAHDI utilizan el siguiente formato en el dialplan:
+Los canales DAHDI usan el siguiente formato en el dialplan:
 
 ```
 DAHDI/[g]<identifier>[c][r<cadence>]
-<identifier>- Physical channel numeric identifier
-[g] – Group identifier
-[c] – Answer confirmation. A number is not considered until the callee press
-“#”
-[r] – customized ringing
-[cadence] Integer from 1 to 4
+<identifier> - Physical channel numeric identifier
+[g] - Group identifier
+[c] - Answer confirmation. A number is not considered until the callee presses "#"
+[r] - customized ringing
+[cadence] - Integer from 1 to 4
 ```
 
 Por ejemplo:
 
 ```
-DAHDI/2
-- channel 2
-DAHDI/g1  - First available channel in group 1
+DAHDI/2     - channel 2
+DAHDI/g1    - First available channel in group 1
 ```
 
 ## Canales digitales (E1/T1/PRI / TDM)
 
-A partir de Asterisk 22, DAHDI y libpri siguen siendo totalmente compatibles, pero los trunks digitales TDM (E1/T1/ISDN PRI) son reemplazados cada vez más por trunks SIP en nuevas implementaciones. Esta sección sigue siendo totalmente aplicable donde se requiera conectividad TDM; en entornos nuevos, el trunking SIP (Capítulo 3) generalmente ofrece la misma densidad de canales sin hardware de telefonía.
+A partir de Asterisk 22, DAHDI y libpri siguen totalmente soportados, pero los trunks digitales TDM (E1/T1/ISDN PRI) están siendo reemplazados cada vez más por trunks SIP en nuevas implementaciones. Esta sección sigue siendo totalmente aplicable donde se requiera conectividad TDM; en entornos greenfield, el trunking SIP (Chapter 3) usualmente brinda la misma densidad de canales sin hardware de telefonía.
 
-Los canales digitales son extremadamente comunes, por lo que necesitará aprender a implementar estos canales si desea enfocarse en clientes grandes. Cuando el número de canales es alto (generalmente más de 8), es bastante común utilizar interfaces digitales como T1/E1/J1. T1 es muy común en los EE. UU., mientras que E1 es común en Europa y J1 en Japón. Estos tipos de canales permiten una buena densidad de circuitos: 24 por canal T1 y 30 para canales E1. En América Latina, China y África, es común utilizar un tipo de señalización asociada al canal (CAS) conocida como MFC/R2. Este capítulo examinará cómo implementar MFC/R2 utilizando la biblioteca OpenR2. En los EE. UU. y Europa, la Red Digital de Servicios Integrados (ISDN) PRI es la señalización más común. El capítulo también discutirá la Interfaz de Velocidad Básica (BRI) de ISDN, que es muy común en Europa en aplicaciones de rango medio. Todos los ejemplos en el libro se concentran en los canales DAHDI. Algunas tarjetas se implementan utilizando canales propietarios, así que consulte con su fabricante para obtener más detalles sobre cómo configurar su tarjeta específica.
+Los canales digitales son extremadamente comunes, por lo que necesitarás aprender a implementar estos canales si deseas enfocarte en clientes grandes. Cuando el número de canales es alto—usualmente más de 8—es bastante frecuente usar interfaces digitales como T1/E1/J1. T1 es muy común en EE. UU., mientras que E1 es común en Europa y J1 en Japón. Estos tipos de canales permiten una buena densidad de circuitos—24 por canal T1 y 30 por canales E1.
+
+En América Latina, China y África, es común usar un tipo de señalización asociada al canal (CAS) conocida como MFC/R2. Este capítulo examinará cómo implementar MFC/R2 usando la biblioteca OpenR2. En EE. UU. y Europa, la Integrated Services Digital Networks (ISDN) PRI es la señalización más común. El capítulo también discutirá la ISDN Basic Rate Interface (BRI), que es muy común en Europa en aplicaciones de rango medio.
+
+Todos los ejemplos del libro se concentran en los canales DAHDI. Algunas tarjetas están implementadas usando canales propietarios, así que por favor consulte con su fabricante para obtener más detalles sobre cómo configurar su tarjeta específica.
 
 ### Objetivos
 
-Al final de este capítulo usted será capaz de:
+Al final de este capítulo podrás:
 
-- Reconocer los principales términos utilizados en telefonía digital
+- Reconocer los términos principales usados en telefonía digital
 - Diferenciar la señalización CAS y CCS
 - Diferenciar la señalización R2 e ISDN
 - Configurar interfaces con señalización ISDN
@@ -469,84 +507,103 @@ Al final de este capítulo usted será capaz de:
 
 ### Líneas digitales E1/T1
 
-Las líneas digitales E1/T1 son una opción siempre que necesite implementar un gran número de canales. Un solo circuito E1 es capaz de 30 llamadas simultáneas, y puede tener características como marcación directa entrante (DID), Caller ID (identificación de llamante) y señalización avanzada. La línea E1/T1 puede llegar a su empresa de varias maneras utilizando par trenzado, fibra y microondas, dependiendo de su país. Las líneas digitales se entregan a su empresa utilizando UTP, fibra o microondas. Los módems y multiplexores (MUX) se utilizan para entregar la línea física. La conexión a una línea T1 siempre se basa en un conector RJ45. Sin embargo, las líneas E1 también pueden ser aprovisionadas utilizando BNC. Es muy importante conocer el tipo de conector que va a recibir de antemano, principalmente en las líneas E1. Por lo general, todo el equipo hasta el RJ45 es proporcionado por la TELCO.
+Líneas digitales E1/T1 son una opción siempre que necesite implementar un gran número de canales. Un solo circuito E1 es capaz de 30 llamadas simultáneas, y puede contar con funciones como marcación directa entrante (DID), identificación de llamante (Caller ID) y señalización avanzada. La línea E1/T1 puede llegar a su empresa de varias maneras usando par trenzado, fibra y microondas, según su país. Las líneas digitales se entregan a su empresa mediante UTP, fibra o microondas. Se utilizan módems y multiplexores (MUX) para proporcionar la línea física. La conexión a una línea T1 siempre se basa en un conector RJ45. Sin embargo, las líneas E1 también pueden provisionarse usando BNC. Es muy importante conocer de antemano el tipo de conector que recibirá, principalmente en líneas E1. Usualmente todo el equipo hasta el RJ45 lo proporciona el TELCO.
 
-![Cómo se aprovisionan los circuitos E1/T1: la compañía telefónica puede entregar el trunk sobre cobre UTP (módem HDSL para E1, o una conexión de tarjeta directa para T1), sobre fibra óptica a través de un multiplexor óptico, o sobre un enlace de radio de microondas.](../images/10-legacy-fig05.png)
+![Cómo se provisionan los circuitos E1/T1: la telco puede entregar el trunk a través de cobre UTP (módem HDSL para E1, o una conexión directa de tarjeta para T1), a través de fibra óptica mediante un multiplexor óptico, o mediante un enlace de radio microondas.](../images/10-legacy-fig05.png)
 
-![¿UTP o BNC? La mayoría de las tarjetas digitales utilizan conectores RJ45 (UTP), pero algunas líneas E1 se entregan en coaxiales BNC duales, en cuyo caso se necesita un balun para adaptar el par coaxial al jack RJ45 de la tarjeta.](../images/10-legacy-fig06.png)
+![¿UTP o BNC? La mayoría de las tarjetas digitales usan conectores RJ45 (UTP), pero algunas líneas E1 se entregan en coaxial dual BNC, en cuyo caso se necesita un balun para adaptar el par coaxial al conector RJ45 de la tarjeta.](../images/10-legacy-fig06.png)
 
 #### ¿Cómo se convierte la voz en bits?
 
-La señal analógica se muestrea 8,000 veces por segundo para crear una versión digital de la voz analógica. Esta codificación se conoce como modulación por código de pulso (PCM). En los EE. UU. y Japón, la señal se codifica utilizando law (en Asterisk, referido como ulaw). En el resto del mundo, la codificación es alaw.
+La señal analógica se muestrea 8,000 veces por segundo para crear una versión digital de la voz analógica. Esta codificación se conoce como modulación por código de pulsos (PCM). En EE. UU. y Japón, la señal se codifica usando law (en Asterisk, referida como ulaw). En el resto del mundo, la codificación es alaw.
 
-![Modulación por código de pulso (PCM): la señal de voz analógica de 4 kHz se muestrea 8,000 veces por segundo (Nyquist) y se codifica en un flujo digital de bits de 64 Kbps.](../images/10-legacy-fig07.png)
+![Modulación por impulsos codificados (PCM): la señal de voz analógica de 4 kHz se muestrea 8 000 veces por segundo (Nyquist) y se codifica en una corriente digital de 64 Kbps de bits.](../images/10-legacy-fig07.png)
 
-#### Multiplexación por división de tiempo
+#### Multiplexación por División de Tiempo
 
-Las líneas analógicas tienen sentido cuando solo necesita unos pocos canales. Al utilizar la multiplexación por división de tiempo (TDM), es posible meter múltiples canales en una sola conexión de datos. Cuando desea un gran número de circuitos, la compañía telefónica generalmente le proporcionará un trunk digital, que es un circuito de datos en el que la voz se transporta en un formato digital utilizando PCM. Cada timeslot utiliza 64 Kbps de ancho de banda para transportar un solo canal de voz.
+Las líneas analógicas tienen sentido cuando necesitas solo unos pocos canales. Al usar multiplexación por división de tiempo (TDM), es posible empaquetar varios canales en una única conexión de datos. Cuando deseas un gran número de circuitos, la compañía telefónica normalmente te proporcionará un trunk digital, que es un circuito de datos en el que la voz se transporta en formato digital usando PCM. Cada ranura de tiempo usa 64 Kbps de ancho de banda para transportar un solo canal de voz.
 
-![Multiplexación por división de tiempo en E1 y T1: un frame E1 transporta 32 timeslots a 2048 Kbps (DS0 #0 para sincronización de frame, DS0 #16 para señalización), mientras que un frame T1 transporta 24 timeslots a 1544 Kbps usando un bit para sincronización y un esquema de bits robados para señalización.](../images/10-legacy-fig08.png)
+![Multiplexación por división de tiempo en E1 y T1: un marco E1 transporta 32 ranuras a 2048 Kbps (DS0 #0 para sincronización de marco, DS0 #16 para señalización), mientras que un marco T1 transporta 24 ranuras a 1544 Kbps usando un bit para sincronización y un esquema de bit robado para señalización.](../images/10-legacy-fig08.png)
 
-En los EE. UU., el trunk digital más común es T1, que tiene 24 líneas disponibles; en Europa y América Latina, los trunks E1 tienen 30 líneas. Algunas empresas proporcionan un T1/E1 fraccional con menos canales. Señalización de bits robados: A veces, un trunk T1 utiliza un esquema de bits robados donde se toma prestado un bit para la señalización. En los trunks T1, el canal de datos/voz se transmite con 56 Kbps en cada timeslot. Como puede observar, cuando utiliza el bit robado, el circuito T1 no pierde dos slots para sincronización y señalización.
+En EE. UU., el tronco digital más común es T1, que tiene 24 líneas disponibles; en Europa y América Latina, los troncales E1 tienen 30 líneas. Algunas compañías ofrecen un T1/E1 fraccional con menos canales. Señalización de bit robado A veces un tronco T1 usa un esquema de bit robado donde se toma un bit para la señalización. En los troncales T1, el canal de datos/voz se transmite a 56 Kbps en cada ranura de tiempo. Como puede observar, cuando se usa el bit robado, el circuito T1 no pierde dos ranuras para sincronización y señalización.
 
 #### Código de línea T1/E1
 
-Los T1 y E1 son en realidad circuitos de datos y tienen una codificación de datos que determina la forma en que se interpretan los bits. Para los E1, el código de línea más común es HDB3 para la capa 1 y CCS para la capa 2. La forma más fácil de saber cómo está configurado su trunk digital es preguntar a la TELCO sobre esta información. Necesitará esta información para configurar el archivo /etc/dahdi/system.conf.
+Los T1 y E1 son en realidad circuitos de datos y tienen una codificación de datos que determina la forma en que se interpretan los bits. Para los E1, el código de línea más común es HDB3 para la capa 1 y CCS para la capa 2. La forma más fácil de saber cómo está configurado su tronco digital es preguntar a la TELCO por esta información. Necesitará esta información para configurar el archivo /etc/dahdi/system.conf.
 
 #### Señalización T1/E1
 
-Es importante entender que las líneas T1/E1 pueden entregarse utilizando diferentes tipos de señalización, tales como:
+Es importante entender que las líneas T1/E1 pueden entregarse usando diferentes tipos de señalización, como:
 
-- T1 con señalización de bits robados
+- T1 con señalización de bit robado
 - T1 con señalización ISDN
 - E1 con MFC/R2 (CAS - Señalización Asociada al Canal)
 - E1 con señalización ISDN
 
-ISDN se utiliza a menudo en Europa y los EE. UU. Es una red de voz digital, estandarizada por la Unión Internacional de Telecomunicaciones (UIT) en 1984. ISDN proporciona dos tipos de canales:
+ISDN se usa a menudo en Europa y EE. UU. Es una red de voz digital, estandarizada por la Unión Internacional de Telecomunicaciones (ITU) en 1984. ISDN proporciona dos tipos de canales:
 
-- Canales portadores (Bearer) o Voz o Datos
-- Canales de datos o Señalización fuera de banda o Señalización LAPD o Q.931
+- Canales portadores
+  - Voz
+  - Datos
+- Canales de datos
+  - Señalización fuera de banda
+  - Señalización LAPD
+  - Q.931
 
-Por lo general, una línea ISDN se proporciona utilizando dos medios físicos:
+Normalmente, una línea ISDN se proporciona usando dos medios físicos:
 
-- Interfaz de velocidad básica (BRI) o Conocida como 2B+D o Dos canales portadores (64K) y un canal de datos (16K) o Utiliza un par de cables de cobre con 148Kbps.
-- Interfaz de velocidad primaria (PRI) o Entregada utilizando un trunk T1/E1 o 23B+D para T1s o 30B+D para E1s
+- Interfaz de tasa básica (BRI)
+  - Conocida como 2B+D
+  - Dos canales portadores (64K) y un canal de datos (16K)
+  - Utiliza un par de cables de cobre con 148Kbps.
+- Interfaz de tasa primaria (PRI)
+  - Proporcionada mediante un trunk T1/E1
+  - 23B+D para T1s
+  - 30B+D para E1s
 
-A veces, los circuitos E1 utilizan un esquema de señalización CAS llamado MFC/R2, que fue definido por la UIT como un estándar conocido como Q.421/Q441. Esto se encuentra frecuentemente en América Latina y Asia. Varias compañías telefónicas en estos países utilizan variantes personalizadas de MFC/R2. Por lo tanto, necesitará conocer la variación correcta del país para que funcione.
+A veces, los circuitos E1 utilizan un esquema de señalización CAS llamado MFC/R2, que fue definido por la ITU como una norma conocida como Q.421/Q441. Esto se encuentra frecuentemente en América Latina y Asia. Varias compañías de telefonía en estos países usan variantes personalizadas de MFC/R2. Por lo tanto, necesitará conocer la variación del país correcta para que funcione.
 
 ### ISDN BRI
 
-Los canales que utilizan señalización ISDN BRI son muy populares en Europa. La mayoría de las tarjetas ISDN BRI para Asterisk admiten una interfaz S/T con capacidades NT y TE. La conexión TE (terminal) es la que se utiliza para conectarse a la TELCO o a otras PBX configuradas como terminación de red (NT). El NT se utiliza para conectar teléfonos y PBX configuradas como TE. ISDN BRI proporciona dos canales de datos/voz y un canal de señalización. Las tarjetas ISDN BRI están disponibles en varios proveedores de tarjetas de interfaz para Asterisk.
+Los canales que usan señalización ISDN BRI son muy populares en Europa. La mayoría de las tarjetas ISDN BRI para Asterisk soportan una interfaz S/T con capacidades NT y TE. La conexión TE (terminal) es la que se usa para conectar al TELCO o a otros PBX configurados como terminación de red (NT). El NT se usa para conectar teléfonos y PBX configurados como TE. ISDN BRI proporciona dos canales de datos/voz y un canal de señalización. Las tarjetas ISDN BRI están disponibles de varios proveedores de tarjetas de interfaz para Asterisk.
 
 ### Elegir una tarjeta de telefonía para su servidor Asterisk
 
-Existen varios fabricantes de tarjetas digitales compatibles con Asterisk. La elección de una tarjeta depende de algunos de los siguientes factores:
+Hay varios fabricantes de tarjetas digitales compatibles con Asterisk. La elección de una tarjeta depende de algunos de los siguientes factores:
 
 #### Bus de datos
 
-Existen varios tipos de bus en su PC. Es muy importante que tenga la tarjeta correcta para su servidor. La siguiente descripción general describe las tarjetas utilizadas con más frecuencia:
+Hay varios tipos de bus en su PC. Es muy importante que tenga la tarjeta adecuada para su servidor. La siguiente visión general describe las tarjetas más usadas frecuentemente:
 
-- 32 Bits PCI 5V encontrados en la mayoría de las computadoras, incluyendo computadoras de escritorio o Sangoma (anteriormente Digium) TE405, TE407, TE205, TE207, TE120, TE122, B410, TDM2400, TDM800, TDM410 y TC400 o Sangoma A101, A102 y A104
-- 32/64 bits PCI 3.3V, básicamente encontrados en servidores o Sangoma (anteriormente Digium) TE410, TE412, TE210, TE212, TE120, TE122, B410, TDM2400, TDM800, TDM410 y TC400
-- PCI Express encontrados en computadoras de escritorio y servidores o Sangoma (anteriormente Digium) TE420, TE220, TE121, AEX2400 y AEX800 o Sangoma A101, A102 y A104
+- 32 bits PCI 5 V encontrado en la mayoría de los ordenadores, incluidos los de escritorio
+  - Sangoma (formerly Digium) TE405, TE407, TE205, TE207, TE120, TE122, B410, TDM2400, TDM800, TDM410, and TC400
+  - Sangoma A101, A102, and A104
+- 32/64 bits PCI 3.3 V, básicamente encontrado en servidores
+  - Sangoma (formerly Digium) TE410, TE412, TE210, TE212, TE120, TE122, B410, TDM2400, TDM800, TDM410, and TC400
+- PCI Express encontrado en ordenadores de escritorio y servidores
+  - Sangoma (formerly Digium) TE420, TE220, TE121, AEX2400, and AEX800
+  - Sangoma A101, A102, and A104
 
-Estas familias de tarjetas se originaron en Digium, que Sangoma adquirió en 2018; ahora se venden y reciben soporte bajo la marca Sangoma. Muchos de los SKUs más antiguos enumerados aquí han sido descontinuados, así que confirme la disponibilidad del modelo actual en www.sangoma.com antes de comprar.
+These card families originated at Digium, which Sangoma acquired in 2018; they are now sold and supported under the Sangoma brand. Many of the older SKUs listed here have been discontinued, so confirm current model availability at www.sangoma.com before purchasing.
 
-- MiniPCI encontrados en sistemas integrados o OpenVOX A100M(FXO), B100M(ISDN BRI), B200M(ISDN BRI) y B400M(ISDN BRI)
-- USB 2.0 encontrados en la mayoría de las PC modernas. Las soluciones basadas en USB permiten una gran densidad de canales analógicos y digitales. Este bus admite 480 Mbps, y cada canal de voz ocupa 64 Kbps. Al utilizar hubs USB, es posible obtener densidades de hasta mil puertos analógicos en un solo puerto. o Xorcom Astribank (FXS, FXO, E1-ISDN, E1-R2)
-- Ethernet. La mayor ventaja de Ethernet es permitir que la tarjeta sea conectada por más de un servidor. Las soluciones de alta disponibilidad suelen ser la aplicación principal para estos dispositivos. La fortaleza de esta solución es el uso de servidores sin ranuras PCI libres o servidores blade. o Redfone FoneBridge (hasta cuatro circuitos E1)
+- MiniPCI encontrado en sistemas empotrados
+  - OpenVOX A100M(FXO), B100M(ISDN BRI), B200M(ISDN BRI), and B400M(ISDN BRI)
+- USB 2.0 encontrado en la mayoría de PCs modernos. Las soluciones basadas en USB permiten una gran densidad de canales analógicos y digitales. Este bus soporta 480 Mbps, y cada canal de voz ocupa 64 Kbps. Al usar hubs USB, es posible alcanzar densidades de hasta mil puertos analógicos en un solo puerto.
+  - Xorcom Astribank (FXS, FXO, E1-ISDN, E1-R2)
+- Ethernet. La mayor ventaja de Ethernet es permitir que la tarjeta sea conectada por más de un servidor. Las soluciones de alta disponibilidad son normalmente la aplicación principal para estos dispositivos. La fortaleza de esta solución es el uso de servidores sin ranuras PCI libres o servidores blade.
+  - Redfone FoneBridge (up to four E1 circuits)
 
-### Uso de cancelación de eco de hardware
+### Uso de cancelación de eco por hardware
 
-La cancelación de eco de hardware reduce la carga en la CPU del host. Para tarjetas con más de una interfaz E1, la cancelación de eco de hardware puede ayudar a aliviar su procesador. Los nuevos canceladores de eco de software mejorados, como el OSLEC, están reduciendo la necesidad de un cancelador de eco de hardware. Para elegir entre canceladores de eco de hardware y software, debe considerar la cantidad de potencia de procesamiento disponible en su servidor y el número de circuitos E1. Un proceso de cancelación de eco puede usar hasta nueve MIPS (millones de instrucciones por segundo) por canal de voz con 128 taps de amplitud usando OSLEC (Referencia: Xorcom Ltd.). Si considera 1 ciclo de CPU por cada instrucción (lo cual no siempre es correcto según el procesador y la implementación del software en sí), estamos hablando de 1.080 Ghz para cuatro E1s.
+La cancelación de eco por hardware reduce la carga en la CPU del host. Para tarjetas con más de una única interfaz E1, la cancelación de eco por hardware puede ayudar a aliviar su procesador. Los nuevos canceladores de eco por software mejorados, como el OSLEC, están reduciendo la necesidad de un cancelador de eco por hardware. Para elegir entre canceladores de eco por hardware y por software, debe considerar la cantidad de potencia de procesamiento disponible en su servidor y el número de circuitos E1. Un proceso de cancelación de eco puede usar hasta nueve MIPS (millones de instrucciones por segundo) por canal de voz con 128 taps de amplitud usando OSLEC (Reference: Xorcom Ltd.). Si considera 1 ciclo de CPU por cada instrucción (lo cual no siempre es correcto según el procesador y la implementación del software), estamos hablando de 1.080 GHz para cuatro E1.
 
 #### Tipo de señalización
 
-Seleccionar el tipo de señalización (por ejemplo, T1 CAS, T1 PRI, E1 CAS R2 o E1 CAS ISDN) no es una tarea fácil. Realmente depende de lo que tenga disponible en su área y a qué precio. La señalización de canal común (CCS) suele ser mejor que la señalización asociada al canal (CAS). Sin embargo, a menudo no está disponible. En los EE. UU., generalmente puede elegir, ya que la mayoría de las TELCOs ofrecen T1 CAS para usuarios regulares y T1 PRI para usuarios avanzados (por ejemplo, centros de llamadas). En América Latina, E1 CAS R2 es predominante, pero ISDN PRI está disponible en algunas ciudades.
+Seleccionar el tipo de señalización (p. ej., T1 CAS, T1 PRI, E1 CAS R2 o E1 CAS ISDN) no es una tarea fácil. Realmente depende de lo que tenga disponible en su zona y a qué precio. La Señalización de Canal Común (CCS) suele ser mejor que la señalización asociada al canal (CAS). Sin embargo, a menudo no está disponible. En EE. UU., normalmente puede elegir, ya que la mayoría de los TELCOS ofrecen T1 CAS para usuarios regulares y T1 PRI para usuarios avanzados (p. ej., centros de llamadas). En América Latina, E1 CAS R2 es predominante, pero ISDN PRI está disponible en algunas ciudades.
 
-![La arquitectura de software DAHDI: Asterisk habla con el controlador de canal `chan_dahdi`, que a su vez carga las bibliotecas de protocolo libpri (ISDN), libopenr2 (MFC/R2) y libss7 (SS7); estas se sitúan sobre la interfaz `/dev/dahdi`, el controlador del kernel DAHDI y el controlador del kernel de interfaz específico de la tarjeta.](../images/10-legacy-fig09.png)
+![La arquitectura de software DAHDI: Asterisk se comunica con el controlador de canal `chan_dahdi`, que a su vez carga las bibliotecas de protocolo libpri (ISDN), libopenr2 (MFC/R2) y libss7 (SS7); estas se sitúan sobre la interfaz `/dev/dahdi`, el controlador del kernel DAHDI y el controlador del kernel de la interfaz específica de la tarjeta.](../images/10-legacy-fig09.png)
 
-Implementar R2 es necesario para instalar una biblioteca conocida como OpenR2 (www.libopenr2.org), desarrollada por Moises Silva, y para parchear Asterisk antes de la instalación (un procedimiento simple que se muestra más adelante en este capítulo). La biblioteca ha pasado varias pruebas y está en producción en varios de nuestros clientes. ISDN es, en mi opinión, siempre la mejor opción, si está disponible. Algunos proveedores pueden tener acceso al sistema de señalización 7 (SS7), que es una señalización CCS disponible entre compañías telefónicas. Existen soluciones propietarias y de código abierto disponibles para SS7. La biblioteca libss7 se utiliza para admitir SS7 en Asterisk.
+Implementar R2 es necesario para instalar una biblioteca conocida como OpenR2 (www.libopenr2.org), desarrollada por Moises Silva, y para parchear Asterisk antes de la instalación—un procedimiento sencillo que se muestra más adelante en este capítulo. La biblioteca ha pasado varias pruebas y está en producción en varios de nuestros clientes. En mi opinión, ISDN es siempre la mejor opción, si está disponible. Algunos proveedores pueden tener acceso al sistema de señalización 7 (SS7), que es una señalización CCS disponible entre compañías telefónicas. Existen soluciones propietarias y de código abierto para SS7. La biblioteca libss7 se usa para soportar SS7 en Asterisk.
 
 ### Configuración de canales de telefonía Asterisk
 
@@ -556,17 +613,17 @@ Configurar una tarjeta de interfaz de telefonía implica varios pasos necesarios
 - Conexión digital usando ISDN BRI
 - Conexión digital usando MFC/R2
 
-Hay dos formas de configurar los canales DAHDI. La primera es configurarlo manualmente con control total de todos los parámetros. La segunda forma es utilizar la utilidad dahdi_genconf para detectar y configurar las tarjetas.
+Hay dos formas de configurar los canales DAHDI. La primera es configurarlos manualmente con control total de todos los parámetros. La segunda forma es usar la utilidad dahdi_genconf para detectar y configurar las tarjetas.
 
-#### Detección y configuración automática
+#### Detección automática y configuración
 
-Gracias al equipo de desarrollo de DAHDI, ahora tenemos detección y configuración automática de las tarjetas. Paso 1: Para generar la configuración automáticamente, utilice la utilidad dahdi_genconf, que detectará la tarjeta y generará los archivos /etc/dahdi/system.conf y dahdi-channels.conf.
+Gracias al equipo de desarrollo de DAHDI, ahora tenemos detección y configuración automáticas de las tarjetas. Paso 1: Para generar la configuración automáticamente, use la utilidad dahdi_genconf, que detectará la tarjeta y generará los archivos /etc/dahdi/system.conf y dahdi-channels.conf.
 
 ```
 dahdi_genconf
 ```
 
-Paso 2: En la última línea del archivo chan_dahdi.conf, incluya el archivo dahdi-channels.conf
+Step 2: En la última línea del archivo chan_dahdi.conf, incluya el archivo dahdi-channels.conf
 
 ```
 #include dahdi_channels.conf
@@ -580,29 +637,29 @@ dahdi_genconf modules
 
 #### Configuración manual
 
-Otra opción es configurar las interfaces manualmente. A continuación se muestran algunos ejemplos de la configuración para los canales DAHDI.
+Otra opción es configurar las interfaces manualmente. A continuación se presentan algunos ejemplos de la configuración para canales DAHDI.
 
-##### Ejemplo #1 – Dos canales T1/E1 usando ISDN
+##### Ejemplo #1 – Dos canales T1/ E1 usando ISDN
 
 Pasos requeridos:
 
 1. Instalación de TE205P o TE210P
-2. Configuración del archivo `/etc/dahdi/system.conf`
-3. Carga del controlador DAHDI
-4. Utilidad `dahdi_test`
-5. Utilidad `dahdi_cfg`
-6. Configuración del archivo `chan_dahdi.conf`
-7. Carga y prueba de Asterisk
+2. `/etc/dahdi/system.conf` file configuration
+3. DAHDI driver loading
+4. `dahdi_test` utility
+5. `dahdi_cfg` utility
+6. `chan_dahdi.conf` file configuration
+7. Asterisk load and testing
 
-Paso 1: Instalación de TE205P. Antes de instalar la TE205P, es importante entender las diferencias entre las tarjetas TE205P y TE210P. La tarjeta TE210P utiliza un bus de 64 bits alimentado por 3.3 voltios que se encuentra casi solo en las placas base de los servidores. Tenga cuidado si especifica esta tarjeta de interfaz; asegúrese de que su hardware admita un bus de 64 bits y 3.3V. La tarjeta TE205P utiliza un PCI de 5V, que a menudo se encuentra en computadoras de escritorio. Hemos elegido la tarjeta de interfaz TE205P con dos spans para este ejemplo porque es más fácil reducirla a una tarjeta de un solo span o expandirla a una tarjeta de cuatro spans. Estas tarjetas ahora se venden bajo la marca Sangoma (anteriormente Digium).
+Paso 1: Instalación de TE205P. Antes de instalar TE205P, es importante comprender las diferencias entre las tarjetas TE205P y TE210P. La tarjeta TE210P utiliza un bus de 64 bits alimentado por 3.3 voltios que se encuentra casi exclusivamente en las placas base de servidores. Tenga cuidado al especificar esta tarjeta de interfaz; asegúrese de que su hardware soporte un bus de 64 bits y 3.3 V. La tarjeta TE205P usa un PCI de 5 V, que suele encontrarse en computadoras de escritorio. Hemos elegido la tarjeta de interfaz TE205P con dos tramos para este ejemplo porque es más fácil reducirla a una tarjeta de un solo tramo o ampliarla a una tarjeta de cuatro tramos. Estas tarjetas se venden ahora bajo la marca Sangoma (anteriormente Digium).
 
-![Una tarjeta E1/T1 de doble span Sangoma/Digium TE205P: los dos puertos RJ45 aceptan los trunks digitales, y un jumper en la placa (el selector E1/T1/J1) establece el estándar de línea.](../images/10-legacy-fig10.png)
+![A Sangoma/Digium TE205P dual-span E1/T1 card: the two RJ45 ports accept the digital trunks, and an on-board jumper (the E1/T1/J1 selector) sets the line standard.](../images/10-legacy-fig10.png)
 
 ```
 Step 2: /etc/dahdi/system.conf configuration file
 ```
 
-La configuración de las tarjetas digitales TDM es un poco diferente de la configuración de sus contrapartes analógicas. Primero, necesitaremos configurar los spans de la placa y luego los canales. Los spans se numeran secuencialmente dependiendo del orden de reconocimiento de las tarjetas. En otras palabras, si tiene más de una tarjeta de interfaz, es difícil saber qué span pertenece a cada una. Use dahdi_hardware para verificar qué hardware está instalado en cada span. Ejemplo #1 (2xT1 PRI)
+La configuración de tarjetas digitales TDM es un poco diferente de la configuración de sus contrapartes analógicas. Primero, necesitaremos configurar los spans de la tarjeta y luego los canales. Los spans se numeran secuencialmente según el orden de reconocimiento de las tarjetas. En otras palabras, si tiene más de una tarjeta de interfaz, es difícil saber a cuál span pertenece cada una. Use `dahdi_hardware` para verificar qué hardware está instalado en cada span. Ejemplo #1 (2xT1 PRI)
 
 ```
 span=1,1,0,esf,b8zs
@@ -647,21 +704,22 @@ bchan=10,11
 hardhdlc=12
 ```
 
-Paso 3: Carga de controladores del kernel Verifique qué controlador necesita instalar usando dahdi_hardware.
+Paso 3: Cargando controladores del kernel Verifique qué controlador necesita instalar usando dahdi_hardware.
 
 ```
 dahdi_hardware
 pci:0000:04:02.0     wcte2xxp    e159:0001 Sangoma Wildcard TE205P T1/E1 Board
 ```
 
-Para cargar use:
+Para cargar, use:
 
 ```
 modprobe dahdi
 modprobe wct2xxp
 ```
 
-Paso 4: Usando dahdi_test, verifique las interrupciones perdidas Puede verificar el número de interrupciones perdidas usando la utilidad dahdi_test compilada con las tarjetas DAHDI. Un número por debajo del 99.987% indica posibles problemas. Encontrará dahdi_test en
+Step 4: Using dahdi_test, check the missing interrupts  
+You may verify the number of interrupt misses using the dahdi_test utility compiled with the DAHDI cards. A number below 99.987% indicates possible problems. You will find dahdi_test in
 
 ```
 /usr/sbin.
@@ -678,10 +736,10 @@ Opened pseudo zap interface, measuring accuracy...
 Best: 100.000000 -- Worst: 99.987793 -- Average: 99.999061
 ```
 
-Paso 5: Usando la utilidad dahdi_cfg para configurar el controlador Esta es la salida correcta para dahdi_cfg para un span E1 fraccional (15 puertos) y dos puertos FXO.
+Paso 5: Uso de la utilidad dahdi_cfg Esta es la salida correcta de dahdi_cfg para un tramo E1 fraccional (15 puertos) y dos puertos FXO.
 
 ```
-#./dahdi_cfg –vvvv
+#./dahdi_cfg -vvvv
 Dahdi configuration
 ======================
 SPAN 1: CCS/HDB3 Build-out: 0 db (CSU)/0-133 feet (DSX-1)
@@ -705,10 +763,10 @@ Channel 16: D-channel (Default) (Slaves: 16)
 16 channels configured.
 ```
 
-Paso 6: Configuración de DAHDI en el archivo /etc/asterisk/chan_dahdi.conf Ejemplo #1 (2xT1)
+Step 6: Configuración de DAHDI en el archivo /etc/asterisk/chan_dahdi.conf Example #1 (2xT1)
 
 ```
-callerid=”John Doe”<(555)555-1111>
+callerid="John Doe"<(555)555-1111>
 switchtype=national
 signalling =pri_cpe
 context=from-pstn
@@ -721,7 +779,7 @@ channel => 25-47
 Ejemplo #2 (2xE1)
 
 ```
-callerid=”Flavio Eduardo” <4830258580>
+callerid="Flavio Eduardo" <4830258580>
 switchtype=euroisdn
 signalling = pri_cpe
 group = 1
@@ -742,23 +800,23 @@ channel=>1,2,4,5,7,8,10,11
 
 Use signaling=bri_cpe_ptmp para BRI punto a multipunto. Actualmente, BRI punto a multipunto no es compatible en modo NT.
 
-#### Carga de los controladores del kernel
+#### Loading the kernel drivers
 
-Después de configurar los controladores, simplemente puede reiniciar el servidor. Si ha instalado DAHDI con make config, no necesitará hacer nada extra. El controlador del kernel se cargará y configurará automáticamente. Sin embargo, a veces es útil cargar y descargar los controladores manualmente. Ejemplo:
+Después de configurar los controladores, puede simplemente reiniciar el servidor. Si ha instalado DAHDI con `make config`, no necesitará hacer nada extra. El controlador del kernel se cargará y configurará automáticamente. Sin embargo, a veces es útil cargar y descargar los controladores manualmente. Example:
 
 ```
 modprobe wct11xp
-dahdi_cfg –vvvvv
+dahdi_cfg -vvvvv
 ```
 
-El primer comando carga el controlador y el segundo, dahdi_cfg, aplica la configuración al controlador del kernel.
+The first command loads the driver and the second, dahdi_cfg, applies the configuration to the kernel driver.
 
 ### Solución de problemas
 
-A veces las cosas no funcionan a la primera. Revisemos algunos recursos para la solución de problemas de DAHDI. Paso 1: Verifique si la tarjeta está siendo reconocida por el sistema operativo. Las tarjetas Sangoma/Digium generalmente se reconocen como el módem ISDN.
+A veces las cosas no funcionan a la primera. Revisemos algunos recursos para solucionar problemas de DAHDI. Paso 1: Verifique si la tarjeta está siendo reconocida por el sistema operativo. Las tarjetas Sangoma/Digium suelen ser reconocidas como el módem ISDN.
 
 ```
-lspci –v
+lspci -v
 00:00.0 Host bridge: Intel Corporation E7230/3000/3010 Memory Controller Hub
 00:01.0 PCI bridge: Intel Corporation E7230/3000/3010 PCI Express Root Port
 00:1c.0 PCI bridge: Intel Corporation 82801G (ICH7 Family) PCI Express Port 1 (rev 01)
@@ -813,7 +871,7 @@ Paso 3: Verifique el estado de las alarmas relacionadas con la capa física de l
 dahdi show status
 ```
 
-Las alarmas indican problemas con el puerto: Alarma roja: No se puede mantener la sincronización con el switch remoto. Esto suele ser un problema físico, como un desajuste de código de línea o de framing. Alarma amarilla: Señala que el switch remoto está en alarma roja. Esto indica que el switch remoto no está recibiendo sus transmisiones. Alarma azul: Recibe todos los 1s sin frame en todos los timeslots; dahdi_tool actualmente no detecta una alarma azul. Loopback: El puerto está en loopback local o remoto
+Las alarmas indican problemas con el puerto: Alarma roja: No se puede mantener la sincronización con el conmutador remoto. Esto suele ser un problema físico, como un código de línea o una incompatibilidad de encuadre. Alarma amarilla: Señala que el conmutador remoto está en alarma roja. Esto indica que el conmutador remoto no está recibiendo sus transmisiones. Alarma azul: Recibe todos los 1 sin encuadrar en todas las ranuras de tiempo; dahdi_tool actualmente no detecta una alarma azul. Loopback: El puerto está en bucle local o remoto
 
 ```
 vtsvoffice*CLI> dahdi show status
@@ -862,7 +920,7 @@ pabxip01*CLI> dahdi show channels
      31 2171       from-pstn                  default
 ```
 
-Paso 5: Verifique el estado de la capa 3 de ISDN, también conocida como q.931. Puede verificar si la capa 3 de ISDN está activa usando: `pri show spans` (para listar todos los spans) o `pri show span <n>` para un span específico:
+Paso 5: Verifique el estado de la capa 3 de ISDN, también conocida como q.931. Puede comprobar si la capa 3 de ISDN está activa usando: `pri show spans` (para listar todos los spans) o `pri show span <n>` para un span específico:
 
 ```
 vtsvoffice*CLI> pri show span 1
@@ -884,13 +942,13 @@ T313 Timer: 4000
 N200 Counter: 3
 ```
 
-Use `pri show spans` (plural) para listar el estado de todos los spans PRI configurados a la vez.
+Use `pri show spans` (plural) para listar el estado de todos los tramos PRI configurados de una vez.
 
 Verifique un canal específico. dahdi show channel x:
 
 ```
 vtsvoffice*CLI> dahdi show channel 1
-Channel: 1*CLI>
+Channel: 1
 File Descriptor: 21
 Span: 1
 Extension:
@@ -916,7 +974,7 @@ Dialing/CallwaitCAS: 0/0
 Default law: alaw
 ```
 
-debug pri span x: Si después de todo todavía tiene problemas, comience a depurar el span pri. Este comando habilita una depuración detallada de las llamadas ISDN. Es un comando importante cuando cree que algo no es correcto. Puede detectar dígitos marcados incorrectamente y otros problemas. A continuación presentamos el ejemplo de una salida de depuración para una llamada exitosa. Consulte este ejemplo si necesita comparar una llamada fallida con una sin problemas. Un consejo es usar core set verbose=0 para recibir solo los mensajes ISDN q.931.
+debug pri span x: Si después de todo aún tienes problemas, comienza a depurar el pri span. Este comando habilita una depuración detallada de llamadas ISDN. Es un comando importante cuando piensas que algo no está correcto. Puedes detectar dígitos marcados incorrectamente y otros problemas. A continuación presentamos el ejemplo de una salida de depuración para una llamada exitosa. Consulta este ejemplo si necesitas comparar una llamada fallida con una sin problemas. Un consejo es usar core set verbose=0 para recibir solo los mensajes ISDN q.931.
 
 ```
 -- Making new call for cr 32833
@@ -942,7 +1000,7 @@ Plan (E.164/E.163) (1)
 > [70 09 a1 33 32 32 34 38 35 38 30]
 > Called Number (len=11) [ Ext: 1  TON: National Number (2)  NPI: ISDN/Telephony Numbering
 Plan (E.164/E.163) (1) '32248580' ]
-> [a1]fice*CLI>
+> [a1]
 > Sending Complete (len= 1)
 < Protocol Discriminator: Q.931 (8)  len=10
 < Call Ref: len= 2 (reference 65/0x41) (Terminator)
@@ -1088,17 +1146,17 @@ NEW_HANGUP DEBUG: Destroying the call, ourstate Null, peerstate Null
 
 ### Opciones de configuración en chan_dahdi.conf
 
-Hay varias opciones disponibles en el archivo chan_dahdi.conf. Una descripción de todas las opciones sería aburrida y contraproducente. Aquí, detallaremos los principales grupos de opciones disponibles para proporcionar una mejor comprensión.
+Varias opciones están disponibles en el archivo chan_dahdi.conf. Una descripción de todas las opciones sería aburrida y contraproducente. Aquí, detallaremos los principales grupos de opciones disponibles para proporcionar una mejor comprensión.
 
 #### Opciones generales (independientes del canal)
 
-context: Define el contexto entrante.
+context: Define el contexto de entrada.
 
 ```
 context=default
 ```
 
-channel: Define el canal o rango de canales. Cada definición de canal heredará las opciones definidas antes de la declaración. Los canales pueden identificarse individualmente o en la misma línea con separación por comas. Los rangos pueden definirse usando "-".
+channel: Define canal o rango de canales. Cada definición de canal heredará las opciones definidas antes de la declaración. Los canales pueden identificarse individualmente o en la misma línea con separación por comas. Los rangos pueden definirse usando “-”.
 
 ```
 Channel=>1-15
@@ -1106,18 +1164,18 @@ Channel=>16
 Channel=>17,18
 ```
 
-group: Permite que los canales sean tratados como un grupo. Si marca un número de grupo en lugar de un número de canal, se utiliza el primer canal disponible. Si los canales son teléfonos, cuando llama a un grupo, todos los teléfonos sonarán simultáneamente. Usando comas, puede especificar más de un grupo para el mismo canal.
+group: Permite que los canales se traten como un grupo. Si marca un número de grupo en lugar de un número de canal, se usa el primer canal disponible. Si los canales son teléfonos, cuando llama a un grupo, todos los teléfonos sonarán simultáneamente. Usando comas, puede especificar más de un grupo para el mismo canal.
 
 ```
 group=1
 group=3,5
 ```
 
-language: Activa la internacionalización y configura un idioma. Esta función configurará los mensajes del sistema para un idioma específico. El inglés es el único idioma con prompts completos disponibles desde la instalación estándar. musiconhold: Seleccione la clase de música en espera.
+language: Activa la internacionalización y configura un idioma. Esta función configurará los mensajes del sistema para un idioma específico. English es el único idioma con indicaciones completas disponibles desde la instalación estándar. musiconhold: Selecciona la clase de música en espera.
 
-#### Opciones de ISDN
+#### ISDN options
 
-switchtype: Depende de la PBX o switch utilizado. En Europa y América Latina, EuroISDN es común.
+switchtype: Depende del PBX o conmutador usado. En Europa y América Latina, EuroISDN es común.
 
 - 5ess: Lucent 5ESS
 - euroisdn: EuroISDN
@@ -1130,39 +1188,46 @@ switchtype: Depende de la PBX o switch utilizado. En Europa y América Latina, E
 switchtype = EuroISDN
 ```
 
-pridialplan: Requerido para algunos switches que necesitan una especificación de dialplan. Esta opción es ignorada por muchos switches. Las opciones válidas son private, national, international y unknown.
+pridialplan: Requerido para algunos conmutadores que necesitan una especificación de plan de marcación. Esta opción es ignorada por muchos conmutadores. Las opciones válidas son private, national, international, y unknown.
 
 ```
 pridialplan = unknown
 ```
 
-prilocaldialplan: Necesario para algunos switches, generalmente unknown.
+prilocaldialplan: Necesario para algunos conmutadores, usualmente desconocido.
 
 ```
 prilocaldialplan = unknown
 ```
 
-overlapdial: La marcación superpuesta (overlap dialing) se utiliza cuando pasa dígitos después de que se establece la conexión. Puede usar el modo de numeración por bloques (overlapdial=no) o el modo de dígitos (overlapdial=yes). El modo de bloque es utilizado a menudo por los operadores. signaling: Configura el tipo de señalización para los canales subsiguientes. Estos parámetros deben corresponder a los del archivo chan_dahdi.conf. Las opciones correctas se basan en el canal disponible. Para ISDN podría elegir cinco opciones:
+overlapdial: El marcado superpuesto se usa cuando se envían dígitos después de que se establece la conexión. Puede usar numeración en modo bloque (overlapdial=no) o modo dígito (overlapdial=yes). El modo bloque es a menudo usado por los operadores. signaling: Configura el tipo de señalización para los canales subsecuentes. Estos parámetros deben corresponder a los del archivo chan_dahdi.conf. Las elecciones correctas dependen del canal disponible. Para ISDN puede elegir cinco opciones:
 
-- pri_cpe: Utilizado cuando el dispositivo es un CPE, a veces referido como cliente, usuario o esclavo. Esta es la forma de señalización más simple y utilizada. A veces, cuando intenta conectarse a una PBX privada, la PBX ha sido configurada comúnmente como CPE también. En este caso, use la señalización pri_net en Asterisk.
-- pri_net: Utilizado cuando Asterisk está conectado a una PBX privada configurada como CPE. La señalización a menudo se refiere como host, maestro o red.
-- bri_cpe: Utilizado cuando Asterisk está conectado como CPE a un trunk ISDN BRI
-- bri_net: Utilizado cuando Asterisk está conectado a un teléfono ISDN o PBX configurado como terminal (TE).
-- bri_cpe_ptmp: Igual que bri_cpe, pero en una arquitectura punto a multipunto.
+- pri_cpe: Se usa cuando el dispositivo es un CPE, a veces llamado cliente, usuario o esclavo. Esta es la forma más simple y más usada de señalización. A veces, cuando intenta conectar a una PBX privada, la PBX también se ha configurado comúnmente como un CPE. En este caso, use señalización pri_net en Asterisk.
+- pri_net: Se usa cuando Asterisk está conectado a una PBX privada configurada como un CPE. La señalización a menudo se denomina host, master o network.
+- bri_cpe: Se usa cuando Asterisk está conectado como un CPE a un trunk ISDN BRI
+- bri_net: Se usa cuando Asterisk está conectado a un teléfono ISDN o a una PBX configurada como un terminal (TE).
+- bri_cpe_ptmp: Igual que bri_cpe, pero en una arquitectura punto‑a‑multipunto.
 
-#### Opciones de CallerID
+#### CallerID options
 
-Hay muchas opciones de Caller ID disponibles. Algunas pueden desactivarse, aunque la mayoría están habilitadas por defecto. usecallerid: Habilita o deshabilita la transmisión de Caller ID para los canales subsiguientes (Yes/No). Nota: Si su sistema requiere dos timbres antes de responder, intente desactivar esta función para que responda inmediatamente. hidecallerid: Oculta el Caller ID (Yes/No). calleridcallwaiting: Habilita la recepción de Caller ID durante una indicación de llamada en espera (Yes/No). callerid: Configura una cadena de Caller ID para un canal específico. El llamante puede configurarse con "asreceived" en interfaces de trunk para pasar el Caller ID hacia adelante.
+Muchas opciones de Caller ID están disponibles. Algunas pueden desactivarse, aunque la mayoría están habilitadas por defecto. usecallerid: Habilita o deshabilita la transmisión del Caller ID para los canales subsecuentes (Yes/No). Nota: Si su sistema requiere dos timbres antes de contestar, intente desactivar esta función para que conteste inmediatamente. hidecallerid: Oculta el Caller ID (Yes/No). calleridcallwaiting: Habilita la recepción del Caller ID durante una indicación de llamada en espera (Yes/No). callerid: Configura una cadena de Caller ID para un canal específico. El llamante puede configurarse con “asreceived” en interfaces de trunk para pasar el Caller ID hacia adelante.
 
 ```
 callerid = "Flavio Eduardo Gonçalves" <48 30258500>
 ```
 
-Nota: La mayoría de las TELCOs exigen que configure su Caller ID correcto. Si no pasa el Caller ID correcto, no debería poder marcar hacia afuera a través de la TELCO. Por otro lado, podrá recibir llamadas incluso sin configurar el Caller ID.
+Note: La mayoría de los TELCO exigen que configure su ID de llamante correcto. Si no envía el ID de llamante adecuado, no debería poder marcar salientes a través del TELCO. Por otro lado, podrá recibir llamadas incluso sin configurar el ID de llamante.
 
 #### Opciones de calidad de audio
 
-Estas opciones ajustan ciertos parámetros de Asterisk que afectan la calidad de audio en los canales DAHDI. echocancel: Deshabilita o habilita la cancelación de eco. Debe mantener esta función habilitada. Acepta "yes" o el número de taps. Explicación: ¿Cómo funciona la cancelación de eco? La mayoría de los algoritmos de cancelación de eco operan generando múltiples copias de una señal recibida, siendo cada una retrasada por un pequeño intervalo. Este pequeño flujo se llama "tap". El número de taps determina el retraso de eco que puede ser cancelado. Estas copias se retrasan, ajustan y restan de la señal original. El truco es ajustar la señal retrasada exactamente a lo que es necesario para eliminar el eco. echocancelwhenbridged: Habilita o deshabilita el cancelador de eco durante una llamada TDM pura. Esto generalmente no es necesario. rxgain: Ajusta la ganancia de recepción de audio para aumentar o disminuir el volumen de recepción (-100% a 100%). txgain: Ajusta la ganancia de transmisión de audio para aumentar o disminuir el volumen de transmisión (-100% a 100%). Ejemplo:
+Estas opciones ajustan ciertos parámetros de Asterisk que afectan la calidad de audio en los canales DAHDI.
+
+- **echocancel**: Desactivar o activar la cancelación de eco. Debe mantener esta función activada. Acepta "yes" o el número de taps. (Explicación: ¿Cómo funciona la cancelación de eco? La mayoría de los algoritmos de cancelación de eco operan generando múltiples copias de una señal recibida, cada una retrasada por un pequeño intervalo. Este pequeño flujo se llama "tap". El número de taps determina el retraso de eco que puede cancelarse. Estas copias se retrasan, ajustan y se restan de la señal original. El truco consiste en ajustar la señal retrasada exactamente a lo necesario para eliminar el eco.)
+- **echocancelwhenbridged**: Activa o desactiva el cancelador de eco durante una llamada TDM pura. Normalmente no es necesario.
+- **rxgain**: Ajusta la ganancia de recepción de audio para aumentar o disminuir el volumen de recepción (-100% a 100%).
+- **txgain**: Ajusta la ganancia de transmisión de audio para aumentar o disminuir el volumen de transmisión (-100% a 100%).
+
+Example:
 
 ```
 echocancel=yes
@@ -1173,14 +1238,14 @@ rxgain=10%
 
 #### Opciones de facturación
 
-Estas opciones cambian la forma en que se registra la información de la llamada en la base de datos de registros de detalle de llamadas (CDR). amaflags: Afecta la categorización de CDR. Acepta estos valores:
+These options change the way in which call information is recorded in the call detail records (CDR) database. amaflags: Affects the categorization of CDR. It accepts these values:
 
 - billing
 - documentation
 - omit
 - default
 
-accountcode: Configura un código de cuenta para un canal específico. Puede contener cualquier valor alfanumérico, generalmente el departamento o nombre de usuario.
+accountcode: It configures an account code for a specific channel. It can contain any alphanumeric value, usually the department or user name.
 
 ```
 accountcode=finance
@@ -1189,36 +1254,36 @@ amaflags=billing
 
 ### Configuración de MFC/R2
 
-MFC/R2 se utiliza en varios países de América Latina, China y África, así como en algunos países europeos. ISDN es superior y preferido si está disponible en su área.
+MFC/R2 se usa en varios países de América Latina, China y África, así como en algunos países europeos. ISDN es superior y se prefiere si está disponible en su zona.
 
 #### Entendiendo el problema
 
-La tarjeta utilizada para señalar MFC/R2 es la misma utilizada para señalar ISDN. Es posible utilizar MFC/R2 en canales DAHDI utilizando la biblioteca llamada libopenR2 (www.libopenr2.com). Esta biblioteca no formaba parte de las versiones de Asterisk anteriores a 1.6.2.
+La tarjeta usada para señalizar MFC/R2 es la misma que se usa para señalizar ISDN. Es posible usar MFC/R2 en canales DAHDI usando la biblioteca llamada libopenR2 (www.libopenr2.com). Esta biblioteca no formaba parte de las versiones de Asterisk anteriores a la 1.6.2.
 
-##### Entendiendo el protocolo MFC/R2
+##### Comprendiendo el protocolo MFC/R2
 
-El protocolo MFC/R2 combina señalización en banda y fuera de banda. La señalización de dirección se reenvía en banda utilizando un conjunto de tonos, mientras que la información del canal se transmite sobre el timeslot 16 como señalización fuera de banda.
+El protocolo MFC/R2 combina señalización in-band y out-of-band. La señalización de dirección se reenvía in-band usando un conjunto de tonos mientras que la información del canal se transmite en el timeslot 16 como señalización out-of-band.
 
-**Señalización de línea (ITU-T Q.421).** En el timeslot 16, cada canal de voz utiliza cuatro bits ABCD para señalar sus estados y el control de llamadas. Los bits C y D rara vez se utilizan. En algunos países, pueden utilizarse para medición (medición de pulsos para facturación). En una conversación normal, tenemos ambos lados trabajando: el llamante y el lado llamado. La señalización desde el lado del llamante se denomina señalización de reenvío (forward), mientras que el lado llamado utiliza señalización de retroceso (backward). Designaremos Af y Bf para la señalización de reenvío y Ab y Bb para la señalización de retroceso.
+**Line Signaling (ITU-T Q.421).** En el intervalo de tiempo 16, cada canal de voz usa cuatro bits ABCD para señalizar sus estados y el control de llamadas. Los bits C y D se usan raramente. En algunos países, pueden usarse para la medición (medición por pulsos para facturación). En una conversación normal, tenemos ambos lados trabajando: el llamante y el llamado. La señalización desde el lado del llamante se denomina señalización hacia adelante mientras que el lado llamado usa señalización hacia atrás. Designaremos Af y Bf para señalización hacia adelante y Ab y Bb para señalización hacia atrás.
 
-| Estado | ABCD reenvío | ABCD retroceso |
+| State | ABCD forward | ABCD backward |
 | --- | --- | --- |
-| Inactivo/Liberado | 1001 | 1001 |
-| Tomado | 0001 | 1001 |
-| Acuse de recibo de toma | 0001 | 1101 |
-| Contestado | 0001 | 0101 |
+| Idle/Released | 1001 | 1001 |
+| Seized | 0001 | 1001 |
+| Seize Ack | 0001 | 1101 |
+| Answered | 0001 | 0101 |
 | ClearBack | 0001 | 1101 |
-| ClearFwd (antes de clear-back) | 1001 | 0101 |
-| ClearFwd (confirmación de desconexión) | 1001 | 1001 |
-| Bloqueado | 1001 | 1101 |
+| ClearFwd (before clear-back) | 1001 | 0101 |
+| ClearFwd (disconnection confirmation) | 1001 | 1001 |
+| Blocked | 1001 | 1101 |
 
-MFC/R2 fue definido por la UIT. Desafortunadamente, varios países personalizaron el estándar según sus propias necesidades. Como resultado, surgieron variaciones en los estándares entre países.
+MFC/R2 fue definido por la ITU. Desafortunadamente, varios países personalizaron el estándar según sus propias necesidades. Como resultado, surgieron variaciones en los estándares entre países.
 
-**Señales inter-registro (ITU-T Q.441).** La señalización MFC/R2 utiliza una combinación de dos tonos. Las tablas a continuación muestran el estándar de la UIT.
+**Señales interregistro (ITU-T Q.441).** La señalización MFC/R2 usa una combinación de dos tonos. Las tablas a continuación muestran el estándar ITU.
 
-Grupo de señales I (reenvío):
+Grupo de señal I (adelante):
 
-| Descripción | Señal de reenvío |
+| Description | Forward signal |
 | --- | --- |
 | Dígito 1 | I-1 |
 | Dígito 2 | I-2 |
@@ -1230,15 +1295,15 @@ Grupo de señales I (reenvío):
 | Dígito 8 | I-8 |
 | Dígito 9 | I-9 |
 | Dígito 0 | I-10 |
-| Indicador de código de país, se requiere supresor de medio eco saliente | I-11 |
+| Indicador de código de país, supresor de medio eco saliente requerido | I-11 |
 | Indicador de código de país, no se requiere supresor de eco | I-12 |
 | Indicador de llamada de prueba | I-13 |
-| Indicador de código de país, se inserta supresor de medio eco saliente | I-14 |
-| No utilizado | I-15 |
+| Indicador de código de país, supresor de medio eco saliente insertado | I-14 |
+| No usado | I-15 |
 
-Grupo de señales II (reenvío):
+Grupo de señal II (adelante):
 
-| Descripción | Señal de reenvío |
+| Descripción | Señal de avance |
 | --- | --- |
 | Suscriptor sin prioridad | II-1 |
 | Suscriptor con prioridad | II-2 |
@@ -1246,67 +1311,67 @@ Grupo de señales II (reenvío):
 | Repuesto | II-4 |
 | Operador | II-5 |
 | Transmisión de datos | II-6 |
-| Suscriptor u operador sin facilidad de transferencia de reenvío | II-7 |
+| Suscriptor u operador sin facilidad de transferencia directa | II-7 |
 | Transmisión de datos | II-8 |
 | Suscriptor con prioridad | II-9 |
-| Operador con facilidad de transferencia de reenvío | II-10 |
+| Operador con facilidad de transferencia directa | II-10 |
 | Repuesto | II-11 |
 | Repuesto | II-12 |
 | Repuesto | II-13 |
 | Repuesto | II-14 |
 | Repuesto | II-15 |
 
-Grupo de señales A (retroceso):
+Grupo de señales A (hacia atrás):
 
-| Descripción | Señal de retroceso |
+| Description | Backward signal |
 | --- | --- |
-| Enviar siguiente dígito (n+1) | A-1 |
-| Enviar penúltimo dígito (n-1) | A-2 |
-| Dirección completa, cambio a recepción de señales del Grupo B | A-3 |
+| Enviar el siguiente dígito (n+1) | A-1 |
+| Enviar el penúltimo dígito (n-1) | A-2 |
+| Dirección completa, cambio a la recepción de señales del Grupo B | A-3 |
 | Congestión en la red nacional | A-4 |
-| Enviar categoría de la parte llamante | A-5 |
+| Enviar la categoría de la parte llamante | A-5 |
 | Dirección completa, cobro, establecer condiciones de voz | A-6 |
-| Enviar antepenúltimo dígito (n-2) | A-7 |
-| Enviar ante-antepenúltimo dígito (n-3) | A-8 |
-| Repuesto | A-9 |
-| Repuesto | A-10 |
+| Enviar el antepenúltimo dígito (n-2) | A-7 |
+| Enviar el tercer dígito desde el final (n-3) | A-8 |
+| Reserva | A-9 |
+| Reserva | A-10 |
 | Enviar indicador de código de país | A-11 |
 | Enviar dígito de idioma o discriminación | A-12 |
 | Enviar naturaleza del circuito | A-13 |
 | Solicitar información sobre el uso del supresor de eco | A-14 |
 | Congestión en un intercambio internacional o en su salida | A-15 |
 
-Grupo de señales B (retroceso):
+Grupo de señal B (hacia atrás):
 
-| Descripción | Señal de retroceso |
+| Description | Backward signal |
 | --- | --- |
-| Repuesto | B-1 |
+| Libre | B-1 |
 | Enviar tono de información especial | B-2 |
-| Línea de suscriptor ocupada | B-3 |
-| Congestión (después del cambio del grupo A al B) | B-4 |
+| Línea del suscriptor ocupada | B-3 |
+| Congestión (después del cambio del grupo A a B) | B-4 |
 | Número no asignado | B-5 |
-| Línea de suscriptor libre, cobro | B-6 |
-| Línea de suscriptor libre, sin cobro | B-7 |
-| Línea de suscriptor fuera de servicio | B-8 |
-| Repuesto | B-9 |
-| Repuesto | B-10 |
-| Repuesto | B-11 |
-| Repuesto | B-12 |
-| Repuesto | B-13 |
-| Repuesto | B-14 |
-| Repuesto | B-15 |
+| Línea del suscriptor libre, con cargo | B-6 |
+| Línea del suscriptor libre, sin cargo | B-7 |
+| Línea del suscriptor fuera de servicio | B-8 |
+| Libre | B-9 |
+| Libre | B-10 |
+| Libre | B-11 |
+| Libre | B-12 |
+| Libre | B-13 |
+| Libre | B-14 |
+| Libre | B-15 |
 
-#### Secuencia MFC/R2
+#### secuencia MFC/R2
 
-La siguiente secuencia ilustra una llamada que se origina desde una extensión de Asterisk a un terminal en la PSTN. La PSTN deja caer la llamada y finaliza la comunicación.
+The following sequence illustrates a call originating from an Asterisk’s extension to a terminal in the PSTN. The PSTN drops the call and ends the communication.
 
-![Un flujo de llamada MFC/R2 completo entre Asterisk y la compañía telefónica: la señalización de línea (Inactivo, Tomado, Acuse de recibo de toma, Contestado, Clearback, Clear Forward) se intercambia en el timeslot 16, los dígitos marcados y las señales de retroceso "enviar siguiente dígito" (grupos I/A/B) viajan en banda, y los tonos audibles llegan al suscriptor.](../images/10-legacy-fig11.png)
+![Un flujo de llamada MFC/R2 completo entre Asterisk y la telco: la señalización de línea (Idle, Seized, Seize Ack, Answer, Clearback, Clear Forward) se intercambia en la ranura de tiempo 16, los dígitos marcados y las señales de retroceso "send next digit" (grupos I/A/B) viajan en banda, y los tonos audibles llegan al suscriptor.](../images/10-legacy-fig11.png)
 
 ### Cómo usar el controlador libopenr2
 
-El proyecto iniciado por Moises Silva se inspiró en el controlador de canal Unicall escrito por Steve Underwood. La biblioteca OpenR2 es actualmente la solución de software más estable para Asterisk. Con esta solución, podemos utilizar cualquier tarjeta digital compatible con DAHDI. Anteriormente, solo estaban disponibles soluciones propietarias para MFC/R2; una de las mejores que he utilizado es la puesta a disposición por Khomp, www.khomp.com.br. En Asterisk 22, el soporte MFC/R2 a través de libopenR2 está integrado cuando la biblioteca está presente en el momento de la compilación; no se requiere ningún parche externo. Los pasos a continuación muestran la instalación manual histórica como referencia; en sistemas modernos, instale `libopenr2-dev` desde el gestor de paquetes de su distribución antes de ejecutar `./configure`, luego habilite `chan_dahdi` en `make menuselect`.
+El proyecto iniciado por Moises Silva se inspiró en el controlador de canal Unicall escrito por Steve Underwood. La biblioteca OpenR2 es actualmente la solución de software más estable para Asterisk. Con esta solución, podemos usar cualquier tarjeta digital compatible con DAHDI. Anteriormente, solo estaban disponibles soluciones propietarias para MFC/R2; una de las mejores que he usado es la que ofrece Khomp, www.khomp.com.br. En Asterisk 22, el soporte MFC/R2 a través de libopenR2 está incorporado cuando la biblioteca está presente en tiempo de compilación — no se requiere ningún parche externo. Los pasos a continuación muestran la instalación manual histórica como referencia; en sistemas modernos, instale `libopenr2-dev` desde el gestor de paquetes de su distribución antes de ejecutar `./configure`, luego habilite `chan_dahdi` en `make menuselect`.
 
-Los pasos a continuación compilan openr2 y Asterisk desde sus repositorios Git actuales. Se mantienen como referencia para sitios que compilan desde el código fuente; en una distribución moderna, generalmente puede saltárselos por completo instalando el paquete `libopenr2-dev` y una compilación empaquetada de Asterisk 22, ya que `chan_dahdi` compila el soporte R2 directamente contra libopenr2 sin ningún parche externo.
+Los pasos a continuación construyen openr2 y Asterisk a partir de sus repositorios Git actuales. Se conservan como referencia para los sitios que compilan desde el código fuente; en una distribución moderna normalmente puedes omitirlos por completo instalando el paquete `libopenr2-dev` y una versión empaquetada de Asterisk 22, ya que `chan_dahdi` compila el soporte R2 directamente contra libopenr2 sin parche externo.
 
 Paso 1: Instale las herramientas de compilación que necesita.
 
@@ -1314,7 +1379,7 @@ Paso 1: Instale las herramientas de compilación que necesita.
 apt-get install git
 ```
 
-Paso 2: Clone la biblioteca openr2 y el código fuente de Asterisk. No se necesita ningún árbol parcheado especial en Asterisk 22; un checkout estándar compila el soporte R2 siempre que libopenr2 esté presente.
+Paso 2: Clone la biblioteca openr2 y el código fuente de Asterisk. No se necesita un árbol parcheado especial en Asterisk 22 — una extracción estándar compila el soporte R2 siempre que libopenr2 esté presente.
 
 ```
 cd /usr/src
@@ -1322,7 +1387,7 @@ git clone https://github.com/moises-silva/openr2.git
 git clone https://github.com/asterisk/asterisk.git
 ```
 
-Paso 3: Compile e instale Por favor, HAGA UNA COPIA DE SEGURIDAD de su servidor antes de proceder.
+Step 3: Compile and install Por favor, HAGA UNA COPIA DE SEGURIDAD de su servidor antes de continuar.
 
 ```
 cd /usr/src/openr2
@@ -1331,14 +1396,14 @@ cd /usr/src/asterisk
 ./configure && make menuselect && make && make install
 ```
 
-Nota: No ejecute “make samples” para evitar sobrescribir sus archivos de configuración.
+Note: No ejecute “make samples” para evitar sobrescribir sus archivos de configuración.
 
 ```
 Step 4: Changing the file /etc/dahdi/system.conf:
 vim /etc/dahdi/system.conf
 ```
 
-Supongamos que tiene una tarjeta con una interfaz E1.
+Supongamos que tienes una tarjeta con una interfaz E1.
 
 ```
 span=1,1,0,cas,hdb3
@@ -1349,10 +1414,11 @@ loadzone=br
 defaultzone=br
 ```
 
-Paso 5: Ejecute el comando dahdi_cfg para aplicar los cambios al controlador:
+Step 5: Run the command dahdi_cfg to apply the changes to the driver:
+--- END MARKDOWN ---
 
 ```
-dahdi_cfg –vvvvvvvv
+dahdi_cfg -vvvvvvvv
 Dahdi Version:SVN-branch-1.4-r4348
 Echo Canceller: MG2
 Configuration
@@ -1394,7 +1460,7 @@ Channel 31: CAS / User (Default) (Slaves: 31)
 -----------------------------------------------------------------------
 ```
 
-Paso 5: Cambie el archivo chan_dahdi.conf
+Step 5: Cambiar el archivo chan_dahdi.conf
 
 ```
 vim /etc/asterisk/chan_dahdi.conf
@@ -1427,7 +1493,7 @@ context=from-mfcr2
 channel => 1-15,17-31
 ```
 
-Paso 6: Cambie el dialplan en el archivo extensions.conf
+Step 6: Cambiar el dial plan en el archivo extensions.conf
 
 ```
 vim /etc/asterisk/extensions.conf
@@ -1436,11 +1502,13 @@ exten => _XXXXXXXX,1,Set(CALLERID(num)=1145678990)
 exten => _XXXXXXXX,n,Dial(DAHDI/g1/${EXTEN},60,tT)
 ```
 
-Nota: Algunas TELCOs no aceptan llamadas sin el Caller ID. Por favor, establezca el Caller ID en uno de los números DID asignados por el operador. En algunos países, este paso no es necesario. Paso 7: Pruebe la solución: Ahora, con una extensión en el contexto from-internal, llame a cualquier número y observe la consola. Verifique si ocurre algún error. -- Executing Set("SIP/8564-081ca5d8", "CALLERID(num)=1145678990") in new stack -- Executing Dial("SIP/8564-081ca5d8", "DAHDI/g1/35678899|60|tT") in new stack
+Nota: Algunos TELCOS no aceptan llamadas sin la identificación del llamante. Por favor, configure la identificación del llamante con uno de los números DID asignados por el operador. En algunos países, este paso no es necesario. Paso 7: Pruebe la solución: Ahora, con una extensión en el contexto from-internal, llame a cualquier número y observe la consola. Verifique si se están produciendo errores. -- Executing Set("SIP/8564-081ca5d8", "CALLERID(num)=1145678990") in new stack -- Executing Dial("SIP/8564-081ca5d8", "DAHDI/g1/35678899|60|tT") in new stack
 
 #### Depuración de OpenR2
 
-Para detectar errores en las llamadas, puede activar la depuración. Para hacer esto, siga los pasos a continuación. Paso 1: Edite el archivo chan_dahdi.conf y añada las siguientes tres líneas a la configuración:
+Para detectar errores en las llamadas, puede activar la depuración. Para hacerlo, siga los pasos a continuación.
+
+1. Edite el archivo `chan_dahdi.conf` y agregue las siguientes tres líneas a la configuración:
 
 ```
 mfcr2_logdir=span1
@@ -1448,7 +1516,10 @@ mfcr2_logging=all
 mfcr2_call_files=yes
 ```
 
-Paso 2: Reinicie el servidor Asterisk Paso 3: Pruebe la llamada y verifique los archivos de llamada en /var/log/asterisk/mfcr2/span1 A continuación se muestra un rastro para una llamada normal. Compárelo con lo que recibe en su llamada.
+2. Reinicie el servidor Asterisk
+3. Pruebe la llamada y verifique los archivos de llamada en `/var/log/asterisk/mfcr2/span1`
+
+A continuación se muestra una traza de una llamada normal. Compárela con lo que recibe en su llamada.
 
 ```
 [15:05:47:710] [Thread: 3078019984] [Chan 1] - Call started at Mon Jul  6 15:05:47 2009 on
@@ -1624,9 +1695,9 @@ chan 1
 [15:06:03:569] [Thread: 3085228944] [Chan 1] - Cannot cancel timer 0
 ```
 
-#### Configuración de MFC/R2
+#### Configuración MFC/R2
 
-Las opciones están documentadas dentro del archivo chan_dahdi.conf. Algunas de las opciones más importantes se detallan aquí. Parámetros obligatorios: mfcr2_variant, mfcr2_max_ani y mfcr2_max_dnis. mfcr2_variant: Variante de país.
+Las opciones están documentadas en el archivo chan_dahdi.conf. Algunas de las opciones más importantes se detallan aquí. Parámetros obligatorios: mfcr2_variant, mfcr2_max_ani y mfcr2_max_dnis. mfcr2_variant: variante de país.
 
 ```
 r2test -l
@@ -1643,100 +1714,105 @@ PH                  Philippines
 VE                  Venezuela
 ```
 
-mfcr2_max_ani: Cantidad máxima de dígitos ANI a solicitar mfcr2_max_dnis: Cantidad máxima de dígitos DNIS a solicitar mfcr2_get_ani_first: Si obtener o no ANI antes de DNIS (requerido por algunas TELCOs) mfcr2_category: Categoría del llamante. Puede establecer la variable MFCR2_CATEGORY antes de iniciar la llamada mfcr2_logdir: Directorio para registrar los archivos de llamada. (/var/log/asterisk/mfcr2/directory) mfcr2_call_files: Si registrar o no las llamadas
+mfcr2_max_ani: Max amount of ANI digits to ask for mfcr2_max_dnis: Max amount of DNIS digits to ask for mfcr2_get_ani_first: Whether or not to get ANI before DNIS (required by some TELCOS) mfcr2_category: Caller category. You can set the variable MFCR2_CATEGORY before starting the call mfcr2_logdir: Directory to log the call files. (/var/log/asterisk/mfcr2/directory) mfcr2_call_files: Whether or not to log the calls
 
-- mfcr2_logging: valores de registro
-- cas – bits ABCD para tx y rx
-- mf – Tonos multifrecuencia
-- stack – salida detallada de la pila de canal y contexto
-- all – todas las actividades
-- nothing – no registrar nada
+- mfcr2_logging: logging values
+- cas – ABCD bits for tx and rx
+- mf – Multifrequency tones
+- stack – verbose output of the channel and context stack
+- all – all activities
+- nothing – do not log anything
 
-mfcr2_mfback_timeout: Este valor merece ser mencionado. A veces, si está llamando a un teléfono celular o cualquier llamada que tarda mucho tiempo en completarse, este parámetro puede agotarse, por lo que a menudo se cambia para un ajuste fino. Si algunas de sus llamadas no se están completando, este es el parámetro que debe cambiar primero. mfcr2_metering_pulse_timeout: Los pulsos son utilizados por algunas variantes R2 para indicar costos mfcr2_allow_collect_calls: En Brasil, el tono II-8 se utiliza para indicar una llamada por cobrar; este parámetro le permite bloquear llamadas por cobrar. mfcr2_double_answer: También se utiliza para evitar llamadas por cobrar cuando se requiere una doble respuesta. Con double_answer=yes, usted bloquea efectivamente las llamadas por cobrar. mfcr2_immediate_accept: Le permite saltarse el uso de señales de grupo B/II e ir directamente al estado aceptado. mfcr2_forced_release: Le permite acelerar la liberación de la llamada; funciona para la variante brasileña.
+mfcr2_mfback_timeout: This value deserves to be mentioned. Sometimes if you are calling a cell phone or any call that takes a long time to complete, this parameter can time out, so it is often changed for fine tuning. If some of your calls are not being completed, this is the parameter you should change first. mfcr2_metering_pulse_timeout: Pulses are used by some R2 variants to indicate costs mfcr2_allow_collect_calls: In Brazil, the tone II-8 is used to indicate a collect call; this parameter allows you to block collect calls. mfcr2_double_answer: Also used to avoid collect calls when a double answer is required. With double_answer=yes you actually block the collect calls. mfcr2_immediate_accept: Allows you to skip the use of group B/II signals and go directly to the accepted state. mfcr2_forced_release: Allows you to speed up the release of the call; works for the Brazilian variant.
 
 #### ANI y DNIS
 
-La Identificación Automática de Número (ANI) es el número del llamante. El Servicio de Identificación de Número Marcado (DNIS) es el número llamado o, en otras palabras, el número marcado. Cuando se recibe una llamada, generalmente los últimos cuatro números se pasan a la PBX en un proceso referido como marcación directa entrante (DID). El número ANI es en realidad el Caller ID. ANI tendrá la extensión del llamante al marcar, mientras que DNIS contendrá el destino de la llamada. Es importante que estos parámetros se configuren correctamente. Algunos switches envían solo los últimos cuatro dígitos, mientras que otros envían el número completo.
+La Identificación Automática de Número (ANI) es el número del llamante. El Servicio de Identificación de Número Marcado (DNIS) es el número llamado o, en otras palabras, el número marcado. Cuando se recibe una llamada, normalmente los últimos cuatro dígitos se pasan al PBX en un proceso llamado marcación directa interna (DID). El número ANI es en realidad el Caller ID. ANI tendrá la extensión del llamante al marcar, mientras que DNIS contendrá el destino de la llamada. Es importante que estos parámetros estén configurados correctamente. Algunos conmutadores envían solo los últimos cuatro dígitos, mientras que otros envían el número completo.
 
-### Formato de canal DAHDI
+### Formato del canal DAHDI
 
-Los canales DAHDI utilizan el siguiente formato en el dialplan:
+Los canales DAHDI usan el siguiente formato en el dialplan:
 
 ```
 DAHDI/[g]<identifier>[c][r<cadence>]
-<identifier>- Physical channel numeric identifier
-[g] – Group identifier
-[c] – Answer confirmation. A number is not considered until the callee press
-“#”
-[r] – customized ringing
-[cadence] Integer from 1 to 4
+<identifier> - Physical channel numeric identifier
+[g] - Group identifier
+[c] - Answer confirmation. A number is not considered until the callee presses "#"
+[r] - customized ringing
+[cadence] - Integer from 1 to 4
 ```
 
 Ejemplos:
 
 ```
-DAHDI/2
-- channel 2
-DAHDI/g1  - First available channel in group 1
-[g] – Group identifier
-[c] – Answer confirmation; A number is not considered until the callee press
-“#”
-[r] – customized ringing
-[cadence] Integer from 1 to 4
+DAHDI/2     - channel 2
+DAHDI/g1    - First available channel in group 1
 ```
 
-## El protocolo IAX2
+## The IAX2 protocol
 
-En este capítulo, aprenderemos sobre el protocolo Inter-Asterisk eXchange (IAX), incluyendo sus fortalezas y debilidades. También se cubrirán detalles como el modo trunk y la interconexión de dos servidores Asterisk. Todas las referencias en este documento corresponden a la versión 2 de IAX. El protocolo IAX proporciona transporte de medios y señalización para voz y video. IAX es muy innovador; ahorra ancho de banda en modo trunk y es mucho más simple que SIP cuando necesita atravesar NAT. El uso principal para IAX hoy en día es interconectar servidores Asterisk. IAX fue creado principalmente para voz, pero también puede acomodar video y otros flujos multimedia. IAX se inspiró en otros protocolos VoIP, como SIP y MGCP. En lugar de utilizar dos protocolos separados para señalización y medios, IAX los unificó para hacer un protocolo único. IAX no utiliza RTP para el transporte de medios; en su lugar, incrusta los medios en la misma conexión UDP.
+In this chapter, we will learn about the Inter-Asterisk eXchange (IAX) protocol, including its strengths and weaknesses. Details such as trunk mode and the interconnection of two Asterisk servers will also be covered. All references in this document correspond to IAX version 2.
 
-**Estado en Asterisk 22.** `chan_iax2` todavía está incluido y es totalmente compatible en Asterisk 22 LTS, por lo que todo en esta sección sigue siendo válido. IAX2 es, sin embargo, un protocolo heredado que ve relativamente poca implementación nueva: la industria ha convergido en gran medida en SIP (a través de `chan_pjsip` en Asterisk 22) tanto para trunking de proveedores como para interconexión de servidores. La principal ventaja restante de IAX2 es su diseño de puerto único: toda la señalización y los medios fluyen sobre un solo puerto UDP (4569 por defecto), lo que simplifica la configuración de firewall y NAT en comparación con SIP más sus flujos RTP separados. Para un nuevo trunk de Asterisk a Asterisk donde NAT no es una preocupación, un trunk PJSIP es el enfoque moderno recomendado; IAX2 se cubre aquí porque sigue siendo una opción válida, especialmente donde solo se puede abrir un puerto UDP a través de un firewall.
+The IAX protocol provides media transport and signaling for voice and video. IAX is very innovative; it saves bandwidth in trunk mode and is much simpler than SIP when you need to traverse NAT. The primary use for IAX nowadays is to interconnect Asterisk servers. IAX was created primarily for voice, but it can also accommodate video and other multimedia streams.
 
-### Objetivos
+IAX was inspired from other VoIP protocols, such as SIP and MGCP. Instead of using two separate protocols for signaling and media, IAX unified them to make a unique protocol. IAX does not use RTP for media transport; instead, it embeds the media in the same UDP connection.
 
-Al final de este capítulo, usted debería ser capaz de:
+**Status in Asterisk 22.** `chan_iax2` is still included and fully supported in Asterisk 22 LTS, so everything in this section remains valid. IAX2 is, however, a legacy protocol that sees relatively little new deployment: the industry has largely converged on SIP (via `chan_pjsip` in Asterisk 22) for both provider trunking and server interconnection. IAX2's main remaining advantage is its single-port design — all signaling and media flow over a single UDP port (4569 by default), which simplifies firewall and NAT configuration compared to SIP plus its separate RTP streams. For a new Asterisk-to-Asterisk trunk where NAT is not a concern, a PJSIP trunk is the recommended modern approach; IAX2 is covered here because it remains a valid choice, especially where only one UDP port can be opened through a firewall.
 
-- Identificar las fortalezas y debilidades del protocolo IAX
-- Describir escenarios de uso para el protocolo IAX
-- Describir las ventajas del modo trunk de IAX
-- Configurar iax.conf para teléfonos
-- Configurar iax.conf para la conexión a un proveedor VoIP
-- Configurar iax.conf para la interconexión de Asterisk
-- Entender la autenticación IAX
+### Objectives
 
-### Diseño de IAX
+By the end of this chapter, you should be able to:
 
-Los principales objetivos para el diseño de IAX son:
+- Identify strengths and weakness of IAX protocol
+- Describe usage scenarios for the IAX protocol
+- Describe the advantages of IAX trunk mode
+- Configure iax.conf for phones
+- Configure iax.conf for connection to a VoIP provider
+- Configure iax.conf for Asterisk interconnection
+- Understand IAX authentication
 
-- Reducir el ancho de banda requerido para el transporte de medios y la señalización
-- Proporcionar transparencia NAT
-- Ser capaz de transmitir la información del dialplan
-- Admitir el uso eficiente de paginación e intercomunicación
+### IAX design
 
-IAX es un protocolo de señalización y medios peer-to-peer que es similar a SIP sin usar RTP. El enfoque básico es multiplexar los flujos multimedia sobre una sola conexión UDP entre dos hosts. El mayor beneficio de este enfoque es su simplicidad al atravesar conexiones sobre NAT, que se encuentra regularmente en módems xDSL. IAX utiliza un solo puerto, UDP 4569 por defecto, y luego utiliza un número de llamada con 15 bits para multiplexar todos los flujos. El protocolo IAX utiliza procesos de registro y autenticación similares al protocolo SIP. Una descripción del protocolo se puede encontrar en http://www.ietf.org/internet-drafts/draft-guy-iax-05.txt
+The main objectives for IAX design are:
 
-![El protocolo IAX multiplexa muchas llamadas entre dos endpoints sobre un solo puerto UDP (4569 por defecto), utilizando un número de llamada de 15 bits para mantener los flujos separados, lo que hace que el atravesamiento NAT sea simple.](../images/10-legacy-fig12.png)
+- To reduce the bandwidth required for media transport and signaling
+- To provide NAT transparency
+- To be able to transmit the dial plan information
+- To support the efficient use of paging and intercom
 
-### Uso de ancho de banda
+IAX is a peer-to-peer signaling and media protocol that is similar to SIP without using RTP. The basic approach is to multiplex the multimedia streams over a single UDP connection between two hosts. The greatest benefit of this approach is its simplicity when traversing connections over NAT, regularly found in xDSL modems. IAX uses a single port, UDP 4569 by default, and then uses a call number with 15 bits to multiplex all streams. The IAX protocol uses registration and authentication processes similar to the SIP protocol. A description of the protocol can be found at http://www.ietf.org/internet-drafts/draft-guy-iax-05.txt
 
-El ancho de banda utilizado en las redes VoIP se ve afectado por varios factores; los códecs y los encabezados de protocolo son los más importantes. El protocolo IAX tiene una característica sorprendente llamada modo trunk, mediante la cual multiplexa varias llamadas utilizando un solo encabezado. Al jugar con la calculadora de ancho de banda de Asterisk, verá cómo los trunks IAX pueden ahorrarle hasta un 80% del tráfico con múltiples llamadas.
+![El protocolo IAX multiplexa muchas llamadas entre dos endpoints a través de un solo puerto UDP (4569 por defecto), usando un número de llamada de 15 bits para mantener los flujos separados — lo que hace que el paso por NAT sea simple.](../images/10-legacy-fig12.png)
 
-![Comparando el overhead de IAX y SIP: dos llamadas SIP/RTP necesitan dos paquetes (40 bytes de carga útil transportados bajo 156 bytes de overhead), mientras que el modo trunk de IAX2 transporta ambas llamadas en un solo paquete (40 bytes de carga útil bajo solo 66 bytes de overhead) al compartir un encabezado IP/UDP a través de muchos mini-frames.](../images/10-legacy-fig13.png)
+### Bandwidth usage
 
-### Nomenclatura de canales
+The bandwidth used in VoIP networks is affected by several factors; codecs and protocol headers are the most important. The IAX protocol has a surprising feature called trunk mode, whereby it multiplexes several calls using a single header. By playing with the Asterisk bandwidth calculator, you will see how IAX trunks can save you up to 80% of the traffic with multiple calls.
 
-Es importante entender las convenciones de nomenclatura de canales, ya que utilizará estos nombres al especificar un canal en el dialplan. El formato de un nombre de canal IAX utilizado para canales salientes es:
+![Comparación del overhead de IAX y SIP: dos llamadas SIP/RTP necesitan dos paquetes (40 bytes de carga útil bajo 156 bytes de overhead), mientras que el modo trunk IAX2 lleva ambas llamadas en un solo paquete (40 bytes de carga útil bajo solo 66 bytes de overhead) compartiendo una cabecera IP/UDP entre muchos mini‑frames.](../images/10-legacy-fig13.png)
+
+### Channel naming
+
+It is important to understand channel-naming conventions as you will use these names when specifying a channel in the dial plan. The format of an IAX channel name used for outbound channels is:
 
 ```
 IAX/[<user>[:<secret>]@]<peer>[:<portno>][/<exten>[@<context>][/<options>]
 ```
 
-<user> UserID en el peer remoto, o nombre del cliente configurado en iax.conf <secret> La contraseña. Alternativamente, puede ser el nombre de archivo para una clave RSA sin la extensión final (.key o .pub) y encerrado entre corchetes <peer> Nombre del servidor al que conectarse <portno> Número de puerto para la conexión <exten> Extensión en el servidor Asterisk remoto <context> Contexto en el servidor Asterisk remoto <options> La única opción disponible es 'a' que significa 'solicitar respuesta automática'
+- `<user>` — ID de usuario en el par remoto, o nombre del cliente configurado en iax.conf
+- `<secret>` — La contraseña. Alternativamente puede ser el nombre de archivo de una clave RSA sin la extensión final (.key o .pub) y entre corchetes
+- `<peer>` — Nombre del servidor al que conectarse
+- `<portno>` — Número de puerto para la conexión
+- `<exten>` — Extensión en el servidor Asterisk remoto
+- `<context>` — Contexto en el servidor Asterisk remoto
+- `<options>` — La única opción disponible es 'a', que significa 'solicitar auto‑respuesta'
 
 #### Ejemplo de canales salientes:
 
-Los canales salientes se ven en la consola de Asterisk. IAX2/8590:secret@myserver/8590@default Llama a la extensión 8590 en myserver. Utiliza 8590:secret como el par nombre/contraseña
+Los canales salientes se ven en la consola de Asterisk.
 
-IAX2/iaxphone Llama a "iaxphone" IAX2/judy:[judyrsa]@somewhere.com Llama a somewhere.com usando judy como nombre de usuario y una clave RSA para autenticación
+- `IAX2/8590:secret@myserver/8590@default` — Llamar a la extensión 8590 en myserver. Usa 8590:secret como el par nombre/contraseña
+- `IAX2/iaxphone` — Llamar a "iaxphone"
+- `IAX2/judy:[judyrsa]@somewhere.com` — Llamar a somewhere.com usando judy como nombre de usuario y una clave RSA para autenticación
 
 #### El formato de un canal IAX entrante es:
 
@@ -1746,35 +1822,44 @@ Los canales entrantes se ven en la consola de Asterisk.
 IAX2/[<username>@]<host>]-<callno>
 ```
 
-<username> Nombre de usuario si se conoce <host> Host que se conecta <callno> Número de llamada local Ejemplo de canal entrante: IAX2[flavio@8.8.30.34]/10 Número de llamada 10 desde la dirección IP 8.8.30.34 usando flavio como usuario. IAX2[8.8.30.50]/11 Número de llamada 11 desde la dirección IP 8.8.30.50.
+- `<username>` — Nombre de usuario si se conoce
+- `<host>` — Host que se conecta
+- `<callno>` — Número de llamada local
+
+Ejemplo de canal entrante:
+
+- `IAX2[flavio@8.8.30.34]/10` — Número de llamada 10 desde la dirección IP 8.8.30.34 usando flavio como usuario.
+- `IAX2[8.8.30.50]/11` — Número de llamada 11 desde la dirección IP 8.8.30.50.
 
 ### Uso de IAX
 
-Puede utilizar IAX de varias maneras. En esta sección, le mostraremos cómo configurar IAX para varios escenarios, incluyendo:
+Puede usar IAX de varias maneras. En esta sección, le mostraremos cómo configurar IAX para varios escenarios, incluyendo:
 
-- Conectar un soft-phone usando IAX
+- Conectar un softphone usando IAX
 - Conectar IAX a un proveedor VoIP usando IAX
 - Conectar dos servidores usando IAX
 - Conectar dos servidores usando IAX en modo trunk
 - Depurar una conexión IAX
 - Usar pares de claves RSA para autenticación
 
-#### Conectar un soft-phone usando IAX
+#### Conectar un softphone usando IAX
 
-Asterisk admite teléfonos IP basados en IAX como el ATCOM y el antiguo ATA de Digium (llamado IAXy), así como soft-phones que todavía implementan el protocolo IAX2. El proceso para soft-phones, ATAs y teléfonos físicos es similar. Para configurar un dispositivo IAX, necesita editar el archivo iax.conf en /etc/asterisk
+Asterisk soporta teléfonos IP basados en IAX como el ATCOM y el antiguo ATA de Digium (llamado IAXy) así como softphones que aún implementan el protocolo IAX2. El proceso para softphones, ATAs y teléfonos duros es similar. Para configurar un dispositivo IAX, necesita editar el archivo iax.conf en /etc/asterisk
 
 ```
 directory.
 ```
 
-Utilizaremos un soft-phone compatible con IAX2 como ejemplo. Paso 1: Haga una copia de seguridad del archivo iax.conf original usando:
+Usaremos un softphone compatible con IAX2 como ejemplo.
+
+1. Haga una copia de seguridad del archivo original `iax.conf` usando:
 
 ```
 #cd /etc/asterisk
 #mv iax.conf iax.conf.backup
 ```
 
-Paso 2: Comience a editar un nuevo archivo iax.conf:
+2. Comience a editar un nuevo archivo `iax.conf`:
 
 ```
 [general]
@@ -1783,7 +1868,7 @@ bindaddr=8.8.1.4
 bandwidth=high
 ```
 
-- ; Parámetro muy importante, cambia los códecs disponibles
+- ; Muy importante parámetro, cambia los códecs disponibles
 
 ```
 disallow=all
@@ -1826,20 +1911,20 @@ secret=senha
 host=dynamic
 ```
 
-He intentado preservar las líneas predeterminadas (no comentadas) del archivo de muestra. Se modificaron los siguientes parámetros:
+He intentado conservar las líneas predeterminadas (no comentadas) del archivo de ejemplo. Los siguientes parámetros fueron modificados:
 
 ```
 bandwidth=high
 ```
 
-Esta línea afecta la selección de códecs. Usar la configuración high permite la selección de un códec de alto ancho de banda y alta calidad como g.711 definido por la palabra clave ulaw. Si mantiene el parámetro predeterminado, no podrá elegir ulaw. En este caso, Asterisk le dará el mensaje "no codec available" para la configuración a continuación.
+Esta línea afecta la selección del codec. Usar la configuración alta permite la selección de un codec de gran ancho de banda y alta calidad como g.711 definido por la palabra clave ulaw. Si mantienes el parámetro predeterminado, no podrás elegir ulaw. En este caso, Asterisk te mostrará el mensaje “no codec available” para la configuración a continuación.
 
 ```
 disallow=all
 allow=ulaw
 ```
 
-En los comandos descritos anteriormente, deshabilitamos todos los códecs y habilitamos solo ulaw. En las LAN, la mayoría de la gente prefiere usar ulaw porque no es intensivo en procesador y ahorra ciclos de CPU. Incluso usando más ancho de banda, este códec es preferible porque en las LAN generalmente tiene un Ethernet de 100 megabits o incluso un Gigabit. Una llamada de voz usando ulaw utiliza casi 100 kilobits por segundo de ancho de banda de su red, lo cual es un uso muy ligero para las LAN de alta velocidad de hoy en día. En redes WAN o Internet, generalmente deshabilitará ulaw, intercambiando algunos ciclos de CPU disponibles por compresión de voz para un mejor uso del ancho de banda. Los códecs gsm, g729 e ilbc también proporcionan un buen factor de compresión.
+En los comandos descritos arriba, desactivamos todos los códecs y habilitamos solo ulaw. En LANs, la mayoría de la gente prefiere usar ulaw porque no consume muchos recursos del procesador y ahorra ciclos de CPU. Aunque usa más ancho de banda, este códec es preferible porque en LANs usualmente se cuenta con Ethernet de 100 megabits o incluso de Gigabit. Una llamada de voz que utiliza ulaw consume casi 100 kilobits por segundo de ancho de banda de su red, lo que representa un uso muy ligero para las LANs de alta velocidad actuales. En redes WAN o Internet, normalmente se desactiva ulaw, intercambiando algunos ciclos de CPU disponibles por compresión de voz para un mejor uso del ancho de banda. Los códecs gsm, g729 e ilbc también proporcionan un buen factor de compresión.
 
 ```
 [2003]
@@ -1849,9 +1934,12 @@ secret=senha
 host=dynamic
 ```
 
-En los comandos anteriores, hemos definido un amigo llamado [2003]. El contexto es el predeterminado (en los primeros laboratorios siempre usamos el contexto predeterminado para evitar confusiones; este contexto se explicará completamente en el capítulo 9). La línea "host=dynamic" proporciona un registro dinámico de la dirección IP del teléfono. Paso 3: Descargue e instale un soft-phone compatible con IAX2. Puede elegir cualquier soft-phone que todavía admita el protocolo IAX2 para el laboratorio. Paso 4: Configure una cuenta IAX en el cliente (típicamente *Add account* → IAX). Tenga en cuenta que el SipPulse Softphone es solo SIP y no puede registrarse sobre IAX2, por lo que para las pruebas de IAX necesita un cliente que todavía admita el protocolo.
+En los comandos anteriores, hemos definido a un amigo llamado [2003]. El contexto es el predeterminado (en los primeros laboratorios siempre usamos el contexto predeterminado para evitar confusiones; este contexto se explicará completamente cuando cubramos el dialplan). La línea “host=dynamic” proporciona un registro dinámico de la dirección IP del teléfono.
 
-Paso 5: Configure el archivo extensions.conf para probar su dispositivo IAX.
+3. Descargue e instale un softphone compatible con IAX2. Puede elegir cualquier softphone que aún admita el protocolo IAX2 para el laboratorio.  
+4. Configure una cuenta IAX en el cliente (normalmente *Add account* → IAX). Tenga en cuenta que el SipPulse Softphone es solo SIP y no puede registrarse mediante IAX2, por lo que para pruebas de IAX necesita un cliente que aún soporte el protocolo.
+
+5. Configure el archivo `extensions.conf` para probar su dispositivo IAX.
 
 ```
 [default]
@@ -1860,33 +1948,33 @@ exten=>2001,1,Dial(SIP/2001)
 exten=>2003,1,Dial(IAX2/2003)
 ```
 
-Ahora puede marcar entre los teléfonos SIP creados en el Capítulo 3 y el teléfono IAX creado en el laboratorio.
+Now you can dial between the SIP phones created in Chapter 3 and the IAX phone created in the lab.
 
-#### Conectar a un proveedor VoIP usando IAX
+#### Connecting to a VoIP provider using IAX
 
-Unos pocos proveedores VoIP admiten IAX. Puede encontrar fácilmente un proveedor IAX buscando "IAX providers". Usar un proveedor IAX tiene mucho sentido ya que IAX puede ahorrar mucho ancho de banda, atraviesa fácilmente NAT y puede autenticarse usando pares de claves RSA.
+A few VoIP providers support IAX. You can easily find an IAX provider by searching for “IAX providers”. Using an IAX provider makes a lot of sense as IAX can save a lot of bandwidth, easily traverses NAT, and can authenticate using RSA key pairs.
 
-![El Asterisk de un cliente conectado a un proveedor VoIP sobre un trunk IAX a través de Internet: un solo trunk transporta todas las llamadas hacia y desde el proveedor.](../images/10-legacy-fig14.png)
+![A customer's Asterisk connected to a VoIP provider over an IAX trunk across the Internet: a single trunk carries all calls to and from the provider.](../images/10-legacy-fig14.png)
 
-El número de proveedores VoIP comerciales compatibles con IAX ha disminuido drásticamente en las últimas versiones de Asterisk; la mayoría de los proveedores ahora ofrecen trunks SIP/PJSIP exclusivamente. Antes de comprometerse con un proveedor IAX, confirme que mantienen activamente su infraestructura IAX. Para una nueva integración de proveedor, un trunk PJSIP (Capítulo 3) es la alternativa recomendada.
+The number of IAX-capable commercial VoIP providers has declined sharply over the past several Asterisk releases; most providers now offer SIP/PJSIP trunks exclusively. Before committing to an IAX provider, confirm they actively maintain their IAX infrastructure. For a new provider integration, a PJSIP trunk (Chapter 3) is the recommended alternative.
 
-#### Conectar a un proveedor usando IAX
+#### Connecting to a provider using IAX
 
-Paso 1: Abra una cuenta en su proveedor favorito. Su proveedor le proporcionará tres cosas.
+Step 1: Open an account in your favorite provider. Your provider will provide you three things.
 
-- Nombre
-- Secreto
-- Dirección IP o nombre de host
-- Clave pública RSA
+- Name
+- Secret
+- IP address or Host name
+- RSA public key
 
-Paso 2: Configure el archivo iax.conf para registrar su Asterisk con su proveedor. Añada las siguientes líneas a la sección [general] del archivo.
+Step 2: Configure the iax.conf file to register your Asterisk with your provider. Add the following lines to the [general] section of the file.
 
 ```
 [general]
 register=>name:secret@hostname/2003
 ```
 
-En las instrucciones descritas anteriormente, se registró con su proveedor usando su cuenta y contraseña. En el momento en que reciba una llamada, se reenviará a la extensión 2003.
+En las instrucciones descritas arriba, te registraste con tu proveedor usando tu cuenta y contraseña. En el momento en que recibas una llamada, será reenviada a la extensión 2003.
 
 ```
 [name]
@@ -1901,7 +1989,7 @@ secret=secret
 host=hostname
 ```
 
-En las instrucciones descritas anteriormente, hemos creado un peer correspondiente al proveedor para fines de marcación.
+En las instrucciones descritas arriba, hemos creado un peer que corresponde al proveedor para propósitos de marcación.
 
 ```
 [nameiax]
@@ -1911,27 +1999,27 @@ auth=rsa
 inkeys=hostname
 ```
 
-Esto es necesario para la autenticación RSA. Usar la clave pública de su proveedor le permite estar seguro de que la llamada que se recibe es realmente del proveedor real. Si alguien más intenta usar la misma ruta, no podrá autenticarla porque no tienen la clave privada correspondiente. Paso 4: Pruebe la conexión. Para probar la conexión, llame a cualquier número. Algunos proveedores proporcionan una prueba de eco. Para lograr esto, por favor edite el archivo extensions.conf.
+Esto es necesario para la autenticación RSA. Usar la clave pública de su proveedor le permite estar seguro de que la llamada recibida proviene realmente del proveedor auténtico. Si alguien más intenta usar la misma ruta, no podrá autenticarse porque no posee la clave privada correspondiente. Paso 4: Pruebe la conexión. Para probar la conexión, marque cualquier número. Algunos proveedores ofrecen una prueba de eco. Para lograr esto, por favor edite el archivo extensions.conf.
 
 ```
 [default]
 exten=>*98,1,Dial(IAX2/name:secret@hostname/*98,20,r)
 ```
 
-Vaya a la CLI de Asterisk y emita un reload. Para verificar si Asterisk está registrado con el proveedor, use el siguiente comando.
+Vaya a la CLI de Asterisk y ejecute un reload. Para verificar si Asterisk está registrado con el proveedor, use el siguiente comando.
 
 ```
-CLI>reload
-CLI>iax2 show register
+*CLI>reload
+*CLI>iax2 show register
 ```
 
-Ahora simplemente marque *98 en el soft-phone conectado al servidor Asterisk.
+Now simply dial *98 on the softphone connected to the Asterisk server.
 
-#### Conectar dos servidores Asterisk a través de un trunk IAX
+#### Conectando dos servidores Asterisk a través de un trunk IAX
 
-Es muy fácil conectar un servidor a otro. No necesitará registrarlos porque las direcciones IP ya son conocidas. Tendrá que crear los peers y usuarios en el archivo iax.conf. Todas las extensiones en el sitio HQ comienzan con 20 seguidas de dos dígitos (por ejemplo, 2000). En la Sucursal, todas las extensiones comienzan con 22 seguidas de dos dígitos (por ejemplo, 2200). Utilizaremos el trunk. Necesitará una fuente de temporización DAHDI para habilitar esta función. Paso 1: Edite el archivo iax.conf en el servidor de la Sucursal.
+It is very easy to connect one server to another. You won’t need to register them because the IP addresses are already known. You will have to create the peers and users in the iax.conf file. All extensions in the HQ site start with 20 followed by two digits (e.g., 2000). In the Branch, all extensions start with 22 followed by two digits (e.g., 2200). We will use the trunk. You will need a DAHDI timing source to enable this feature. Step 1: Edit the iax.conf file in the Branch server.
 
-![Conectando dos servidores Asterisk con un trunk IAX: el servidor HQ (192.168.1.1, extensiones 20xx) y el servidor de la Sucursal (192.168.1.2, extensiones 22xx) se alcanzan entre sí sobre un solo trunk IAX; no se necesita registro porque ambas direcciones IP son fijas y conocidas.](../images/10-legacy-fig15.png)
+![Connecting two Asterisk servers with an IAX trunk: the HQ server (192.168.1.1, extensions 20xx) and the Branch server (192.168.1.2, extensions 22xx) reach each other over a single IAX trunk — no registration is needed because both IP addresses are fixed and known.](../images/10-legacy-fig15.png)
 
 ```
 [general]
@@ -1972,7 +2060,7 @@ host=dynamic
 callerid='2001'
 ```
 
-Paso 2: Configure el archivo extensions.conf en el servidor de la Sucursal
+Paso 2: Configurar el archivo extensions.conf en el servidor Branch
 
 ```
 [general]
@@ -1988,7 +2076,7 @@ exten=>_22XX,1,dial(IAX2/${EXTEN},20)
 exten=>_22XX,2,hangup
 ```
 
-Paso 3: Configure el archivo iax.conf en el servidor HQ
+# Paso 3: Configurar el archivo iax.conf en el servidor central
 
 ```
 [general]
@@ -2030,7 +2118,7 @@ callerid="2201"
 host=dynamic
 ```
 
-Paso 4: Configure el archivo extensions.conf en el servidor HQ.
+Step 4: Configurar el archivo extensions.conf en el servidor HQ.
 
 ```
 [general]
@@ -2046,17 +2134,31 @@ exten=>_20XX,1,Dial(IAX2/${EXTEN})
 exten=>_20XX,2,hangup
 ```
 
-Paso 5: Pruebe una llamada desde el teléfono 2000 en el servidor HQ al teléfono 2200 en el servidor de la Sucursal.
+Step 5: Test a call from the phone 2000 in the HQ server to the phone 2200 in the Branch server.
 
-### Autenticación IAX
+### IAX authentication
 
-Ahora analicemos el proceso de autenticación IAX desde el punto de vista práctico para ayudarle a elegir el mejor método para cada requisito específico.
+Now let’s analyze the IAX authentication process from the practical standpoint to help you choose the best method for each specific requirement.
 
-#### Conexiones entrantes
+#### Incoming connections
 
-![El flujo de decisión de autenticación IAX para una llamada entrante: Asterisk se ramifica según si se proporciona un nombre de usuario, si coincide con una sección, si la IP de origen está permitida y si el secreto (texto plano, MD5 o RSA) coincide; aceptando la llamada con el contexto y las opciones de peer de esa sección, o denegándola.](../images/10-legacy-fig16.png)
+![El flujo de decisión de autenticación IAX para una llamada entrante: Asterisk se ramifica según si se proporciona un nombre de usuario, si coincide con una sección, si la IP de origen está permitida y si el secreto (texto plano, MD5 o RSA) coincide — aceptando la llamada con el contexto y las opciones de peer de esa sección, o denegándola.](../images/10-legacy-fig16.png)
 
-Cuando Asterisk recibe una conexión entrante, la información inicial puede incluir un nombre de usuario (del campo "username=") o no. La conexión entrante también tiene una dirección IP, que Asterisk utiliza para la autenticación también. Si se proporciona un usuario, Asterisk: 1. Busca en iax.conf una entrada con type=user (o type=friend con un nombre de sección que coincida con el nombre de usuario). Si no lo encuentra, Asterisk rechaza la conexión. 2. Si la entrada encontrada tiene configuraciones deny/allow, compara la dirección IP del llamante para determinar si aceptar la llamada o no dependiendo de las cláusulas deny/allow. 3. Verifica la contraseña (secreto) usando texto plano, md5 o RSA. 4. Acepta la conexión y envía la llamada al contexto especificado en la línea "context=" del archivo iax.conf. Si no se proporciona un nombre de usuario, Asterisk: 1. Busca una entrada que contenga type=user (o type=friend) en el archivo iax.conf sin un secreto especificado. También verifica las cláusulas deny/allow. Si se encuentra una entrada, la conexión se acepta y el nombre de la sección se utiliza como el nombre del usuario. 2. Busca una entrada que contenga type=user (o type=friend) en el archivo iax.conf con un secreto o clave RSA especificada. Verifica las cláusulas deny/allow. Si se encuentra una entrada, intenta autenticar al llamante usando el secreto especificado; si coincide, acepta la conexión. El nombre de la sección es el nombre del usuario. Supongamos que su archivo iax.conf tiene las siguientes entradas:
+When Asterisk receives an incoming connection, the initial information can include a user name (from the field "username=") or not. The incoming connection has an IP address too, which Asterisk uses for authentication as well.
+
+If a user is provided, Asterisk:
+
+1. Searches iax.conf for an entry with type=user (or type=friend with a section name matching the username). If it did not find it, Asterisk refuses the connection.
+2. If the entry found has deny/allow configurations, it compares the IP address from the caller to determine whether to accept the call or not depending on the deny/allow clauses.
+3. It checks the password (secret) using plaintext, md5, or RSA.
+4. It accepts the connection and sends the call to the context specified in the line "context=" from the iax.conf file.
+
+If a username is not provided, Asterisk:
+
+1. Searches for an entry containing type=user (or type=friend) in the iax.conf file without a specified secret. It checks deny/allow clauses as well. If an entry is found, the connection is accepted and the section name is used as the user's name.
+2. Searches for an entry containing type=user (or type=friend) in the iax.conf file with a secret or RSA key specified. It checks deny/allow clauses. If an entry is found, it tries to authenticate the caller using the specified secret; if it matches, it accepts the connection. Section name is the user's name.
+
+Let's suppose your iax.conf file has the following entries:
 
 ```
 [guest]
@@ -2086,15 +2188,40 @@ Si una llamada tiene un nombre de usuario especificado, como:
 - iax-gateway
 - iax-friend
 
-Asterisk intentará autenticar la llamada usando solo la entrada correspondiente en el archivo iax.conf. Si se especifican otros nombres, la llamada sería rechazada. Si no se especifica ningún usuario, Asterisk intentará autenticar la conexión como guest. Sin embargo, si guest no existe, intentará cualquier otra conexión con un secreto coincidente. En otras palabras, si no tiene una sección guest en su archivo iax.conf, un usuario malintencionado podría intentar adivinar cualquier secreto coincidente al no especificar el nombre de usuario. Las restricciones de deny/allow de direcciones IP también se aplican. Una buena forma de evitar la adivinación de secretos es usar la autenticación RSA. Otro método es restringir las direcciones IP permitidas para llamar.
+Asterisk intentará autenticar la llamada usando solo la entrada correspondiente en el archivo iax.conf. Si se especifican otros nombres, la llamada será rechazada. Si no se especifica un usuario, Asterisk intentará autenticar la conexión como guest. Sin embargo, si guest no existe, intentará cualquier otra conexión con un secreto coincidente. En otras palabras, si no tienes una sección guest en tu archivo iax.conf, un usuario malintencionado podría intentar adivinar cualquier secreto coincidente sin especificar el nombre de usuario. Las restricciones de denegar/permitir por direcciones IP también se aplican. Una buena forma de evitar la adivinación de secretos es usar autenticación RSA. Otro método es restringir las direcciones IP permitidas para llamar.
 
-#### Restricciones de dirección IP
+#### Restricciones de direcciones IP
 
-permit = <ipaddr>/<netmask> Las reglas se interpretan en secuencia, y todas se evalúan (este concepto es diferente de las ACLs deny = <ipaddr>/<netmask> que se encuentran habitualmente en routers y firewalls). Ejemplo #1 permit=0.0.0.0/0.0.0.0 deny=192.168.0.0/255.255.255.0 Denegará cualquier paquete de la red 192.168.0.0/24 Ejemplo #2 deny=192.168.0.0/255.255.255.0 permit=0.0.0.0/0.0.0.0 Permitirá cualquier paquete. La última instrucción reemplaza a la primera.
+Access is controlled with `permit` and `deny` lines:
+
+```
+permit = <ipaddr>/<netmask>
+deny = <ipaddr>/<netmask>
+```
+
+Las reglas se interpretan en secuencia, y todas se evalúan (este concepto es diferente de las ACLs que se encuentran normalmente en routers y firewalls). La última instrucción coincidente reemplaza a las anteriores.
+
+Example #1:
+
+```
+permit=0.0.0.0/0.0.0.0
+deny=192.168.0.0/255.255.255.0
+```
+
+Esto denegará cualquier paquete de la red 192.168.0.0/24.
+
+Ejemplo #2:
+
+```
+deny=192.168.0.0/255.255.255.0
+permit=0.0.0.0/0.0.0.0
+```
+
+Esto permitirá cualquier paquete, porque la última instrucción reemplaza a la primera.
 
 #### Conexiones salientes
 
-Las conexiones salientes adquieren información de autenticación utilizando los siguientes métodos:
+Las conexiones salientes adquieren información de autenticación usando los siguientes métodos:
 
 - La descripción del canal IAX2 pasada por la aplicación dial().
 - Una entrada con type=peer o type=friend en el archivo iax.conf.
@@ -2102,29 +2229,29 @@ Las conexiones salientes adquieren información de autenticación utilizando los
 
 #### Conectar dos servidores Asterisk usando claves RSA
 
-Es posible usar IAX con autenticación fuerte usando claves RSA asimétricas. Según el código fuente (res_krypto.c), Asterisk utiliza claves RSA con un algoritmo SHA-1 para resúmenes de mensajes en lugar del MD5 más débil. A continuación se muestra una guía paso a paso para configurar dos servidores usando claves RSA.
+Es posible usar IAX con autenticación fuerte mediante claves RSA asimétricas. Según el código fuente (res_krypto.c), Asterisk usa claves RSA con un algoritmo SHA-1 para los resúmenes de mensaje en lugar del más débil MD5. A continuación se muestra una guía paso a paso para configurar dos servidores usando claves RSA.
 
-##### Configurar el servidor para la sucursal
+##### Configuración del servidor para la rama
 
-Paso 1: Genere las claves RSA en el servidor de la sucursal
+Paso 1: Generar las claves RSA en el servidor de la rama
 
 ```
 astgenkey -n
 ```
 
-Cuando se le pregunte, use el nombre de clave branch. Hemos usado el parámetro –n para evitar pasar una frase de contraseña cada vez que Asterisk se reinicializa. Si desea mejorar la seguridad, no use el –n e inicie Asterisk con asterisk -i Paso 2: Copie las claves al directorio /var/lib/asterisk/keys
+Cuando se solicite, use el nombre de clave branch. Hemos usado el parámetro –n para evitar pasar una frase de paso cada vez que Asterisk se reinicializa. Si desea mejorar la seguridad, no use el –n y inicie Asterisk con asterisk -i Paso 2: Copie las claves al directorio /var/lib/asterisk/keys
 
 ```
 cp branch.* /var/lib/asterisk/keys
 ```
 
-Paso 3: Copie la clave pública al servidor HQ
+# Paso 3: Copiar la clave pública al servidor HQ
 
 ```
 scp branch.pub root@hq_ip_address:/var/lib/asterisk/keys
 ```
 
-Paso 4: Edite el archivo iax.conf en el servidor de la Sucursal.
+Paso 4: Editar el archivo iax.conf en el servidor Branch.
 
 ```
 [general]
@@ -2157,7 +2284,7 @@ host=dynamic
 callerid='2201'
 ```
 
-Paso 8: Configure el archivo extensions.conf en el servidor de la Sucursal
+Paso 8: Configurar el archivo extensions.conf en el servidor Branch
 
 ```
  [default]
@@ -2167,27 +2294,27 @@ exten=>_22XX,1,dial(IAX2/${EXTEN},20)
 exten=>_22XX,2,hangup
 ```
 
-##### Configurar el servidor para la sede central
+##### Configurando el servidor para la sede central
 
-Paso 1: Genere las claves RSA en el servidor HQ
+Paso 1: Generar las claves RSA en el servidor de la sede central
 
 ```
 astgenkey -n
 ```
 
-Cuando se le pregunte, use el nombre de clave hq. Paso 2: Copie las claves al directorio /var/lib/asterisk/keys
+Cuando se solicite, use el nombre de clave hq. Paso 2: Copie las claves al directorio /var/lib/asterisk/keys
 
 ```
 cp hq.* /var/lib/asterisk/keys
 ```
 
-Paso 3: Copie la clave pública al servidor BRANCH
+# Paso 3: Copiar la clave pública al servidor BRANCH
 
 ```
 scp hq.pub root@branch_ip_address:/var/lib/asterisk/keys
 ```
 
-Paso 4: Configure el archivo iax.conf en el servidor HQ
+Step 4: Configurar el archivo iax.conf en el servidor HQ
 
 ```
 [general]
@@ -2221,7 +2348,7 @@ callerid="2001"
 host=dynamic
 ```
 
-Paso 10: Configure el archivo extensions.conf en el servidor HQ.
+Step 10: Configurar el archivo extensions.conf en el servidor HQ.
 
 ```
 [default]
@@ -2231,33 +2358,41 @@ exten=>_20XX,1,Dial(IAX2/${EXTEN})
 exten=>_20XX,2,hangup
 ```
 
-Paso 11: Pruebe una llamada desde el teléfono 2000 en el servidor HQ al teléfono 2200 en el servidor de la Sucursal.
+Step 11: Test a call from the 2000 phone in the HQ server to the 2200 phone in the Branch server.
 
-### Configuración del archivo iax.conf
+### The iax.conf file configuration
 
-El archivo iax.conf tiene varios parámetros; discutir cada parámetro uno por uno sería aburrido y contraproducente. Todos los parámetros, junto con una descripción, se pueden encontrar en el archivo de muestra. En la wiki www.voip-info.org encontrará información detallada sobre cada uno. Aquí mostraremos algunos de los parámetros más importantes para la configuración de la sección general, peers y usuarios.
+The file iax.conf has several parameters; discussing each parameter one by one would be boring and counterproductive. All parameters, along with a description, can be found in the sample file. In the wiki www.voip-info.org you will find detailed information about each one. Here we will show some of the most important parameters for the configuration of the general section, peers, and users.
 
-#### Sección [General]
+#### [General] Section
 
-Direcciones del servidor bindport = <portnum> Configura el puerto UDP IAX. El valor predeterminado es 4569. bindaddr = <ipaddr> Use 0.0.0.0 para vincular Asterisk a todas las interfaces o especifique la dirección IP de una interfaz específica. Selección de códec bandwidth = [low|medium|high] High = todos los códecs Medium = todos los códecs excepto ulaw y alaw Low = códecs de bajo ancho de banda allow/disallow = Ajuste fino de selección de códec [alaw|ulaw|gsm|g.729| etc.]
+Server addresses:
+
+- `bindport = <portnum>` — Configures the IAX UDP port. Default is 4569.
+- `bindaddr = <ipaddr>` — Use 0.0.0.0 to bind Asterisk to all interfaces, or specify the IP address of a specific interface.
+
+Codec selection:
+
+- `bandwidth = [low|medium|high]` — High = all codecs; Medium = all codecs except ulaw and alaw; Low = low bandwidth codecs.
+- `allow/disallow = [alaw|ulaw|gsm|g.729| etc.]` — Codec selection fine tuning.
 
 ### Jitter buffer
 
-El jitter es la variación de retardo entre paquetes. Es el factor más importante que afecta la calidad de la voz. Se utiliza un Jitter buffer para compensar la variación de retardo. Sacrifica la latencia en favor de un menor jitter. Puede hacer una analogía entre el jitter buffer y un tanque de agua. Ambos pueden recibir paquetes o agua a intervalos irregulares, pero finalmente entregarán un flujo regular.
+Jitter is the delay variation between packets. It is the most important factor affecting voice quality. A Jitter buffer is used to compensate for the delay variation. It sacrifices latency in favor of lower jitter. You can make an analogy between the jitter buffer and a water tank. Both can receive packets or water at irregular intervals, but will ultimately deliver a regular flow.
 
-![El jitter buffer como un tanque de agua: los paquetes llegan irregularmente de la red y llenan el buffer, que luego los libera a un ritmo constante para producir un flujo de voz suave. El tamaño del buffer (en ms) intercambia un poco de latencia por un menor jitter; la banda de exceso de buffer permite que Asterisk aumente o reduzca el buffer a medida que cambian las condiciones de la red.](../images/10-legacy-fig17.png)
+![The jitter buffer as a water tank: packets arrive irregularly from the network and fill the buffer, which then releases them at a steady rate to produce a smooth voice flow. The buffer size (in ms) trades a little latency for lower jitter; the excess-buffer band lets Asterisk grow or shrink the buffer as network conditions change.](../images/10-legacy-fig17.png)
 
-Un jitter pequeño (es decir, por debajo de 20 ms) suele ser imperceptible. Sin embargo, un jitter por encima de este nivel es molesto. La latencia o retardo debe mantenerse por debajo de 150ms. Crear un jitter buffer sacrificará algo de retardo por un jitter menor, un concepto conocido como "presupuesto de retardo". Puede afectar el jitter buffer usando estos parámetros:
+A small jitter (i.e., below 20 ms) is usually imperceptible. However, jitter above this level is annoying. The latency or delay should be kept to below 150ms. Creating a jitter buffer will sacrifice some delay for a lower jitter—a concept known as “delay-budget”. You can affect the jitter buffer using these parameters:
 
-- Jitterbuffer=<yes/no> – Habilita o deshabilita
-- Dropcount=<number> - Cantidad máxima de frames que deben retrasarse en los últimos dos segundos. La configuración recomendada es 3 (1.5% de frames perdidos)
-- Maxjitterbuffer=<ms> - Generalmente por debajo de 100 ms
-- Maxexcessbuffer=<ms> - Si el retardo de la red mejora, el jitter buffer podría estar sobredimensionado. En consecuencia, Asterisk intentará reducirlo.
-- Minexcessbuffer=<ms> - Una vez que el exceso de buffer cae a este valor, Asterisk comienza a aumentar el tamaño del buffer.
+- Jitterbuffer=<yes/no> – Enables or disables
+- Dropcount=<number> - Maximum amount of frames that should be delayed in the last two seconds. The recommended setting is 3 (1.5% of dropped frames)
+- Maxjitterbuffer=<ms> - Usually below 100 ms
+- Maxexcessbuffer=<ms> - If the network delay improves, the jitter buffer could be oversized. Consequently, Asterisk will try to reduce it.
+- Minexcessbuffer=<ms> - Once the excess buffer drops to this value, Asterisk starts to increase the buffer size.
 
-### Etiquetado de frames
+### Frame tagging
 
-El parámetro a continuación marca el paquete IP en el campo de tipo de servicio. Los routers pueden leer esta etiqueta, priorizando así el tráfico. Asterisk utiliza códigos DSCP para este campo (RFC 2474). Los valores permitidos son CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43 y ef (es decir, reenvío acelerado).
+The parameter below marks the IP packet in the type of service field. Routers can read this tag, thereby prioritizing traffic. Asterisk uses DSCP codes for this field (RFC 2474). Allowed values are CS0, CS1, CS2, CS3, CS4, CS5, CS6, CS7, AF11, AF12, AF13, AF21, AF22, AF23, AF31, AF32, AF33, AF41, AF42, AF43, and ef (i.e., expedited forwarding).
 
 ```
 tos=ef
@@ -2265,7 +2400,7 @@ tos=ef
 
 ### Cifrado IAX2
 
-IAX admite el cifrado de llamadas utilizando una clave simétrica, cifrado de bloque de 128 bits llamado AES (Advanced Encryption Standard). Es muy simple activar el cifrado entre trunks IAX. En el archivo iax.conf use:
+IAX soporta el cifrado de llamadas usando una clave simétrica, cifrado de bloque de 128 bits llamado AES (Advanced Encryption Standard). Es muy simple activar el cifrado entre trunks IAX. En el archivo iax.conf use:
 
 ```
 encryption=yes
@@ -2277,7 +2412,7 @@ Para forzar el cifrado:
 forceencryption=yes
 ```
 
-Para garantizar la compatibilidad con versiones anteriores, es posible que deba deshabilitar la rotación de claves usando:
+Para garantizar la compatibilidad con versiones anteriores, es posible que necesite desactivar la rotación de claves usando:
 
 ```
 keyrotate=no
@@ -2285,7 +2420,7 @@ keyrotate=no
 
 ### Comandos de depuración IAX2
 
-A continuación se muestran algunos de los comandos de consola de solución de problemas más importantes para Asterisk.
+A continuación se presentan algunos de los comandos de consola de solución de problemas más importantes para Asterisk.
 
 ```
 iax2 show netstats
@@ -2318,7 +2453,7 @@ Name/Username    Host                 Mask             Port          Status
 iax2 debug
 ```
 
-Al observar esta salida, identifique el principio y el final de la llamada. Observe la información de retardo y jitter obtenida usando paquetes poke y pong. Estos paquetes ayudan a crear la salida del comando "iax2 show netstats".
+Al observar esta salida, identifique el inicio y el final de la llamada. Observe la información de retardo y jitter obtenida usando paquetes poke y pong. Estos paquetes ayudan a generar la salida del comando “iax2 show netstats”.
 
 ```
 vtsvoffice*CLI> iax2 debug
@@ -2433,33 +2568,42 @@ vtsvoffice*CLI>iax2 no debug
 
 ### Resumen
 
-Este capítulo ha revisado las fortalezas y debilidades del protocolo IAX. Ha demostrado cómo funciona IAX en varios escenarios, como soft-phones y un trunk entre dos servidores Asterisk. El modo trunk le permite ahorrar ancho de banda al transportar más de una llamada en un solo paquete. Finalmente, aprendió comandos de consola que puede usar para verificar el estado y depurar el protocolo.
+Este capítulo ha revisado las fortalezas y debilidades del protocolo IAX. Ha demostrado cómo funciona IAX en varios escenarios, como softphones y un trunk entre dos servidores Asterisk. El modo trunk le permite ahorrar ancho de banda al transportar más de una llamada en un solo paquete. Finalmente, aprendió los comandos de consola que puede usar para verificar el estado y depurar el protocolo.
 
-## SIP heredado: chan_sip y sip.conf (eliminado en Asterisk 21+)
+## Legacy SIP: chan_sip and sip.conf (removed in Asterisk 21+)
 
-> **Heredado / histórico:** Todo en esta sección utiliza el antiguo controlador `chan_sip` y su archivo de configuración `sip.conf`. `chan_sip` fue desaprobado durante varias versiones y **eliminado en Asterisk 21**, por lo que **no existe en Asterisk 22**. Ninguno de los ejemplos de `sip.conf` a continuación se ejecutará en un sistema actual; se mantienen aquí solo para documentar cómo funcionaban las implementaciones heredadas y para ayudarle a migrarlas. Para la forma moderna y compatible de hacer cualquiera de estas cosas, consulte la sección *PJSIP: el canal SIP* del capítulo *SIP & PJSIP en profundidad*. La teoría del *protocolo* SIP (métodos, registro, proxy/redirect, SDP, tipos de NAT) es a nivel de protocolo y vive en ese capítulo; lo que sigue es puramente la **configuración** de `chan_sip` eliminada.
+> **Legacy / historical:** Everything in this section uses the old `chan_sip`
+> driver and its `sip.conf` configuration file. `chan_sip` was deprecated for
+> several releases and **removed in Asterisk 21**, so it **does not exist in
+> Asterisk 22**. None of the `sip.conf` examples below will run on a current
+> system — they are kept here only to document how legacy deployments worked and
+> to help you migrate them. For the modern, supported way to do any of this, see
+> the *PJSIP: the SIP channel* section of the *SIP & PJSIP in depth* chapter. The
+> SIP *protocol* theory (methods, registration, proxy/redirect, SDP, NAT types)
+> is protocol-level and lives in that chapter; what follows is purely the removed
+> `chan_sip` **configuration**.
 
-En sistemas heredados hasta Asterisk 20, SIP se configuraba en `/etc/asterisk/sip.conf`, que solía ser el segundo archivo más cambiado (justo después de `extensions.conf`). Las secciones a continuación muestran cómo `chan_sip` conectaba Asterisk a un proveedor SIP, cómo conectar dos Asterisks juntos usando SIP, soporte de dominio, presencia, opciones de códec/DTMF/QoS, autenticación y NAT, seguido de una guía para migrar todo a PJSIP.
+On legacy systems through Asterisk 20, SIP was configured in `/etc/asterisk/sip.conf`, which used to be the second most changed file (just after `extensions.conf`). The sections below show how `chan_sip` connected Asterisk to a SIP provider, how to connect two Asterisks together using SIP, domain support, presence, codec/DTMF/QoS options, authentication, and NAT — followed by a guide to migrating all of it to PJSIP.
 
-### Conectar Asterisk a un proveedor SIP (sip.conf)
+### Connecting Asterisk to a SIP provider (sip.conf)
 
-Asterisk se utiliza a menudo para conectarse a un proveedor VoIP SIP. Los proveedores VoIP suelen tener mejores tarifas para llamadas telefónicas que los proveedores tradicionales. Otro punto interesante y atractivo de los proveedores VoIP es la posibilidad de comprar números DID en otras ciudades, incluso en países extranjeros. Estas son buenas razones para usar VoIP para telecomunicaciones. En esta sección, aprenderá cómo el `chan_sip` heredado conectaba Asterisk a un proveedor VoIP. Se requieren tres pasos para conectar Asterisk a un proveedor SIP. Las pruebas se pueden realizar estableciendo una cuenta con su proveedor favorito. Paso 1: Registrarse con un proveedor SIP en sip.conf Para conectarse a un proveedor SIP, necesitará la siguiente información del proveedor:
+Asterisk is often used to connect to a SIP VoIP provider. VoIP providers usually have better rates for phone calls than traditional providers. Another interesting and attractive point of VoIP providers is the possibility to buy DID numbers in other cities—even in foreign countries. These are good reasons to use VoIP for telecommunications. In this section, you will learn how legacy `chan_sip` connected Asterisk to a VoIP provider. Three steps are required to connect Asterisk to a SIP provider. Tests can be conducted by establishing an account with your favorite provider. Step 1: Registering with a SIP provider in sip.conf To connect to a SIP provider, you will need the following information from the provider:
 
-![Asterisk conectado a un proveedor de servicios VoIP sobre Internet o una WAN privada, con teléfonos SIP locales registrados al servidor Asterisk](../images/07-sip-and-pjsip-fig07.png)
+![Asterisk connected to a VoIP service provider over the Internet or a private WAN, with local SIP phones registered to the Asterisk server](../images/07-sip-and-pjsip-fig07.png)
 
-- nombre de usuario
-- secreto y remotesecret (Use secret para autenticar solicitudes entrantes y remotesecret para solicitudes salientes)
-- nombre de host
-- dominio
-- códecs permitidos
+- username
+- secret and remotesecret (Use secret to authenticate inbound requests and remotesecret for outbound requests)
+- hostname
+- domain
+- codecs allowed
 
-Esta configuración permitirá a su proveedor localizar la dirección IP de Asterisk. En la siguiente declaración, le estamos diciendo a Asterisk que se registre en un proveedor SIP definido por el nombre de host e informe al proveedor de la dirección IP de Asterisk. La declaración dice que desea recibir llamadas en la extensión 4100. En la sección [general] del archivo sip.conf, ingrese la siguiente línea:
+This configuration will allow your provider to locate Asterisk’s IP address. In the following statement, we are telling Asterisk to register to a SIP provider defined by the hostname and inform the provider of Asterisk’s IP address. The statement says that you want to receive calls at extension 4100. In the [general] section of the sip.conf file, enter the following line:
 
 ```
 register=>name:secret@hostname/4100
 ```
 
-Paso 2: Configurar el [peer] en sip.conf Cree una entrada de tipo peer para el proveedor deseado para simplificar la marcación de Asterisk.
+Paso 2: Configure el [peer] en sip.conf Cree una entrada de tipo peer al proveedor deseado para simplificar la marcación de Asterisk.
 
 ```
 [provider]
@@ -2477,60 +2621,62 @@ disallow=all
 allow=ulaw ; or any other codec available from your provider
 ```
 
-Paso 3: Crear una ruta al proveedor en el dialplan Elegiremos los dígitos 010 como la ruta de destino al proveedor. Para marcar #610000 dentro del proveedor, simplemente marque 010610000.
+Paso 3: Crear una ruta al proveedor en el dial plan  
+Elegiremos los dígitos 010 como la ruta de destino al proveedor.  
+Para marcar #610000 dentro del proveedor, simplemente marque 010610000.
 
 ```
 exten=>_010.,1,Set(CALLERID(num)=username)
-exten=>_010.,n,Set(CALLERID(Name)=”Flavio Gonçalves”)
+exten=>_010.,n,Set(CALLERID(Name)="Flavio Gonçalves")
 exten=>_010.,n,Dial(SIP/${EXTEN:3}@provider)
 exten=>_010.,n,Hangup
 ```
 
-#### Opciones SIP específicas para el escenario de proveedor
+#### Opciones SIP específicas para el escenario del proveedor
 
-La siguiente discusión examina los detalles de las opciones establecidas en el archivo sip.conf para la conexión a un proveedor VoIP.
+La siguiente discusión examina los detalles de las opciones establecidas en el archivo sip.conf para la conexión a un proveedor de VoIP.
 
 ```
 register=>username:password@hostname/4100
 ```
 
-La instrucción registered en el archivo sip.conf se utiliza para registrarse con un proveedor. La transacción de registro se autentica con el nombre y el secreto. Puede usar una barra diagonal ("/") para proporcionar una extensión para las llamadas entrantes. Técnicamente hablando, la extensión se colocará en el campo de encabezado "Contact" de la solicitud SIP. El comportamiento de registro puede ser controlado por ciertos parámetros:
+La instrucción `registered` en el archivo `sip.conf` se usa para registrarse con un proveedor. La transacción `register` se autentica con el nombre y el secreto. Puede usar una barra diagonal (“/”) para proporcionar una extensión para llamadas entrantes. Técnicamente, la extensión se colocará en el campo de encabezado “Contact” de la solicitud SIP. El comportamiento de registro puede controlarse mediante ciertos parámetros:
 
 ```
 registertimeout=20
 registerattempts=10
 ```
 
-Para verificar si el registro fue exitoso, el comando de consola heredado era `sip show registry`. En Asterisk 22, el comando equivalente es `pjsip show registrations` (registros salientes) y `pjsip show endpoints` para el estado del endpoint.
+Para verificar si el registro fue exitoso, el comando de consola heredado era `sip show registry`. En Asterisk 22 el comando equivalente es `pjsip show registrations` (registraciones salientes) y `pjsip show endpoints` para el estado del endpoint.
 
-El parámetro "username" se utiliza en el resumen de autenticación. El resumen se calcula utilizando nombre de usuario, secreto y reino:
+El parámetro “username” se usa en el digest de autenticación. El digest se calcula usando username, secret y realm:
 
 ```
 username=username
 ```
 
-Host define la dirección o nombre del proveedor VoIP:
+Host define la dirección o el nombre del proveedor de VoIP:
 
 ```
 host=hostname
 ```
 
-Los parámetros Fromuser y Fromdomain a veces son necesarios para la autenticación. Estos parámetros se utilizan en el campo de encabezado SIP From:
+Los parámetros Fromuser y Fromdomain a veces son requeridos para la autenticación. Estos parámetros se utilizan en el campo de encabezado SIP From:
 
 ```
 fromuser=username
 fromdomain=hostname
 ```
 
-Cuando se conecta a un proveedor VoIP, se requieren credenciales. Después de la invitación inicial, el proveedor le envía un mensaje llamado "407 Proxy Authentication Required"; usted proporciona las credenciales en el mensaje INVITE subsiguiente. Para las llamadas entrantes, su servidor Asterisk solicitará credenciales para el proveedor. Obviamente, el proveedor no tiene una credencial válida para su servidor Asterisk. Cuando usa insecure=invite, le está diciendo a Asterisk que no envíe el "407 Proxy Authentication Required" al proveedor y que acepte llamadas entrantes. También puede usar insecure=port, invite para hacer coincidir el peer basado en la dirección IP sin hacer coincidir el número de puerto.
+Cuando te conectas a un proveedor de VoIP, se requieren credenciales. Después de la invitación inicial, el proveedor te envía un mensaje llamado “407 Proxy Authentication Required”; proporcionas las credenciales en el mensaje INVITE subsiguiente. Para llamadas entrantes, tu servidor Asterisk solicitará credenciales al proveedor. Evidentemente, el proveedor no posee una credencial válida para tu servidor Asterisk. Cuando utilizas insecure=invite, le indicas a Asterisk que no envíe el “407 Proxy Authentication Required” al proveedor y que acepte llamadas entrantes. También puedes usar insecure=port, invite para que coincida con el peer basándose en la dirección IP sin coincidir el número de puerto.
 
 ```
 insecure=invite, port
 ```
 
-### Conectar dos servidores Asterisk juntos usando SIP (sip.conf)
+### Conectando dos servidores Asterisk entre sí usando SIP (sip.conf)
 
-Puede usar SIP para interconectar dos cajas Asterisk. Es importante prestar atención al dialplan antes de continuar con esta configuración. Los usuarios generalmente quieren conectar otras PBX con el mínimo esfuerzo. La idea aquí es usar un número de extensión solo para conectarse a la otra PBX. Paso 1: Edite el archivo sip.conf en el servidor A:
+Puede usar SIP para interconectar dos cajas Asterisk. Es importante prestar atención al dial plan antes de continuar con esta configuración. Los usuarios generalmente quieren conectar otras PBX con el mínimo esfuerzo. La idea aquí es usar solo un número de extensión para conectar con la otra PBX. Paso 1: Edite el archivo sip.conf en el servidor A:
 
 ```
 [B]
@@ -2577,7 +2723,7 @@ allow=ulaw
 directmedia=no
 ```
 
-Paso 3: Edite el archivo extensions.conf en el servidor A:
+Paso 3: Editar el archivo extensions.conf en el servidor A:
 
 ```
 [default]
@@ -2599,7 +2745,7 @@ exten=_45XX,2,hangup()
 
 ### Soporte de dominio de Asterisk (sip.conf)
 
-El protocolo SIP sigue la arquitectura de Internet. Lo primero que debe hacer antes de configurar SIP es configurar correctamente los servidores DNS. En un entorno SIP, puede llamar a un usuario ubicado en cualquier proxy SIP, y otros usuarios también pueden llamarlo a usted usando su Identificador Uniforme de Recursos (URI) SIP. Para configurar un servidor DNS para SIP, debe añadir registros SRV a su servidor DNS.
+El protocolo SIP sigue la arquitectura de Internet. Lo primero que hay que hacer antes de configurar SIP es establecer correctamente los servidores DNS. En un entorno SIP, puedes llamar a un usuario ubicado en cualquier proxy SIP, y otros usuarios también pueden llamarte usando tu Identificador Uniforme de Recursos SIP (URI). Para establecer un servidor DNS para SIP, debes añadir registros SRV a tu servidor DNS.
 
 ```
 ; SIP server/proxy and its backup server/proxy
@@ -2615,7 +2761,7 @@ _sip._udp.yourdomain.com  21600 IN SRV 10 0 5060 sip1.voip.school.
 _sip._udp.yourdomain.com  21600 IN SRV 20 0 5060 sip2.voip.school.
 ```
 
-Después de configurar el DNS, puede usar el URI, que apunta a un usuario SIP, teléfono SIP o extensión telefónica. Un URI SIP se ve similar a una dirección de correo electrónico (por ejemplo, sip:chuck@yourpartnerdomain.com). Usando URIs SIP, no se necesita ningún número de teléfono para realizar una llamada de un teléfono SIP a otro. Para marcar a un usuario externo, simplemente use una declaración como la que se muestra a continuación.
+Después de configurar el DNS, puedes usar el URI, que apunta a un usuario SIP, un teléfono SIP o una extensión telefónica. Un URI SIP se parece a una dirección de correo electrónico (p. ej., sip:chuck@yourpartnerdomain.com). Al usar URIs SIP, no se necesita un número de teléfono para realizar una llamada de un teléfono SIP a otro. Para marcar a un usuario externo, simplemente usa una sentencia como la que se muestra a continuación.
 
 ```
 exten=4000,1,dial(SIP/chuck@yourpartnerdomain.com)
@@ -2627,21 +2773,21 @@ Ciertos parámetros pueden controlar el comportamiento del dominio.
 srvlookup=yes
 ```
 
-Este parámetro habilita las búsquedas DNS SRV en llamadas salientes. Usando este parámetro, es posible realizar llamadas usando nombres SIP basados en dominio.
+Este parámetro habilita búsquedas DNS SRV en llamadas salientes. Usando este parámetro, es posible marcar llamadas usando nombres SIP basados en el dominio.
 
 ```
 allowguest=yes
 ```
 
-Este parámetro permite que una invitación externa sea procesada sin autenticación. Procesa la llamada dentro del contexto definido en la sección general o en la declaración de dominio. Advertencia: Si define un contexto en la sección general con acceso a la PSTN, un usuario externo puede marcar la PSTN a través de su PBX. En este caso, incurrirá en cualquier cargo. Permita solo sus propias extensiones en el contexto definido en la sección general.
+Este parámetro permite que una invitación externa sea procesada sin autenticación. Procesa la llamada dentro del contexto definido en la sección general o en la declaración de dominio. Advertencia: Si define un contexto en la sección general con acceso a PSTN, un usuario externo puede marcar la PSTN a través de su PBX. En este caso, incurrirá en cargos. Permita solo sus propias extensiones en el contexto definido en la sección general.
 
-![Conectando a otros servidores SIP por dominio: youdomain.com y yourpartnerdomain.com intercambian señalización SIP, para que usuarios como lee y bruce puedan llamar a chuck y norris usando URIs SIP](../images/07-sip-and-pjsip-fig09.png)
+![Conexión a otros servidores SIP por dominio: youdomain.com y yourpartnerdomain.com intercambian señalización SIP, de modo que usuarios como lee y bruce pueden llamar a chuck y norris usando URIs SIP](../images/07-sip-and-pjsip-fig09.png)
 
 ```
 domain=acme.com,default
 ```
 
-El comando domain le permite manejar más de un dominio dentro de Asterisk. Si una llamada proviene de un dominio específico, se dirige a un contexto específico.
+El comando **domain** permite manejar más de un dominio dentro de Asterisk. Si una llamada proviene de un dominio específico, se dirige a un contexto específico.
 
 ```
 ;autodomain=yes
@@ -2653,27 +2799,27 @@ Este parámetro incluye la IP local y el nombre de host en los dominios permitid
 ;allowexternaldomains=no
 ```
 
-El valor predeterminado es yes. Descomente la línea para no permitir llamadas a dominios externos.
+The default is yes. Uncomment the line to disallow calls to outside domains.
 
-### Configuraciones avanzadas de SIP (sip.conf)
+### SIP advanced configurations (sip.conf)
 
-Esta sección explica algunos parámetros avanzados del canal SIP heredado, como presencia, selección de códec, opciones DTMF y marcado de paquetes QoS. Los **conceptos** (BLF/presencia, negociación de códec, modos DTMF, marcado DSCP) se trasladan a PJSIP, pero los nombres de parámetros de `sip.conf` mostrados aquí **no** existen en Asterisk 22. En PJSIP, el modo DTMF es `dtmf_mode=` en un endpoint, y los códecs se establecen con `allow=`/`disallow=`.
+This section explains some advanced parameters of the legacy SIP channel, such as presence, codec selection, DTMF options, and QoS packet marking. The **concepts** (BLF/presence, codec negotiation, DTMF modes, DSCP marking) carry over to PJSIP, but the `sip.conf` parameter names shown here do **not** exist in Asterisk 22. On PJSIP, DTMF mode is `dtmf_mode=` on an endpoint, and codecs are set with `allow=`/`disallow=`.
 
-#### Presencia SIP
+#### SIP Presence
 
-La presencia SIP está parcialmente implementada en Asterisk. Asterisk admite solicitudes como SUBSCRIBE y NOTIFY a usuarios dependiendo del estado de un canal. Asterisk no admite el método SIP PUBLISH. En otras palabras, puede suscribirse a los estados (ocupado, inactivo y sonando) de un canal, pero no puede publicar información como "ausente" o "no molestar". El escenario más común para la presencia es el campo de lámpara de ocupado (BLF), en el que simula el comportamiento de un sistema KS con lámparas para cada extensión y trunk. Parámetros SIP para presencia:
+SIP presence is partially implemented in Asterisk. Asterisk supports requests such as SUBSCRIBE and NOTIFY users depending on the state of a channel. Asterisk does not support the SIP method PUBLISH. In other words, you can subscribe to the states (busy, idle, and ringing) of a channel, but cannot publish information such as “away” or “do not disturb”. The most common scenario for presence is busy lamp field (BLF), in which you simulate the behavior of a KS system with lamps for each extension and trunk. SIP parameters for presence:
 
-- allowsubscribe=yes: Permitir métodos de suscripción SIP
-- subscribecontext=sip_subscribers: Contexto donde buscar hints
-- notifyring=yes: Enviar SIP NOTIFY al sonar
-- notifyhold=yes: Enviar SIP NOTIFY en espera
-- counteronpeer (renombrado de limitonpeer para Asterisk 1.4.x): Aplicar el contador solo en el lado del peer
-- callcounter=yes: Habilitar contadores de llamadas en el dispositivo.
-- busylevel=1: Umbral para el número de llamadas para considerar el dispositivo como ocupado.
+- allowsubscribe=yes: Allow SIP subscription methods
+- subscribecontext=sip_subscribers: Context where to look for hints
+- notifyring=yes: Send SIP NOTIFY on ring
+- notifyhold=yes: Send SIP NOTIFY on hole
+- counteronpeer (renamed from limitonpeer for Asterisk 1.4.x): Apply the counter only on the peer side
+- callcounter=yes: Enable call counters in the device.
+- busylevel=1: Threshold for the number of calls for considering the device as busy.
 
-Por ejemplo: Paso 1: Probar la presencia SIP con Asterisk no es tan difícil. Primero, configuremos los archivos sip.conf y extensions.conf.
+For example: Step 1: Testing SIP presence with Asterisk is not that hard. First, let’s configure the files sip.conf and extensions.conf.
 
-En el archivo sip.conf
+In the file sip.conf
 
 ```
 [general]
@@ -2711,18 +2857,18 @@ exten=_20XX,1,dial(SIP/${EXTEN})
 exten=_20XX,n,Hangup()
 ```
 
-Paso 2: Ahora configure el soft-phone para usar presencia. Le mostraremos cómo configurar el SipPulse Softphone.
+Step 2: Ahora configure el softphone para usar presencia. Le mostraremos cómo configurar el SipPulse Softphone.
 
-- Secuencia: clic derecho->SIP Account Settings->Properties->Presence
-- Cambie el modelo de presencia de peer-to-peer a presence agent, lo que hará que el soft-phone se suscriba a Asterisk para eventos SIP.
+- Secuencia: clic‑derecho→SIP Account Settings→Properties→Presence
+- Cambie el modelo de presencia de peer-to-peer a presence agent, lo que hará que el softphone se suscriba a Asterisk para eventos SIP.
 
-Paso 3: Añada el contacto a otros soft-phones. En este ejemplo, el SipPulse Softphone es la cuenta 2000, así que añadiremos un contacto para la cuenta 2001. Secuencia: Abra el panel derecho (panel de presencia en el softphone)->Clic en Contacts->Add a contact. Rellene el nombre 2001. Display as 2001 y no olvide marcar la casilla Show this contact’s availability.
+Step 3: Añada el contacto a otros softphones. En este ejemplo, el SipPulse Softphone es la cuenta 2000, así que añadiremos un contacto para la cuenta 2001. Secuencia: Abra el panel derecho (panel de presencia en el softphone)→Haga clic en Contacts→Add a contact. Complete el nombre 2001. Display as 2001 y no olvide marcar la casilla Show this contact’s availability.
 
-Paso 4: Ahora llame a la extensión 2001 y verifique el estado del teléfono en el panel derecho del soft-phone. Use el comando de consola `core show hints` para ver el estado de presencia cambiando en el servidor (en chan_sip heredado, `sip show inuse` mostraba cuántas llamadas tenía en cada línea). En Asterisk 22, use `pjsip show endpoints` para inspeccionar el estado del endpoint y del canal. El estado de presencia/BLF aparece en los contactos del softphone o en el panel BLF; exactamente cómo se muestra depende del cliente.
+Step 4: Ahora llame a la extensión 2001 y verifique el estado del teléfono en el panel derecho del softphone. Use el comando de consola `core show hints` para ver cómo cambia el estado de presencia en el servidor (en chan_sip heredado, `sip show inuse` mostraba cuántas llamadas tenía en cada línea). En Asterisk 22, use `pjsip show endpoints` para inspeccionar el estado del endpoint y del canal. El estado de presencia/BLF aparece en los contactos del softphone o en el panel BLF — exactamente cómo se muestra depende del cliente.
 
-#### Configuración de códec
+#### Codec configuration
 
-La configuración de códec es simple y directa. Puede establecer las palabras allow y disallow en la sección [general] o en la sección peer/user. La mejor práctica es estandarizar el códec para evitar la transcodificación, que es intensiva en procesador. Por favor, use el mismo códec para mensajes y prompts.
+Codec configuration is simple and straightforward. You can set the words allow and disallow in the [general] section or peer/user section. The best practice is to standardize the codec to avoid transcoding, which is processor intensive. Please use the same codec for messages and prompts.
 
 ```
 [general]
@@ -2732,35 +2878,35 @@ allow=g729
 
 #### Opciones DTMF
 
-En ciertas ocasiones, pasará dígitos a una aplicación como correo de voz o respuesta de voz interactiva (IVR). Es importante pasar DTMF correctamente. El método más simple para pasar DTMF se llama inband. Se establece en la sección [general] o peer/user del archivo sip.conf. Cuando establece dtmfmode=inband, los tonos DTMF se generan como sonidos en el canal de audio. El principal problema con este método es que, cuando comprime el canal de audio usando un códec como g729, los sonidos se distorsionan y los tonos DTMF no se reconocen correctamente. Si planea usar dtmfmode=inband, use el códec g.711 (ulaw y alaw).
+En ciertas ocasiones, pasarás dígitos a una aplicación como voicemail o respuesta de voz interactiva (IVR). Es importante pasar DTMF correctamente. El método más simple para pasar DTMF se llama inband. Se configura en la sección [general] o peer/user del archivo sip.conf. Cuando estableces dtmfmode=inband, los tonos DTMF se generan como sonidos en el canal de audio. El principal problema de este método es que, al comprimir el canal de audio usando un codec como g729, los sonidos se distorsionan y los tonos DTMF no se reconocen adecuadamente. Si planeas usar dtmfmode=inband, utiliza el codec g.711 (ulaw y alaw).
 
 ```
 dtmfmode=inband
 ```
 
-Otro enfoque es usar RFC2833, que le permite pasar tonos DTMF como eventos con nombre en los paquetes RTP.
+Otro enfoque es usar RFC2833, que permite pasar tonos DTMF como eventos nombrados en los paquetes RTP.
 
 ```
 dtmfmode=rfc2833
 ```
 
-Finalmente, puede pasar dígitos DTMF dentro de paquetes SIP, en lugar de paquetes RTP. Este método se define en el RFC3265 (eventos de señalización) y RFC2976.
+Finalmente, puedes pasar dígitos DTMF dentro de paquetes SIP, en lugar de paquetes RTP. Este método está definido en los RFC3265 (eventos de señalización) y RFC2976.
 
 ```
 dtmfmode=info
 ```
 
-Tras el lanzamiento de la versión 1.2, ahora es posible usar:
+Following the release of version 1.2, it is now possible to use:
 
 ```
 dtmfmode=auto
 ```
 
-Esto intenta usar el RFC2833; si no es posible, use tonos de banda.
+Esto intenta usar RFC2833; si no es posible, use tonos de banda.
 
-#### Configuración de marcado de calidad de servicio (QoS)
+#### Configuración del marcado de Calidad de Servicio (QoS)
 
-QoS es un conjunto de técnicas responsables de la calidad de voz. QoS se implementa de tal manera que reduce el ancho de banda, la latencia y el jitter. Las principales funciones de QoS son la programación de paquetes, la fragmentación y la compresión de encabezados. QoS se implementa en switches y routers, no por Asterisk en sí. Sin embargo, Asterisk puede ayudar a los routers y switches marcando paquetes para entrega urgente. El marcado se realiza utilizando puntos de código de servicios diferenciados (DSCP) definidos en los RFCs 2474 y RFC2475.
+QoS es un conjunto de técnicas responsables de la calidad de voz. QoS se implementa de manera que reduzca el ancho de banda, la latencia y el jitter. Las funciones principales de QoS son la programación de paquetes, la fragmentación y la compresión de encabezados. QoS se implementa en conmutadores y enrutadores, no en Asterisk mismo. Sin embargo, Asterisk puede ayudar a los enrutadores y conmutadores marcando los paquetes para entrega rápida. El marcado se realiza usando puntos de código de servicios diferenciados (DSCP) definidos en los RFC 2474 y RFC2475.
 
 ```
 tos_sip=cs3
@@ -2768,31 +2914,31 @@ tos_audio=ef
 tos_video=af41
 ```
 
-A partir de la versión 1.4, puede especificar diferentes códigos para señalización (SIP), audio (RTP) y video (RTP).
+A partir de la versión 1.4, puedes especificar códigos diferentes para señalización (SIP), audio (RTP) y video (RTP).
 
 ### Autenticación SIP (sip.conf)
 
-Cuando el `chan_sip` heredado recibía una llamada SIP, seguía las reglas descritas en el siguiente diagrama. Tres parámetros jugaban un papel importante en la autenticación SIP. En Asterisk 22, la autenticación se configura en su lugar con objetos PJSIP `auth` (`type=auth`, `auth_type=userpass`, `username=`, `password=`) referenciados por un endpoint, y el control de acceso IP se realiza con `permit=`/`deny=` en el endpoint o a través de un `acl`.
+Cuando el legado `chan_sip` recibía una llamada SIP, seguía las reglas descritas en el diagrama siguiente. Tres parámetros jugaban un papel importante en la autenticación SIP. En Asterisk 22, la autenticación se configura en su lugar con objetos PJSIP `auth` (`type=auth`, `auth_type=userpass`, `username=`, `password=`) referenciados por un endpoint, y el control de acceso IP se realiza con `permit=`/`deny=` en el endpoint o mediante un `acl`.
 
-![Flujo de decisión de autenticación chan_sip heredado: Asterisk verifica el encabezado From contra sip.conf, intenta la sección type=user/peer coincidente y las credenciales MD5, y recurre a insecure=invite o allowguest antes de permitir o denegar la llamada](../images/07-sip-and-pjsip-fig10.png)
+![Flujo de decisión de autenticación del chan_sip heredado: Asterisk verifica el encabezado From contra sip.conf, intenta la sección type=user/peer coincidente y credenciales MD5, y recurre a insecure=invite o allowguest antes de permitir o denegar la llamada](../images/07-sip-and-pjsip-fig10.png)
 
 ```
 allowguest=yes/no
 ```
 
-Este parámetro controla si un usuario sin un peer correspondiente puede autenticarse sin nombre y secreto. Discutimos este parámetro en la sección de soporte de dominio.
+Este parámetro controla si un usuario sin un peer correspondiente puede autenticarse sin un nombre y secreto. Discutimos este parámetro en la sección de soporte de dominios.
 
 ```
 insecure=invite,port
 ```
 
-Cuando usamos insecure=invite, Asterisk no genera el mensaje "407 Proxy Authentication Required". Sin este mensaje, el usuario puede realizar una llamada sin autenticación. Esto se utiliza a menudo para conectarse a proveedores de servicios VoIP. Las llamadas provenientes del proveedor de servicios VoIP generalmente no están autenticadas.
+Cuando usamos `insecure=invite`, Asterisk no genera el mensaje “407 Proxy Authentication Required”. Sin este mensaje, el usuario puede realizar una llamada sin autenticación. Esto se usa a menudo para conectar con proveedores de servicios VoIP. Las llamadas que provienen del proveedor de servicios VoIP generalmente no están autenticadas.
 
 ```
 autocreatepeer=yes/no
 ```
 
-Este comando se utiliza cuando Asterisk está conectado a un proxy SIP. Crea dinámicamente un peer para cada llamada. Cuando esta opción está habilitada, cualquier UAC puede conectarse al servidor Asterisk. Es importante limitar la conexión IP al proxy SIP. El proxy SIP, a su vez, se encarga del control de acceso. La configuración del peer se basa en las opciones generales, así como en el campo de encabezado "Contact" del paquete SIP. Advertencia: Use esto con extrema precaución ya que abre Asterisk por completo.
+Este comando se usa cuando Asterisk está conectado a un proxy SIP. Crea dinámicamente un peer para cada llamada. Cuando esta opción está habilitada, cualquier UAC puede conectarse al servidor Asterisk. Es importante limitar la conexión IP al proxy SIP. El proxy SIP, a su vez, se encarga del control de acceso. La configuración del peer se basa en las opciones generales así como en el campo de encabezado “Contact” del paquete SIP. Advertencia: Use esto con extrema precaución ya que abre completamente Asterisk.
 
 ```
 secret=secret, remotesecret=secret
@@ -2801,7 +2947,7 @@ secret=secret, remotesecret=secret
 Este parámetro configura el secreto para la autenticación; use secret para solicitudes entrantes y remotesecret para solicitudes salientes. Si no desea presentar los secretos en archivos de texto, puede usar md5secret para incluir un hash en lugar del secreto. Para generar el secreto MD5, puede usar:
 
 ```
-echo –n “username:realm:secret” |md5sum
+echo -n "username:realm:secret" |md5sum
 ```
 
 Luego use la siguiente declaración:
@@ -2810,7 +2956,7 @@ Luego use la siguiente declaración:
 md5secret=0b0e5d467890....
 ```
 
-Advertencia: No olvide usar el parámetro –n; el retorno de carro se utilizará en el cálculo md5.
+Advertencia: No olvide usar el parámetro –n; el retorno de carro se usará en el cálculo md5.
 
 ```
 deny=0.0.0.0/0.0.0.0
@@ -2827,51 +2973,54 @@ Es posible controlar algunos parámetros RTP.
 rtptimeout=60
 ```
 
-Esto termina las llamadas sin actividad RTP por más de 60 segundos cuando no están en espera.
+This terminates calls without RTP activity for more the 60 seconds when not in hold.
 
 ```
 rtpholdtimeout=120
 ```
 
-Esto termina las llamadas sin actividad RTP incluso en espera (debe ser mayor que rtptimeout).
+Esto termina llamadas sin actividad RTP incluso en espera (debe ser mayor que rtptimeout).
 
-### Atravesamiento NAT SIP (sip.conf)
+### SIP NAT traversal (sip.conf)
 
-La *teoría* de NAT (los cuatro tipos de NAT, el problema del encabezado Contact, los keep-alives y forzar los medios a través del servidor) es a nivel de protocolo y se cubre en el capítulo *SIP & PJSIP en profundidad*. Los parámetros de `sip.conf` mostrados aquí (`nat=`, `qualify=`, `directmedia=`, `externaddr=`, `localnet=`) son de **chan_sip heredado** y fueron eliminados en Asterisk 21+. En PJSIP, estos se asignan a configuraciones de transporte/endpoint tales como `rewrite_contact=yes`, `force_rport=yes`, `rtp_symmetric=yes`, `direct_media=no`, `external_media_address`, `external_signaling_address` y `local_net=` en el transporte, además de `qualify_frequency=` en el AOR.
+La *teoría* NAT (los cuatro tipos de NAT, el problema del encabezado Contact, los keep-alives y forzar los medios a través del servidor) es a nivel de protocolo y se cubre en el capítulo *SIP & PJSIP in depth*. Los parámetros `sip.conf` mostrados aquí (`nat=`, `qualify=`, `directmedia=`, `externaddr=`, `localnet=`) son **legacy chan_sip** y fueron eliminados en Asterisk 21+. En PJSIP estos se asignan a configuraciones de transporte/endpoint como `rewrite_contact=yes`, `force_rport=yes`, `rtp_symmetric=yes`, `direct_media=no`, `external_media_address`, `external_signaling_address` y `local_net=` en el transporte, más `qualify_frequency=` en el AOR.
 
-En chan_sip heredado, el parámetro `nat` tenía cinco opciones:
+En legacy chan_sip, el parámetro `nat` tenía cinco opciones:
 
-- nat = no — No realizar ningún manejo especial de NAT aparte de RFC3581
-- nat = force_rport — Pretender que había un parámetro rport incluso si no lo había
-- nat = comedia — Enviar medios al puerto desde el que Asterisk los recibió, independientemente de dónde diga el SDP que se envíen.
+- nat = no — No realizar manejo especial de NAT más allá de RFC3581
+- nat = force_rport — Pretender que había un parámetro rport aun si no lo había
+- nat = comedia — Enviar medios al puerto desde el que Asterisk los recibió sin importar a dónde indique el SDP.
 - nat = auto_force_rport — Establecer la opción force_rport si Asterisk detecta NAT (predeterminado)
 - nat = auto_comedia — Establecer la opción comedia si Asterisk detecta NAT
 
-Cuando pone la declaración "nat=force_rport" en el archivo sip.conf, le está diciendo a Asterisk que ignore la dirección contenida en el campo de encabezado "Contact" del encabezado SIP y use la dirección IP y el puerto de origen en el encabezado IP del paquete y también que envíe los medios de vuelta a la dirección desde donde se recibieron, ignorando el contenido del encabezado SDP.
+Cuando colocas la declaración “nat=force_rport” en el archivo sip.conf, le estás indicando a Asterisk que ignore la dirección contenida en el campo de encabezado “Contact” del encabezado SIP y que use la dirección IP de origen y el puerto en el encabezado IP del paquete, y también que envíe los medios de vuelta a la dirección desde donde fueron recibidos ignorando el contenido del encabezado SDP.
 
 ```
 nat=force_rport,comedia
 ```
 
-Es necesario mantener abierta la asignación NAT. Si NAT se agota, Asterisk no puede enviar una invitación al UAC. El UAC puede enviar llamadas, pero no recibir ninguna. La siguiente declaración se puede usar para mantener NAT abierto.
+Es necesario mantener el mapeo NAT abierto. Si el NAT expira, Asterisk no puede enviar una invitación al UAC. El UAC puede enviar llamadas, pero no recibir ninguna. La siguiente declaración puede usarse para mantener el NAT abierto.
 
 ```
 qualify=yes
 ```
 
-Qualify enviará un paquete SIP usando el método OPTIONS regularmente, lo que ayudará a mantener NAT abierto. Qualify envía un OPTIONS cada 60 segundos y cada 10 segundos cuando el host no es alcanzable. Puede usar "sip show peers" para ver la latencia de los peers. Si el NAT del usuario es del tipo simétrico, no es posible enviar paquetes de un UAC a otro directamente; en ese caso, tiene que forzar el RTP a través de Asterisk usando:
+Qualify enviará un paquete SIP usando el método OPTIONS de forma regular, lo que ayudará a mantener abierto el NAT. Qualify envía un OPTIONS cada 60 segundos y cada décimo segundo cuando el host no es accesible. Puedes usar “sip show peers” para ver la latencia de los peers. Si el NAT del usuario es del tipo simétrico, no es posible enviar paquetes de un UAC a otro directamente; en ese caso debes forzar el RTP a través de Asterisk usando:
 
 ```
 directmedia=no
 ```
 
-#### Asterisk detrás de NAT (sip.conf)
+#### Asterisk behind NAT (sip.conf)
 
-Todos los escenarios anteriores asumen que el servidor Asterisk tiene una dirección de Internet externa (válida). A veces, el servidor Asterisk se implementa detrás de un firewall con NAT. En este caso, es necesario realizar algunas configuraciones adicionales.
+Todos los escenarios anteriores asumen que el servidor Asterisk tiene una dirección externa (válida) de Internet. A veces el servidor Asterisk se implementa detrás de un firewall con NAT. En este caso, es necesario realizar algunas configuraciones adicionales.
 
-![Asterisk detrás de NAT: un firewall asigna la dirección pública 200.180.4.168 al servidor Asterisk interno (192.168.1.100), reenviando SIP en UDP 5060 y el rango RTP UDP 10000–20000 definido en rtp.conf](../images/07-sip-and-pjsip-fig13.png)
+![Asterisk behind NAT: a firewall maps the public address 200.180.4.168 to the internal Asterisk server (192.168.1.100), forwarding SIP on UDP 5060 and the RTP range UDP 10000–20000 defined in rtp.conf](../images/07-sip-and-pjsip-fig13.png)
 
-Paso 1: Configure el firewall para redirigir el puerto UDP 5060 estáticamente al servidor Asterisk. Paso 2: Configure el firewall para redirigir los puertos UDP de 10000 a 20000 estáticamente. Si desea restringir el número de puertos abiertos, puede editar el archivo rtp.conf para cambiar el rango de puertos RTP. Otra forma es usar un firewall inteligente que admita el protocolo SIP para abrir los puertos RTP dinámicamente.
+1. Configure el firewall para redirigir el puerto UDP 5060 de forma estática al servidor Asterisk.  
+2. Configure el firewall para redirigir los puertos UDP del 10000 al 20000 de forma estática.
+
+Si desea restringir la cantidad de puertos abiertos, puede editar el archivo `rtp.conf` para cambiar el rango de puertos RTP. Otra forma es usar un firewall inteligente que admita el protocolo SIP para abrir los puertos RTP dinámicamente.
 
 ```
 ; RTP Configuration
@@ -2884,7 +3033,7 @@ rtpstart=10000
 rtpend=20000
 ```
 
-Paso 3: Configure Asterisk para incluir la dirección externa en los campos de encabezado de los paquetes SIP, incluido el Protocolo de Descripción de Sesión (SDP). Puede lograr esto añadiendo las siguientes dos declaraciones al archivo sip.conf:
+Paso 3: Configure Asterisk para incluir la dirección externa en los campos de encabezado de los paquetes SIP, incluido el Session Description Protocol (SDP). Puede lograrlo añadiendo las siguientes dos declaraciones al archivo sip.conf:
 
 ```
 externaddr=200.180.4.168
@@ -2894,13 +3043,13 @@ localnet=192.168.1.0/255.255.255.0
 nat=force_rport,comedia
 ```
 
-El primer parámetro externaddr le dice a Asterisk que incluya la dirección IP externa dentro de los encabezados SIP para destinos externos. El segundo parámetro localnet permite a Asterisk diferenciar entre direcciones externas e internas. Opcionalmente, puede usar externhost si usa un DNS dinámico con una dirección DHCP en el servidor.
+El primer parámetro **externaddr** indica a Asterisk que incluya la dirección IP externa dentro de los encabezados SIP para destinos externos. El segundo parámetro **localnet** permite a Asterisk diferenciar entre direcciones externas e internas. Opcionalmente, puede usar **externhost** si utiliza un DNS dinámico con una dirección DHCP en el servidor.
 
-### Strings de marcación SIP (chan_sip)
+### Cadenas de marcación SIP (chan_sip)
 
-La tecnología de string de marcación de `SIP/...` mostrada a continuación es el controlador chan_sip eliminado. En Asterisk 22 use la tecnología `PJSIP/...` en su lugar; por ejemplo `Dial(PJSIP/2000)` o `Dial(PJSIP/${EXTEN}@provider)`. Las formas y el significado son por lo demás análogos.
+La tecnología de cadena de marcación `SIP/...` mostrada a continuación es el controlador **chan_sip** eliminado. En Asterisk 22 use la tecnología `PJSIP/...` en su lugar — por ejemplo `Dial(PJSIP/2000)` o `Dial(PJSIP/${EXTEN}@provider)`. Las formas y el significado son, por lo demás, análogos.
 
-Puede llamar a un destino SIP heredado usando diferentes strings de marcación:
+Puede llamar a un destino SIP heredado usando diferentes cadenas de marcación:
 
 ```
 SIP/peer
@@ -2923,14 +3072,20 @@ exten=>s,1,Dial(SIP/192.168.1.8:5060,20)
 exten=>s,1,Dial(SIP/8500@sip.com:9876)
 ```
 
-## Migrar un sistema chan_sip heredado a PJSIP
+## Migrando un sistema legacy chan_sip a PJSIP
 
-Debido a que `chan_sip` fue eliminado en Asterisk 21 y ya no existe en Asterisk 22, cualquier implementación de `sip.conf` existente debe migrarse a PJSIP. El mayor cambio conceptual es que un solo bloque de `sip.conf` `[peer]` o `[friend]` se divide en varios objetos PJSIP, cada uno con un `type=`: un **endpoint** (configuración de llamada/códec/medios), uno o más objetos **aor** (donde se puede alcanzar el dispositivo / registro), un objeto **auth** (credenciales) y un **transport** compartido (el socket de escucha, direcciones NAT). La siguiente tabla asigna los conceptos más comunes.
+Porque `chan_sip` fue eliminado en Asterisk 21 y ya no está en Asterisk 22, cualquier
+despliegue existente de `sip.conf` debe migrarse a PJSIP. El mayor cambio conceptual
+es que un solo `sip.conf` `[peer]` o `[friend]` se divide en varios
+objetos PJSIP, cada uno con un `type=`: un **endpoint** (configuraciones de llamada/códec/media),
+uno o más objetos **aor** (donde se puede alcanzar el dispositivo / registro),
+un objeto **auth** (credenciales), y un **transport** compartido (el socket de escucha,
+direcciones NAT). La tabla siguiente asigna los conceptos más comunes.
 
-| Concepto de sip.conf heredado | Equivalente PJSIP (pjsip.conf) |
+| Concepto legacy sip.conf | Equivalente PJSIP (pjsip.conf) |
 | --- | --- |
-| Bloque `[peer]` / `[friend]` | `type=endpoint` + `type=aor` + `type=auth` (referenciado vía `auth=` y `aors=`) |
-| `type=friend` / `type=peer` / `type=user` | un solo `type=endpoint` (PJSIP no tiene distinción entre friend/peer/user) |
+| `[peer]` / `[friend]` block | `type=endpoint` + `type=aor` + `type=auth` (referenciado vía `auth=` y `aors=`) |
+| `type=friend` / `type=peer` / `type=user` | un solo `type=endpoint` (PJSIP no tiene distinción de friend/peer/user) |
 | `host=dynamic` (el dispositivo se registra) | `type=aor` con `max_contacts=1`; el dispositivo REGISTERs para actualizar su contacto |
 | `host=<ip/hostname>` (estático) | `type=aor` con un `contact=sip:host:port` estático |
 | `register=>user:secret@host/ext` (saliente) | `type=registration` (`server_uri=`, `client_uri=`, `outbound_auth=`) |
@@ -2944,10 +3099,10 @@ Debido a que `chan_sip` fue eliminado en Asterisk 21 y ya no existe en Asterisk 
 | `externaddr=` | `external_media_address=` y `external_signaling_address=` en el **transport** |
 | `localnet=` | `local_net=` en el **transport** |
 | `insecure=invite` (proveedor, sin auth) | omitir `auth=`/`outbound_auth=` y usar `identify` (`type=identify`, `match=`) |
-| `allowguest=yes` | endpoint `anonymous` + `allow_unauthenticated_options` (usar con cuidado) |
+| `allowguest=yes` | `anonymous` endpoint + `allow_unauthenticated_options` (usar con cuidado) |
 | `tos_sip` / `tos_audio` | `tos_audio` / `tos_video` (y `cos_audio` / `cos_video`) en el endpoint |
 
-Una extensión de registro que se veía así en el `sip.conf` heredado:
+Una extensión registradora que se veía así en el legacy `sip.conf`:
 
 ```
 [2000]
@@ -2985,15 +3140,19 @@ max_contacts=1
 qualify_frequency=60
 ```
 
-### El script de conversión sip_to_pjsip.py
+### The sip_to_pjsip.py conversion script
 
-Asterisk incluye un script de ayuda, **`sip_to_pjsip.py`**, que lee un `sip.conf` existente y produce un `pjsip.conf`. Puede ejecutarlo directamente en el directorio /etc/asterisk. La utilidad está en el árbol de fuentes de Asterisk bajo `contrib/scripts/sip_to_pjsip/`, donde `${PATH_TO_ASTERISK_SOURCE}` es la ruta donde se encuentran los archivos fuente de Asterisk (generalmente /usr/src/asterisk-22.x.y/):
+Asterisk ships a helper script, **`sip_to_pjsip.py`**, that reads an existing
+`sip.conf` and produces a `pjsip.conf`. You can run it directly in the
+/etc/asterisk directory. The utility is in the Asterisk source tree under
+`contrib/scripts/sip_to_pjsip/`, where `${PATH_TO_ASTERISK_SOURCE}` is the path
+where the Asterisk source files are found (usually /usr/src/asterisk-22.x.y/):
 
 ```
 ${PATH_TO_ASTERISK_SOURCE}/contrib/scripts/sip_to_pjsip/sip_to_pjsip.py
 ```
 
-Si lo ejecuta con la opción `--help`, verá sus opciones:
+If you run it with the `--help` option you will see its options:
 
 ```
 -h, --help                help
@@ -3001,11 +3160,13 @@ Si lo ejecuta con la opción `--help`, verá sus opciones:
 -q, --quiet               suppress warnings and informational messages
 ```
 
-También acepta argumentos posicionales opcionales — `[input-file [output-file]]`, que por defecto son `sip.conf` y `pjsip.conf` en el directorio actual.
+También acepta argumentos posicionales opcionales — `[input-file [output-file]]`,
+con valores predeterminados `sip.conf` y `pjsip.conf` en el directorio actual.
 
-Trate su salida como un **punto de partida**: revise cada objeto generado, especialmente los transportes, la configuración NAT y las listas de códecs, y pruebe exhaustivamente antes de pasar a producción.
+Trate su salida como un **punto de partida**: revise cada objeto generado,
+especialmente los transportes, la configuración NAT y las listas de códecs, y pruebe a fondo antes de pasar a producción.
 
-Migremos el sip.conf en nuestros laboratorios complementarios en VoIP School Blackbelt (voip.school)
+Migramos el sip.conf en nuestros laboratorios acompañantes en VoIP School Blackbelt (voip.school)
 
 #### sip.conf
 
@@ -3137,7 +3298,7 @@ outbound_auth = siptrunk
 aors = siptrunk
 ```
 
-Aunque la conversión parece correcta, podemos ver que algunos elementos como qualify=yes no se pueden asignar directamente. Para corregirlo, debe añadir a la sección aor el comando qualify_frequency=time en segundos. Ejemplo a continuación.
+Mientras la conversión parece correcta, podemos ver que algunos elementos como qualify=yes no pueden mapearse directamente. Para solucionarlo, debe agregar a la sección aor el comando qualify_frequency=time en segundos. Ejemplo a continuación.
 
 ```
 [bob]
@@ -3146,57 +3307,61 @@ max_contacts = 1
 qualify_frequency=15
 ```
 
-La configuración completa de PJSIP se cubre en el capítulo *SIP & PJSIP en profundidad*, y la documentación oficial en docs.asterisk.org tiene una cobertura completa del canal. En nuestros laboratorios complementarios en voip.school, el laboratorio 5 le permite practicar lo que acaba de aprender.
+La configuración completa de PJSIP se cubre en el capítulo *SIP & PJSIP in depth*, y la documentación oficial en docs.asterisk.org cubre completamente el canal. En nuestros laboratorios complementarios en voip.school, el laboratorio 5 le permite practicar lo que acaba de aprender.
 
-## Cuestionario
+## Resumen
 
-1. Con respecto a las dos interfaces analógicas Foreign eXchange, marque las afirmaciones correctas (elija todas las que correspondan):
-   - A. Una interfaz FXO se conecta a la oficina central de la red telefónica pública conmutada (PSTN) y obtiene el tono de marcado de ella.
-   - B. Una interfaz FXS proporciona tono de marcado y energía de timbre a un teléfono, fax o módem analógico estándar.
-   - C. Una interfaz FXS es la forma correcta de conectar Asterisk a una línea telefónica.
-   - D. Una interfaz FXO también se puede conectar a un puerto de extensión de una PBX heredada.
-2. ¿La señalización de supervisión en una línea analógica incluye cuál de las siguientes (elija todas las que correspondan)?
+Este capítulo reúne las tecnologías de canales que preceden a los despliegues de VoIP puro de hoy, pero que Asterisk 22 aún soporta. Viste cómo las líneas **analógicas** y los teléfonos se conectan mediante interfaces **FXO/FXS** en DAHDI, cómo se provisionan los enlaces **digitales TDM** (E1/T1 e ISDN PRI/BRI), y cómo **IAX2** (`chan_iax2`) sigue sirviendo como un tronco servidor‑a‑servidor eficiente y amigable con NAT, aunque ahora es claramente legado. También revisaste el controlador **`chan_sip`** retirado y su sintaxis `sip.conf` — que encontrarás en sistemas más antiguos pero que ya no existe en Asterisk 22 — y trabajaste en la migración de dicho sistema a PJSIP con la tabla de mapeo de conceptos y el script `sip_to_pjsip.py`. La regla práctica: recurre a cualquier cosa de este capítulo solo cuando el hardware real o un sistema legado existente te obliguen; todo lo nuevo debe ser PJSIP sobre IP.
+
+## Quiz
+
+1. Regarding the two analog Foreign eXchange interfaces, mark the correct statements (choose all that apply):
+   - A. An FXO interface connects to the public switched telephone network (PSTN) central office and draws dial tone from it.
+   - B. An FXS interface provides dial tone and ringing power to a standard analog phone, fax, or modem.
+   - C. An FXS interface is the correct way to connect Asterisk to a telco line.
+   - D. An FXO interface can also be connected to an extension port of a legacy PBX.
+2. Supervision signaling on an analog line includes which of the following (choose all that apply)?
    - A. On-hook
    - B. Off-hook
    - C. Ringing
    - D. DTMF
-3. El eco, los chasquidos y el ruido en una tarjeta analógica DAHDI son causados más a menudo por:
-   - A. La forma en que se compiló Asterisk
-   - B. Conflictos de interrupción PCI
-   - C. Un códec SIP incorrecto
-   - D. Un dialplan faltante
-4. Para una facturación precisa en canales analógicos, debe detectar exactamente cuándo contesta el extremo lejano. ¿Qué función activa en Asterisk (y solicita a la compañía telefónica) para hacer esto?
-   - A. Inversión de respuesta
-   - B. Inversión de facturación
-   - C. Inversión de polaridad
-   - D. Generación de tono de marcado
-5. El hardware DAHDI es independiente de Asterisk: la tarjeta física se configura en `/etc/dahdi/system.conf`, mientras que `chan_dahdi.conf` define los canales de Asterisk, no el hardware en sí.
-   - A. Verdadero
-   - B. Falso
-6. Con respecto a la capacidad y señalización del trunk digital, marque las afirmaciones correctas (elija todas las que correspondan):
-   - A. Un trunk E1 transporta 30 canales de voz y un trunk T1 transporta 24.
-   - B. Un ISDN PRI utiliza 30B+D en un E1 y 23B+D en un T1.
-   - C. ISDN es un ejemplo de señalización CCS, mientras que MFC/R2 es un ejemplo de señalización CAS.
-   - D. T1 es el trunk digital más utilizado en Europa y América Latina.
-7. ¿Qué utilidad detecta automáticamente las tarjetas DAHDI y genera `/etc/dahdi/system.conf` y `dahdi-channels.conf`?
+3. Echo, pops, and noise on a DAHDI analog card are most often caused by:
+   - A. The way Asterisk was compiled
+   - B. PCI interrupt conflicts
+   - C. An incorrect SIP codec
+   - D. A missing dial plan
+4. For precise billing on analog channels you must detect exactly when the far end answers. Which feature do you activate on Asterisk (and request from the telco) to do this?
+   - A. Answer reversal
+   - B. Billing reversal
+   - C. Polarity reversal
+   - D. Dial-tone generation
+5. The DAHDI hardware is independent of Asterisk: the physical card is configured in `/etc/dahdi/system.conf`, while `chan_dahdi.conf` defines the Asterisk channels, not the hardware itself.
+   - A. True
+   - B. False
+6. Regarding digital trunk capacity and signaling, mark the correct statements (choose all that apply):
+   - A. An E1 trunk carries 30 voice channels and a T1 trunk carries 24.
+   - B. An ISDN PRI uses 30B+D on an E1 and 23B+D on a T1.
+   - C. ISDN is an example of CCS signaling, while MFC/R2 is an example of CAS signaling.
+   - D. T1 is the digital trunk most commonly used in Europe and Latin America.
+7. Which utility automatically detects DAHDI cards and generates `/etc/dahdi/system.conf` and `dahdi-channels.conf`?
    - A. dahdi_generator
    - B. dahdi_genconf
    - C. dahdi_cfg
    - D. generate_dahdi
-8. Al migrar un `sip.conf` `[friend]` heredado a PJSIP, un solo bloque debe dividirse en varios objetos. ¿Qué conjunto de objetos `type=` de PJSIP reemplaza normalmente a un `[friend]` de registro?
-   - A. `type=endpoint`, `type=aor` y `type=auth`
-   - B. `type=peer` y `type=user`
-   - C. `type=sip` solamente
-   - D. `type=channel` y `type=device`
-9. ¿Cuál es la principal ventaja práctica de usar el modo trunk IAX2 entre dos servidores Asterisk?
-   - A. Cifra cada llamada con TLS por defecto
-   - B. Transporta varias llamadas bajo un solo encabezado, ahorrando ancho de banda
-   - C. Elimina la necesidad de cualquier códec
-   - D. Asigna un puerto UDP separado por llamada para una mejor calidad
-10. Las claves RSA se pueden usar para la autenticación IAX2. ¿Qué clave debe mantener en secreto y cuál entrega al otro servidor?
-    - A. Mantenga la clave pública en secreto; comparta la clave privada
-    - B. Mantenga la clave privada en secreto; comparta la clave pública
-    - C. Mantenga la clave compartida en secreto; comparta la clave privada
-    - D. Ambas claves deben ser compartidas
+8. When migrating a legacy `sip.conf` `[friend]` to PJSIP, a single block must be split into several objects. Which set of PJSIP `type=` objects normally replaces one registering `[friend]`?
+   - A. `type=endpoint`, `type=aor`, and `type=auth`
+   - B. `type=peer` and `type=user`
+   - C. `type=sip` only
+   - D. `type=channel` and `type=device`
+9. What is the main practical advantage of using IAX2 trunk mode between two Asterisk servers?
+   - A. It encrypts every call with TLS by default
+   - B. It carries several calls under a single header, saving bandwidth
+   - C. It removes the need for any codec
+   - D. It allocates a separate UDP port per call for better quality
+10. RSA keys can be used for IAX2 authentication. Which key must you keep secret, and which do you give to the other server?
+    - A. Keep the public key secret; share the private key
+    - B. Keep the private key secret; share the public key
+    - C. Keep the shared key secret; share the private key
+    - D. Both keys must be shared
 
-**Respuestas:** 1 — A, B, D · 2 — A, B, C · 3 — B · 4 — C · 5 — A · 6 — A, B, C · 7 — B · 8 — A · 9 — B · 10 — B
+**Answers:** 1 — A, B, D · 2 — A, B, C · 3 — B · 4 — C · 5 — A · 6 — A, B, C · 7 — B · 8 — A · 9 — B · 10 — B

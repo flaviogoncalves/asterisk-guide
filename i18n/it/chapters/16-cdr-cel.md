@@ -1,29 +1,61 @@
-# Asterisk Call Detail Records
+# Registri Dettaglio Chiamate Asterisk
 
-Asterisk, come altre piattaforme di telefonia, consente la fatturazione delle chiamate telefoniche. Esistono diversi programmi sul mercato in grado di importare i record generati dai PBX. Tali record vengono utilizzati, tra le altre cose, per verificare l'importo corretto della bolletta e per le statistiche.
+Asterisk, come altre piattaforme telefoniche, consente la fatturazione delle chiamate. Numerosi programmi sul mercato possono importare i record generati dai PBX. Questi record sono usati per verificare l'importo corretto della bolletta e le statistiche, tra le altre cose.
 
 ## Obiettivi
 
-Al termine di questo capitolo, il lettore sarà in grado di:
+Entro la fine di questo capitolo, il lettore dovrebbe essere in grado di:
 
 - Descrivere dove e in quale formato vengono generati i record
-- Generare record utilizzando ODBC (Open Database Connectivity)
+- Generare record usando ODBC (Open Database Connectivity)
 - Implementare uno schema di autenticazione integrato con la fatturazione
 
 ## Formato CDR di Asterisk
 
-Asterisk genera un call detail record (CDR) per ogni chiamata. Questi record vengono memorizzati, per impostazione predefinita, in un file di testo in formato CSV (comma separated value) in /var/log/asterisk/cdr-csv. Il file è organizzato nei seguenti campi: CDR Description Type Size Accountcode Numero di conto String Src Numero ID chiamante String Dst Estensione di destinazione String Dcontext Contesto di destinazione String Caller ID with Text ID chiamante con testo String Channel Canale utilizzato String Dstchannel Canale di destinazione String Lastapp Ultima applicazione String Lastdata Dati dell'ultima applicazione String Start Inizio della chiamata Data/Ora Answer Risposta alla chiamata Data/Ora End Fine della chiamata Data/Ora Duration Tempo, dalla composizione alla chiusura Integer (secondi) Billsec Tempo, dalla risposta alla chiusura Integer (secondi) Disposition Esito della chiamata String (ANSWERED, NO ANSWER, BUSY, FAILED, CONGESTION) Amaflags Flag (DEFAULT, OMIT, BILLING, DOCUMENTATION) String User field Campo definito dall'utente String Esempio di file csv importato in una tabella. AccountCode CallerID No. Extension Context CallerID text Src Dst 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-5f30 PJSIP/8584-9153 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-96f5 PJSIP/8584-3312 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-74ac PJSIP/8584-297b 1234 4830258576 2012348584 admin "Joana D’Arc" <4830258576> PJSIP/8576-2c5d PJSIP/8584-9870 1234 4830258584 2012348576 default "Luis Sample" <4830258584> PJSIP/8584-03fd PJSIP/8576-645c Application Appdata Start Answer End Dur Bil Disposition Amaflags Dial PJSIP/8584,30,tT 27/3/2006 16:05 27/3/2006 16:05 27/3/2006 16:05 ANSWERED DOCUMENTATION Dial PJSIP/8584,30,tT 27/3/2006 16:16 27/3/2006 16:16 27/3/2006 16:16 ANSWERED BILLING Dial PJSIP/8584,30,tT 27/3/2006 16:22 27/3/2006 16:22 27/3/2006 16:22 ANSWERED BILLING Dial PJSIP/8584,30,tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING Dial PJSIP/8576,30,tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING
+Asterisk genera un record di dettaglio chiamata (CDR) per ogni chiamata. Questi record sono memorizzati, per impostazione predefinita, in un file di testo in formato valore separato da virgole (CSV) in **/var/log/asterisk/cdr-csv**. Il file è organizzato nei seguenti campi:
 
-## Codici conto e contabilità automatica dei messaggi
+| Campo | Descrizione | Tipo |
+|-------|-------------|------|
+| Accountcode | Numero di conto da utilizzare | String |
+| Src | Numero ID chiamante | String |
+| Dst | Interno di destinazione | String |
+| Dcontext | Contesto di destinazione | String |
+| Clid | ID chiamante con testo | String |
+| Channel | Canale utilizzato | String |
+| Dstchannel | Canale di destinazione | String |
+| Lastapp | Ultima applicazione | String |
+| Lastdata | Dati dell'ultima applicazione | String |
+| Start | Inizio della chiamata | Date/Time |
+| Answer | Risposta della chiamata | Date/Time |
+| End | Fine della chiamata | Date/Time |
+| Duration | Tempo, dal dial al riaggancio | Integer (seconds) |
+| Billsec | Tempo, dalla risposta al riaggancio | Integer (seconds) |
+| Disposition | Cosa è accaduto alla chiamata (ANSWERED, NO ANSWER, BUSY, FAILED, CONGESTION) | String |
+| Amaflags | Flag (DEFAULT, OMIT, BILLING, DOCUMENTATION) | String |
+| Userfield | Campo definito dall'utente | String |
 
-È possibile specificare codici conto e flag ama su ogni canale. Solitamente ciò avviene nel file di configurazione del canale (ad esempio, chan_dahdi.conf, pjsip.conf). Il parametro amaflags definisce cosa fare con il record CDR. I possibili valori di amaflag sono:
+Esempio di file CSV. Ogni riga è un record; i campi compaiono nello stesso ordine della tabella sopra (`accountcode` per primo, `amaflags` per ultimo):
+
+```text
+# accountcode,src,dst,dcontext,clid,channel,dstchannel,lastapp,lastdata,
+#   start,answer,end,duration,billsec,disposition,amaflags
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-5f30","PJSIP/8584-9153","Dial","PJSIP/8584,30,tT","2006-03-27 16:05:00","2006-03-27 16:05:00","2006-03-27 16:05:00","0","0","ANSWERED","DOCUMENTATION"
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-96f5","PJSIP/8584-3312","Dial","PJSIP/8584,30,tT","2006-03-27 16:16:00","2006-03-27 16:16:00","2006-03-27 16:16:00","0","0","ANSWERED","BILLING"
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-74ac","PJSIP/8584-297b","Dial","PJSIP/8584,30,tT","2006-03-27 16:22:00","2006-03-27 16:22:00","2006-03-27 16:22:00","0","0","ANSWERED","BILLING"
+"1234","4830258576","2012348584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-2c5d","PJSIP/8584-9870","Dial","PJSIP/8584,30,tT","2006-03-27 16:37:00","2006-03-27 16:37:00","2006-03-27 16:37:00","0","0","ANSWERED","BILLING"
+"1234","4830258584","2012348576","default","""Luis Sample"" <4830258584>","PJSIP/8584-03fd","PJSIP/8576-645c","Dial","PJSIP/8576,30,tT","2006-03-27 16:37:00","2006-03-27 16:37:00","2006-03-27 16:37:00","0","0","ANSWERED","BILLING"
+```
+
+## Codici conto e contabilizzazione dei messaggi automatici
+
+È possibile specificare codici conto e flag ama su ogni canale. Di solito ciò avviene nel file di configurazione del canale (ad es., chan_dahdi.conf, pjsip.conf). Il parametro amaflags definisce cosa fare con il record CDR. I possibili valori di amaflag sono:
 
 - Default
 - Omit
 - Billing
 - Documentation
 
-Analogamente al modo in cui un record può essere contrassegnato per la fatturazione o la documentazione, è possibile impostare un codice conto su ogni record. Il codice conto è una stringa a formato libero (l'opzione endpoint `accountcode` accetta qualsiasi String, e il record CDR lo memorizza in un campo di 80 caratteri) solitamente utilizzato per assegnare un record a un dipartimento o a un'unità aziendale. Esempio: sezione endpoint di pjsip.conf
+Simile al modo in cui un record può essere contrassegnato per fatturazione o documentazione, un codice conto può essere impostato su ogni record. Il codice conto è una stringa libera (l’opzione endpoint `accountcode` accetta qualsiasi String, e il record CDR lo memorizza in un campo di 80 caratteri) solitamente usata per assegnare un record a un dipartimento o a un'unità aziendale. Esempio: sezione endpoint di pjsip.conf
 
 ```
 [8576]
@@ -31,11 +63,11 @@ type=endpoint
 accountcode=Support
 ```
 
-Il flag AMA non è un'opzione endpoint `pjsip.conf` in Asterisk 22; impostalo per chiamata dal dialplan con la funzione `CHANNEL` (ad esempio `Set(CHANNEL(amaflags)=billing)`), oppure con `Set(CDR(amaflags)=billing)`.
+Il flag AMA non è un’opzione endpoint `pjsip.conf` in Asterisk 22; impostalo per chiamata dal dialplan con la funzione `CHANNEL` (ad esempio `Set(CHANNEL(amaflags)=billing)`), o con `Set(CDR(amaflags)=billing)`.
 
-## Modifica del formato CSV e/o CDR
+## Changing the CSV and/or CDR format
 
-È possibile modificare il formato CSV cambiando il file cdr_custom.conf.
+You can change the CSV format by changing the cdr_custom.conf file.
 
 ```
 ;
@@ -50,27 +82,27 @@ ion)}","${CDR(amaflags)}","${CDR(accountcode)}","${CDR(uniqueid)}","${CDR(userf
 ield)}"
 ```
 
-È possibile modificare il formato CDR nel file cdr_custom.conf.
+You can change the CDR format in the cdr_custom.conf file.
 
-## Archiviazione CDR
+## CDR Storage
 
-L'archiviazione dei CDR può essere ottenuta in diversi modi. Il metodo più importante è costituito dai file di testo CSV, che possono essere facilmente importati nei fogli di calcolo. Per le piccole imprese, di solito questo è sufficiente. Alcuni software di fatturazione accettano, per impostazione predefinita, file CSV. Tuttavia, memorizzare i CDR in un database è molto meglio e più sicuro. Asterisk supporta diversi tipi di database. Esistono alcune interfacce grafiche per la fatturazione sul mercato. Con così tanti driver, quale scegliere?
+CDR storage can be achieved in several ways. The most important way is CSV text files that can be easily imported into spreadsheets. For small businesses, this is usually okay. Some billing software accepts, by default, CSV files. However, storing CDRs in a database is a lot better and safer. Asterisk supports several database flavors. There are some graphical interfaces for billing in the market. With so many drivers, which one to choose?
 
-### Driver di archiviazione disponibili
+### Storage drivers available
 
-- cdr_csv – File di testo con valori separati da virgola
-- cdr_custom – File di testo personalizzabili con valori separati da virgola
-- cdr_adaptive_odbc – Backend ODBC adattivo (preferito per l'archiviazione su database)
-- cdr_odbc – Database supportati da unixODBC (legacy; preferito cdr_adaptive_odbc)
-- cdr_pgsql – Database Postgres
-- cdr_tds (cdr_freetds) – Database Sybase e MSSQL tramite FreeTDS
-- cdr_manager – CDR verso Manager Interface
-- cdr_radius – Interfaccia CDR radius
-- cdr_sqlite3_custom – Modulo CDR personalizzato SQLite3
+- cdr_csv – Comma Separated Value text files
+- cdr_custom – Customizable comma-separated-value text files
+- cdr_adaptive_odbc – Adaptive ODBC backend (preferred for database storage)
+- cdr_odbc – unixODBC supported databases (legacy; cdr_adaptive_odbc preferred)
+- cdr_pgsql – Postgres databases
+- cdr_tds (cdr_freetds) – Sybase and MSSQL databases via FreeTDS
+- cdr_manager – CDR to Manager Interface
+- cdr_radius – CDR radius interface
+- cdr_sqlite3_custom – SQLite3 custom CDR module
 
-Il modulo `cdr_addon_mysql` (cdr_mysql) raccomandato dalle guide meno recenti è stato rimosso in Asterisk 19, quindi non esiste un driver CDR MySQL nativo in Asterisk 22. Per scrivere i CDR su MySQL/MariaDB, utilizzare `cdr_adaptive_odbc` insieme a un driver ODBC MySQL: l'approccio utilizzato in questo capitolo.
+The `cdr_addon_mysql` (cdr_mysql) module that older guides recommended was removed in Asterisk 19, so there is no native MySQL CDR driver on Asterisk 22. To write CDRs to MySQL/MariaDB, use `cdr_adaptive_odbc` together with a MySQL ODBC driver — the approach used in this chapter.
 
-La registrazione dei CDR viene eseguita su tutti i moduli attivi caricati nel file /etc/asterisk/modules.conf. Se il parametro autoload=yes è impostato, tutti i moduli vengono caricati. Per verificare quali cdr_drivers sono attualmente caricati nel sistema, utilizzare il comando seguente:
+CDR recording is done to all active modules loaded in the file /etc/asterisk/modules.conf. If the parameter autoload=yes is set, all modules are loaded. To check which cdr_drivers are currently loaded in the system use the command below:
 
 ```
 asterisk*CLI> module show like cdr_
@@ -91,19 +123,19 @@ extended
 6 modules loaded
 ```
 
-Se si visualizza la schermata sopra, sono in esecuzione almeno cdr_adaptive_odbc, cdr_csv, cdr_custom, cdr_manager, cdr_odbc e cdr_sqlite3_custom. Negli ultimi anni, dopo alcune Astricon, mi è apparso chiaro che il team di Asterisk prediligesse ODBC. È l'unico driver che supporta il connection pooling. Il connection pooling rappresenta un grande vantaggio in termini di prestazioni, poiché non è necessario aprire una nuova connessione per ogni operazione. Questo capitolo era stato precedentemente scritto utilizzando cdr_mysql. Per questa edizione sono passato a cdr_adaptive_odbc, pur sapendo che è un po' più complesso da configurare. La scelta di cdr_adaptive_odbc ci consente inoltre di personalizzare il CDR. È possibile impostare semplicemente una nuova variabile CDR nel dialplan e aggiungere la colonna al database. Set(CDR(jitter)=
+If you see the screenshot above, at least cdr_adaptive_odbc, cdr_csv, cdr_custom, cdr_manager, cdr_odbc and cdr_sqlite3_custom are running. In the latest years after some astricons it become clear for me the Asterisk team was favoring ODBC. It is the only driver supporting connection pooling. Connection pooling is a great advantage in terms of performance because you don’t have to open a new connection for every operation. This chapter was previously written using cdr_mysql. I have moved to cdr_adaptive_odbc for this edition even knowing that it is a little more complex to setup. The choice for cdr_adaptive_odbc also allows us to customize the CDR. You may simply set a new CDR variable in the dialplan and add the matching column to the database. For example, to record the audio jitter:
 
 ```
-${RTPAUDIOQOSJITTER}).
+Set(CDR(jitter)=${RTPAUDIOQOSJITTER})
 ```
 
-### Archiviazione CSV
+### CSV Storage
 
-Come abbiamo detto in precedenza, per impostazione predefinita, Asterisk invia tutti i CDR a un file di testo CSV utilizzando il modulo cdr_csv.so. Se non è possibile visualizzare i file in /var/log/asterisk/cdr-csv, verificare se il modulo viene caricato utilizzando il comando CLI module show. Se non è caricato, controllare modules.conf. In questo capitolo invieremo i cdr a cdr_csv come backup.
+As we said before, by default, Asterisk sends all CDR to a CSV text file using the cdr_csv.so module. If you can’t see the files in the /var/log/asterisk/cdr-csv, check to see if the module is being loaded using the CLI command module show. If it’s not loaded, check modules.conf. In this chapter we will send cdrs to cdr_csv as a backup.
 
-### Configurazione del file modules.conf
+### Configuring the file modules.conf
 
-Per caricare solo i moduli appropriati, utilizzare le righe seguenti nel file modules.conf
+To load only the appropriate modules, use the lines below in the modules.conf file
 
 ```
 noload => cdr_custom.so
@@ -112,25 +144,25 @@ noload => cdr_manager.so
 noload => cdr_sqlite3_custom.so
 ```
 
-Ora abbiamo caricato solo cdr_csv e cdr_adaptive_odbc.
+Now we have only cdr_csv and cdr_adaptive_odbc loaded.
 
 ## Installazione e configurazione di ODBC su Ubuntu 22.04
 
-Mi pento sempre di pubblicare istruzioni dettagliate nel libro. A volte cambiano prima ancora che il libro venga pubblicato. Le versioni cambiano, i moduli cambiano, quindi cerca di adattare il comando qui alla tua situazione. Il più delle volte, piccole modifiche sono sufficienti per riprodurre l'installazione. Presta attenzione ai passaggi, anche gli utenti Linux esperti troveranno difficile installare i driver ODBC.
+Mi rammarico sempre di pubblicare istruzioni dettagliate nel libro. A volte cambiano prima che il libro venga pubblicato. Le versioni cambiano, i moduli cambiano, quindi cerca di adattare il comando qui alla tua situazione. Nella maggior parte dei casi sono sufficienti modifiche minori per riprodurre l'installazione. Presta attenzione ai passaggi che anche gli utenti Linux esperti troveranno difficili per installare i driver ODBC.
 
-Passaggio 1 - Installare i pacchetti richiesti:
+Passo 1 - Installa i pacchetti richiesti:
 
 ```
 apt-get install mysql-server unixodbc unixodbc-dev libltdl-dev libtool
 ```
 
-Passaggio 2 - Creare un database e un utente:
+Passo 2 - Crea un database e un utente:
 
 ```
 mysql -u root -p
 ```
 
-(Utilizzare la password definita durante la creazione del server mysql) Digitare questi comandi nella riga di comando di mysql
+(Usa la password definita quando hai creato il server mysql) Digita questi comandi nella riga di comando di mysql
 
 ```
 CREATE USER 'astdb'@'%' IDENTIFIED BY 'supersecret';
@@ -140,14 +172,14 @@ FLUSH PRIVILEGES;
 EXIT
 ```
 
-Passaggio 3 - Creare il database
+Passo 3 - Crea il database
 
 ```
 cd /usr/src/asterisk-22.*/contrib/scripts/realtime/mysql
 mysql -u root -p astdb <mysql_cdr.sql
 ```
 
-Passaggio 4: Scaricare il connettore ODBC MySQL da Oracle. Controllare il proprio sistema operativo utilizzando: `lsb_release -a`. Per Ubuntu 22.04 (x86_64), visitare https://dev.mysql.com/downloads/connector/odbc/ e scegliere l'attuale release 8.x o 9.x per Ubuntu 22.04. Il nome file esatto e il numero di versione cambiano nel tempo, quindi impostare `VER` (sotto) su qualunque sia il nome dell'attuale build glibc di Linux.
+Passo 4: Scarica il connettore MySQL ODBC da Oracle. Controlla il tuo sistema operativo usando: `lsb_release -a`. Per Ubuntu 22.04 (x86_64), visita https://dev.mysql.com/downloads/connector/odbc/ e scegli la versione corrente 8.x o 9.x per Ubuntu 22.04. Il nome esatto del file e il numero di versione cambiano nel tempo, quindi imposta `VER` (sotto) a qualunque sia il nome della build Linux glibc attuale.
 
 ```
 cd /usr/src
@@ -158,7 +190,7 @@ wget https://dev.mysql.com/get/Downloads/Connector-ODBC/9.0/$VER.tar.gz
 tar -xzvf $VER.tar.gz
 ```
 
-Passaggio 5: Installare il driver ODBC
+Passo 5: Installa il driver ODBC
 
 ```
 cd /usr/src/$VER
@@ -167,7 +199,7 @@ cp lib/* /usr/local/lib
 myodbc-installer -a -d -n "MySQL" -t "Driver=/usr/local/lib/libmyodbc9w.so"
 ```
 
-Passaggio 6 - Configurare il connettore ODBC modificando il file /etc/odbc.ini per creare il DSN (Data Source Name)
+Passo 6 - Configura il connettore ODBC modificando il file /etc/odbc.ini per creare il DSN (Data Source Name)
 
 ```
 [astconn]
@@ -178,7 +210,7 @@ Server = localhost
 Port = 3306
 ```
 
-Passaggio 7: Testare l'accesso al driver utilizzando iSQL. iSQL è un'utilità da riga di comando per connettersi al database tramite unixodbc.
+Passo 7: Verifica l'accesso al driver usando iSQL. iSQL è un'utilità a riga di comando per connettersi al database tramite unixodbc.
 
 ```
 isql -v astconn astdb supersecret
@@ -189,9 +221,9 @@ Per favore, non procedere con la configurazione di Asterisk se non riesci a vede
 
 ### Configurazione di ODBC in Asterisk
 
-Prima di poter configurare cdr_adaptive_odbc, è necessario configurare innanzitutto il file delle risorse ODBC.
+Prima di poter configurare cdr_adaptive_odbc, devi prima configurare il file di risorsa ODBC.
 
-Passaggio 1 - Connettere Asterisk a ODBC. Modificare il file res_odbc.conf:
+Passo 1 - Collega Asterisk a ODBC. Modifica il file res_odbc.conf:
 
 ```
 [cdr]
@@ -202,10 +234,10 @@ password => supersecret
 pre-connect => yes
 ```
 
-Passaggio 2 – Riavviare Asterisk e testare utilizzando
+Passo 2 – Riavvia Asterisk e testa usando
 
 ```
-CLI>odbc show
+asterisk*CLI> odbc show
 ```
 
 L'output è mostrato di seguito.
@@ -219,7 +251,7 @@ DSN:    astconn
   Number of active connections: 1 (out of 20)
 ```
 
-Passaggio 3 – Configurare il driver ODBC adattivo in /etc/asterisk/cdr_adaptive_odbc.conf
+Passo 3 – Configura il driver ODBC adattivo in /etc/asterisk/cdr_adaptive_odbc.conf
 
 ```
 [cdr]
@@ -227,39 +259,39 @@ connection=cdr
 table=cdr
 ```
 
-Qui `connection` punta alla sezione di connessione `[cdr]` definita in `res_odbc.conf`, e `table` è la tabella del database in cui vengono scritti i CDR.
+Qui `connection` punta alla sezione di connessione `[cdr]` definita in `res_odbc.conf`, e `table` è la tabella del database dove vengono scritti i CDR.
 
-Passaggio 4 – Ricaricare il modulo cdr_adaptive_odbc.so:
-
-```
-asterisk*CLI>reload cdr_adaptive_odbc
-```
-
-Passaggio 5 – Effettuare alcune chiamate e verificare la presenza di nuovi record nel database. Per controllare il database:
+Passo 4 – Ricarica il modulo cdr_adaptive_odbc.so:
 
 ```
-mysql –u root –p
+asterisk*CLI> reload cdr_adaptive_odbc
+```
+
+Passo 5 – Effettua le stesse chiamate e controlla il database per nuovi record. Per controllare il database:
+
+```
+mysql -u root -p
 >use astdb
->select * from cdr
+>select * from cdr;
 ```
 
 ## Applicazioni e funzioni
 
-Diverse applicazioni sono correlate alla fatturazione.
+Diversi applicazioni sono correlate alla fatturazione.
 
 ### CDR(accountcode)
 
-Imposta un codice conto prima di chiamare un'altra applicazione dial(); ad esempio: Formato:
+Imposta un codice account prima di chiamare un'altra applicazione dial(); per esempio: Formato:
 
 ```
 Set(CDR(accountcode)=account)
 ```
 
-Il codice conto può essere verificato utilizzando la variabile di canale ${CDR(accountcode)}
+Il codice account può essere verificato usando la variabile di canale ${CDR(accountcode)}
 
 ### CDR(amaflags)
 
-Imposta un flag per scopi di fatturazione. Le opzioni sono default, omit, documentation e billing.
+Imposta un flag a scopo di fatturazione. Le opzioni sono default, omit, documentation e billing.
 
 ```
 Set(CDR(amaflags)=amaflags)
@@ -267,33 +299,35 @@ Set(CDR(amaflags)=amaflags)
 
 ### Set(CDR_PROP(disable)=1)
 
-Disabilita la registrazione CDR per il canale corrente, in modo che nessun CDR venga scritto nel file o nel database. Reimpostandolo su `0` si riabilita la registrazione.
+Disabilita la registrazione CDR per il canale corrente, quindi nessun CDR viene scritto su file o database. Ripristinandolo a `0` riattiva la registrazione.
 
 ```
 Set(CDR_PROP(disable)=1)
 ```
 
-L'applicazione `NoCDR()` utilizzata nelle edizioni precedenti per questo scopo è stata rimossa in Asterisk 21; su Asterisk 22 si disabilita il CDR di un canale con `Set(CDR_PROP(disable)=1)` invece.
+L’applicazione `NoCDR()` che le edizioni precedenti usavano per questo è stata rimossa in Asterisk 21; in Asterisk 22 si disabilita il CDR di un canale con `Set(CDR_PROP(disable)=1)` invece.
 
 ### ResetCDR()
 
-Reimposta il Call Data Record: il tempo `start` (e, se risposto, il tempo `answer`) viene impostato sull'ora corrente e tutte le variabili CDR vengono cancellate. Se l'opzione `v` è impostata, le variabili CDR vengono preservate durante il ripristino.
+Reimposta il Call Data Record: il tempo `start` (e, se risposto, il tempo `answer`) viene impostato all’ora corrente e tutte le variabili CDR vengono cancellate. Se l’opzione `v` è impostata, le variabili CDR vengono conservate durante il reset.
 
 ### Set(CDR(userfield)=Value)
 
-Questo comando imposta un campo utente nel CDR. Quando si utilizza `cdr_adaptive_odbc`, il campo utente viene memorizzato automaticamente se esiste una colonna `userfield` nella tabella CDR: non è necessaria alcuna ricompilazione del sorgente. Per i file di testo CSV, è necessario modificare il codice sorgente (cdr_csv.c) e ricompilare Asterisk se si desidera utilizzare i campi utente.
+Questo comando imposta un campo utente nel CDR. Quando si usa `cdr_adaptive_odbc`, il campo utente viene memorizzato automaticamente se esiste una colonna `userfield` nella tabella CDR — non è necessaria la ricompilazione della sorgente. Per i file di testo CSV, è necessario modificare il codice sorgente (cdr_csv.c) e ricompilare Asterisk se si vogliono usare i campi utente.
 
-Le edizioni precedenti memorizzavano i CDR in MySQL con il modulo `cdr_addon_mysql` (`cdr_mysql.conf`). Quel modulo è stato rimosso in Asterisk 19, quindi non è disponibile su Asterisk 22. Il percorso supportato è ora `cdr_adaptive_odbc` con un driver ODBC MySQL, che memorizza il campo utente — e qualsiasi altra colonna personalizzata — in modo nativo tramite la sua mappatura adattiva delle colonne.
+Le edizioni precedenti memorizzavano i CDR in MySQL con il modulo `cdr_addon_mysql` (`cdr_mysql.conf`). Quel modulo è stato rimosso in Asterisk 19, quindi non è disponibile in Asterisk 22. Il percorso supportato ora è `cdr_adaptive_odbc` con un driver MySQL ODBC, che memorizza il campo utente — e qualsiasi altra colonna personalizzata — nativamente tramite la sua mappatura adattiva delle colonne.
 
-### AppendCDRUserField(Value)
+### Aggiunta al campo utente
 
-Accoda dati al campo utente nel CDR.
+Le edizioni precedenti usavano l’applicazione `AppendCDRUserField()` per aggiungere dati al campo utente CDR. Quell’applicazione è stata rimossa da Asterisk; in Asterisk 22 si aggiunge al campo utente leggendo e reimpostandolo con la funzione `CDR`, per esempio
+
+`Set(CDR(userfield)=${CDR(userfield)}extra)`.
 
 ![13-call-detail-records figure 1](../images/13-call-detail-records-img01.png)
 
-## Autenticazione utente
+## User authentication
 
-Alcune aziende addebitano le chiamate ai propri dipendenti. In Asterisk è possibile impostare uno schema di autenticazione che consente di fatturare l'utente autenticato sul CDR. Questa autenticazione può essere eseguita utilizzando una password passata come parametro all'applicazione Authenticate: un file di password, indicato da uno / (slash) prima del parametro, o una chiave del database Asterisk (utilizzando l'opzione `d`). Formato:
+Alcune aziende fatturano le chiamate ai propri dipendenti. In Asterisk è possibile impostare uno schema di autenticazione che consente di addebitare l'utente autenticato sul CDR. Questa autenticazione può essere eseguita usando una password passata come parametro all'applicazione Authenticate—un file di password, indicato da una / (barra) prima del parametro, o una chiave del database di Asterisk (usando l'opzione `d`). Formato:
 
 ```
 Authenticate(password[,options[,maxdigits[,prompt]]])
@@ -302,12 +336,12 @@ Authenticate(/passwdfile[,options])
 
 Opzioni:
 
-- a – Imposta il codice conto del canale sulla password inserita.
-- d – Interpreta il percorso fornito come una chiave DB di Asterisk anziché come un file letterale.
-- m – Interpreta il percorso come un file di linee `accountcode:passwordhash`.
+- a – Imposta il codice account del canale sulla password inserita.  
+- d – Interpreta il percorso fornito come chiave del DB di Asterisk anziché come file letterale.  
+- m – Interpreta il percorso come un file di righe `accountcode:passwordhash`.  
 - r – Rimuove la chiave del database dopo un'autenticazione riuscita (valido solo con `d`).
 
-Se il chiamante fallisce tutti e tre i tentativi, il canale viene chiuso; l'esecuzione del dialplan non continua, quindi gestire il percorso di errore nella riga successiva a `Authenticate()`. Esempio (Chiamate internazionali):
+Se il chiamante esaurisce tutti e tre i tentativi, il canale viene chiuso; l'esecuzione del dialplan non continua, quindi gestire il percorso di errore sulla riga successiva a `Authenticate()`. Esempio (Chiamate internazionali):
 
 ```
 exten=_9011.,1,Authenticate(/password,d)
@@ -315,23 +349,23 @@ exten=_9011.,1,Authenticate(/password,d)
  same=>n,Hangup()
 ```
 
-La vecchia opzione `j` (salto alla priorità n+101 in caso di errore) e la convenzione di priorità `+101` sono state rimosse da Asterisk molto tempo fa; un fallimento di `Authenticate()` chiude semplicemente la chiamata.
+L'opzione `j` (salta alla priorità n+101 in caso di errore) e la convenzione di priorità `+101` sono state rimosse da Asterisk molto tempo fa; un `Authenticate()` fallito semplicemente chiude la chiamata.
 
 Per inserire la password in una chiave DB dalla console:
 
 ```
-CLI> database put senha 123456 1
+asterisk*CLI> database put senha 123456 1
 ```
 
-## Utilizzo delle password dalla segreteria telefonica
+## Using passwords from voicemail
 
-Questa applicazione esegue la stessa operazione di authenticate, ma utilizza il file di configurazione della segreteria telefonica per la password.
+This application does the same as authenticate, but uses the voicemail configuration file for the password.
 
 ```
 VMAuthenticate([mailbox][@context][,options])
 ```
 
-Se viene specificata una casella vocale, solo la password di quella casella sarà considerata valida. Se la casella vocale non è specificata, la variabile di canale `${AUTH_MAILBOX}` verrà impostata con la casella vocale autenticata. Se l'opzione `s` è impostata, i prompt iniziali vengono saltati. Esempio (Chiamate internazionali):
+If a mailbox is specified, only that mailbox's password will be considered valid. If the mailbox is not specified, the channel variable `${AUTH_MAILBOX}` will be set with the authenticated mailbox. If the `s` option is set, the initial prompts are skipped. Example (International Calls):
 
 ```
 exten=_9011.,1,VMAuthenticate(${CALLERID(num)}@local,s)
@@ -341,30 +375,30 @@ exten=_9011.,1,VMAuthenticate(${CALLERID(num)}@local,s)
 
 ## Channel Event Logging (CEL)
 
-I record CDR forniscono una riga di riepilogo per chiamata. Per un tracciamento degli eventi più dettagliato — come le transizioni di stato dei singoli canali, gli eventi di ingresso/uscita dai bridge e le tratte di trasferimento assistito — Asterisk 22 include **Channel Event Logging (CEL)**, configurato tramite `/etc/asterisk/cel.conf` e memorizzato tramite backend come `cel_odbc` o `cel_custom`.
+I record CDR forniscono una riga di riepilogo per chiamata. Per un tracciamento più dettagliato degli eventi — come le transizioni di stato dei singoli canale, gli eventi di ingresso/uscita dal bridge e le gambe di trasferimento assistito — Asterisk 22 include **Channel Event Logging (CEL)**, configurato tramite `/etc/asterisk/cel.conf` e memorizzato attraverso backend come `cel_odbc` o `cel_custom`.
 
-CEL integra il CDR anziché sostituirlo: il CDR rimane lo standard per i riepiloghi di fatturazione, mentre CEL fornisce dati granulari per evento utili per il rilevamento delle frodi, il monitoraggio della qualità e la reportistica avanzata.
+CEL completa i CDR invece di sostituirli: i CDR rimangono lo standard per i riepiloghi di fatturazione, mentre CEL fornisce dati granulari per evento utili per la rilevazione delle frodi, il monitoraggio della qualità e la generazione di report avanzati.
 
-Il pattern di configurazione `cel.conf` rispecchia `cdr.conf`: si abilitano i tipi di evento desiderati nella sezione `[general]` di `cel.conf`, quindi si configura ogni backend di archiviazione nel proprio file — `cel_custom.conf` per CSV, `cel_odbc.conf` per un database ODBC (la stessa connessione `res_odbc.conf` utilizzata per i CDR). È possibile confermare se CEL è attivo con `cel show status` sulla CLI.
+Il modello di configurazione `cel.conf` rispecchia `cdr.conf`: si abilitano i tipi di evento desiderati nella sezione `[general]` di `cel.conf`, quindi si configura ogni backend di memorizzazione nel proprio file — `cel_custom.conf` per CSV, `cel_odbc.conf` per un database ODBC (la stessa connessione `res_odbc.conf` usata per i CDR). È possibile verificare se CEL è attivo con `cel show status` sulla CLI.
 
-## Riepilogo
+## Sommario
 
-In questo capitolo abbiamo imparato come implementare la registrazione CDR in file di testo e in un database MySQL. Abbiamo anche imparato come impostare amaflags e codici conto. Alla fine del capitolo, abbiamo imparato come utilizzare uno schema di autenticazione integrato con CDR e fatturazione.
+In questo capitolo abbiamo imparato come implementare la registrazione dei CDR in file di testo e in un database MySQL. Abbiamo anche imparato come impostare amaflags e codici di conto. Alla fine del capitolo, abbiamo imparato come utilizzare uno schema di autenticazione integrato con CDR e fatturazione.
 
 ## Quiz
 
 1. Per impostazione predefinita, Asterisk registra il CDR nella directory /var/log/asterisk/cdr-csv.
-   - A. Falso
-   - B. Vero
-2. Asterisk può scrivere CDR su (selezionare tutte le opzioni applicabili):
+   - A. False
+   - B. True
+2. Asterisk può scrivere i CDR su (seleziona tutte le opzioni valide):
    - A. MySQL
-   - B. Oracle nativo
+   - B. Native Oracle
    - C. Microsoft SQL Server
    - D. File di testo CSV
-   - E. Database supportati da unixODBC
+   - E. database supportati da unixODBC
 3. Asterisk genera un CDR per un solo tipo di archiviazione alla volta.
-   - A. Falso
-   - B. Vero
+   - A. False
+   - B. True
 4. Quali amaflags di Asterisk sono disponibili?
    - A. DEFAULT
    - B. OMIT
@@ -372,23 +406,23 @@ In questo capitolo abbiamo imparato come implementare la registrazione CDR in fi
    - D. RATE
    - E. BILLING
    - F. DOCUMENTATION
-5. Per associare un dipartimento a un CDR si utilizza il comando ___, e il codice conto può essere letto con la variabile di canale ___.
-6. La differenza tra `Set(CDR_PROP(disable)=1)` e `ResetCDR()` è che disabilitare il CDR impedisce la scrittura di qualsiasi record, mentre `ResetCDR()` reimposta (azzera) il record corrente. (L'applicazione `NoCDR()` che precedentemente disabilitava i CDR è stata rimossa in Asterisk 21.)
-   - A. Falso
-   - B. Vero
-7. Per utilizzare un campo definito dall'utente con il modulo `cdr_csv.so`, è necessario modificare il codice sorgente e ricompilare Asterisk.
-   - A. Falso
-   - B. Vero
-8. I tre metodi di autenticazione disponibili per l'applicazione Authenticate() sono:
+5. Per associare un dipartimento a un CDR si usa il comando ___, e il codice account può essere letto con la variabile di canale ___.
+6. La differenza tra `Set(CDR_PROP(disable)=1)` e `ResetCDR()` è che disabilitare il CDR impedisce che venga scritto qualsiasi record, mentre `ResetCDR()` azzera (resetta) il record corrente. (L’applicazione `NoCDR()` che in precedenza disabilitava i CDR è stata rimossa in Asterisk 21.)
+   - A. False
+   - B. True
+7. Per usare un campo definito dall’utente con il modulo `cdr_csv.so`, è necessario modificare il codice sorgente e ricompilare Asterisk.
+   - A. False
+   - B. True
+8. I tre metodi di autenticazione disponibili per l’applicazione Authenticate() sono:
    - A. Password
    - B. File di password
    - C. Asterisk DB (dbput e dbget)
-   - D. Segreteria telefonica
+   - D. Voicemail
 9. Le password della segreteria telefonica sono specificate in una sezione separata di `voicemail.conf` e non sono le stesse degli utenti della segreteria telefonica.
-   - A. Falso
-   - B. Vero
-10. Channel Event Logging (CEL) sostituisce il CDR in Asterisk 22: una volta abilitato CEL, i riepiloghi di fatturazione CDR non vengono più prodotti.
-    - A. Falso
-    - B. Vero
+   - A. False
+   - B. True
+10. Channel Event Logging (CEL) sostituisce il CDR in Asterisk 22 — una volta abilitato il CEL, i riepiloghi di fatturazione del CDR non vengono più prodotti.
+    - A. False
+    - B. True
 
-**Risposte:** 1 — B · 2 — A, B, C, D, E · 3 — A · 4 — A, B, E, F · 5 — `Set(CDR(accountcode)=...)`; `${CDR(accountcode)}` · 6 — B · 7 — A · 8 — A, B, C · 9 — B · 10 — A
+**Answers:** 1 — B · 2 — A, B, C, D, E · 3 — A · 4 — A, B, E, F · 5 — `Set(CDR(accountcode)=...)`; `${CDR(accountcode)}` · 6 — B · 7 — A · 8 — A, B, C · 9 — B · 10 — A

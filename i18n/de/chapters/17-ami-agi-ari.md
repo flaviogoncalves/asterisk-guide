@@ -1,45 +1,43 @@
-# Erweitern von Asterisk mit AMI und AGI
+# Erweiterung von Asterisk mit AMI und AGI
 
-In verschiedenen Situationen kann es notwendig sein, Asterisk-Funktionen mithilfe externer Anwendungen zu erweitern. Es gibt viele verschiedene Wege, wie dies geschehen kann. In diesem Kapitel behandeln wir zwei der klassischen Methoden zur Integration von Asterisk mit anderen Systemen: AMI – Asterisk Manager Interface und AGI – Asterisk Gateway Interface. Wir werden uns auch den Befehl asterisk –rx und die Anwendung system() ansehen. Die Wahl der Integrationsmethode für Asterisk hängt von der jeweiligen Anwendung ab. Für AGI ist die gebräuchlichste Anwendung ein mit einer Datenbank verbundener IVR. Für AMI sind Dialer die beliebteste Anwendung. Eine dritte, modernere Schnittstelle — ARI, das Asterisk REST Interface — wird separat im nächsten Kapitel behandelt.
+In mehreren Situationen kann es notwendig sein, Asterisk‑Funktionen mithilfe externer Anwendungen zu erweitern. Es gibt viele verschiedene Möglichkeiten, wie dies geschehen kann. In diesem Kapitel behandeln wir zwei der klassischen Methoden, Asterisk in andere Systeme zu integrieren: AMI – Asterisk Manager Interface und AGI – Asterisk Gateway Interface. Außerdem schauen wir uns den Befehl `asterisk –rx` und die Anwendung `system()` an. Welche Integrationsmethode gewählt wird, hängt von der Anwendung ab. Für AGI ist die häufigste Anwendung das IVR, das an eine Datenbank angebunden ist. Für AMI sind Dialer die populärste Anwendung. Eine dritte, modernere Schnittstelle — ARI, das Asterisk REST Interface — wird im nächsten Kapitel separat behandelt.
 
-## Lernziele
+## Objectives
 
-Nach Abschluss dieses Kapitels sollte der Leser in der Lage sein:
+By the end of this chapter, the reader should be able to:
 
-- Zugriffsmöglichkeiten auf externe Programme zu beschreiben
-- Den Befehl asterisk –rx zu verwenden, um einen Konsolenbefehl auszuführen
-- Die Anwendung system() zu verwenden, um externe Programme im dialplan aufzurufen
-- Zu erklären, was AMI ist und wie es funktioniert
-- Die Datei manager.conf zu konfigurieren und AMI zu aktivieren
-- Einen AMI-Befehl aus einem PHP-Programm heraus auszuführen
-- Zu erklären, was der Asterisk manager proxy ist und wie er funktioniert
-- Verschiedene AGI-Varianten zu beschreiben (DeadAGI, AGI, EAGI, FastAGI)
-- Ein einfaches, mit PHP erstelltes AGI-Programm auszuführen
+- Beschreiben Sie die Zugriffsoptionen auf externe Programme
+- Verwenden Sie den `asterisk –rx`‑Befehl, um einen Konsolenbefehl auszuführen
+- Verwenden Sie die `system()`‑App, um externe Programme im Dialplan aufzurufen
+- Erklären Sie, was AMI ist und wie es funktioniert
+- Konfigurieren Sie die `manager.conf`‑Datei und aktivieren Sie AMI
+- Führen Sie einen AMI‑Befehl aus einem PHP‑Programm aus
+- Erklären Sie, was der Asterisk Manager Proxy ist und wie er funktioniert
+- Beschreiben Sie die verschiedenen AGI‑Flavors (DeadAGI, AGI, EAGI, FastAGI)
+- Führen Sie ein einfaches AGI‑Programm aus, das mit PHP erstellt wurde
 
-## Hauptmethoden zur Erweiterung von Asterisk
+## Hauptmethoden, Asterisk zu erweitern
 
-Asterisk bietet verschiedene Möglichkeiten zur Anbindung an externe Programme. In diesem Kapitel behandeln wir:
-
-- Linux-Befehlszeile und Asterisk-Konsole
+- Linux‑Kommandozeile und Asterisk‑Konsole
 - System()-Anwendung
 - AMI
 - AGI
 
-## Erweitern von Asterisk über die Konsolen-CLI
+## Erweiterung von Asterisk mit der Konsolen‑CLI
 
-Eine Anwendung kann Asterisk einfach über die Linux-Shell mit dem folgenden Befehl aufrufen.
+Eine Anwendung kann Asterisk einfach aus der Linux‑Shell mit dem folgenden Befehl aufrufen.
 
 ```
-asterisk –rx <command>
+asterisk -rx <command>
 ```
 
 Beispiel:
 
 ```
-asterisk –rx “stop now”
+asterisk -rx "stop now"
 ```
 
-Sogar ein Befehl mit einer Ausgabe kann aufgerufen werden:
+Auch ein Befehl, der eine Ausgabe erzeugt, kann aufgerufen werden:
 
 ```
 asterisk:~# asterisk -rx "pjsip show endpoints"
@@ -57,13 +55,12 @@ Endpoint:  <Endpoint/CID.....................................>  <State.....>  <C
  Endpoint:  4000                                                 Not in use    0 of inf
 ```
 
-## Erweitern von Asterisk mit der System()-Anwendung
+## Erweiterung von Asterisk mit der System()-Anwendung
 
-Die Anwendung system() ermöglicht es Asterisk, eine externe Anwendung aufzurufen.
+Die system()-Anwendung ermöglicht es Asterisk, eine externe Anwendung aufzurufen.
 
 ```
-asterisk*CLI> show application system
-asterisk*CLI>
+asterisk*CLI> core show application System
   -= Info about application 'System' =-
 [Synopsis]
 Execute a system command
@@ -75,7 +72,7 @@ Result of execution is returned in the SYSTEMSTATUS channel variable:
    SUCCESS      Specified command successfully executed
 ```
 
-Beispiel: Diese Anwendung führt ein Screen-Pop mittels netbios WindowsPopup durch.
+Beispiel: Diese Anwendung erzeugt ein Bildschirm‑Popup mittels NetBIOS WindowsPopup.
 
 ```
 exten => 9000,1,System(/bin/echo -e "'Incoming Call From -> ${CALLERID(num)}
@@ -84,34 +81,34 @@ exten => 9000,2,Dial(PJSIP/9000,15,t)
 exten => 9000,3,Hangup
 ```
 
-## Was ist AMI?
+## What is AMI?
 
-AMI ermöglicht es einem Client-Programm, eine Verbindung zu einer Asterisk-Instanz herzustellen und Befehle zu erteilen oder Ereignisse über eine TCP-Verbindung zu lesen. Systemintegratoren werden diese Ressourcen nützlich finden, um Kanalzustände zu verfolgen. AMI basiert auf einem einfachen Konzept eines Zeilenprotokolls, das key:value-Paare über TCP verwendet. Asterisk selbst ist nicht darauf ausgelegt, zu viele Verbindungen über diese Schnittstelle zu verarbeiten. Wenn Sie viele Verbindungen zu AMI haben, sollten Sie die Verwendung des Asterisk manager proxy in Betracht ziehen.
+AMI ermöglicht es einem Client‑Programm, sich mit einer Asterisk‑Instanz zu verbinden und Befehle zu senden oder Ereignisse über eine TCP‑Verbindung zu lesen. Systemintegratoren werden diese Ressourcen nützlich finden, um Kanalzustände zu verfolgen. AMI beruht auf einem einfachen Konzept eines Zeilenprotokolls, das Schlüssel:Wert‑Paare über TCP verwendet. Asterisk selbst ist nicht dafür ausgelegt, zu viele Verbindungen über diese Schnittstelle zu verarbeiten. Wenn Sie viele Verbindungen zu AMI haben, sollten Sie einen Asterisk‑Manager‑Proxy in Betracht ziehen.
 
-### Welche Sprache für AMI verwenden
+### What language to use for AMI
 
-Die Auswahl einer Programmiersprache kann heutzutage schwierig sein. Es gibt einfach zu viele Optionen — Java, PHP, Perl, C, C#, Python und einige andere. Es ist möglich, AMI mit jeder Sprache zu verwenden, die eine Socket- oder telnet-Schnittstelle unterstützt. Wir haben uns für dieses Buch aufgrund ihrer Popularität für PHP entschieden.
+Die Auswahl einer Programmiersprache kann heutzutage schwierig sein. Es gibt einfach zu viele Optionen – Java, PHP, Perl, C, C#, Python und mehrere andere. Es ist möglich, AMI mit jeder Sprache zu verwenden, die eine Socket‑ oder Telnet‑Schnittstelle unterstützt. Wir haben für dieses Buch PHP gewählt, weil es sehr verbreitet ist.
 
-### Verhalten des AMI-Protokolls
+### AMI protocol behavior
 
-- Bevor Sie Befehle an Asterisk senden, müssen Sie eine AMI-Sitzung aufbauen
-- Die erste Zeile eines Pakets enthält den Schlüssel „Action“, wenn sie von einem Client gesendet wird
-- Die erste Zeile eines Pakets enthält den Schlüssel „Response“ oder „Event“, wenn sie von Asterisk kommt
+- Bevor Sie Befehle an Asterisk senden, müssen Sie eine AMI‑Sitzung aufbauen
+- Die erste Zeile eines Pakets enthält den Schlüssel „Action“, wenn es von einem Client gesendet wird
+- Die erste Zeile eines Pakets enthält den Schlüssel „Response“ oder „Event“, wenn es von Asterisk kommt
 - Pakete können nach der Authentifizierung in beide Richtungen übertragen werden
 
-### Pakettypen
+### Packet types
 
 Der Typ des Pakets wird durch das Vorhandensein der folgenden Schlüssel bestimmt:
 
-- Action: Ein Paket, das von einem mit AMI verbundenen Client gesendet wird, um eine bestimmte Aktion anzufordern. Es gibt eine begrenzte Anzahl von Aktionen, die Clients zur Verfügung stehen. Die geladenen Module bestimmen diese Aktionen. Ein Paket enthält den Aktionsnamen und seine Parameter.
-- Response: Die Antwort, die von Asterisk auf die letzte vom Client gesendete Aktion erfolgt.
-- Event: Daten, die zu einem Ereignis gehören, das im Asterisk-Kern oder von einem Modul generiert wurde.
+- Action: Ein Paket, das von einem Client, der mit AMI verbunden ist, gesendet wird, um eine bestimmte Aktion anzufordern. Es gibt eine endliche Menge von Aktionen, die Clients zur Verfügung stehen. Die geladenen Module bestimmen diese Aktionen. Ein Paket enthält den Aktionsnamen und seine Parameter.
+- Response: Die Antwort, die von Asterisk auf die zuletzt vom Client gesendete Aktion zurückkommt.
+- Event: Daten, die zu einem Ereignis gehören, das im Asterisk‑Kernel oder von einem Modul erzeugt wurde.
 
-Wenn ein Client Pakete vom Typ Action sendet, ist ein Parameter namens ActionID enthalten. Da die Reihenfolge, in der die Antworten von Asterisk gesendet werden, nicht vorhersehbar ist, wird ActionID verwendet, um Aktionen und Antworten zuzuordnen. Event-Pakete werden in zwei verschiedenen Kontexten verwendet. Erstens informieren Ereignisse den Client über Änderungen in Asterisk (z. B. neu erstellte Kanäle, getrennte Kanäle oder Agenten, die sich bei einer Warteschlange an- oder abmelden). Zweitens werden Ereignisse verwendet, um Antworten auf eine Client-Aktion zu transportieren.
+Wenn ein Client Pakete vom Typ Action sendet, wird ein Parameter namens ActionID mitgesendet. Da die Reihenfolge, in der die Antworten von Asterisk gesendet werden, nicht vorhersehbar ist, wird ActionID verwendet, um Aktionen und Antworten zu korrelieren. Event‑Pakete werden in zwei verschiedenen Kontexten verwendet. Erstens informieren Events den Client über Änderungen in Asterisk (z. B. neu erstellte Channels, getrennte Channels oder Agenten, die sich an- bzw. abmelden). Zweitens werden Events genutzt, um Antworten auf eine Client‑Aktion zu transportieren.
 
-## Konfiguration von Benutzern und Berechtigungen
+## Configuring users and permissions
 
-Um auf AMI zuzugreifen, ist es notwendig, eine TCP-Verbindung aufzubauen, die an einem TCP-Port (normalerweise 5038) lauscht. Sie müssen die Datei /etc/asterisk/manager.conf konfigurieren, um ein Benutzerkonto und Berechtigungen zu erstellen. Es gibt eine begrenzte Anzahl von Berechtigungen: „read“, „write“ oder beides. Diese Berechtigungen werden definiert in der
+Um auf AMI zuzugreifen, ist es notwendig, eine TCP‑Verbindung zu etablieren, die an einem TCP‑Port (üblicherweise 5038) lauscht. Sie müssen die Datei /etc/asterisk/manager.conf konfigurieren, um ein Benutzerkonto und Berechtigungen anzulegen. Es gibt eine endliche Menge von Berechtigungen: „read“, „write“ oder beide. Diese Berechtigungen sind definiert in der
 
 ```
 manager.conf file.
@@ -127,9 +124,9 @@ deny=0.0.0.0/0.0.0.0
 permit=127.0.0.1/255.255.255.255
 ```
 
-### Anmeldung am AMI
+### Logging in to the AMI
 
-Um sich bei AMI anzumelden und zu authentifizieren, müssen Sie ein Aktionspaket vom Typ login mit einem Benutzernamen und einem in der manager.conf erstellten Konto senden.
+Um sich bei AMI anzumelden und zu authentifizieren, müssen Sie ein Action‑Packet vom Typ login mit einem Benutzernamen und dem in manager.conf erstellten Konto senden.
 
 ```
 Action:login
@@ -137,7 +134,7 @@ Username:admin
 Secret:password
 ```
 
-Beispiel: Anmeldung bei AMI mit PHP
+Beispiel: Anmeldung bei AMI mit php
 
 ```
 <?php
@@ -148,7 +145,7 @@ fputs($socket, "Secret: senha\r\n\r\n");
 ?>
 ```
 
-Wenn Sie keine Ereignisse empfangen müssen, können Sie „Events Off“ verwenden.
+Wenn Sie die Events nicht empfangen müssen, können Sie „Events Off“ verwenden.
 
 ```
 <?php
@@ -160,9 +157,9 @@ fputs($socket, "Events: off\r\n\r\n");
 ?>
 ```
 
-### Aktionspakete
+### Action packets
 
-Wenn Sie ein Aktionspaket an Asterisk senden, können Sie einige zusätzliche Schlüssel (z. B. die gewählte Nummer) angeben, indem Sie key:value-Paare nach der Aktion übergeben. Es ist auch möglich, Kanal- und globale Variablen an den dialplan zu übergeben.
+Wenn Sie ein Action‑Packet an Asterisk senden, können Sie einige zusätzliche Schlüssel (z. B. angerufene Nummer) durch Übergabe von Schlüssel:Wert‑Paaren nach der Action bereitstellen. Es ist ebenfalls möglich, Kanal‑ und globale Variablen an den Dialplan zu übergeben.
 
 ```
 Action: <action type><CRLF>
@@ -174,9 +171,9 @@ Variable: <Variable 2>=<Value 2><CRLF>
 <CRLF>
 ```
 
-### Aktionsbefehle
+### Action commands
 
-Sie können die CLI-Anweisung manager show commands verwenden, um die verfügbaren Aktionen aufzulisten. In Asterisk 22 umfasst der Kernsatz an Befehlen (diese Liste ist repräsentativ; geladene Module fügen weitere hinzu):
+Sie können den CLI‑Befehl `manager show` verwenden, um die verfügbaren Aktionen aufzulisten. In Asterisk 22 umfasst das Kernset an Befehlen (diese Liste ist repräsentativ; geladene Module fügen weitere hinzu):
 
 ```
 Action Privilege Synopsis
@@ -234,7 +231,6 @@ Action Privilege Synopsis
   Queues           <none>           Queues
   AgentLogoff      agent,all        Sets an agent as no longer logged in
   Agents           agent,all        Lists agents and their status
-  UnpauseMonitor   call,all         Unpause monitoring of a channel
   PlayDTMF                        call,all         Play DTMF signal on a specific channel.
   PJSIPShowEndpoints              system,reportin  Lists PJSIP endpoints
   PJSIPShowEndpoint               system,reportin  Detail listing of an endpoint
@@ -245,11 +241,10 @@ Action Privilege Synopsis
 
 ```
   AGI              agi,all          Add an AGI command to execute by Async AGI
-  StopMonitor      call,all         Stop monitoring a channel
-  PauseMonitor     call,all         Pause monitoring of a channel
-  ChangeMonitor    call,all         Change monitoring filename of a channel
+  MixMonitor       system,all       Record a call and mix the audio during recording
+  StopMixMonitor   system,call,all  Stop recording a call through MixMonitor
+  MixMonitorMute   system,call,all  Mute / unMute a Mixmonitor recording
   ShowDialPlan     config,reportin  List dialplan
-  Monitor          call,all         Monitor a channel
   DBDelTree        system,all       Delete DB Tree
   DBDel            system,all       Delete DB Entry
   DBPut            system,all       Put DB Entry
@@ -259,7 +254,7 @@ Action Privilege Synopsis
   ParkedCalls      <none>           List parked calls
 ```
 
-Wenn Sie spezifische Befehlsparameter wissen müssen, verwenden Sie den Befehl manager show command <command>. Beispiel:
+Falls Sie die spezifischen Parameter eines Befehls wissen müssen, benutzen Sie `manager show command <command>`. Beispiel:
 
 ```
 asterisk*CLI> manager show command Originate
@@ -341,50 +336,61 @@ originate,all
 OriginateResponse
 ```
 
-### Ereignispakete
+### Event packets
 
-Ereignisse werden auf der Manager-Schnittstelle generiert, wann immer etwas in Asterisk passiert — ein Kanal wird erstellt oder ändert seinen Zustand, zwei Kanäle werden gebrückt oder die Brücke wird aufgehoben, eine Registrierung ändert sich, ein Warteschlangenmitglied wird hinzugefügt und so weiter. Jedes Ereignis ist ein Block von `Key: value` Zeilen, die mit einem `Event:` Header beginnen.
+Events werden auf der Manager‑Schnittstelle erzeugt, wann immer etwas in Asterisk passiert — ein Kanal wird erstellt oder ändert seinen Zustand, zwei Kanäle werden gebrückt oder entbrückt, eine Registrierung ändert sich, ein Queue‑Mitglied wird hinzugefügt usw. Jeder Event ist ein Block von
 
-Der genaue Satz an Ereignissen hängt von den geladenen Modulen und der Asterisk-Version ab. Anstatt eine Liste wiederzugeben, die schnell veraltet, fragen Sie den laufenden Server nach dem maßgeblichen Satz ab:
+`Key: value` Zeilen, die mit einer `Event:`‑Überschrift beginnen.
+
+Der genaue Satz an Events hängt von den geladenen Modulen und der Asterisk‑Version ab, daher wird anstelle einer schnell veraltenden Liste das laufende System nach dem autoritativen Satz abgefragt:
 
 ```
 asterisk*CLI> manager show events             ; list every event this build can emit
 asterisk*CLI> manager show event BridgeEnter  ; describe one event and its fields
 ```
 
-Zum Beispiel wird die Anrufbrückung durch die Ereignisse `BridgeCreate`, `BridgeEnter`, `BridgeLeave` und `BridgeDestroy` gemeldet (`BridgeEnter` bedeutet "Wird ausgelöst, wenn ein Kanal in eine Brücke eintritt"). Die älteren Ereignisse `Link`/`Unlink` wurden in Asterisk 12 entfernt.
+Zum Beispiel wird das Bridging von Anrufen über die Events `BridgeCreate`, `BridgeEnter`, `BridgeLeave` und `BridgeDestroy` gemeldet (`BridgeEnter` bedeutet „Raised when a channel enters a bridge“). Die älteren Events `Link`/`Unlink` wurden in Asterisk 12 entfernt.
 
 ## Asterisk Gateway Interface
 
-AGI ist eine Gateway-Schnittstelle zu Asterisk, ähnlich wie CGI, das von Webservern verwendet wird. Es ermöglicht die Verwendung von Hochsprachen wie Perl, PHP und Python, um die Funktionalität von Asterisk zu erweitern. Die Hauptanwendung für CGIs ist der Aufbau von IVR-Systemen. Es gibt vier Arten von AGI:
+AGI ist ein Gateway-Interface zu Asterisk, ähnlich wie CGI, das von Web‑Servern verwendet wird. Es ermöglicht die Nutzung von Hochsprachen wie Perl, PHP und Python, um die Funktionalität von Asterisk zu erweitern. Die Hauptanwendung für CGIs ist der Aufbau von IVR. Es gibt vier Arten von AGI:
 
-- Normales AGI, das ein Programm innerhalb des Asterisk-Servers aufruft.
-- Fast AGI, das ein AGI auf einem anderen Server über TCP-Sockets aufruft.
-- EAGI, das den Zugriff auf den Audiokanal und dessen Steuerung vom AGI aus ermöglicht.
-- DEADAGI, das auch nach einem hangup() Zugriff auf den Kanal gewährt. Wird normalerweise in der ‚h‘-extension aufgerufen.
+- Normal AGI, das ein Programm innerhalb von Asterisk aufruft.
+- Fast AGI, das ein AGI auf einem anderen Server über TCP‑Sockets aufruft.
+- EAGI, das Zugriff auf den Sound‑Kanal und dessen Steuerung vom AGI aus ermöglicht.
+- DeadAGI, das Zugriff auf den Kanal selbst nach hangup() gewährt. Wird üblicherweise in der ‘h’-Erweiterung aufgerufen. Beachten Sie, dass in Asterisk 22 die `DeadAGI`‑Anwendung veraltet ist — die reguläre `AGI`‑Anwendung erkennt einen aufgelegten Kanal und führt das Skript automatisch im „dead“-Modus aus, sodass neue Dialpläne einfach `AGI()` aufrufen sollten.
 
-Anwendungsformat:
+Application format:
 
 ```
-asterisk*CLI> core show application agi
-asterisk*CLI>
-  -= Info about application 'AGI' =-
+asterisk*CLI> core show application AGI
+  -= Info about Application 'AGI' =-
 [Synopsis]
-Executes an AGI compliant application
+Executes an AGI compliant application.
 [Description]
-  [E|Dead]AGI(command|args): Executes an Asterisk Gateway Interface compliant
-program on a channel. AGI allows Asterisk to launch external programs
-written in any language to control a telephony channel, play audio,
-read DTMF digits, etc. by communicating with the AGI protocol on stdin
-and stdout.
-Returns -1 on hangup (except for DeadAGI) or if application requested
- hangup, or 0 on non-hangup exit.
-Using 'EAGI' provides enhanced AGI, with incoming audio available out of band
-on file descriptor 3
-Use the CLI command 'agi show' to list available agi commands
+Executes an Asterisk Gateway Interface compliant program on a channel. AGI
+allows Asterisk to launch external programs written in any language to control
+a telephony channel, play audio, read DTMF digits, etc. by communicating with
+the AGI protocol.
+The following variants of AGI exist, and are chosen based on the value passed
+to <command>:
+    AGI - The classic variant of AGI, this will launch the script specified by
+    <command> as a new process. Communication with the script occurs on 'stdin'
+    and 'stdout'.
+    FastAGI - Connect Asterisk to a FastAGI server using a TCP connection. The
+    URI to the FastAGI server should be given in the form
+    '[scheme]://host.domain[:port][/script/name]', where <scheme> is either
+    'agi' or 'hagi'.
+    AsyncAGI - Use AMI to control the channel in AGI. AsyncAGI should be invoked
+    by passing 'agi:async' to the <command> parameter.
+This application sets the channel variable ${AGISTATUS} on completion, one of:
+SUCCESS, FAILURE, NOTFOUND, HANGUP.
+[Syntax]
+AGI(command[,arg1[,arg2[,...]]])
+Use the CLI command 'agi show commands' to list available agi commands
 ```
 
-Sie können die verfügbaren AGI-Befehle mit dem Befehl `agi show commands` anzeigen (die untenstehende Ausgabe ist repräsentativ; Asterisk 22 fügt einige zusätzliche Befehle hinzu):
+Sie können die verfügbaren AGI‑Befehle mit dem Befehl `agi show commands` anzeigen (die Ausgabe unten ist beispielhaft; Asterisk 22 fügt einige zusätzliche Befehle hinzu):
 
 ```
 Dead                        Command   Description
@@ -437,24 +443,27 @@ stream
    No                          gosub   Execute a dialplan subroutine
 ```
 
-Zum Debuggen verwenden Sie agi debug.
+Um zu debuggen, verwenden Sie agi debug.
 
 ### Verwendung von AGI
 
-In diesem Beispiel verwenden wir php-cli, die PHP-Befehlszeilenversion. Installieren Sie php-cli, falls es noch nicht installiert ist. Befolgen Sie diese Schritte, um PHP-AGI-Skripte zu verwenden. Schritt 1: Alle AGI-Skripte befinden sich in /var/lib/asterisk/agi-bin. Schritt 2: Ändern Sie die Berechtigungen, um die Ausführung zu erlauben.
+In diesem Beispiel verwenden wir php‑cli, die php‑Kommandozeilen‑Version. Installieren Sie php‑cli, falls es noch nicht installiert ist. Befolgen Sie diese Schritte, um php‑AGI‑Skripte zu nutzen.
+
+1. Alle AGI‑Skripte befinden sich in `/var/lib/asterisk/agi-bin`
+2. Ändern Sie die Berechtigungen, um die Ausführung zu erlauben.
 
 ```
 chmod 755 *.php
 ```
 
-Schritt 3: Shell-Schnittstelle (PHP-spezifisch). Die ersten Zeilen des Skripts müssen lauten:
+3. Shell‑Schnittstelle (php‑spezifisch). Die ersten Zeilen des Skripts müssen sein:
 
 ```
 #!/usr/bin/php -q
 <?php
 ```
 
-Schritt 4: I/O-Kanäle öffnen:
+4. Öffne I/O‑Kanäle:
 
 ```
 $stdin = fopen('php://stdin', 'r');
@@ -462,7 +471,7 @@ $stdout = fopen('php://stdout', 'w');
 $stdlog = fopen('agi.log', 'w');
 ```
 
-Schritt 5: Die Asterisk-Ausgabe verwalten. Asterisk sendet die Informationsmenge jedes Mal, wenn AGI aufgerufen wird.
+5. Verwalte die Asterisk-Ausgabe. Asterisk sendet das Informationsset jedes Mal, wenn AGI aufgerufen wird.
 
 ```
 agi_request:testephp
@@ -490,20 +499,22 @@ while (!feof($stdin)) {
 }
 ```
 
-Das vorherige Skript erstellt ein Array namens $agi. Verfügbare Optionen sind:
+Das vorherige Skript erstellt ein Array mit dem Namen $agi. Verfügbare Optionen sind:
 
-- agi_request – AGI-Dateiname
-- agi_channel – AGI-Ursprungskanal
-- agi_language – Eingestellte Sprache
-- agi_type – Kanaltyp (z. B. SIP, DAHDI)
-- agi_uniqueid – Eindeutige Kennung
-- agi_callerid – CallerID (z. B. Flavio <8590>)
-- agi_context – Ursprungskontext
-- agi_extension – Gewählte extensions
+- agi_request – AGI‑Dateiname
+- agi_channel – AGI‑auslösender Kanal
+- agi_language – eingestellte Sprache
+- agi_type – Kanaltyp (z. B. SIP, DAHDI)
+- agi_uniqueid – eindeutige Kennung
+- agi_callerid – Anrufer-ID (z. B. Flavio <8590>)
+- agi_context – auslösender Kontext
+- agi_extension – angerufene Durchwahlnummern
 - agi_priority – Priorität
-- agi_accountcode – Ursprungs-Accountcode
+- agi_accountcode – auslösender Account‑Code
 
-Um eine Variable namens agi_extensions aufzurufen, verwenden Sie $agi[agi_extensions]. Schritt 6: Kanal-AGI verwenden. An diesem Punkt können Sie beginnen, mit Asterisk zu kommunizieren. Verwenden Sie den Befehl fputs, um Befehle an AGI zu senden. Sie können auch den Befehl echo verwenden.
+Um auf eine Variable namens agi_extensions zuzugreifen, verwenden Sie $agi[agi_extensions].
+
+6. Verwenden Sie channel AGI. An diesem Punkt können Sie mit Asterisk kommunizieren. Nutzen Sie den Befehl fputs, um Befehle an AGI zu senden. Sie können auch den Befehl echo verwenden.
 
 ```
 fputs($stdout,"SAY NUMBER 4000 '79#' \n");
@@ -512,13 +523,14 @@ fflush($stdout);
 
 Hinweise zur Verwendung von Anführungszeichen:
 
-- AGI-Befehlsoptionen sind nicht optional
-- Einige Optionen müssen in Anführungszeichen gesetzt werden <escape digits>
-- Einige Optionen sollten nicht in Anführungszeichen gesetzt werden <digit string>
-- Einige Optionen können beide Formate verwenden
+- AGI‑Befehlsoptionen sind nicht optional
+- Einige Optionen müssen in Anführungszeichen eingeschlossen werden <escape digits>
+- Einige Optionen dürfen nicht in Anführungszeichen eingeschlossen werden <digit string>
+- Einige Optionen können in beiden Formaten verwendet werden
 - Sie können einfache Anführungszeichen verwenden
 
-Schritt 7 – Variablen übergeben. Kanalvariablen können im AGI gesetzt, aber nicht innerhalb des AGI verwendet werden. Das folgende Beispiel funktioniert innerhalb eines AGI nicht.
+Schritt 7 – Variablen übergeben  
+Kanalvariablen können im AGI gesetzt werden, können jedoch nicht innerhalb des AGI verwendet werden. Das folgende Beispiel funktioniert nicht innerhalb eines AGI.
 
 ```
 SET VARIABLE MY_DIALCOMMAND "PJSIP/${EXTEN}"
@@ -530,14 +542,16 @@ Das folgende Beispiel funktioniert:
 SET VARIABLE MY_DIALCOMMAND "PJSIP/4000"
 ```
 
-Schritt 8: Asterisk-Antworten. Das Folgende ist notwendig, um Antworten von Asterisk zu verifizieren:
+Schritt 8: Asterisk-Antworten  
+Folgendes ist erforderlich, um Antworten von Asterisk zu überprüfen:
 
 ```
 $msg  = fgets($stdin,1024);
 fputs($stdlog,$msg . "\n");
 ```
 
-Schritt 9: Die gesperrten (Zombie-)Prozesse beenden. Wenn Ihr Skript aus irgendeinem Grund fehlschlägt, bleibt der Prozess hängen. Verwenden Sie den Befehl killproc, um ihn vor einem erneuten Test zu bereinigen.
+Step 9: Töte die gesperrten (Zombie) Prozesse  
+Falls dein Skript aus irgendeinem Grund fehlschlägt, wird der Prozess hängen bleiben. Verwende den killproc‑Befehl, um ihn zu bereinigen, bevor du erneut testest.
 
 ```
  #!/usr/bin/php -q
@@ -575,7 +589,7 @@ Schritt 9: Die gesperrten (Zombie-)Prozesse beenden. Wenn Ihr Skript aus irgende
  // main program
  echo "VERBOSE \"Start here!\" 2\n";
  read();
- errlog("Call from ".$agi['channel']." – Phone ringing ");
+ errlog("Call from ".$agi['channel']." - Phone ringing ");
  read();
  write("SAY DIGITS 22 X"); // X is the escape digit. since X is not DTMF, no ex
 it is possible
@@ -592,62 +606,62 @@ exit is possible
 
 ### DeadAGI
 
-DeadAGI wird verwendet, wenn Sie keinen aktiven Kanal haben. Normalerweise führen Sie das DeadAGI in der ‚h‘-extension aus.
+DeadAGI wird verwendet, wenn Sie keinen Live‑Kanal haben. Normalerweise führen Sie die DeadAGI in der ´h´‑Erweiterung aus. In Asterisk 22 ist die `DeadAGI`‑Anwendung veraltet und kann in einer zukünftigen Version entfernt werden; die Standard‑`AGI`‑Anwendung verarbeitet jetzt aufgehängte („dead“) Kanäle automatisch, daher sollten Sie `AGI()` in neuen dialplans bevorzugen.
 
 ### FASTAGI
 
-Fast AGI implementiert AGI unter Verwendung eines TCP-Ports (standardmäßig 4573) als Input/Output-Kanal. Das FastAGI-Format ist (agi://). Zum Beispiel:
+Fast AGI implementiert AGI über einen TCP‑Port (standardmäßig 4573) als Eingabe‑/Ausgabekanal. Das FastAGI‑Format ist (agi://). Zum Beispiel:
 
 ```
 exten => 0800400001, 1, Agi(agi://192.168.0.1)
 ```
 
-Wenn die TCP-Verbindung verloren geht oder getrennt wird, endet das AGI und die TCP-Verbindung wird geschlossen, gefolgt von einer Anruftrennung. Diese Ressource ist nützlich, um die CPU-Last Ihres Asterisk-Servers zu verringern, wenn Skripte auf einem externen Server ausgeführt werden. Weitere Details zu FastAGI finden Sie im Quellcode-Verzeichnis (bitte sehen Sie sich die Datei „agi/fastagi-test“ an). Die Asterisk-Java-Bibliothek bietet eine FastAGI-Serverimplementierung für Java. Weitere Informationen finden Sie unter https://github.com/asterisk-java/asterisk-java
+Wenn die TCP‑Verbindung verloren geht oder getrennt wird, endet das AGI und die TCP‑Verbindung wird geschlossen, gefolgt von einer Aufhebung des Anrufs. Diese Ressource ist nützlich, um die CPU‑Last Ihres Asterisk‑Servers zu reduzieren, wenn Skripte auf einem externen Server ausgeführt werden. Weitere Details zu FastAGI finden Sie im Quellcode‑Verzeichnis (siehe bitte die Datei “agi/fastagi-test”). Die Asterisk‑Java‑Bibliothek stellt eine FastAGI‑Server‑Implementierung für Java bereit. Weitere Informationen finden Sie unter https://github.com/asterisk-java/asterisk-java
 
-ARI, die moderne REST/WebSocket-Schnittstelle, erhält im nächsten Kapitel ein eigenes Kapitel.
+ARI, die moderne REST/WebSocket‑Schnittstelle, erhält im nächsten Kapitel ein eigenes Kapitel.
 
 ## Ändern des Quellcodes
 
-Asterisk wird in der Sprache C entwickelt (nicht C++). Das Unterrichten von C-Programmierung würde den Rahmen dieses Dokuments sprengen. Wenn Sie interessiert sind, finden Sie unter https://docs.asterisk.org entsprechende Dokumentation, die gute Tipps zum Anwenden und Erstellen von Patches für Asterisk sowie eine API-Dokumentation bietet, die größtenteils von der Software Doxygen generiert wird. Für diejenigen, die mit C-Programmierung vertraut sind, kann das Ändern des Quellcodes der Anwendungen der mächtigste (und gefährlichste) Weg sein, Asterisk zu erweitern.
+Asterisk wird in der Programmiersprache C (nicht C++) entwickelt. Das Unterrichten von C‑Programmierung liegt außerhalb des Umfangs dieses Dokuments. Wenn Sie interessiert sind, finden Sie entsprechende Dokumentation unter https://docs.asterisk.org, die gute Tipps zur Anwendung und Erstellung von Patches für Asterisk sowie API‑Dokumentation, meist generiert mit Doxygen‑Software, bietet. Für diejenigen, die mit C‑Programmierung vertraut sind, kann das Ändern des Quellcodes der Anwendungen die mächtigste (und gefährlichste) Methode sein, Asterisk zu erweitern.
 
 ## Zusammenfassung
 
-In diesem Kapitel haben Sie gelernt, wie man externe Programme an die Asterisk PBX anbindet. Wir haben mit asterisk –rx begonnen, um Befehle von der Linux-Shell an die Asterisk-Konsole zu übergeben. Als Nächstes lernten wir die System()-Anwendung kennen, die es ermöglicht, ein externes Programm aus dem dialplan aufzurufen. AMI ist die Schnittstelle, die einer CTI-Schnittstelle, wie sie in traditionellen PBXs üblich ist, am nächsten kommt. Um eine Anwendung aus dem dialplan aufzurufen, haben wir AGI verwendet, mit einem Ausblick auf seine verschiedenen Varianten: DeadAGI für tote Kanäle, EAGI für die Handhabung des Audiostreams, Fast AGI für die Verwendung von TCP-Sockets als Input/Output-Schnittstelle und normales AGI für das Aufrufen und Verarbeiten der Skripte innerhalb desselben Asterisk-Servers. Das nächste Kapitel ist ARI gewidmet, der modernen REST/WebSocket-API, die externen Anwendungen die volle Kontrolle über Asterisk-Kanäle und -Brücken gibt.
+In diesem Kapitel haben Sie gelernt, wie externe Programme an die Asterisk PBX angebunden werden. Wir haben mit `asterisk –rx` begonnen, um Befehle von der Linux‑Shell an die Asterisk‑Konsole zu übergeben. Anschließend haben wir die Anwendung `System()` kennengelernt, die es ermöglicht, ein externes Programm aus dem Dialplan heraus aufzurufen. AMI ist die dem CTI‑Interface am nächsten kommende Schnittstelle, wie sie in traditionellen PBXs üblich ist. Um eine Anwendung aus dem Dialplan heraus aufzurufen, haben wir das AGI verwendet und dabei verschiedene Varianten ausprobiert: DeadAGI für tote Kanäle, EAGI für die Verarbeitung des Audiostreams, Fast AGI für die Nutzung von TCP‑Sockets als Ein‑/Ausgabe‑Schnittstelle und das normale AGI für das Aufrufen und Verarbeiten von Skripten auf derselben Asterisk‑Box. Das nächste Kapitel ist ARI gewidmet, der modernen REST/WebSocket‑API, die externen Anwendungen die vollständige Kontrolle über Asterisk‑Kanäle und Bridges gibt.
 
 ## Quiz
 
-1. Welche der folgenden Methoden ist KEINE Schnittstellenmethode für Asterisk?
+1. Welche der folgenden ist KEINE Schnittstellenmethode für Asterisk?
    - A. AMI
    - B. AGI
    - C. `asterisk -rx`
    - D. System()
    - E. External()
-2. AMI ermöglicht die Übertragung von Asterisk-Befehlen über TCP-Sockets, und diese Schnittstelle ist bei einer frischen Asterisk-Installation standardmäßig aktiviert.
+2. AMI ermöglicht das Senden von Asterisk‑Befehlen über TCP‑Sockets, und diese Schnittstelle ist in einer frischen Asterisk‑Installation standardmäßig aktiviert.
    - A. Wahr
    - B. Falsch
-3. AMI ist sehr sicher, da die Authentifizierung MD5-Challenge/Response verwendet.
+3. AMI ist sehr sicher, weil seine Authentifizierung MD5‑Challenge/Response verwendet.
    - A. Wahr
    - B. Falsch
-4. FastAGI lässt den dialplan externe Skripte auf einer anderen Maschine über TCP-Sockets (normalerweise Port 4573) aufrufen.
+4. FastAGI lässt den Dialplan externe Skripte auf einer anderen Maschine über TCP‑Sockets (gewöhnlich Port 4573) aufrufen.
    - A. Wahr
    - B. Falsch
-5. DeadAGI wird auf aktiven Kanälen verwendet. Es kann auf DAHDI-Kanälen verwendet werden, aber nicht auf SIP- oder IAX-Kanälen.
+5. DeadAGI wird auf aktiven Kanälen verwendet. Es kann auf DAHDI‑Kanälen, aber nicht auf SIP‑ oder IAX‑Kanälen eingesetzt werden.
    - A. Wahr
    - B. Falsch
 6. AGI unterstützt nur PHP als Skriptsprache.
    - A. Wahr
    - B. Falsch
-7. Der Befehl ___ zeigt alle verfügbaren AGI-Befehle an.
-8. Der Befehl ___ zeigt alle verfügbaren AMI-Befehle an.
-9. Welchen Header fügt der Client in ein AMI-Aktionspaket ein, damit die asynchronen Antworten und Ereignisse, die von Asterisk zurückkommen, mit der Aktion korreliert werden können, die sie ausgelöst hat?
+7. Der Befehl ___ zeigt alle verfügbaren AGI‑Befehle.
+8. Der Befehl ___ zeigt alle verfügbaren AMI‑Befehle.
+9. In einem AMI‑Action‑Packet, welchen Header fügt der Client hinzu, damit die asynchronen Antworten und Ereignisse, die von Asterisk zurückkommen, mit der auslösenden Aktion korreliert werden können?
    - A. `ActionID`
    - B. `Variable`
    - C. `Secret`
    - D. `Event`
-10. Welche Berechtigungsklasse in der AMI manager.conf muss ein Benutzer haben, um die Aktion `Originate` auszuführen und einen ausgehenden Anruf zu tätigen?
+10. Welche manager.conf‑Berechtigungsklasse muss ein Benutzer haben, um die `Originate`‑Aktion auszuführen und einen ausgehenden Anruf zu tätigen?
     - A. `originate`
     - B. `verbose`
     - C. `log`
     - D. `reporting`
 
-**Antworten:** 1 — E · 2 — B · 3 — B · 4 — A · 5 — B · 6 — B · 7 — `agi show commands` · 8 — `manager show commands` · 9 — A · 10 — A
+**Answers:** 1 — E · 2 — B · 3 — B · 4 — A · 5 — B · 6 — B · 7 — `agi show commands` · 8 — `manager show commands` · 9 — A · 10 — A

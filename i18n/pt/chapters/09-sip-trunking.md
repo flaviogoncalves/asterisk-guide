@@ -1,40 +1,54 @@
 # SIP trunking, DID & the PSTN
 
-Um PBX que só consegue ligar para si mesmo não é muito útil. Mais cedo ou mais tarde, todo sistema precisa alcançar o resto do mundo — a rede telefônica pública comutada (PSTN), um provedor SIP ou outro PBX. O link que transporta essas chamadas é um **trunk**. Na era TDM, um trunk era um circuito físico: um T1/E1 PRI ou um conjunto de linhas FXO analógicas. Hoje, é quase sempre um **SIP trunk** — uma conexão lógica com um Internet Telephony Service Provider (ITSP) transportada pela mesma rede IP que todo o resto.
+Um PBX que só pode ligar para ele mesmo não é muito útil. Mais cedo ou mais tarde todo sistema
+precisa alcançar o resto do mundo — a rede telefônica pública comutada
+(PSTN), um provedor SIP ou outro PBX. O link que transporta essas chamadas é um
+**trunk**. Na era TDM um trunk era um circuito físico: um T1/E1 PRI ou um conjunto
+de linhas analógicas FXO. Hoje ele é quase sempre um **SIP trunk** — uma conexão
+lógica a um Internet Telephony Service Provider (ITSP) transportada sobre a mesma
+rede IP que todo o resto.
 
-Este capítulo mostra como conectar o Asterisk 22 a um ITSP com PJSIP, como escolher entre um trunk baseado em registro e um baseado em IP, como rotear números DID de entrada para o destino correto, como enviar chamadas de saída com o caller-ID correto e formatação E.164, e como criar failover e roteamento de menor custo entre vários trunks. Terminamos com o tratamento de NAT para trunks e um laboratório que levanta um segundo Asterisk (e SIPp) como um ITSP simulado para que você possa realizar chamadas reais através de um trunk.
+Este capítulo mostra como conectar o Asterisk 22 a um ITSP com PJSIP, como escolher
+entre um trunk baseado em registro e um trunk baseado em IP, como rotear números DID
+entrantes para o destino correto, como enviar chamadas externas com ID de chamada
+correto e formatação E.164, e como construir failover e roteamento de menor custo
+através de vários trunks. Terminamos com o tratamento de NAT para trunks e um laboratório que
+levanta um segundo Asterisk (e SIPp) como um ITSP simulado para que você possa fazer chamadas reais
+através de um trunk.
 
-Tudo aqui foi verificado no laboratório Asterisk 22.10.0 do livro; o padrão de objeto de trunk é o mesmo introduzido em *Building your first PBX with PJSIP* e *SIP & PJSIP in depth*.
+Tudo aqui foi verificado contra o laboratório do livro para Asterisk 22.10.0; o padrão
+de objeto trunk é o mesmo introduzido em *Building your first PBX with PJSIP*
+e *SIP & PJSIP in depth*.
 
-## Objetivos
+## Objectives
 
 Ao final deste capítulo, você deverá ser capaz de:
 
-- Conectar o Asterisk 22 a um ITSP com PJSIP
-- Escolher entre trunks baseados em registro e baseados em IP (estáticos)
-- Rotear DIDs de entrada para a extensão, IVR ou fila correta
-- Rotear chamadas de saída com o caller-ID correto e formatação E.164
-- Criar failover de trunk e roteamento de menor custo com `${DIALSTATUS}`
-- Lidar com NAT para trunks no transporte e no endpoint
+- Conectar o Asterisk 22 a um ITSP usando PJSIP
+- Escolher entre troncos baseados em registro e troncos baseados em IP (estáticos)
+- Roteir DIDs de entrada para a extensão, IVR ou fila corretas
+- Roteir chamadas de saída com ID de chamada adequado e formatação E.164
+- Construir failover de tronco e roteamento de menor custo com `${DIALSTATUS}`
+- Gerenciar NAT para troncos no transporte e no endpoint
 
-## O que é um SIP trunk
+## O que é um tronco SIP
 
-Um SIP trunk é um caminho de voz lógico entre seu PBX e outro sistema SIP. Na prática, esse "outro sistema" é uma de duas coisas:
+Um tronco SIP é um caminho lógico de voz entre seu PBX e outro sistema SIP. Na prática, esse “outro sistema” é uma das duas coisas:
 
-- **Um ITSP (Internet Telephony Service Provider).** Uma operadora comercial que vende originação e terminação de chamadas e, geralmente, um bloco de números de telefone (DIDs). Você aponta o Asterisk para o host de sinalização do provedor, e o provedor conecta suas chamadas à PSTN mais ampla. É assim que a maioria dos sistemas modernos alcança a rede telefônica — sem necessidade de hardware de telefonia.
-- **Um gateway PSTN.** Um dispositivo (ou outro Asterisk) que possui interfaces PSTN físicas — uma placa PRI, portas FXO analógicas ou um gateway GSM/4G — e as apresenta ao seu PBX como SIP. O gateway faz a conversão TDM-para-SIP; do ponto de vista do Asterisk, é apenas mais um SIP trunk.
+- **Um ITSP (Internet Telephony Service Provider).** Um operadora comercial que lhe vende origem e terminação de chamadas e, geralmente, um bloco de números de telefone (DIDs). Você aponta o Asterisk para o host de sinalização do provedor, e o provedor conecta suas chamadas à rede PSTN mais ampla. É assim que a maioria dos sistemas modernos alcança a rede telefônica — sem necessidade de hardware de telefonia.
+- **Um gateway PSTN.** Um dispositivo (ou outro Asterisk) que possui interfaces físicas PSTN — uma placa PRI, portas analógicas FXO ou um gateway GSM/4G — e as apresenta ao seu PBX como SIP. O gateway faz a conversão TDM‑para‑SIP; do ponto de vista do Asterisk, ele é apenas outro tronco SIP.
 
-De qualquer forma, no PJSIP, um trunk é **apenas um endpoint**. A mesma família de objetos que você usou para um telefone — `endpoint`, `auth`, `aor`, opcionalmente `identify` e `registration` — constrói um trunk. As diferenças estão nos detalhes: um trunk autentica *saídas* (você é o cliente, então as credenciais vão em `outbound_auth`, não `auth`), geralmente não registra um user agent para você (você se registra *nele*, ou ele envia tráfego de um IP conhecido), e ele direciona chamadas de entrada para um context dedicado como `from-pstn` em vez de `from-internal`.
+De qualquer forma, no PJSIP um tronco é **apenas um endpoint**. A mesma família de objetos que você usou para um telefone — `endpoint`, `auth`, `aor`, opcionalmente `identify` e `registration` — constrói um tronco. As diferenças estão nos detalhes: um tronco autentica *saída* (você é o cliente, então as credenciais vão em `outbound_auth`, não em `auth`), normalmente não registra um agente de usuário para você (você se registra nele, ou ele lhe envia tráfego de um IP conhecido), e direciona chamadas recebidas para um contexto dedicado como `from-pstn` em vez de `from-internal`.
 
-> **Comparado com o antigo trunk TDM.** Um PRI fornecia um número fixo de canais B (23 em um T1, 30 em um E1) e sinalizava o estabelecimento da chamada através de um canal D dedicado (veja o capítulo *Legacy channels*). Um SIP trunk não tem contagem fixa de canais — a capacidade é o que sua largura de banda, a política do seu provedor e quaisquer limites de `max_contacts`/chamadas simultâneas permitirem. Caller-ID, DID e o progresso da chamada que costumavam trafegar em elementos de informação ISDN agora trafegam em cabeçalhos SIP e SDP.
+> **Comparado ao antigo tronco TDM.** Um PRI lhe fornecia um número fixo de B‑channels (23 em um T1, 30 em um E1) e sinalizava o estabelecimento de chamadas por um D‑channel dedicado (veja o capítulo *Canais legados*). Um tronco SIP não tem contagem fixa de canais — a capacidade é o que sua largura de banda, a política do provedor e quaisquer limites `max_contacts`/de chamadas simultâneas permitirem. Caller‑ID, DID e progresso de chamada que antes viajavam em elementos de informação ISDN agora viajam em cabeçalhos SIP e SDP.
 
-Existem duas maneiras pelas quais um ITSP concordará em trocar tráfego com você, e elas determinam como você constrói o trunk: **baseado em registro** e **baseado em IP (estático)**. Cobriremos cada um por vez.
+Existem duas maneiras pelas quais um ITSP concordará em trocar tráfego com você, e elas determinam como você constrói o tronco: **baseado em registro** e **baseado em IP (estático)**. Abordaremos cada uma a seguir.
 
 ## Trunks baseados em registro
 
-Um trunk baseado em registro é o modelo usado quando o provedor espera que *você* faça login *neles*. Seu Asterisk envia periodicamente um `REGISTER` SIP para o provedor, autenticando-se com um nome de usuário e senha, exatamente da mesma forma que um telefone se registra no seu PBX. Isso é comum quando seu IP público é dinâmico, quando você está atrás de NAT, ou quando o provedor simplesmente identifica os clientes por credenciais SIP em vez de endereço IP.
+Um trunk baseado em registro é o modelo usado quando o provedor espera que *você* faça login *neles*. Seu Asterisk periodicamente envia um SIP `REGISTER` ao provedor, autenticando com um nome de usuário e senha, exatamente como um telefone se registra ao seu PBX. Isso é comum quando seu IP público é dinâmico, quando você está atrás de NAT, ou quando o provedor simplesmente identifica clientes por credenciais SIP em vez de por endereço IP.
 
-No PJSIP, o login de saída reside em um objeto `registration` dedicado. Ele substitui a única linha `register =>` que o driver removido `chan_sip` usava em `sip.conf`. Aqui está um trunk de registro completo para um provedor fictício, seguindo o padrão verificado dos capítulos anteriores — observe `outbound_auth` (não `auth`), `server_uri`/`client_uri` (não `server`/`client`), `from_user`/`from_domain` no endpoint, e `dtmf_mode=rfc4733`:
+Em PJSIP o login de saída vive em um objeto `registration` dedicado. Ele substitui a única linha `register =>` que o driver `chan_sip` removido usava em `sip.conf`. Aqui está um trunk de registro completo para um provedor fictício, seguindo o padrão verificado dos capítulos anteriores — note `outbound_auth` (não `auth`), `server_uri`/`client_uri` (não `server`/`client`), `from_user`/`from_domain` no endpoint e `dtmf_mode=rfc4733`:
 
 ```
 [itsp]
@@ -69,15 +83,15 @@ contact_user=4830001000
 retry_interval=60
 ```
 
-Algumas coisas a notar:
+Algumas coisas a observar:
 
-- **`auth_type=digest`, não `userpass`.** Ambos produzem a mesma autenticação digest, mas no Asterisk 22, `userpass` (e o antigo `md5`) são **descontinuados e convertidos silenciosamente para `digest`**. Prefira `digest` em novas configurações; você ainda verá `userpass` em arquivos antigos e nos capítulos anteriores deste livro.
-- **`outbound_auth` tanto no endpoint quanto no registro.** O registro o usa para autenticar o `REGISTER`; o endpoint o usa para responder ao `407 Proxy Authentication Required` que o provedor envia de volta para um `INVITE` de saída. Eles podem compartilhar um objeto `auth`.
-- **`from_user` / `from_domain`.** Muitos provedores rejeitam chamadas cujo cabeçalho `From` não carrega o número da sua conta e o domínio deles. Essas duas opções definem exatamente isso.
-- **`contact_user=4830001000`.** Isso se torna a parte de usuário do `Contact` que você registra, para que o provedor saiba para qual número entregar as chamadas de entrada. É o equivalente moderno do sufixo `/9999` na antiga linha `register =>`.
+- **`auth_type=digest`, não `userpass`.** Ambos produzem a mesma autenticação digest, mas no Asterisk 22 `userpass` (e o antigo `md5`) são **obsoletos e convertidos silenciosamente para `digest`**. Prefira `digest` em novas configurações; você ainda verá `userpass` em arquivos mais antigos e nos capítulos anteriores deste livro.
+- **`outbound_auth` tanto no endpoint quanto no registro.** O registro o usa para autenticar o `REGISTER`; o endpoint o usa para responder ao `407 Proxy Authentication Required` que o provedor envia de volta a um outbound `INVITE`. Eles podem compartilhar um único objeto `auth`.
+- **`from_user` / `from_domain`.** Muitos provedores rejeitam chamadas cujo cabeçalho `From` não contém seu número de conta e seu domínio. Essas duas opções definem exatamente isso.
+- **`contact_user=4830001000`.** Isso se torna a parte do usuário do `Contact` que você registra, de modo que o provedor saiba para qual número entregar chamadas inbound. É o equivalente moderno do sufixo `/9999` na antiga linha `register =>`.
 - **`retry_interval=60`.** Se o registro falhar, tente novamente a cada 60 segundos.
 
-Após um reload, confirme o registro com `pjsip show registrations`. No laboratório — onde o `itsp.example.com` não responde de fato — a tabela fica assim:
+Após um reload, confirme o registro com `pjsip show registrations`. No laboratório — onde `itsp.example.com` não responde de fato — a tabela fica assim:
 
 ```
 *CLI> pjsip show registrations
@@ -90,15 +104,15 @@ Após um reload, confirme o registro com `pjsip show registrations`. No laborat�
 Objects found: 1
 ```
 
-O sufixo `(exp. Ns)` faz a contagem regressiva dos segundos até a próxima tentativa; assim que cruza zero, ele lê brevemente `(exp. Ns ago)` antes que a tentativa de reenvio seja disparada. Contra um provedor real, a coluna `Status` lê `Registered` com os segundos restantes até a próxima atualização. `Rejected` (ou `Unregistered`) significa que o provedor não aceitou o login — ative o `pjsip set logger on` e leia a resposta `401`/`403`, quase sempre um nome de usuário, senha ou domínio `client_uri` incorreto.
+O sufixo `(exp. Ns)` conta regressivamente os segundos até a próxima tentativa; quando chega a zero ele exibe brevemente `(exp. Ns ago)` antes que a nova tentativa seja disparada. Contra um provedor real a coluna `Status` mostra `Registered` com os segundos restantes até a próxima atualização. `Rejected` (ou `Unregistered`) significa que o provedor não aceitou o login — ative `pjsip set logger on` e leia a resposta `401`/`403`, quase sempre um nome de usuário, senha ou domínio `client_uri` incorretos.
 
-## Trunks baseados em IP (estáticos)
+## IP-based (static) trunks
 
-O segundo modelo não precisa de registro algum. O provedor conhece seu endereço IP público e envia chamadas diretamente para ele; você, por sua vez, envia chamadas para o IP de sinalização conhecido do provedor. A autenticação é feita por **endereço IP de origem**, não por credenciais SIP. Isso é típico para trunks entre dois servidores que você controla, ou para um trunk corporativo onde ambos os lados possuem endereços estáticos.
+O segundo modelo não requer registro algum. O provedor conhece seu endereço IP público e envia chamadas diretamente para ele; você, por sua vez, envia chamadas para o IP de sinalização conhecido do provedor. A autenticação é feita por **endereço IP de origem**, não por credenciais SIP. Isso é típico para trunks entre dois servidores que você controla, ou para um trunk empresarial onde ambos os lados têm endereços estáticos.
 
-O objeto chave é o `identify`. Ele diz ao Asterisk: "qualquer solicitação SIP que chegue deste IP pertence àquele endpoint". Sem ele, o PJSIP tenta combinar uma solicitação de entrada com um endpoint pelo usuário `From`, o que o tráfego de uma operadora não satisfará — então a chamada seria rejeitada ou cairia no endpoint `anonymous`.
+O objeto chave é `identify`. Ele diz ao Asterisk: "qualquer requisição SIP que chegar deste IP *pertence* àquele endpoint." Sem ele, o PJSIP tenta corresponder uma requisição inbound a um endpoint pelo usuário `From`, o que o tráfego de uma operadora não satisfaz — então a chamada seria rejeitada ou cairia no endpoint `anonymous`.
 
-Um trunk estático remove o objeto `registration` e adiciona o `identify`:
+Um trunk estático elimina o objeto `registration` e adiciona `identify`:
 
 ```
 [itsp]
@@ -122,7 +136,7 @@ endpoint=itsp
 match=203.0.113.10
 ```
 
-O `match` aceita um endereço IP, um intervalo CIDR ou um nome de host. **Nomes de host são resolvidos uma vez, no momento do carregamento da configuração**, portanto, se o IP do seu provedor mudar, você deve recarregar. Para uma operadora que publica vários gateways de mídia, liste cada IP de sinalização — você pode repetir o `match` ou fornecer um CIDR:
+`match` aceita um endereço IP, um intervalo CIDR ou um nome de host. **Nomes de host são resolvidos uma única vez, no carregamento da configuração**, portanto, se o IP do seu provedor mudar você deverá recarregar. Para uma operadora que publica vários gateways de mídia, liste cada IP de sinalização — você pode repetir `match` ou fornecer um CIDR:
 
 ```
 [itsp-identify]
@@ -133,7 +147,7 @@ match=203.0.113.11
 match=198.51.100.0/24
 ```
 
-Verifique o que o Asterisk aceitará com `pjsip show identifies`. Capturado do laboratório (a linha `sipp-identify` é o endpoint SIPp pré-existente do laboratório):
+Verifique o que o Asterisk aceitará com `pjsip show identifies`. Capturado do laboratório (a linha `sipp-identify` é o endpoint SIPp pré‑existente do laboratório):
 
 ```
 *CLI> pjsip show identifies
@@ -151,12 +165,12 @@ Verifique o que o Asterisk aceitará com `pjsip show identifies`. Capturado do l
 Objects found: 2
 ```
 
-### A implicação de segurança
+### The security implication
 
-Um trunk baseado em IP sem autenticação é uma porta, e o `identify`/`match` é a única fechadura nela. Se você definir um `match` muito amplo — ou se um invasor puder falsificar um IP de origem — as chamadas cairão no seu context `from-pstn` sem autenticação. Duas defesas, usadas juntas:
+Um trunk baseado em IP sem autenticação é uma porta, e `identify`/`match` é a única fechadura nela. Se você `match` um intervalo muito amplo — ou se um atacante puder falsificar um IP de origem — as chamadas chegam ao seu contexto `from-pstn` não autenticadas. Duas defesas, usadas em conjunto:
 
-- **Combine o mais estritamente possível.** Prefira IPs de host específicos em vez de CIDRs amplos. Apenas os IPs de sinalização reais do provedor pertencem ao `match`.
-- **Combine com uma ACL.** O PJSIP pode descartar tráfego na camada SIP antes mesmo que ele chegue a um endpoint, usando um objeto `type=acl` (ou `acl.conf`):
+- **Correspondência o mais restrita possível.** Prefira IPs de host específicos em vez de CIDRs amplos. Apenas os verdadeiros IPs de sinalização do provedor pertencem a `match`.
+- **Combine isso com uma ACL.** O PJSIP pode descartar tráfego na camada SIP antes que ele chegue a um endpoint, usando um objeto `type=acl` (ou `acl.conf`):
 
 ```
 [itsp-acl]
@@ -166,15 +180,27 @@ permit=203.0.113.10
 permit=203.0.113.11
 ```
 
-Referencie-o a partir da seção global (`acl=itsp-acl` em `[global]`/`type=global`) ou aplique por transporte. O princípio é o mesmo do capítulo SIP: negue tudo, depois permita apenas o que você confia. E o que quer que seu context de trunk faça, **nunca o deixe alcançar um context que possa discar de volta para a PSTN** sem uma regra deliberada e autenticada — esse é o clássico buraco de fraude telefônica.
+Uma seção `type=acl` não precisa de referência: `res_pjsip_acl` aplica cada um desses objetos a *todo* o tráfego SIP inbound antes que ele alcance qualquer endpoint. (As opções `acl` e `contact_acl` no objeto puxam listas de regras nomeadas de `acl.conf` ao invés de listar `permit`/`deny` inline como acima.) O princípio é o mesmo do capítulo SIP: negar tudo, então permitir apenas o que você confia. E seja qual for o contexto do seu trunk,
+**nunca o deixe alcançar um contexto que possa discar de volta para a PSTN** sem uma regra deliberada e autenticada — esse é o clássico buraco de fraude de tarifas.
 
-> **Qual modelo devo usar?** Se o provedor lhe fornecer um nome de usuário e senha, use um trunk de **registro**. Se eles pedirem seu endereço IP e fornecerem o deles, use um trunk de **identify**. Alguns provedores suportam ambos; muitos trunks reais combinam um registro (para que o provedor possa encontrá-lo) com um identify (para que INVITEs de entrada dos gateways de mídia do provedor sejam combinados mesmo quando chegam de um IP diferente do registrar).
+> **Which model should I use?** If the provider gives you a username and password,
+> use a **registration** trunk. If they ask for your IP address and give you
+> theirs, use an **identify** trunk. Some providers support both; many real
+> trunks combine a registration (so the provider can find you) with an identify
+> (so inbound INVITEs from the provider's media gateways are matched even when
+> they arrive from an IP other than the registrar).
 
 ## Roteamento de entrada e tratamento de DID
 
-Assim que as chamadas de entrada chegam, elas caem no `context` do endpoint — aqui, `from-pstn`. Um **DID** (Direct Inward Dialing number) é simplesmente o número discado que o provedor lhe entrega na URI da solicitação. Seu trabalho no dialplan é mapear cada DID para um destino: uma extensão única, um IVR, uma fila ou um grupo de toque.
+Uma vez que as chamadas de entrada chegam, elas caem no `context` do endpoint — aqui
+`from-pstn`. Um **DID** (número de Discagem Direta Interna) é simplesmente o número discado
+que o provedor entrega a você no URI da requisição. Seu trabalho no dialplan é mapear cada
+DID para um destino: uma única extensão, um IVR, uma fila ou um grupo de toque.
 
-O número que o provedor envia é correspondido como `${EXTEN}` no `from-pstn`. O quanto dele você vê depende do provedor — alguns enviam o número E.164 completo (`+4830001000`), alguns enviam o número nacional, alguns enviam apenas os últimos dígitos. Inspecione uma chamada de entrada real com `pjsip set logger on` e observe a URI da solicitação antes de escrever os padrões.
+O número que o provedor envia é comparado como `${EXTEN}` em `from-pstn`. Quanto dele você vê depende do provedor — alguns enviam o número completo no formato E.164
+(`+4830001000`), outros enviam o número nacional, outros enviam apenas os últimos
+dígitos. Inspecione uma chamada de entrada real com `pjsip set logger on` e observe o
+URI da requisição antes de escrever padrões.
 
 ### Um DID para uma extensão
 
@@ -198,11 +224,12 @@ exten => 4830001000,1,Answer()
  same =>             n,Goto(ivr-main,s,1)
 ```
 
-`ivr-main` é o context de atendente automático que você construiu nos capítulos de dialplan (`Background()` + `WaitExten()`). Rotear o DID é apenas um `Goto`.
+`ivr-main` é o contexto de atendente automático que você criou nos capítulos do dialplan
+(`Background()` + `WaitExten()`). Roteando o DID é apenas um `Goto`.
 
 ### Um DID para uma fila
 
-Uma linha de suporte que deve cair em uma fila de chamadas:
+Uma linha de suporte que deve entrar em uma fila de chamadas:
 
 ```
 [from-pstn]
@@ -211,9 +238,11 @@ exten => 4830002000,1,Answer()
  same =>             n,Hangup()
 ```
 
-### Muitos DIDs de uma vez
+### Vários DIDs de uma vez
 
-Ao comprar um bloco de números, um padrão mantém o dialplan pequeno. Suponha que seu intervalo de DID seja `4830003000`–`4830003099` e o provedor envie o número completo; mapeie os dois últimos dígitos de cada DID para a extensão `60xx`:
+Quando você compra um bloco de números, um padrão mantém o dialplan pequeno. Suponha que sua
+faixa de DIDs seja `4830003000`–`4830003099` e o provedor envie o número completo; mapeie
+os dois últimos dígitos de cada DID para a extensão `60xx`:
 
 ```
 [from-pstn]
@@ -222,9 +251,14 @@ exten => _48300030XX,1,NoOp(DID ${EXTEN} -> extension 60${EXTEN:-2})
  same =>             n,Hangup()
 ```
 
-O `${EXTEN:-2}` pega os dois últimos dígitos (o deslocamento negativo conta da direita), então `4830003007` toca `PJSIP/6007`. Uma tabela de consulta `did => extension` construída com `GoSub` ou um banco de dados Asterisk (`AstDB`/`func_odbc`) escala ainda mais, mas para um punhado de números, padrões explícitos são os mais claros.
+`${EXTEN:-2}` obtém os dois últimos dígitos (deslocamento negativo conta a partir da direita),
+então `4830003007` toca `PJSIP/6007`. Uma tabela de consulta `did => extension` construída com
+`GoSub` ou um banco de dados Asterisk (`AstDB`/`func_odbc`) escala ainda mais, mas para
+um pequeno número de DIDs padrões explícitos são os mais claros.
 
-> **Capture o DID não correspondido.** Adicione uma extensão `i` (inválida) ao `from-pstn` para que um número de entrada mal roteado reproduza um anúncio ou toque para o operador em vez de cair silenciosamente:
+> **Capture o DID não correspondido.** Adicione uma extensão `i` (inválida) a `from-pstn` para que um
+> número de entrada mal roteado reproduza um anúncio ou toque o operador em vez de
+> ser descartado silenciosamente:
 >
 > ```
 > exten => i,1,Playback(ss-noservice)
@@ -233,11 +267,15 @@ O `${EXTEN:-2}` pega os dois últimos dígitos (o deslocamento negativo conta da
 
 ## Roteamento de saída, caller-ID e E.164
 
-As chamadas de saída fluem para o outro lado: um telefone interno disca um número, seu dialplan o corresponde, remove qualquer prefixo de acesso, define o caller-ID que o provedor espera e entrega a chamada ao endpoint do trunk com `Dial(PJSIP/<number>@itsp)`.
+Chamadas de saída fluem no sentido oposto: um telefone interno disca um número, seu dialplan
+o corresponde, remove qualquer prefixo de acesso, define o caller-ID que o provedor espera e
+encaminha a chamada para o endpoint trunk com `Dial(PJSIP/<number>@itsp)`.
 
 ### Enviando a chamada para o trunk
 
-A sintaxe de canal para um trunk é `PJSIP/<number>@<endpoint>`: a parte antes do `@` torna-se a parte de usuário da URI da solicitação de saída, e a parte após o `@` nomeia o endpoint cujo `aor` `contact` fornece o host de destino. Uma regra clássica de "disque 9 para uma linha externa":
+A sintaxe do canal para um trunk é `PJSIP/<number>@<endpoint>`: a parte antes do
+`@` torna‑se a porção de usuário do URI de requisição de saída, e a parte após o
+`@` nomeia o endpoint cujo `aor` `contact` fornece o host de destino. Uma regra clássica “disque 9 para uma linha externa”:
 
 ```
 [from-internal]
@@ -247,29 +285,43 @@ exten => _9NXXXXXXXXX,1,NoOp(Outbound to ${EXTEN:1} via itsp)
  same =>             n,Hangup()
 ```
 
-O `${EXTEN:1}` remove o código de acesso `9` inicial antes que o número seja enviado. O padrão `_9NXXXXXXXXX` corresponde a `9` mais um número de 10 dígitos cujo primeiro dígito é 2–9; ajuste-o para o seu plano de discagem.
+`${EXTEN:1}` remove o código de acesso `9` inicial antes que o número seja enviado. O
+padrão `_9NXXXXXXXXX` corresponde a `9` mais um número de 10 dígitos cujo primeiro dígito é
+2–9; ajuste-o ao seu plano de discagem.
 
 ### Caller-ID em chamadas de saída
 
-A maioria dos ITSPs ignora — ou rejeita ativamente — um caller-ID que não seja um número que você possui. Defina o número de caller-ID de saída para um dos seus DIDs com a função `CALLERID(num)` antes do `Dial()`, como mostrado acima. Você também pode definir o nome:
+A maioria dos ITSPs ignora — ou rejeita ativamente — um caller-ID que não seja um número que você possua.
+Defina o número de caller-ID de saída para um dos seus DIDs com a função `CALLERID(num)`
+antes de `Dial()`, como mostrado acima. Você também pode definir o nome:
 
 ```
  same => n,Set(CALLERID(num)=4830001000)
  same => n,Set(CALLERID(name)=ACME Corp)
 ```
 
-Se o provedor ainda remover ou substituir seu nome de caller-ID, essa é a política deles — muitas operadoras obtêm o nome exibido de seu próprio banco de dados CNAM baseado no número, não do seu cabeçalho `From`.
+Se o provedor ainda remover ou sobrescrever o nome do seu caller-ID, essa é a política dele — muitos operadores obtêm o nome exibido de seu próprio banco de dados CNAM
+associado ao número, não do seu cabeçalho `From`.
 
 Duas opções de endpoint interagem com isso:
 
-- **`from_user`** define a parte de usuário do cabeçalho `From` no nível SIP, que alguns provedores usam para identificar sua conta independentemente do `CALLERID(num)`.
-- **`trust_id_outbound`** (padrão `no`) controla se o Asterisk enviará cabeçalhos de identidade sensíveis à privacidade (`P-Asserted-Identity`/`P-Preferred-Identity`) na saída. Deixe desligado, a menos que seu provedor documente que deseja PAI, caso em que defina `trust_id_outbound=yes` e `send_pai=yes`.
+- **`from_user`** define a parte de usuário do cabeçalho `From` no nível SIP, que
+  alguns provedores usam para identificar sua conta independentemente de `CALLERID(num)`.
+- **`trust_id_outbound`** (padrão `no`) controla se o Asterisk enviará
+  cabeçalhos de identidade sensíveis à privacidade (`P-Asserted-Identity`/`P-Preferred-Identity`)
+  na saída. Deixe desativado a menos que seu provedor documente que deseja PAI, caso
+  em que configure `trust_id_outbound=yes` e `send_pai=yes`.
 
 ### Normalizando para E.164
 
-E.164 é o formato de número internacional: um `+` inicial, código do país, depois o número nacional, sem espaços ou pontuação (por exemplo, `+5548999990000` ou `+14155550100`). As operadoras esperam — ou exigem — cada vez mais E.164 no trunk. Em vez de espalhar a formatação pelo dialplan, normalize uma vez no context de saída.
+E.164 é o formato internacional de número: um `+` inicial, código do país, depois o
+número nacional, sem espaços ou pontuação (por exemplo `+5548999990000` ou
+`+14155550100`). Os operadores cada vez mais esperam — ou exigem — E.164 no trunk.
+Em vez de espalhar a formatação pelo dialplan, normalize uma única vez no contexto de saída.
 
-Um exemplo norte-americano que aceita um número local de 10 dígitos, um número prefixado com `1` de 11 dígitos ou um número já em E.164, e sempre apresenta `+1…` ao trunk:
+Um exemplo norte‑americano que aceita um número local de 10 dígitos, um número de 11 dígitos
+com prefixo `1`, ou um número já em E.164, e sempre apresenta `+1…` ao
+trunk:
 
 ```
 [from-internal]
@@ -290,15 +342,18 @@ exten => _+X.,1,Set(CALLERID(num)=+14155550000)
  same =>     n,Hangup()
 ```
 
-Alguns provedores querem o `+`; outros querem apenas os dígitos. Se o seu rejeitar o `+`, remova-o na saída com `${EXTEN:1}` no `Dial`. O ponto é que todo o conhecimento de formato vive em um só lugar, então trocar de provedor — ou adicionar um segundo — é uma mudança de uma linha.
+Alguns provedores desejam o `+`; outros querem apenas os dígitos. Se o seu rejeitar o
+`+`, remova‑o na saída com `${EXTEN:1}` no `Dial`. O ponto é que
+todo o conhecimento de formato fica em um único lugar, então trocar de provedor — ou adicionar um
+segundo — é uma mudança de uma linha.
 
-## Failover e roteamento de menor custo
+## Failover and least-cost routing
 
-Com um trunk, uma falha do provedor significa sem chamadas de saída. Com dois ou mais, você pode fazer failover automaticamente e até escolher a rota mais barata por destino — *roteamento de menor custo* (LCR).
+Com um tronco, uma falha do provedor significa que não há chamadas de saída. Com dois ou mais, você pode fazer failover automaticamente e ainda escolher a rota mais barata por destino — *least-cost routing* (LCR).
 
 ### Failover com `${DIALSTATUS}`
 
-O `Dial()` define a variável de canal `${DIALSTATUS}` quando retorna. Os valores com os quais você se preocupa para failover são `CHANUNAVAIL` (o trunk não pôde ser alcançado de forma alguma) e `CONGESTION` (a chamada foi rejeitada, por exemplo, todos os circuitos ocupados). Tente o trunk principal; se ele não puder realizar a chamada, passe para o backup:
+`Dial()` define a variável de canal `${DIALSTATUS}` quando retorna. Os valores que importam para failover são `CHANUNAVAIL` (o tronco não pôde ser alcançado) e `CONGESTION` (a chamada foi rejeitada, por exemplo, todos os circuitos ocupados). Tente o tronco primário; se ele não puder transportar a chamada, passe para o backup:
 
 ```
 [from-internal]
@@ -310,11 +365,11 @@ exten => _9NXXXXXXXXX,1,Set(CALLERID(num)=4830001000)
  same =>             n(done),Hangup()
 ```
 
-Observe a escolha deliberada de **não** fazer failover em `BUSY` ou `NOANSWER` — isso significa que a *parte chamada* foi alcançada e recusou, então tentar novamente em outro trunk faria tocar novamente um telefone que já disse não (e poderia lhe custar uma segunda chamada). Apenas re-roteie quando o *próprio trunk* falhar.
+Observe a escolha deliberada **não** fazer failover em `BUSY` ou `NOANSWER` — esses indicam que a *parte chamada* foi alcançada e recusou, então tentar novamente em outro tronco faria o telefone tocar novamente quando já havia dito não (e poderia custar uma segunda chamada). Redirecione apenas quando o *próprio tronco* falhar.
 
-### Uma sub-rotina de roteamento reutilizável
+### Uma subrotina de roteamento reutilizável
 
-Repetir essa lógica para cada padrão de discagem é propenso a erros. Fatore-a em uma rotina `GoSub` que recebe o número de destino e tenta cada trunk em ordem:
+Repetir essa lógica para cada padrão de discagem é propenso a erros. Refatore-a em uma rotina `GoSub` que recebe o número de destino e tenta cada tronco na ordem:
 
 ```
 [from-internal]
@@ -332,11 +387,11 @@ exten => s,1,Set(NUM=${ARG1})
  same =>   n(end),Return()
 ```
 
-Agora, cada padrão de saída é uma chamada `GoSub`, e a ordem do trunk é definida em exatamente um lugar.
+Agora cada padrão de saída é uma chamada `GoSub`, e a ordem dos troncos é definida em **um único** lugar.
 
-### Roteamento de menor custo por destino
+### Least-cost routing por destino
 
-O LCR verdadeiro escolhe o trunk pelo destino da chamada. Um formato comum é corresponder ao prefixo de destino e enviar cada classe de chamada para o provedor que é mais barato para ela — por exemplo, chamadas internacionais para uma operadora de atacado e chamadas locais/nacionais para a sua principal:
+Um LCR verdadeiro escolhe o tronco de acordo com o destino da chamada. Um padrão comum é combinar o prefixo de destino e enviar cada classe de chamada ao provedor que for mais barato para ela — por exemplo, chamadas internacionais para um carrier wholesale e chamadas locais/nacionais para o seu tronco primário:
 
 ```
 [from-internal]
@@ -355,17 +410,24 @@ exten => s,1,Set(NUM=${ARG1})
  same =>   n(end),Return()
 ```
 
-Para mais do que alguns prefixos, armazene a tabela de rotas em um banco de dados (`func_odbc`/`AstDB`) e procure o trunk por prefixo em vez de codificar padrões. O dialplan permanece pequeno e as tarifas vivem em uma tabela que você pode editar sem recarregar a lógica.
+Para mais de alguns prefixos, armazene a tabela de rotas em um banco de dados (`func_odbc`/`AstDB`) e procure o tronco pelo prefixo em vez de codificar os padrões. O dialplan permanece pequeno e as tarifas ficam em uma tabela que pode ser editada sem recarregar a lógica.
 
-## NAT e trunks
+## NAT and trunks
 
-NAT é a causa mais comum de problemas em trunks — normalmente áudio unidirecional ou um trunk que se registra, mas nunca recebe chamadas de entrada. A causa é a mesma dos telefones (coberta em *SIP & PJSIP in depth* e *Designing a VoIP network*): o Asterisk anuncia sua própria ideia de seu endereço em SIP e SDP, e atrás de NAT, esse é um endereço privado RFC 1918 que o provedor não consegue rotear de volta.
+NAT é a causa única mais comum de problemas em trunks — tipicamente áudio unidirecional,
+ou um trunk que registra mas nunca recebe chamadas inbound. A causa é a mesma
+dos telefones (abordada em *SIP & PJSIP in depth* e *Designing a VoIP network*):
+Asterisk anuncia sua própria ideia de endereço em SIP e SDP, e atrás de NAT
+esse é um endereço privado RFC 1918 que o provedor não pode rotear de volta.
 
-Para trunks, a correção tem duas partes — configurações no **transporte** (seu endereço público) e configurações no **endpoint** (como tratar a mídia do provedor).
+Para trunks a correção tem duas partes — configurações no **transport** (seu endereço público) e configurações no **endpoint** (como tratar a mídia do provedor).
 
-### No transporte — seu endereço público
+### On the transport — your public address
 
-Quando o servidor Asterisk está atrás de NAT (uma nuvem ou caixa local com um IP privado e um IP público 1:1), informe ao transporte seu endereço público e quais redes são locais. Essas opções são definidas uma vez, no `transport`, e aplicam-se a todo o tráfego sobre ele:
+Quando o próprio servidor Asterisk está atrás de NAT (uma máquina na nuvem ou on‑prem com
+um IP privado e um IP público 1:1), informe ao transport seu endereço público e quais
+redes são locais. Essas opções são definidas uma única vez, no `transport`, e se aplicam a
+todo o tráfego sobre ele:
 
 ```
 [transport-udp]
@@ -378,13 +440,17 @@ external_media_address=203.0.113.50
 external_signaling_address=203.0.113.50
 ```
 
-- **`external_signaling_address`** — o IP público que o Asterisk escreve nos cabeçalhos SIP (`Via`, `Contact`) para destinos fora de `local_net`.
-- **`external_media_address`** — o IP público que o Asterisk escreve na linha SDP `c=` para que o RTP volte para o lugar certo. Geralmente idêntico ao endereço de sinalização.
-- **`local_net`** — redes que o Asterisk trata como internas, para que ele *não* reescreva endereços para pares LAN. Liste todas as sub-redes internas.
+- **`external_signaling_address`** — o IP público que Asterisk grava nos cabeçalhos SIP
+  (`Via`, `Contact`) para destinos fora de `local_net`.
+- **`external_media_address`** — o IP público que Asterisk grava na linha SDP `c=`
+  para que o RTP retorne ao lugar correto. Normalmente idêntico ao endereço de sinalização.
+- **`local_net`** — redes que Asterisk trata como internas, portanto *não* reescreve
+  endereços para pares LAN. Liste todas as sub‑redes internas.
 
-### No endpoint — a mídia do provedor
+### On the endpoint — the provider's media
 
-A outra metade lida com um provedor que também está atrás de NAT, ou simplesmente envia mídia de um endereço diferente daquele no SDP dele. Defina isso por endpoint de trunk:
+A outra metade lida com um provedor que também está atrás de NAT, ou simplesmente envia
+mídia de um endereço diferente daquele presente em seu SDP. Defina estas opções por endpoint de trunk:
 
 ```
 [itsp]
@@ -404,24 +470,45 @@ from_user=4830001000
 from_domain=itsp.example.com
 ```
 
-- **`direct_media=no`** — mantenha a mídia fluindo através do Asterisk em vez de deixar as duas pernas conversarem diretamente. Essencial através de NAT, e necessário de qualquer maneira se você quiser gravar, transcodificar ou monitorar a chamada.
-- **`rtp_symmetric=yes`** — o comportamento clássico *comedia*: envie RTP de volta para o endereço de onde a mídia realmente veio, não o endereço que o SDP alega.
-- **`force_rport=yes`** — responda ao SIP a partir do IP/porta de origem da solicitação (RFC 3581), em vez de confiar no cabeçalho `Via`.
-- **`rewrite_contact=yes`** — em mensagens SIP de entrada deste endpoint, reescreva o cabeçalho `Contact` (ou um cabeçalho `Record-Route` apropriado) para o endereço IP e porta de origem de onde o pacote realmente veio. Conforme a própria documentação da opção, isso "ajuda os servidores a se comunicarem com endpoints que estão atrás de NATs" e "ajuda a reutilizar conexões de transporte confiáveis, como TCP e TLS."
+- **`direct_media=no`** — mantenha a mídia fluindo através do Asterisk ao invés de permitir
+  que as duas pernas conversem diretamente. Essencial através de NAT, e necessário de qualquer forma se você
+  quiser gravar, transcodificar ou monitorar a chamada.
+- **`rtp_symmetric=yes`** — o comportamento clássico *comedia*: envie RTP de volta para o
+  endereço de onde a mídia realmente veio, não para o endereço que o SDP indica.
+- **`force_rport=yes`** — responda ao SIP a partir do IP/porta de origem da requisição
+  (RFC 3581), ao invés de confiar no cabeçalho `Via`.
+- **`rewrite_contact=yes`** — em mensagens SIP inbound desse endpoint, reescreva
+  o cabeçalho `Contact` (ou um cabeçalho `Record-Route` apropriado) para o IP
+  de origem e porta de onde o pacote realmente veio. Conforme a própria
+  documentação da opção, isso "ajuda servidores a comunicar com endpoints que estão atrás
+  de NATs" e "ajuda a reutilizar conexões de transporte confiáveis como TCP e TLS."
 
-> **Recomendação — telefones vs trunks.** `rewrite_contact` é quase sempre a escolha certa para telefones, porque seu contato anunciado é tipicamente um endereço privado RFC 1918 que não é roteável de volta para eles. Em um trunk estático baseado em IP, o contato do provedor geralmente já é um endereço público correto, então reescrevê-lo é frequentemente desnecessário; alguns operadores preferem deixá-lo desligado lá e ativá-lo apenas para trunks de registro e telefones atrás de NAT. O efeito documentado da opção é puramente a reescrita de `Contact`/`Record-Route` de entrada acima — então a prática segura é testar contra sua operadora específica antes de ativá-la em um trunk estático.
+> **Recommendation — phones vs trunks.** `rewrite_contact` é quase sempre a
+> escolha correta para telefones, porque o contato anunciado geralmente é um endereço privado
+> RFC 1918 que não é roteável de volta para eles. Em um trunk baseado em IP estático
+> o contato do provedor costuma já ser um endereço público correto, então reescrevê‑lo
+> muitas vezes é desnecessário; alguns operadores preferem deixá‑lo desativado aí e habilitá‑lo
+> apenas para trunks de registro e telefones NAT‑ados. O efeito documentado da
+> opção é puramente a reescrita inbound `Contact`/`Record-Route` acima — portanto a
+> prática segura é testar com sua operadora específica antes de ativá‑la em um
+> trunk estático.
 
-Você pode confirmar as configurações efetivas em qualquer endpoint com `pjsip show endpoint <name>` — `direct_media`, `rtp_symmetric`, `force_rport`, `rewrite_contact` e o restante são todos impressos no dump de parâmetros.
+Você pode confirmar as configurações efetivas em qualquer endpoint com
+`pjsip show endpoint <name>` — `direct_media`, `rtp_symmetric`, `force_rport`,
+`rewrite_contact`, e o restante é impresso no dump de parâmetros.
 
 ## Lab — um ITSP simulado com um segundo Asterisk e SIPp
 
-Você não precisa de um trunk pago para praticar. O laboratório do livro já executa um container Asterisk 22.10.0 e um container SIPp em uma rede privada `172.30.0.0/24`; trataremos o container SIPp como a "operadora" fazendo chamadas de entrada e adicionaremos um endpoint de trunk que direciona essas chamadas para um context `from-pstn`.
+Você não precisa de um tronco pago para praticar. O laboratório do livro já executa um contêiner Asterisk
+22.10.0 e um contêiner SIPp em uma rede privada `172.30.0.0/24`; trataremos o contêiner SIPp como o “operador” que faz chamadas inbound, e adicionaremos um
+endpoint de tronco que direciona essas chamadas para um contexto `from-pstn`.
 
-![Um SIP trunk entre o PBX Asterisk e o ITSP: o PBX se registra como uma conta, chamadas de saída discam `PJSIP/<num>@trunk`, e chamadas de entrada caem no context `from-pstn`.](../images/09-sip-trunking-fig01.png)
+![Um tronco SIP entre o PBX Asterisk e o ITSP: o PBX registra como uma conta, chamadas outbound discam `PJSIP/<num>@trunk`, e chamadas inbound chegam ao contexto `from-pstn`](../images/09-sip-trunking-fig01.png)
 
-### 1. Adicione o endpoint do trunk
+### 1. Adicionar o endpoint de tronco
 
-Adicione um trunk baseado em IP ao `lab/asterisk/etc/pjsip.conf` que corresponda ao host SIPp do laboratório e direcione as chamadas de entrada para `from-pstn`:
+Adicione um tronco baseado em IP ao `lab/asterisk/etc/pjsip.conf` que corresponda ao host SIPp do laboratório
+e direcione chamadas inbound para `from-pstn`:
 
 ```
 [itsp]
@@ -443,9 +530,10 @@ endpoint=itsp
 match=172.30.0.50
 ```
 
-### 2. Roteie o DID de entrada
+### 2. Roteir o DID inbound
 
-No `lab/asterisk/etc/extensions.conf`, adicione um context `from-pstn` que atenda o DID que a operadora simulada discará e o reproduza, depois adicione uma regra de saída:
+Em `lab/asterisk/etc/extensions.conf`, adicione um contexto `from-pstn` que atenda ao
+DID que o operador simulado discará e reproduza-o, então adicione uma regra outbound:
 
 ```
 [from-pstn]
@@ -463,7 +551,7 @@ exten => _9X.,1,Set(CALLERID(num)=4830001000)
  same =>     n,Hangup()
 ```
 
-Recarregue ambos os arquivos (`core reload`) e verifique se o trunk carregou:
+Recarregue ambos os arquivos (`core reload`) e verifique se o tronco foi carregado:
 
 ```
 *CLI> pjsip show endpoint itsp
@@ -474,20 +562,27 @@ Recarregue ambos os arquivos (`core reload`) e verifique se o trunk carregou:
         Match: 172.30.0.50/32
 ```
 
-### 3. Faça uma chamada de entrada através do trunk
+### 3. Fazer uma chamada inbound através do tronco
 
-Aponte um cenário SIPp para o PBX com o DID como o usuário de destino. O laboratório já envia `lab/sipp/uac_9000.xml`, que faz INVITE para a extensão `9000`; copie-o para `uac_did.xml` e altere o usuário da request-URI/`To` de `9000` para `4830001000`, depois execute-o a partir do container SIPp:
+Aponte um cenário SIPp para o PBX com o DID como usuário alvo. O laboratório já
+distribui `lab/sipp/uac_9000.xml`, que INVITE a extensão `9000`; copie‑o para
+`uac_did.xml` e altere o request‑URI/usuário `To` de `9000` para `4830001000`,
+então execute‑o a partir do contêiner SIPp:
 
 ```
 docker compose -f lab/docker-compose.yml exec -T sipp \
   sipp -sf /sipp/uac_did.xml 172.30.0.10:5060 -m 1 -nostdin
 ```
 
-Observe a chamada atingir o `from-pstn` no console do Asterisk (`pjsip set logger on` mostra o INVITE de entrada; `core show channels` mostra o canal `PJSIP/itsp-…` reproduzindo `demo-congrats`). Como o IP de origem do SIPp corresponde ao `identify`, a chamada é aceita sem autenticação — exatamente como um trunk de operadora estático se comporta.
+Observe a chamada atingir `from-pstn` no console do Asterisk (`pjsip set logger on`
+mostra o INVITE inbound; `core show channels` mostra o canal `PJSIP/itsp-…`
+reproduzindo `demo-congrats`). Como o IP de origem do SIPp corresponde ao `identify`, a
+chamada é aceita sem autenticação — exatamente como um tronco de operador estático
+se comporta.
 
-### 4. Inspecione o trunk
+### 4. Inspecionar o tronco
 
-Capture a configuração completa do trunk para suas anotações:
+Capture a configuração completa do tronco para suas anotações:
 
 ```
 pjsip show endpoint itsp
@@ -495,47 +590,71 @@ pjsip show aors
 pjsip show identifies
 ```
 
-### 5. (Desafio) torne-o um trunk de registro
+### 5. (Stretch) torná‑lo um tronco de registro
 
-Levante o *segundo* container Asterisk como um registrar real: dê a ele um `endpoint`+`auth`+`aor` para a conta `4830001000`, então no PBX troque o bloco `identify` pelo bloco `registration` do início deste capítulo (apontando o `server_uri` para o IP do segundo container). Confirme com `pjsip show registrations` que o status lê `Registered`, depois faça uma chamada em cada direção.
+Levante o *segundo* contêiner Asterisk como um registrador real: forneça-lhe um
+`endpoint`+`auth`+`aor` para a conta `4830001000`, então no PBX troque o
+bloco `identify` pelo bloco `registration` do início deste capítulo
+(apontando `server_uri` para o IP do segundo contêiner). Confirme com
+`pjsip show registrations` que o status exibe `Registered`, então faça uma chamada
+em cada direção.
 
-## Resumo
+## Summary
 
-Um SIP trunk conecta seu PBX ao mundo exterior, e no PJSIP é apenas um endpoint construído a partir da mesma família `endpoint` + `auth` + `aor` que você já conhece, mais um `identify` ou um `registration`. Use um **trunk de registro** (`type=registration` com `outbound_auth`) quando o provedor lhe fornecer um nome de usuário e senha; use um **trunk baseado em IP** (`type=identify` com `match`) quando a autenticação for por IP de origem — e bloqueie este último com um `match` estreito e um `acl`, porque um trunk não autenticado é um alvo de fraude telefônica. Na entrada, o DID do provedor chega como `${EXTEN}` no seu context `from-pstn`, onde você o roteia para uma extensão, um IVR ou uma fila — padrões e `${EXTEN:-N}` mantêm os blocos de DID compactos. Na saída, defina o `CALLERID(num)` para um número que você possui, normalize para E.164 em um só lugar e entregue a chamada ao `PJSIP/<number>@trunk`. Construa resiliência tentando vários trunks e ramificando no `${DIALSTATUS}` (`CHANUNAVAIL`/`CONGESTION` significam re-rotear; `BUSY`/`NOANSWER` não), e coloque o roteamento de menor custo em uma tabela `GoSub`. Finalmente, NAT para trunks é de dois lados: `external_media_address`/`external_signaling_address`/`local_net` no **transporte** para seu endereço público, e `direct_media=no`, `rtp_symmetric`, `force_rport` e `rewrite_contact` no **endpoint** para a mídia do provedor.
+Um trunk SIP conecta seu PBX ao mundo externo, e no PJSIP ele é apenas um
+endpoint construído a partir da mesma família `endpoint` + `auth` + `aor` que você já conhece,
+mais um `identify` ou um `registration`. Use um **trunk de registro**
+(`type=registration` com `outbound_auth`) quando o provedor lhe fornece um nome de usuário
+e senha; use um **trunk baseado em IP** (`type=identify` com `match`) quando
+a autenticação for por IP de origem — e restrinja este último com um `match`
+estreito e um `acl`, porque um trunk não autenticado é um alvo de fraude de tarifas. De entrada,
+o DID do provedor chega como `${EXTEN}` no seu contexto `from-pstn`, onde você
+o encaminha para uma extensão, um IVR ou uma fila — padrões e `${EXTEN:-N}` mantêm
+os blocos de DID compactos. De saída, defina `CALLERID(num)` para um número que você possui, normalize
+para E.164 em um único lugar, e entregue a chamada ao `PJSIP/<number>@trunk`. Construa
+resiliência tentando múltiplos trunks e ramificando em `${DIALSTATUS}`
+(`CHANUNAVAIL`/`CONGESTION` significam reencaminhamento; `BUSY`/`NOANSWER` não), e coloque
+roteamento de menor custo em uma tabela `GoSub`. Finalmente, NAT para trunks é bidirecional:
+`external_media_address`/`external_signaling_address`/`local_net` no
+**transport** para seu endereço público, e `direct_media=no`, `rtp_symmetric`,
+`force_rport` e `rewrite_contact` no **endpoint** para a mídia do provedor.
 
 ## Quiz
 
-1. No PJSIP, as credenciais usadas para autenticar uma chamada de *saída* ou registro para um provedor são referenciadas com:
+1. No PJSIP, as credenciais usadas para autenticar uma chamada *outbound* ou
+   registro para um provedor são referenciadas com:
    - A. `auth=`
    - B. `outbound_auth=`
    - C. `secret=`
    - D. `remotesecret=`
-2. Você deve usar um trunk `type=registration` quando:
+2. Você deve usar um tronco `type=registration` quando:
    - A. O provedor o identifica pelo seu endereço IP de origem.
-   - B. O provedor lhe fornece um nome de usuário e senha e espera que você faça login.
+   - B. O provedor fornece um nome de usuário e senha e espera que você faça login.
    - C. Você nunca quer que o Asterisk envie um `REGISTER`.
-   - D. O trunk é entre dois servidores de IP estático que você controla.
-3. A opção `match` do objeto `identify` aceita (escolha todas as que se aplicam):
+   - D. O tronco está entre dois servidores de IP estático que você controla.
+3. A opção `match` do objeto `identify` aceita (marque todas que se aplicam):
    - A. Um endereço IP
    - B. Um intervalo CIDR
-   - C. Um nome de host (resolvido no momento do carregamento da configuração)
+   - C. Um nome de host (resolvido no momento da carga da configuração)
    - D. Apenas um nome de usuário SIP
 4. No Asterisk 22, `auth_type=userpass` é:
    - A. O único valor válido
-   - B. Descontinuado e convertido para `digest`
-   - C. Removido e causa um erro de carregamento
-   - D. Necessário para registro de saída
-5. Um número DID de entrada chega no dialplan como:
+   - B. Obsoleto e convertido para `digest`
+   - C. Removido e causa erro de carregamento
+   - D. Obrigatório para registro outbound
+5. Um número DID inbound chega ao dialplan como:
    - A. `${CALLERID(num)}`
-   - B. `${EXTEN}` no `context` do endpoint do trunk
+   - B. `${EXTEN}` no `context` do endpoint do tronco
    - C. `${DIALSTATUS}`
    - D. `${CONTEXT}`
-6. Para enviar os dois últimos dígitos do DID discado `4830003007` para uma extensão, você usaria:
+6. Para enviar os dois últimos dígitos do DID discado `4830003007` para uma extensão,
+   você usaria:
    - A. `${EXTEN:2}`
    - B. `${EXTEN:0:2}`
    - C. `${EXTEN:-2}`
    - D. `${EXTEN:8}`
-7. Após `Dial()` para um trunk, você deve fazer failover para um trunk de backup em quais valores `${DIALSTATUS}` (escolha dois)?
+7. Após `Dial()` para um tronco, você deve mudar para um tronco de backup no qual
+   os valores `${DIALSTATUS}` (marque dois)?
    - A. `CHANUNAVAIL`
    - B. `BUSY`
    - C. `CONGESTION`
@@ -545,15 +664,16 @@ Um SIP trunk conecta seu PBX ao mundo exterior, e no PJSIP é apenas um endpoint
    - B. `Set(from_user=4830001000)`
    - C. `Set(DIALSTATUS=4830001000)`
    - D. `Set(CONNECTEDLINE(num)=4830001000)`
-9. As opções que informam ao Asterisk seu endereço *público* quando o servidor está atrás de NAT são definidas no:
+9. As opções que informam ao Asterisk seu endereço *público* quando o servidor está atrás de
+   NAT são configuradas em:
    - A. `endpoint`
    - B. `aor`
    - C. `transport` (`external_media_address` / `external_signaling_address`)
    - D. `registration`
-10. `rtp_symmetric=yes` em um endpoint de trunk faz com que o Asterisk:
-    - A. Criptografe RTP com SRTP
-    - B. Envie RTP de volta para o endereço de onde a mídia realmente veio, ignorando o SDP
-    - C. Desabilite RTP completamente
-    - D. Force mídia direta entre endpoints
+10. `rtp_symmetric=yes` em um endpoint de tronco faz o Asterisk:
+    - A. Criptografar RTP com SRTP
+    - B. Enviar RTP de volta para o endereço de onde a mídia realmente chegou, ignorando o SDP
+    - C. Desativar RTP completamente
+    - D. Forçar mídia direta entre endpoints
 
-**Respostas:** 1 — B · 2 — B · 3 — A, B, C · 4 — B · 5 — B · 6 — C · 7 — A, C · 8 — A · 9 — C · 10 — B
+**Answers:** 1 — B · 2 — B · 3 — A, B, C · 4 — B · 5 — B · 6 — C · 7 — A, C · 8 — A · 9 — C · 10 — B

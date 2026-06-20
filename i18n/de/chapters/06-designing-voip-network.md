@@ -1,256 +1,261 @@
-# Entwurf eines VoIP-Netzwerks
+# Designing a VoIP network
 
-Voice over IP wächst schnell auf dem Telefonmarkt. Das Paradigma der Konvergenz verändert die Art und Weise, wie wir kommunizieren, senkt die Kosten und verbessert die Art und Weise, wie wir Informationen austauschen. Sprache ist nur der Anfang einer Ära der vollständigen Multimedia-Kommunikation, die Sprache, Video und Präsenz umfasst. In Zukunft werden wir nicht mehr die Menschen zur Arbeit transportieren, sondern die Arbeit zu den Menschen, da dies sauberer, schneller und kostengünstiger ist. VoIP ist nur ein Teil dieser Revolution. Unsere Herausforderung in diesem Kapitel besteht darin, ein VoIP-Netzwerk zu entwerfen. Dazu müssen wir Konzepte wie Sitzungsprotokolle und Codecs verstehen sowie wissen, wie man die Anzahl der Leitungen und die Bandbreite dimensioniert.
+Voice over IP ist ein schnell wachsender Bereich im Telekommunikationsmarkt. Das Konvergenzparadigma verändert die Art und Weise, wie wir kommunizieren, senkt Kosten und verbessert die Art, wie wir Informationen austauschen. Sprache ist nur der Anfang einer vollständigen Multimedia‑Kommunikationsära, die Sprache, Video und Präsenz umfasst. In Zukunft werden wir Menschen nicht mehr zur Arbeit transportieren, sondern die Arbeit zu den Menschen bringen, weil das sauberer, schneller und günstiger ist. VoIP ist nur ein Teil dieser Revolution. Unsere Aufgabe in diesem Kapitel ist es, ein VoIP‑Netzwerk zu entwerfen. Dafür müssen wir Konzepte wie Sitzungsprotokolle und Codecs verstehen sowie wissen, wie man die Anzahl der Leitungen und die Bandbreite dimensioniert.
 
 ## Ziele
 
-Am Ende dieses Kapitels sollten Sie in der Lage sein:
+By the end of this chapter, you should be able to:
 
-- Die Vorteile von VoIP zu verstehen
-- Zu beschreiben, wie Asterisk VoIP handhabt
-- Die Konzepte der SIP- und IAX-Kanäle zu beschreiben
-- Das am besten geeignete Protokoll für einen spezifischen Datenkanal auszuwählen
-- Den am besten geeigneten Codec für einen spezifischen Datenkanal auszuwählen
-- Die erforderliche Anzahl an Kanälen zu dimensionieren
-- Die erforderliche Bandbreite zu berechnen
+- Die Vorteile von VoIP verstehen
+- Beschreiben, wie Asterisk VoIP verarbeitet
+- Die Konzepte der SIP- und IAX-Kanäle beschreiben
+- Das am besten geeignete Protokoll für einen bestimmten Datenkanal auswählen
+- Den am besten geeigneten Codec für einen bestimmten Datenkanal auswählen
+- Die erforderliche Anzahl an Kanälen dimensionieren
+- Die erforderliche Bandbreite berechnen
 
-## VoIP-Vorteile
+## VoIP benefits
 
-Warum sollten Sie sich für VoIP interessieren? VoIP bietet Vorteile sowohl für Unternehmen als auch für Privatpersonen. Kostensenkung ist sicherlich einer davon, aber in einigen Umgebungen vereinfacht VoIP die Integration von Computersystemen. Einige der Vorteile werden hier detailliert beschrieben:
+Why would you care about VoIP? VoIP provides benefits to both companies and individuals. Cost reduction is certainly one of them, but in some environments VoIP simplifies the integration of computer systems. Several of the benefits are detailed here:
 
-### Konvergenz
+### Convergence
 
-Der Hauptvorteil von VoIP ist die Kombination von Daten- und Sprachnetzwerken zur Kostensenkung (Konvergenz). Die Analyse der reinen Sprachminutenkosten reicht jedoch möglicherweise nicht aus, um die Einführung von VoIP zu rechtfertigen. Der Preis der von Telefongesellschaften verkauften Minuten wird schnell günstiger und ist etwas, das vor der Einführung von VoIP berücksichtigt werden muss.
+The primary benefit of VoIP is the combination of data and voice networks to reduce costs (convergence). However, analyzing just voice minute costs may not be enough to justify the adoption of VoIP. The price of the minutes sold by phone companies is quickly becoming cheaper and is something to be considered before adopting VoIP.
 
-### Infrastrukturkosten
+### Infrastructure costs
 
-Die Nutzung einer einzigen Netzwerkinfrastruktur reduziert die Kosten, die mit Hinzufügungen, Entfernungen und Änderungen verbunden sind. Da IP allgegenwärtig geworden ist, hat es VoIP-bezogene Technologie auf verschiedene neue Geräte gebracht, wie Mobiltelefone, PDAs, eingebettete Systeme und Laptops.
+The use of a single network infrastructure reduces the costs associated with additions, removals, and changes. As IP has become pervasive, it has brought VoIP-related technology to several new devices, such as cell phones, PDAs, embedded systems, and laptops.
 
-### Offene Standards
+### Open Standards
 
-Schließlich bieten die offenen Standards, auf denen VoIP aufbaut, die Freiheit, aus verschiedenen Anbietern zu wählen. Dieser einzige Vorteil macht den Kunden zum König, anstatt ihn von TELCOS und PBX-Herstellern abhängig zu machen.
+Finally, the open standards upon which VoIP is built provide the freedom to choose from different vendors. This single benefit makes the customer king instead of a subordinate to TELCOS and PBX manufacturers.
 
 ### Computer Telephony Integration
 
-Telefonie ist weitaus älter als die Informatik. Telefon-PBXs basieren auf Leitungsvermittlung, und man hat normalerweise nicht mehr als einen Computer zur Überwachung. Mit VoIP wird Telefonie von Grund auf auf Basis von Computerstandards erstellt. Dies macht die Nutzung von Computer-Telefonie-Anwendungen billiger und einfacher als im alten Modell. Sie können schnell eine lange Liste von Telefonieanwendungen auf Basis von Asterisk erstellen. Sie können IVRs, ACDs, CTI, Dialer, Screen-Popups und andere Anwendungen in einem Bruchteil der Zeit entwickeln, die für herkömmliche PBXs erforderlich wäre.
+Telephony is far older than computing. Telephony PBXs are circuit-switch based, and you usually do not have more than a computer for supervision. With VoIP, telephony is from the ground up created based in computer standards. This makes the use of Computer Telephony applications cheaper and easier than in the old model. You can quickly create a long list of telephony applications based on Asterisk. You can develop IVRs, ACDs, CTI, dialers, screen popups, and other applications in a fraction of the time required for traditional PBXs.
 
 ## Asterisk VoIP-Architektur
 
-Die Architektur von Asterisk ist unten dargestellt. Asterisk behandelt alle VoIP-Protokolle als Kanäle. Sie können jeden Codec oder jedes Protokoll verwenden. Das hier zu lernende Konzept ist, dass Asterisk jede Art von Kanal mit jeder anderen verbindet. Somit können Sie Signalisierungsprotokolle wie SIP und IAX ineinander übersetzen und sogar mit verschiedenen Codecs arbeiten. Zum Beispiel können Sie einen Anruf von einem SIP-Telefon im lokalen Netzwerk mit dem G.711-Codec zu einem SIP-trunk zu Ihrem VoIP-Anbieter mit dem G.729-Codec übersetzen. In den nächsten Kapiteln werden wir die Details der SIP- und IAX-Architektur erläutern. H.323-Unterstützung (über das chan_ooh323 Add-on) ist verfügbar, aber zunehmend selten; SIP/PJSIP ist der Standard für moderne Implementierungen.
+Die Architektur von Asterisk ist unten dargestellt. Asterisk behandelt alle VoIP‑Protokolle als Channels. Sie können jeden Codec oder jedes Protokoll verwenden. Das zu lernende Konzept ist, dass Asterisk beliebige Channel‑Typen miteinander verbindet. So können Sie Signalisierungsprotokolle wie SIP und IAX zueinander übersetzen, sogar mit unterschiedlichen Codecs. Zum Beispiel können Sie einen Anruf von einem SIP‑Telefon im lokalen Netzwerk, das den Codec G.711 nutzt, zu einem SIP‑Trunk zu Ihrem VoIP‑Provider, der den Codec G.729 verwendet, übersetzen. In den nächsten Kapiteln erklären wir die Details der SIP‑ und IAX‑Architektur. Unterstützung für H.323 (über das chan_ooh323‑Add‑on) ist verfügbar, aber zunehmend selten; SIP/PJSIP ist der Standard für moderne Deployments.
 
-![Modulare Architektur von Asterisk: Anwendungen und Kanäle verbinden sich über APIs mit dem PBX-Switch-Core, wobei Codec-Übersetzung und Dateiformat-Module dynamisch geladen werden.](../images/06-voip-network-fig01.png)
+![Asterisk's modular architecture: applications and channels connect to the PBX switch core through APIs, with codec translation and file-format modules loaded dynamically.](../images/06-voip-network-fig01.png)
 
-## VoIP-Protokolle und der Netzwerk-Stack
+## VoIP protocols and the network stack
 
-VoIP verwendet eine Reihe verschiedener Protokolle, die zusammenarbeiten. Es ist verlockend, sie dem sieben-schichtigen OSI-Referenzmodell gegenüberzustellen, und viele ältere Diagramme tun genau das – sie platzieren SIP und H.323 auf der "Sitzungs"-Schicht und die Codecs auf der "Präsentations"-Schicht. Diese Zuordnung war schon immer umstritten. Die IETF, die SIP standardisiert, verwendet nicht das OSI-Modell; sie folgt dem älteren vier-schichtigen TCP/IP (DoD)-Modell, und RFC 3261 definiert **SIP als Protokoll der Anwendungsschicht**. Die Medien folgen dem gleichen Muster: RTP und die Codecs leben in der Nutzlast der Anwendung, übertragen über UDP auf der Transportschicht. Die folgende Tabelle ordnet die wichtigsten VoIP-Protokolle dem TCP/IP-Modell zu, das die IETF tatsächlich verwendet, wobei das grobe OSI-Äquivalent nur als Referenz dient.
+VoIP verwendet eine Reihe verschiedener Protokolle, die zusammenarbeiten. Es ist verlockend, sie
+gegen das sieben‑schichtige OSI‑Referenzmodell zu stellen, und viele ältere Diagramme tun genau
+das – sie platzieren SIP und H.323 in der „Session“-Schicht und die Codecs in der
+„Presentation“-Schicht. Diese Zuordnung war stets umstritten. Das IETF, das
+SIP standardisiert, verwendet nicht das OSI‑Modell; es folgt dem älteren vier‑schichtigen TCP/IP
+(DoD)-Modell, und RFC 3261 definiert **SIP als ein Application‑Layer‑Protokoll**. Das Media‑
+Verhalten folgt demselben Muster: RTP und die Codecs befinden sich im Anwendungspayload,
+über UDP auf der Transportschicht transportiert. Die nachfolgende Tabelle ordnet die wichtigsten VoIP‑Protokolle dem
+TCP/IP‑Modell zu, das das IETF tatsächlich verwendet, wobei das grobe OSI‑Äquivalent nur
+zur Referenz angegeben ist.
 
-| TCP/IP (IETF) Schicht | Protokolle | Grobes OSI-Äquivalent |
+| TCP/IP (IETF) layer | Protocols | Rough OSI equivalent |
 |---|---|---|
-| Anwendung | SIP, H.323, MGCP, IAX2-Signalisierung; RTP/RTCP; Codecs (G.711, G.729, Opus…) | Anwendung / Präsentation / Sitzung |
+| Application | SIP, H.323, MGCP, IAX2 signaling; RTP/RTCP; codecs (G.711, G.729, Opus…) | Application / Presentation / Session |
 | Transport | UDP, TCP | Transport |
-| Internet | IP (mit QoS wie DiffServ) | Netzwerk |
-| Verbindung | Ethernet, PPP, Frame Relay… | Datenverbindung / Physisch |
+| Internet | IP (with QoS such as DiffServ) | Network |
+| Link | Ethernet, PPP, Frame Relay… | Data link / Physical |
 
-QoS-Mechanismen wie DiffServ arbeiten auf der IP-Schicht, um Sprachpakete zu priorisieren und die Anrufqualität zu verbessern. Einige Protokollspezifika:
+QoS‑Mechanismen wie DiffServ arbeiten auf der IP‑Schicht, um Sprachpakete zu priorisieren und
+die Anrufqualität zu verbessern. Einige protokollspezifische Details:
 
-- **SIP** verwendet UDP oder TCP auf Port 5060 (TLS auf 5061), um Signalisierung zu übertragen. Das Audio wird separat durch RTP über einen konfigurierbaren UDP-Portbereich übertragen (Asterisks mitgeliefertes `rtp.conf` Beispiel verwendet 10000 bis 20000), kodiert mit einem Codec wie G.711.
-- **H.323** überträgt Anrufsignalisierung über TCP (H.225-Anrufsignalisierung auf Port 1720), während der H.225 RAS-Kanal UDP auf Port 1719 verwendet; RTP transportiert das Audio.
-- **IAX2** ist ungewöhnlich: Es multiplext sowohl Signalisierung als auch Medien über einen einzigen UDP-Port (4569), was die NAT- und Firewall-Durchquerung vereinfacht.
+- **SIP** verwendet UDP oder TCP auf Port 5060 (TLS auf 5061), um Signalisierung zu transportieren. Der Audio‑Stream
+  wird separat per RTP über einen konfigurierbaren UDP‑Port‑Bereich (Asterisk's shipped
+  `rtp.conf` sample uses 10000 to 20000) übertragen, kodiert mit einem Codec wie G.711.
+- **H.323** transportiert die Anrufsignalisierung über TCP (H.225 call signaling on port 1720), während
+  der H.225 RAS‑Kanal UDP auf Port 1719 nutzt; RTP transportiert das Audio.
+- **IAX2** ist ungewöhnlich: Es multiplexiert sowohl Signalisierung als auch Media über einen einzigen UDP‑Port
+  (4569), was die NAT‑ und Firewall‑Durchdringung vereinfacht.
 
 
-## Wie man ein Protokoll auswählt
+## How to choose a protocol
 
-Wie können Sie angesichts der vielen Protokolle das beste für Ihr Netzwerk auswählen? In diesem Abschnitt werden wir die Vor- und Nachteile jedes Protokolls hervorheben.
+Given the many protocols, how can you choose the best one for your network? In this section, we will highlight the advantages and drawbacks of each protocol.
 
 ### SIP - Session Initiated Protocol
 
-SIP ist ein offener Standard der Internet Engineering Task Force (IETF), der weitgehend in RFC 3261 definiert ist. Die meisten modernen VoIP-Anbieter verwenden SIP; tatsächlich entwickelt es sich zum beliebtesten VoIP-Standard. Die Stärke von SIP ist, dass es ein IETF-basierter Standard ist. SIP ist leicht im Vergleich zum älteren H.323. Die Hauptschwäche von SIP ist die NAT-Durchquerung – eine Herausforderung für die meisten SIP-VoIP-Anbieter. Die IETF hat SIP nicht mit Blick auf die Abrechnung entwickelt, sondern für offene Kommunikation zwischen Peers. Abrechnung ist normalerweise ein Anliegen für VoIP-Anbieter.
+SIP is an Internet Engineering Task Force (IETF) open standard, largely defined in RFC 3261. Most modern VoIP providers use SIP; indeed, it is becoming the most popular VoIP standard. The strength of SIP is that it is an IETF-based standard. SIP is light when compared to the older H.323. SIP’s main weakness is the NAT traversal—a challenge to most SIP VoIP providers. IETF did not create SIP with billing in mind, but for open communications between peers. Billing is usually a concern for VoIP providers.
 
 ### IAX – Inter Asterisk eXchange
 
-IAX ist ein offenes Protokoll, das ursprünglich von Digium (jetzt Sangoma) entwickelt wurde. IAX ist ein Alles-in-einem-Protokoll, da es Signalisierung und Medien über denselben UDP-Port (4569) transportiert. Mark Spencer entwickelte IAX als binäres Protokoll für reduzierte Bandbreite. Die Hauptstärke von IAX ist seine reduzierte Bandbreitennutzung (es verwendet kein RTP); es ist auch sehr einfach für NAT- und Firewall-Durchquerung, da es nur einen UDP-Port (4569) verwendet. Wenn ein traditioneller PBX-Hersteller IAX entwickelt hätte, hätte er das Protokoll wahrscheinlich als „das Beste seit Speiseeis“ vermarktet; in einigen Situationen kann IAX im Trunk-Modus die Sprachbandbreitennutzung um ein Drittel reduzieren. IAX2 (Version 2) wird in Asterisk 22 weiterhin über das `chan_iax2` Modul ausgeliefert und bleibt nützlich für Asterisk-zu-Asterisk-Trunks, obwohl es als veraltet gilt; SIP/PJSIP wird für neue Implementierungen bevorzugt. IAX2 ist in [RFC 5456](https://www.rfc-editor.org/rfc/rfc5456) (Informationell) spezifiziert.
+IAX is an open protocol originally developed by Digium (now Sangoma). IAX is an all-in-one protocol as it transports signaling and media through the same UDP port (4569). Mark Spencer developed IAX as a binary protocol for reduced bandwidth. The main strength of IAX is its reduced bandwidth usage (it does not use RTP); it is also very easy for NAT and firewall traversal since it uses only one UDP port (4569).
+
+If a traditional PBX manufacturer were to have created IAX, it would probably have marketed the protocol as the "best thing since ice cream"; in some situations, IAX in trunk mode can reduce voice bandwidth use by one third. IAX2 (version 2) still ships in Asterisk 22 via the `chan_iax2` module and remains useful for Asterisk-to-Asterisk trunks, though it is considered legacy; SIP/PJSIP is preferred for new deployments. IAX2 is specified in [RFC 5456](https://www.rfc-editor.org/rfc/rfc5456) (Informational).
 
 ### MGCP – Media Gateway Control Protocol
 
-MGCP ist ein Protokoll, das in Verbindung mit H.323, SIP und IAX verwendet wird. Sein größter Vorteil ist die Skalierbarkeit. Es wird im Call Agent anstatt in den Gateways konfiguriert. Dies vereinfacht den Konfigurationsprozess und ermöglicht eine zentralisierte Verwaltung. Die Asterisk-Implementierung ist jedoch nicht vollständig, und es scheint, dass nicht viele Leute es verwenden.
+MGCP is a protocol used in conjunction with H.323, SIP, and IAX. Its greatest advantage is scalability. It is configured in the call agent instead of the gateways. This simplifies the configuration process and permits centralized management. However, Asterisk implementation is not complete, and it seems that not many people use it.
 
 ### H.323
 
-H.323 wird weitgehend in VoIP verwendet. Es ist eines der ersten VoIP-Protokolle und ist wesentlich für die Verbindung älterer VoIP-Infrastrukturen, die auf Gateways basieren. H.323 ist immer noch der Standard auf dem Gateway-Markt, obwohl der Markt langsam zu SIP migriert. Zu den Stärken von H.323 gehören die große Marktakzeptanz und Reife. Die Schwächen von H.323 hängen mit der Komplexität der Implementierung und den damit verbundenen Kosten der Standardisierungsgremien zusammen.
+H.323 is largely being used in VoIP. It is one of the first VoIP protocols and is essential for connecting older VoIP infrastructures based in gateways. H.323 is still the standard in the gateway market, although the market is slowly migrating to SIP. H.323’s strengths include the large market adoption and maturity. H.323’s weaknesses are related to the complexity of implementation and standard bodies’ associated costs.
 
-### Protokollvergleichstabelle
+### Protocol comparison table
 
-Die folgende Tabelle fasst die Unterschiede zwischen den Sitzungsprotokollen zusammen.
+The following table summarizes the differences among the session protocols.
 
-| Protokoll | Standardisierungsgremium | Asterisk 22 Modul / Status | Verwendet für |
+| Protocol | Standard body | Asterisk 22 module / status | Used for |
 |----------|---------------|-----------------------------|----------|
-| SIP | IETF-Standard | `chan_pjsip` (Kern; der einzige SIP-Treiber — `chan_sip` wurde in Asterisk 21 entfernt) | SIP-Telefone; Verbindung zu SIP-Dienstanbietern |
-| IAX2 | RFC 5456 (Informationell) | `chan_iax2` (Kern; wird noch ausgeliefert, gilt als veraltet) | Asterisk-zu-Asterisk-Trunks; IAX2-Telefone; IAX-Dienstanbieter |
-| H.323 | ITU-Standard | `chan_ooh323` (externes Community-Add-on, nicht im Basis-Build) | H.323-Telefone und Gateways (kann einen externen Gatekeeper verwenden, kann keiner sein) |
-| MGCP | IETF/ITU | `chan_mgcp` in Asterisk 21 entfernt — nicht mehr verfügbar | (veraltete MGCP-Telefone) |
-| SCCP (Skinny) | Cisco proprietär | `chan_skinny` in Asterisk 21 entfernt — nicht mehr verfügbar | (veraltete Cisco-Telefone) |
+| SIP | IETF standard | `chan_pjsip` (core; the only SIP driver — `chan_sip` was removed in Asterisk 21) | SIP phones; connecting to SIP service providers |
+| IAX2 | RFC 5456 (Informational) | `chan_iax2` (core; still shipped, considered legacy) | Asterisk-to-Asterisk trunks; IAX2 phones; IAX service providers |
+| H.323 | ITU standard | `chan_ooh323` (external community add-on, not in the base build) | H.323 phones and gateways (can use an external gatekeeper, cannot be one) |
+| MGCP | IETF/ITU | `chan_mgcp` removed in Asterisk 21 — no longer available | (legacy MGCP phones) |
+| SCCP (Skinny) | Cisco proprietary | `chan_skinny` removed in Asterisk 21 — no longer available | (legacy Cisco phones) |
 
-## Ein Endpoint pro Gerät
+## Ein Endpunkt pro Gerät
 
-In Asterisk 22 modelliert der PJSIP-Stack jedes Telefon, jeden Trunk oder jedes Gateway als ein einziges **Endpoint**-Objekt in `pjsip.conf`. Ein Endpoint tätigt und empfängt Anrufe; seine Anmeldeinformationen leben in einem `auth`-Objekt, seine registrierte Adresse in einem `aor` und sein Netzwerkpfad in einem `transport`. Sie konfigurieren einen Endpoint pro Gerät und fügen die benötigten Teile hinzu – es gibt keine separate "User"- versus "Peer"-Rolle, über die man nachdenken müsste. (Das vollständige Objektmodell wird in *SIP und PJSIP* behandelt.)
+In Asterisk 22 modelliert der PJSIP‑Stack jedes Telefon, jede Trunk oder jedes Gateway als ein einzelnes **endpoint**‑Objekt in `pjsip.conf`. Ein Endpunkt sowohl platziert als auch empfängt Anrufe; seine Anmeldedaten befinden sich in einem `auth`‑Objekt, seine registrierte Adresse in einem `aor`, und sein Netzwerkpfad in einem `transport`. Sie konfigurieren einen Endpunkt pro Gerät und hängen die benötigten Komponenten an – es gibt keine separate „user“‑ versus „peer“‑Rolle, über die nachgedacht werden muss. (Das vollständige Objektmodell wird in *SIP & PJSIP in depth* behandelt.)
 
 ## Codecs und Codec-Übersetzung
 
-Sie verwenden einen Codec, um die Sprache von einer analogen Welle in ein digitales Signal umzuwandeln. Codecs unterscheiden sich voneinander in Aspekten wie Klangqualität, Kompressionsrate, Bandbreite und Rechenanforderungen. Dienste, Telefone und Gateways unterstützen normalerweise mehrere dieser Aspekte. Der Codec G.729 ist sehr beliebt. Er ist nicht Teil des Standard-Asterisk 22-Builds; stattdessen wird er als externes Add-on-Modul (`codec_g729`) geliefert, das Sie von Digium (jetzt Sangoma) herunterladen. Asterisks `menuselect`-Quelle listet es mit `support_level=external` auf und merkt deutlich an: "Laden Sie den g729a-Codec von Digium herunter. Für diesen Codec muss eine Lizenz erworben werden." Mit anderen Worten, die rechtmäßige Nutzung von G.729 erfordert eine gekaufte Lizenz pro Kanal. (Eine Open-Source-Alternative, `bcg729`, existiert ebenfalls.)
+Sie verwenden einen Codec, um die Stimme von einer analogen Welle in ein digitales Signal zu konvertieren. Codecs unterscheiden sich in Aspekten wie Klangqualität, Kompressionsrate, Bandbreite und Rechenanforderungen. Dienste, Telefone und Gateways unterstützen in der Regel mehrere dieser Aspekte. Der Codec G.729 ist sehr verbreitet. Er ist nicht Teil des Standard‑Asterisk‑22‑Builds; stattdessen wird er als externes Add‑on‑Modul (`codec_g729`) bereitgestellt, das Sie von Digium (heute Sangoma) herunterladen. Asterisk’s `menuselect`‑Quellcode listet ihn unter `support_level=external` auf und weist eindeutig darauf hin: „Download the g729a codec from Digium. A license must be purchased for this codec.“ Mit anderen Worten, die legale Nutzung von G.729 erfordert den Kauf einer Lizenz pro Kanal. (Eine Open‑Source‑Alternative, `bcg729`, existiert ebenfalls.)
 
-![Pulse Code Modulation (PCM): ein 4000 Hz analoges Signal wird 8000 Mal pro Sekunde abgetastet (Nyquist-Theorem) und in einen 64 Kbps digitalen Bitstrom kodiert.](../images/06-voip-network-fig04.png)
+![Pulse Code Modulation (PCM): ein 4000 Hz‑Analogsignal wird 8000 mal pro Sekunde abgetastet (Nyquist‑Theorem) und in einen 64 Kbps‑digitalen Bitstrom codiert.](../images/06-voip-network-fig04.png)
 
-Asterisk 22 unterstützt (unter anderem) die folgenden Codecs:
+Asterisk 22 unterstützt die folgenden Codecs (unter anderem):
 
-- GSM: 13 Kbps
-- iLBC: 13.3 Kbps
-- ITU G.711 (ulaw/alaw): 64 Kbps — Standard-PSTN-Qualität; ulaw üblich in Nordamerika, alaw üblich in Europa und Lateinamerika
-- ITU G.722: 64 Kbps — Breitband (HD-Sprache), gute Qualität bei gleicher Bandbreite wie G.711
-- ITU G.723.1: 5.3/6.3 Kbps
-- ITU G.726: 16/24/32/40 Kbps
-- ITU G.729: 8 Kbps — externes `codec_g729` Binärmodul, heruntergeladen von Digium/Sangoma (`support_level=external`; eine Lizenz muss erworben werden, um es zu nutzen)
-- Speex: 2.15 bis 44.2 Kbps
-- LPC10: 2.4 Kbps
-- **Opus**: 6–510 Kbps, variabel — moderner Breitband-/Vollband-Codec; exzellente Qualität und Widerstandsfähigkeit gegen Paketverlust; bereitgestellt als externes `codec_opus` Binärmodul, heruntergeladen von Digium/Sangoma (`support_level=external`; kein Lizenzkauf vermerkt, im Gegensatz zu G.729); empfohlen für WebRTC und moderne SIP-Endpoints. (Open-Source-Build-Alternativen existieren auf GitHub.)
+- GSM: 13 Kbps
+- iLBC: 13,3 Kbps
+- ITU G.711 (ulaw/alaw): 64 Kbps — Standard‑PSTN‑Qualität; ulaw üblich in Nordamerika, alaw üblich in Europa und Lateinamerika
+- ITU G.722: 64 Kbps — Wideband (HD‑Voice), gute Qualität bei gleicher Bandbreite wie G.711
+- ITU G.723.1: 5,3/6,3 Kbps
+- ITU G.726: 16/24/32/40 Kbps
+- ITU G.729: 8 Kbps — externes `codec_g729`‑Binärmodul von Digium/Sangoma heruntergeladen (`support_level=external`; eine Lizenz muss zum Einsatz erworben werden)
+- Speex: 2,15 bis 44,2 Kbps
+- LPC10: 2,4 Kbps
+- **Opus**: 6–510 Kbps, variabel — moderner Wideband/Fullband‑Codec; exzellente Qualität und Paketverlust‑Resilienz; wird als externes `codec_opus`‑Binärmodul von Digium/Sangoma bereitgestellt (`support_level=external`; kein Lizenzkauf erforderlich, im Gegensatz zu G.729); empfohlen für WebRTC und moderne SIP‑Endpoints. (Open‑Source‑Build‑Alternativen gibt es auf GitHub.)
 
-Darüber hinaus erlaubt Asterisk die Übersetzung zwischen Codecs. In einigen Fällen ist dies nicht möglich, wie im Fall von g723, das nur im Pass-Thru-Modus unterstützt wird. Die Übersetzung von einem Codec in einen anderen verbraucht viele Ressourcen der CPU. Vermeiden Sie dies daher nach Möglichkeit vollständig.
+Zusätzlich erlaubt Asterisk die Übersetzung zwischen Codecs. In einigen Fällen ist dies nicht möglich, etwa beim g723, das nur im Pass‑Thru‑Modus unterstützt wird. Die Übersetzung von einem Codec zum anderen verbraucht viele CPU‑Ressourcen. Daher sollte man dies nach Möglichkeit ganz vermeiden.
 
-## Wie man einen Codec auswählt
+## How to choose a Codec
 
-Die Codec-Auswahl hängt von mehreren Optionen ab, wie zum Beispiel:
+Codec selection depends on several options, such as:
 
-- Klangqualität
-- Lizenzkosten
-- CPU-Verarbeitungslast
-- Bandbreitenanforderungen
-- Verschleierung von Paketverlusten
-- Verfügbarkeit für Asterisk und Telefongeräte
+- Sound quality
+- Licensing costs
+- CPU-processing consumption
+- Bandwidth requirements
+- Packet-loss concealment
+- Availability for Asterisk and phone devices
 
-Die folgende Tabelle vergleicht die beliebtesten Codecs. Die Qualität dieser Codecs gilt als „toll“-Qualität – mit anderen Worten, ähnlich wie PSTN.
+The following table compares the most popular codecs. The quality of these codecs is considered “toll”—in other words, similar to PSTN.
 
-| Codec | G.711 (ulaw/alaw) | G.722 | Opus | G.729A | iLBC | GSM 06.10 |
+| Codec | G.711 | G.722 | Opus | G.729A | iLBC | GSM |
 |---|---|---|---|---|---|---|
-| Audioband | Schmalband | Breitband (HD) | Schmal→Vollband | Schmalband | Schmalband | Schmalband |
-| Bandbreite (Kbps) | 64 | 64 | 6–510 (variabel) | 8 | 13.33 | 13 |
-| Asterisk 22 Modul | `codec_ulaw`/`codec_alaw` (Kern) | `codec_g722` (Kern) | `codec_opus` (extern) | `codec_g729` (extern) | `codec_ilbc` (Kern) | `codec_gsm` (Kern) |
-| Kosten (pro Kanal) | Kostenlos | Kostenlos | Kostenlos (Binär-Download) | Lizenzkauf erforderlich¹ | Kostenlos | Kostenlos |
-| Widerstand gegen Frame-Verlust² | Keiner | Niedrig | Exzellent (eingebautes FEC/PLC) | ~3% | ~5% | ~3% |
-| Relative CPU-Kosten | Sehr niedrig | Niedrig | Moderat–hoch | Hoch | Hoch | Niedrig |
+| Audio band | Narrow | Wide (HD) | Narrow–full | Narrow | Narrow | Narrow |
+| Bandwidth (Kbps) | 64 | 64 | 6–510 | 8 | 13.33 | 13 |
+| Cost/channel | Free | Free | Free | License¹ | Free | Free |
+| Frame-erasure² | None | Low | Excellent | ~3% | ~5% | ~3% |
+| CPU cost | Very low | Low | Mod.–high | High | High | Low |
 
-Die PSTN-Basislinie ist **G.711** — sie ist die Referenz für „toll“-Qualität und transkodiert kostenlos innerhalb von Asterisk. **G.722** liefert Breitband (HD)-Sprache bei denselben 64 Kbps und ist eine gute Wahl für LAN/intern. **Opus** ist der moderne Standard für WebRTC und fähige SIP-Endpoints: Er passt seine Bitrate an, verfügt über eine eingebaute Vorwärtsfehlerkorrektur und widersteht Paketverlusten gut; er wird als externes `codec_opus` Binärpaket geliefert (kostenloser Download). **G.729** bleibt nützlich auf WAN-Trunks mit geringer Bandbreite, aber die rechtmäßige Nutzung erfordert entweder Sangomas lizenziertes `codec_g729` (kostenloser Download, Lizenz pro Kanal zur Nutzung erforderlich) oder die Open-Source **bcg729**-Implementierung als Alternative.
+The Asterisk 22 modules are: G.711 `codec_ulaw` / `codec_alaw` (core), G.722 `codec_g722` (core), Opus `codec_opus` (external), G.729 `codec_g729` (external), iLBC `codec_ilbc` (core), and GSM `codec_gsm` (core). Opus is "Narrow–full" because it scales from narrowband up to fullband; its bandwidth (6–510 Kbps) is variable, and its frame-erasure resistance comes from built-in FEC/PLC.
 
-¹ Sangomas `codec_g729` Binärpaket ist kostenlos herunterladbar, erfordert aber eine gekaufte Lizenz pro Kanal für die rechtmäßige Nutzung. Das Open-Source `bcg729` ist eine lizenzfreie Alternative.
+The PSTN baseline is **G.711** — it is the reference for "toll" quality and transcodes for free inside Asterisk. **G.722** delivers wideband (HD) voice at the same 64 Kbps and is a good LAN/internal choice. **Opus** is the modern default for WebRTC and capable SIP endpoints: it adapts its bitrate, has built-in forward error correction, and resists packet loss well; it ships as the external `codec_opus` binary (free to download). **G.729** stays useful on low-bandwidth WAN trunks, but lawful use requires either Sangoma's licensed `codec_g729` (free to download, per-channel license to use) or the open-source **bcg729** implementation as an alternative.
 
-² Widerstand gegen Frame-Verlust bezieht sich darauf, wie gut die wahrgenommene Qualität (MOS) bei Paketverlusten erhalten bleibt. Der genaue Kreuzungspunkt variiert mit der Paketierung und den Netzwerkbedingungen; verwenden Sie diese Spalte für einen relativen Vergleich, nicht als präzisen Wert.
+¹ Sangoma's `codec_g729` binary is free to download but requires a purchased per-channel license to use lawfully. The open-source `bcg729` is a license-free alternative.
 
-**Codec-Empfehlungen für Asterisk 22:**
+² Resistance to frame erasure refers to how well perceived quality (MOS) holds up under packet loss. The exact crossover point varies with packetization and network conditions; use this column for relative comparison, not as a precise figure.
 
-- **G.711 (ulaw/alaw):** Verwendung für PSTN-Trunks und maximale Interoperabilität; null Transkodierungskosten innerhalb von Asterisk.
-- **G.729:** Nützlich für WAN-Trunks mit geringer Bandbreite; Sangomas `codec_g729` Modul ist kostenlos herunterladbar, erfordert aber eine gekaufte Lizenz pro Kanal zur Nutzung.
-- **G.722:** Gute Wahl für Breitband (HD-Sprache) bei LAN/internen Extensions; gleiche Bandbreite wie G.711 bei besserer Qualität.
-- **Opus:** Empfohlen für moderne Endpoints, WebRTC-Clients und jede Implementierung, bei der der Endpoint dies unterstützt. Adaptive Bitrate, exzellente Widerstandsfähigkeit gegen Paketverluste, frei verfügbar über Sangomas `codec_opus` Binärmodul.
+**Codec recommendations for Asterisk 22:**
 
-## Overhead durch Protokoll-Header
+- **G.711 (ulaw/alaw):** Use for PSTN trunks and maximum interoperability; zero transcoding cost within Asterisk.
+- **G.729:** Useful for low-bandwidth WAN trunks; Sangoma's `codec_g729` module is free to download but requires a purchased per-channel license to use.
+- **G.722:** Good choice for wideband (HD voice) on LAN/internal extensions; same bandwidth as G.711 with better quality.
+- **Opus:** Recommended for modern endpoints, WebRTC clients, and any deployment where the endpoint supports it. Adaptive bitrate, excellent packet-loss resilience, freely available via Sangoma's `codec_opus` binary module.
 
-Obwohl Codecs wenig Bandbreite verbrauchen, müssen wir den Overhead durch Protokoll-Header wie Ethernet, IP, UDP und RTP berücksichtigen. Daher könnten wir sagen, dass die Bandbreite von den verwendeten Headern abhängt. Wenn wir uns in einem Ethernet-Netzwerk befinden, ist der Bandbreitenbedarf höher als in einem PPP-Netzwerk, da der PPP-Header kürzer ist als der Ethernet-Header. Schauen wir uns einige Beispiele an: Ethernet Ziel G.729 kodiert (20) UDP-Header (8) Ethernet-Typ (2) Ethernet-Quelle IP-Header (20) RTP-Header (12) Sprach-Nutzlast Prüfsumme (4) Adresse (6) Adresse (6) Ethernet Codec g.711 (64 Kbps)
+## Overhead caused by protocol headers
 
-![Ein einzelnes g.729-Sprachpaket auf Ethernet: 20 Bytes Nutzlast verpackt in 58 Bytes Ethernet-, IP-, UDP- und RTP-Header — ein g.729-Gespräch verbraucht 31.2 Kbps.](../images/06-voip-network-fig05.png)
+Trotz der Tatsache, dass Codecs nur wenig Bandbreite benötigen, müssen wir den Overhead berücksichtigen, der durch Protokoll‑Header wie Ethernet, IP, UDP und RTP entsteht. Damit hängt die tatsächlich verbrauchte Bandbreite von den verwendeten Headern ab. In einem Ethernet‑Netzwerk ist der Bedarf höher als in einem PPP‑Netzwerk, weil der PPP‑Header kürzer ist als der Ethernet‑Header. Ein einzelnes G.729‑Sprachpaket trägt beispielsweise nur 20 Byte Nutzdaten, wird jedoch in etwa 58 Byte Ethernet‑, IP‑, UDP‑ und RTP‑Header eingewickelt – also dominieren die Header, nicht der Codec, die Bandbreite (siehe Abbildung unten).
 
-- Ethernet (Ethernet+IP+UDP+RTP+G.711) = 95.2 Kbps
-- PPP (PPP+IP+UDP+RTP+G.711) = 82.4 Kbps
-- Frame-Relay (FR+IP+UDP+RTP+G.711) = 82.8 Kbps
+![A single g.729 voice packet on Ethernet: 20 bytes of payload wrapped in 58 bytes of Ethernet, IP, UDP, and RTP headers — a g.729 conversation consumes 31.2 Kbps.](../images/06-voip-network-fig05.png)
 
-Codec G.729 (8 Kbps)
+- Ethernet (Ethernet+IP+UDP+RTP+G.711) = 95,2 Kbps
+- PPP (PPP+IP+UDP+RTP+G.711) = 82,4 Kbps
+- Frame-Relay (FR+IP+UDP+RTP+G.711) = 82,8 Kbps
 
-- Ethernet (Ethernet+IP+UDP+RTP+G.729) = 31.2 Kbps
-- PPP (PPP+IP+UDP+RTP+G.729) = 26.4 Kbps
-- Frame-Relay (FR+IP+UDP+RTP+G.729) = 26.8 Kbps
+Codec G.729 (8 Kbps)
 
-Sie können andere Bandbreitenanforderungen einfach mit einem Online-VoIP-Bandbreitenrechner wie <https://www.voip.school/bandcalc/bandcalc.php> berechnen.
+- Ethernet (Ethernet+IP+UDP+RTP+G.729) = 31,2 Kbps
+- PPP (PPP+IP+UDP+RTP+G.729) = 26,4 Kbps
+- Frame-Relay (FR+IP+UDP+RTP+G.729) = 26,8 Kbps
+
+Sie können andere Bandbreitenanforderungen leicht mit einem Online‑VoIP‑Bandbreitenrechner wie <https://www.voip.school/bandcalc/bandcalc.php> berechnen.
 
 
 ## Traffic Engineering
 
-Ein Hauptproblem beim Entwurf von VoIP-Netzwerken ist die Dimensionierung der Anzahl der Leitungen und der erforderlichen Bandbreite zu einem bestimmten Ziel, wie einem entfernten Büro oder einem Dienstanbieter. Es ist auch wichtig, die Anzahl der gleichzeitigen Anrufe von Asterisk zu dimensionieren (Hauptparameter für die Dimensionierung von Asterisk).
+Ein Hauptproblem beim Entwurf von VoIP‑Netzwerken ist die Dimensionierung der Leitungsanzahl und der benötigten Bandbreite zu einem bestimmten Ziel, etwa einem entfernten Büro oder einem Dienstanbieter. Es ist ebenfalls wichtig, die Anzahl gleichzeitiger Anrufe von Asterisk zu dimensionieren (Hauptparameter für die Dimensionierung von Asterisk).
 
-### Vereinfachungen
+### Simplifications
 
 Die primäre und am weitesten verbreitete Vereinfachung besteht darin, die Anzahl der Anrufe nach Benutzertyp zu schätzen. Zum Beispiel:
 
-- Business-PBXs (ein gleichzeitiger Anruf für alle fünf Extensions)
-- Privatnutzer (ein gleichzeitiger Anruf für alle sechzehn Benutzer)
+- Business‑PBXs (ein gleichzeitiger Anruf pro fünf Nebenstellen)
+- Residential users (ein gleichzeitiger Anruf pro sechzehn Nutzer)
 
-Beispiel #1 Der Hauptsitz des Unternehmens hat 120 Extensions und zwei Zweigstellen – die erste mit 30 Extensions und die zweite mit 15 Extensions. Unser Ziel ist es, die Anzahl der E1-Trunks im Hauptsitz und die für das Frame-Relay-Netzwerk erforderliche Bandbreite zu dimensionieren.
+Example #1 Das Unternehmen hat 120 Nebenstellen am Hauptsitz und zwei Niederlassungen – die erste mit 30 Nebenstellen und die zweite mit 15 Nebenstellen. Unser Ziel ist es, die Anzahl der E1‑Trunks am Hauptsitz und die für das Frame‑Relay‑Netzwerk erforderliche Bandbreite zu dimensionieren.
 
-![Beispiel-Netzwerktopologie (gleiche Stadt): Hauptsitz mit 120 Extensions verbindet sich über T1-Leitungen mit dem PSTN und über eine Frame-Relay-Cloud mit Zweigstelle #1 (30 Extensions) und Zweigstelle #2 (15 Extensions).](../images/06-voip-network-fig06.png)
+![Example network topology (same city): headquarters with 120 extensions connects to the PSTN over T1 lines, and to branch #1 (30 extensions) and branch #2 (15 extensions) over a Frame-Relay cloud.](../images/06-voip-network-fig06.png)
 
-1a Anzahl der T1-Leitungen
+1a Number of T1 lines
 
-- Gesamtzahl der Extensions, die T1-Leitungen nutzen: 120+30+15=165 Leitungen
-- Verwendung eines Trunks für alle fünf Extensions für geschäftliche Zwecke
-- Gesamtzahl der Leitungen = 33 oder ungefähr 2xT1-Leitungen
+- Gesamtzahl der Nebenstellen, die T1‑Leitungen nutzen: 120+30+15=165 Leitungen
+- Ein Trunk pro fünf Nebenstellen für geschäftliche Nutzung
+- Gesamtzahl der Leitungen = 33 oder ungefähr 2 × T1‑Leitungen
 
-1b Bandbreitenanforderungen Wir wählen den g.729-Codec aufgrund der Bandbreitenanforderungen, der Klangqualität und des mittleren CPU-Verbrauchs.
+1b Bandwidth requirements Wir wählen den g.729‑Codec wegen der Bandbreitenanforderungen, der Klangqualität und des mittleren CPU‑Verbrauchs.
 
-Mit einem Trunk für alle fünf Extensions:
+Mit einem Trunk pro fünf Nebenstellen:
 
-- Erforderliche Bandbreite für Zweigstelle #1 (Frame-Relay): 26.8*6=160.8 Kbps
-- Erforderliche Bandbreite für Zweigstelle #2 (Frame-Relay): 26.8*3= 80.4 Kbps
+- Benötigte Bandbreite für Niederlassung #1 (Frame‑relay): 26.8*6=160.8 Kbps
+- Benötigte Bandbreite für Niederlassung #2 (Frame‑relay): 26.8*3= 80.4 Kbps
 
-### Erlang B-Methode
+### Erlang B method
 
-1.a Anzahl der gleichzeitigen VoIP-Anrufe Manchmal ist Vereinfachung nicht der beste Ansatz. Wenn Sie über frühere Daten verfügen, können Sie einen wissenschaftlicheren Ansatz wählen. Wir verwenden die Arbeit von Agner Karup Erlang (Kopenhagener Telefongesellschaft, 1909), der eine Formel zur Berechnung der Leitungen in einer Trunk-Gruppe zwischen zwei Städten entwickelte. Erlang ist eine Verkehrsmessungseinheit, die normalerweise in der Telekommunikation vorkommt. Sie wird verwendet, um das Volumen des Verkehrs für eine Stunde zu beschreiben. Zum Beispiel: 20 Anrufe finden in einer Stunde statt, mit durchschnittlich 5 Minuten Gesprächsdauer. Sie können die Anzahl der Erlangs wie unten gezeigt berechnen: Verkehrsminuten in der Stunde: 20 x 5 = 100 Minuten Stunde des Verkehrs innerhalb einer Stunde: 100/60 = 1.66 Erlangs Sie können diese Maße aus einem Anrufprotokoll bestimmen und sie verwenden, um Ihr Netzwerk zu entwerfen, um die erforderliche Anzahl an Leitungen zu berechnen. Sobald die Anzahl der Leitungen bekannt ist, ist es möglich, die Bandbreitenanforderungen zu berechnen. Erlang B ist die am häufigsten verwendete Methode zur Berechnung der Anzahl der Leitungen in einer Trunk-Gruppe. Es wird davon ausgegangen, dass Anrufe zufällig eintreffen (Poisson-Verteilung), während blockierte Anrufe sofort gelöscht werden. Diese Methode erfordert, dass Sie den Busy Hour Traffic (BHT) kennen, den Sie aus einem Anrufprotokoll oder durch die folgende Vereinfachung erhalten können: BHT=17% der Anrufminuten eines Tages.
+Wenn Sie historische Daten haben, können Sie den Trunk wissenschaftlicher dimensionieren, anstatt zu vereinfachen. Wir verwenden die Arbeit von Agner Karup Erlang (Copenhagen Telephone Company, 1909), der eine Formel zur Berechnung der Leitungsanzahl in einer Trunk‑Gruppe zwischen zwei Städten entwickelte.
 
-![Erlang B-Rechnerergebnisse: 5 Erlangs bei 1% Blockierung erfordern 11 Leitungen (Hauptsitz zu Zweigstelle #1), und 2.83 Erlangs bei 1% Blockierung erfordern 8 Leitungen (Hauptsitz zu Zweigstelle #2).](../images/06-voip-network-fig07.png)
+Ein **Erlang** ist eine in der Telekommunikation gebräuchliche Verkehrsmessgröße; sie beschreibt das Verkehrsvolumen während einer Stunde. Beispiel: Angenommen, in einer Stunde finden 20 Anrufe statt, durchschnittlich 5 Minuten Gesprächsdauer pro Anruf:
 
-Eine weitere wichtige Variable ist die Grade of Service (GoS), die die Wahrscheinlichkeit der Blockierung von Anrufen durch Leitungsmangel definiert. Sie können diesen Parameter festlegen, der normalerweise 0.05 (5% Anrufe verloren) oder 0.01 (1% Anrufe verloren) beträgt. Beispiel #1: Unter Verwendung desselben Beispiels aus 5.10.1 geben wir Ihnen einige Daten zu Verkehrsmustern. Aus dem Anrufprotokoll haben wir diese Daten entdeckt: Daten aus dem Anrufprotokoll (Anrufminuten und BHT):
+- Verkehrsminuten in der Stunde: 20 × 5 = 100 Minuten
+- Stundenverkehr innerhalb einer Stunde: 100 / 60 = **1.66 Erlangs**
 
-- Hauptsitz zu Zweigstelle #1 = 2,000 Minuten, BHT = 300 Minuten
-- Hauptsitz zu Zweigstelle #2 = 1,000 Minuten, BHT = 170 Minuten
-- Zweigstelle #1 zu Zweigstelle #2 = 0, BHT=0
+Sie können diese Messwerte aus einem Call‑Logger auslesen und zur Planung Ihres Netzwerks sowie zur Berechnung der erforderlichen Leitungsanzahl verwenden. Sobald die Leitungsanzahl bekannt ist, können Sie die Bandbreitenanforderungen berechnen.
 
-Lassen Sie uns GoS=0.01 festlegen
+**Erlang B** ist die am häufigsten verwendete Methode zur Berechnung der Leitungsanzahl in einer Trunk‑Gruppe. Sie geht davon aus, dass Anrufe zufällig (Poisson‑Verteilung) eintreffen und blockierte Anrufe sofort abgeworfen werden. Sie erfordert, dass Sie den **Busy Hour Traffic (BHT)** kennen, den Sie aus einem Call‑Logger erhalten oder als Vereinfachung schätzen können: BHT = 17 % der Anrufminuten eines Tages.
 
-- Hauptsitz zu Zweigstelle #1 - BHT=300 Minuten/60 = 5 Erlangs
-- Hauptsitz zu Zweigstelle #2 – BHT=170 Minuten/60 = 2.83 Erlangs
+![Erlang B calculator results: 5 Erlangs at 1% blocking requires 11 lines (headquarters to branch #1), and 2.83 Erlangs at 1% blocking requires 8 lines (headquarters to branch #2).](../images/06-voip-network-fig07.png)
 
-Unter Verwendung eines Erlang-Rechners wie <https://www.erlang.com>
-
-- Für den Hauptsitz zu Zweigstelle #1 sind 11 Leitungen erforderlich.
-- Für den Hauptsitz zu Zweigstelle #2 sind 8 Leitungen erforderlich
-
-1.b Erforderliche Bandbreite Wir verwenden ein WAN, in dem Paketverlust selten ist. Wir wählen den g729-Codec aufgrund seiner guten Klangqualität und Datenkompression (8 Kbps).
-
-Ausgewählter Codec: g729 Datalink-Schicht: Frame-Relay
-
-- Geschätzte Sprachbandbreite für Zweigstelle #1: 26.8x11 = 294.8 Kbps
-- Geschätzte Sprachbandbreite für Zweigstelle #2: 26.8x8 = 214.40 Kbps
+Eine weitere wichtige Variable ist der Grade of Service (GoS), der die Wahrscheinlichkeit blockierter Anrufe wegen Leitungsengpässen definiert. Sie können diesen Parameter festlegen, üblich sind 0.05 (5 % verlorene Anrufe) oder 0.01 (1 % verlorene Anrufe). Example #1: Unter Verwendung des zuvor in diesem Abschnitt vorgestellten Hauptsitz‑und‑zwei‑Niederlassungen‑Beispiels geben wir Ihnen einige Daten zu den Verkehrsmustern. Aus dem Call‑Logger haben wir diese Daten ermittelt: Daten aus dem Call‑Logger
 
 ## Reduzierung der für VoIP erforderlichen Bandbreite
 
-Drei Methoden können verwendet werden, um die für VoIP-Anrufe erforderliche Bandbreite zu reduzieren:
+Drei Methoden können verwendet werden, um die für VoIP‑Gespräche erforderliche Bandbreite zu reduzieren:
 
-- RTP-Header-Kompression
+- RTP‑Header‑Kompression
 - IAX Trunked
-- VoIP-Nutzlast
+- VoIP‑Payload
 
-### RTP-Header-Kompression
+### RTP Header Compression
 
-In Frame-Relay- und PPP-Netzwerken können Sie RTP-Header-Kompression verwenden. RTP-Header-Kompression wurde in RFC 2508 definiert. Es ist ein IETF-Standard, der in mehreren Routern verfügbar ist. Seien Sie jedoch vorsichtig, da einige Router ein anderes Funktionsset erfordern, damit diese Ressource verfügbar ist. Die Auswirkung der Verwendung von RTP-Header-Kompression ist fabelhaft, da sie die in unserem Beispiel erforderliche Bandbreite von 26.8 Kbps pro Sprachgespräch auf 11.2 Kbps reduziert – eine Reduzierung um 58.2%!
+In Frame‑Relay‑ und PPP‑Netzwerken können Sie RTP‑Header‑Kompression einsetzen. RTP‑Header‑Kompression wurde in RFC 2508 definiert. Es ist ein IETF‑Standard, der in mehreren Routern verfügbar ist. Seien Sie jedoch vorsichtig, da einige Router einen anderen Funktionsumfang benötigen, damit diese Ressource verfügbar ist. Die Auswirkung der Verwendung von RTP‑Header‑Kompression ist beeindruckend, da sie die in unserem Beispiel benötigte Bandbreite von 26,8 Kbps pro Sprachgespräch auf 11,2 Kbps reduziert – eine Verringerung um 58,2 %!
 
-### IAX2-Trunk-Modus
+### IAX2 trunk mode
 
-Wenn Sie zwei Asterisk-Server verbinden, können Sie das IAX2-Protokoll im Trunk-Modus verwenden. Diese revolutionäre Technologie benötigt keine speziellen Router und kann auf jede Art von Datenverbindung angewendet werden.
+Wenn Sie zwei Asterisk‑Server verbinden, können Sie das IAX2‑Protokoll im Trunk‑Modus verwenden. Diese revolutionäre Technologie benötigt keine speziellen Router und kann auf jede Art von Datenlink angewendet werden.
 
-![IAX2-Trunk-Modus auf Ethernet: ein einzelner g.729-Anruf benötigt seinen vollständigen Header-Stack (31.2 Kbps), aber ein zweiter Anruf teilt sich diese Header und fügt nur ein kleines IAX2-Miniframe hinzu, was durchschnittlich etwa 9.6 Kbps zusätzliche Bandbreite pro zusätzlichem Anruf bedeutet.](../images/06-voip-network-fig08.png)
+![IAX2 trunk mode on Ethernet: a single g.729 call needs its full header stack (31.2 Kbps), but a second call shares those headers and adds only a small IAX2 miniframe, averaging about 9.6 Kbps of extra bandwidth per additional call.](../images/06-voip-network-fig08.png)
 
-Der IAX2-Trunk-Modus verwendet dieselben Header ab dem zweiten Anruf wieder. Bei Verwendung von g729 in einer PPP-Verbindung verbraucht der erste Anruf 30 Kbps Bandbreite, während der zweite Anruf denselben Header wie der erste verwendet und die notwendige Bandbreite für den zusätzlichen Anruf auf 9.6 Kbps reduziert. Wir können die erforderliche Bandbreite im Trunk-Modus wie folgt berechnen: Zweigstelle #1 (11 Anrufe) Bandbreite = 31.2 + (11-1)* 9.6 Kbps = 127.2 Kbps Zweigstelle #2 (8 Anrufe) Bandbreite = 31.2 + (8-1)* 9.6 Kbps = 98.4 Kbps Der erste Anruf verbraucht 31.2 Kbps, der nächste 9.6, und so weiter.
+Der IAX2‑Trunk‑Modus verwendet dieselben Header vom zweiten Anruf und darüber hinaus. Bei Verwendung von g729 in einer PPP‑Verbindung verbraucht der erste Anruf 30 Kbps Bandbreite, während der zweite Anruf denselben Header wie der erste nutzt und die für den zusätzlichen Anruf notwendige Bandbreite auf 9,6 Kbps reduziert. Wir können die erforderliche Bandbreite im Trunk‑Modus wie folgt berechnen: Branch #1 (11 calls) Bandwidth = 31.2 + (11-1)* 9.6 Kbps = 127.2 Kbps Branch #2 (8 calls) Bandwidth = 31.2 + (8-1)* 9.6 Kbps = 98.4 Kbps Der erste Anruf verwendet 31,2 Kbps, der nächste 9,6 Kbps und so weiter.
 
-### Erhöhung der Sprach-Nutzlast
+### Increasing the Voice Payload
 
-Diese Methode ist sehr verbreitet, wenn VoIP-Gateways über das Internet verwendet werden. Bei Verwendung einer größeren Nutzlast opfern Sie Latenz zugunsten einer reduzierten Bandbreite. Sie können die RTP-Paketierung ändern, indem Sie die Frame-Größe an den Codec in der allow-Anweisung anhängen.
+Diese Methode ist sehr verbreitet, wenn VoIP‑Gateways über das Internet eingesetzt werden. Bei Verwendung einer größeren Payload opfern Sie Latenz zugunsten einer reduzierten Bandbreite. Sie können die RTP‑Packetisierung ändern, indem Sie die Frame‑Größe an den Codec in der allow‑Anweisung anhängen.
 
-![Erhöhung der Sprach-Nutzlast: das Packen von 60 Bytes g.729-Nutzlast in ein Paket (anstatt 20) amortisiert die 58 Bytes an Headern über mehr Sprache, wodurch die Bandbreite auf etwa 16.05 Kbps pro Anruf sinkt, auf Kosten einer erhöhten Latenz.](../images/06-voip-network-fig09.png)
+![Increasing the voice payload: packing 60 bytes of g.729 payload into one packet (instead of 20) amortizes the 58 bytes of headers across more voice, dropping bandwidth to about 16.05 Kbps per call at the cost of added latency.](../images/06-voip-network-fig09.png)
 
 Beispiel:
 
@@ -258,58 +263,58 @@ Beispiel:
 allow=ulaw:30
 ```
 
-Die zulässigen Werte sind: Name Min Max Default Increment g723 gsm ulaw alaw g726 ADPCM SLIN lpc10 g729 speex ilbc
+Die Zahl nach dem Doppelpunkt ist das Packetisierungsintervall in Millisekunden – wie viel Sprache in jedem RTP‑Paket transportiert wird. Ein größerer Wert amortisiert den festen Header‑Overhead über mehr Audio (weniger Bandbreite) auf Kosten zusätzlicher Latenz. Jeder Codec hat seine eigene minimale, maximale und Standard‑Frame‑Größe; G.711 (`ulaw`/`alaw`) verwendet beispielsweise standardmäßig 20 ms.
 
 ## Zusammenfassung
 
-In diesem Kapitel haben Sie gelernt, dass Asterisk VoIP unter Verwendung von Kanälen behandelt. Es unterstützt SIP (über `chan_pjsip` in Asterisk 22) und IAX2; H.323 ist nur über das Community-Add-on `ooh323` verfügbar, und die älteren MGCP- und SCCP (Skinny)-Kanäle sind nicht mehr Teil eines Standard-Asterisk 22-Builds. Sie haben verglichen und gelernt, wie man ein Signalisierungsprotokoll und einen Codec für VoIP-Kanäle auswählt. Das IAX2 ist bandbreiteneffizienter und kann NAT leicht durchqueren. SIP/PJSIP ist das von Drittanbieter-Telefon- und Gateway-Herstellern am meisten unterstützte Protokoll und der einzige SIP-Kanaltreiber in Asterisk 22. Das H.323-Protokoll ist das älteste und sollte verwendet werden, um eine Verbindung zu veralteten VoIP-Infrastrukturen herzustellen. In Abschnitt 5.11 haben wir gelernt, wie man ein VoIP-Netzwerk entwirft und dimensioniert.
+In diesem Kapitel haben Sie gelernt, dass Asterisk VoIP über Kanäle verarbeitet. Es unterstützt SIP (via `chan_pjsip` in Asterisk 22) und IAX2; H.323 ist nur über das Community‑Add‑on `ooh323` verfügbar, und die älteren MGCP‑ und SCCP‑(Skinny)‑Kanäle gehören nicht mehr zu einem Standard‑Build von Asterisk 22. Sie haben verglichen und gelernt, wie man ein Signalisierungsprotokoll und einen Codec für VoIP‑Kanäle auswählt. IAX2 ist bandbreiteneffizienter und kann NAT leicht durchqueren. SIP/PJSIP ist das am meisten unterstützte Protokoll bei Drittanbieter‑Telefon‑ und Gateway‑Herstellern und ist der einzige SIP‑Kanaltreiber in Asterisk 22. Das H.323‑Protokoll ist das älteste und sollte verwendet werden, um sich mit Legacy‑VoIP‑Infrastrukturen zu verbinden. Im Abschnitt Traffic Engineering haben wir gelernt, wie man ein VoIP‑Netzwerk plant und dimensioniert.
 
 ## Quiz
 
-1. Welche der folgenden sind Vorteile von VoIP, die in diesem Kapitel beschrieben werden (kreuzen Sie alle zutreffenden an)?
-   - A. Konvergenz von Daten- und Sprachnetzwerken zur Kostensenkung
-   - B. Niedrigere Infrastrukturkosten für Hinzufügungen, Entfernungen und Änderungen
-   - C. Offene Standards, die Sie von einem einzigen Anbieter befreien
-   - D. Einfachere und billigere Computer-Telefonie-Integration
-   - E. Garantierte niedrigere Minutenpreise als bei jeder Telefongesellschaft
-2. Konvergenz ist die Integration von Sprache, Daten und Video in einem einzigen Netzwerk; ihr Hauptvorteil ist die Kostensenkung bei der Implementierung und Wartung getrennter Netzwerke.
-   - A. Falsch
-   - B. Wahr
-3. Asterisk behandelt jedes VoIP-Protokoll als Kanal und kann jeden Kanaltyp mit jedem anderen verbinden, wobei bei Bedarf zwischen Codecs transkodiert wird.
-   - A. Falsch
-   - B. Wahr
-4. In Asterisk 22 wird SIP von welchem Kanaltreiber gehandhabt?
+1. Which of the following are benefits of VoIP described in this chapter (check all that apply)?
+   - A. Convergence of data and voice networks to reduce cost
+   - B. Lower infrastructure cost for additions, removals, and changes
+   - C. Open standards that free you from a single vendor
+   - D. Easier and cheaper Computer Telephony Integration
+   - E. Guaranteed lower per-minute calling rates than any phone company
+2. Convergence is the integration of voice, data, and video in a single network; its primary benefit is cost reduction in the implementation and maintenance of separate networks.
+   - A. False
+   - B. True
+3. Asterisk treats every VoIP protocol as a channel and can bridge any channel type to any other, transcoding between codecs when needed.
+   - A. False
+   - B. True
+4. In Asterisk 22, SIP is handled by which channel driver?
    - A. chan_sip
    - B. chan_pjsip
    - C. chan_skinny
    - D. chan_mgcp
-5. In dem TCP/IP (IETF)-Modell, gegen das SIP in RFC 3261 tatsächlich definiert ist, arbeiten die Signalisierungsprotokolle SIP, H.323 und IAX2 auf der ___ Schicht.
-   - A. Präsentation
-   - B. Anwendung
-   - C. Physisch
-   - D. Sitzung
-   - E. Datenverbindung
-6. SIP ist das am meisten angenommene Protokoll für IP-Telefone und ist ein offener Standard, der weitgehend von der IETF in RFC 3261 definiert ist.
-   - A. Falsch
-   - B. Wahr
-7. IAX2 transportiert sowohl Signalisierung als auch Medien über einen einzigen UDP-Port, was es effizient und einfach macht, NAT zu durchqueren. Welchen UDP-Port verwendet IAX2?
+5. In the TCP/IP (IETF) model that SIP is actually defined against in RFC 3261, the signaling protocols SIP, H.323, and IAX2 operate at the ___ layer.
+   - A. Presentation
+   - B. Application
+   - C. Physical
+   - D. Session
+   - E. Data link
+6. SIP is the most adopted protocol for IP phones and is an open standard largely defined by the IETF in RFC 3261.
+   - A. False
+   - B. True
+7. IAX2 transports both signaling and media over a single UDP port, which makes it efficient and easy to traverse NAT. Which UDP port does IAX2 use?
    - A. 5060
    - B. 1720
    - C. 4569
    - D. 5061
-8. IAX wurde ursprünglich von Digium (jetzt Sangoma) entwickelt. Trotz begrenzter Akzeptanz durch Telefonhersteller ist IAX exzellent, wenn Sie (kreuzen Sie alle zutreffenden an):
-   - A. Bandbreitennutzung reduzieren müssen (es verwendet kein RTP)
-   - B. Ein Video-Medienformat benötigen
-   - C. Einfache NAT- und Firewall-Durchquerung benötigen
-   - D. Trunk-Modus benötigen, um viele Asterisk-zu-Asterisk-Anrufe zu kombinieren und den Header-Overhead zu amortisieren
-9. In Asterisk 22 wird ein Gerät als ein einziges PJSIP `endpoint`-Objekt konfiguriert, das sowohl Anrufe tätigt als auch empfängt – es gibt keine separate "User"- oder "Peer"-Rolle.
-   - A. Falsch
-   - B. Wahr
-10. Bezüglich Codecs in Asterisk 22, kreuzen Sie alle wahren Aussagen an:
-    - A. G.711 ist äquivalent zu PCM und verwendet 64 Kbps Bandbreite.
-    - B. Sangomas codec_g729-Modul ist kostenlos herunterladbar, aber die rechtmäßige Nutzung erfordert eine gekaufte Lizenz pro Kanal.
-    - C. GSM ist beliebt, weil es etwa 13 Kbps verwendet und keine Lizenz benötigt.
-    - D. G.711 u-law ist in Nordamerika üblich, während a-law in Europa und Lateinamerika üblich ist.
-    - E. G.729 ist leicht und verwendet im Vergleich zu G.711 sehr wenige CPU-Ressourcen zum Kodieren und Dekodieren.
+8. IAX was originally developed by Digium (now Sangoma). Despite limited adoption by phone vendors, IAX is excellent when you need (check all that apply):
+   - A. To reduce bandwidth usage (it does not use RTP)
+   - B. A video media format
+   - C. Easy NAT and firewall traversal
+   - D. Trunk mode to combine many Asterisk-to-Asterisk calls and amortize header overhead
+9. In Asterisk 22, a device is configured as a single PJSIP `endpoint` object that both places and receives calls — there is no separate "user" or "peer" role.
+   - A. False
+   - B. True
+10. Regarding codecs in Asterisk 22, check all the true statements:
+    - A. G.711 is equivalent to PCM and uses 64 Kbps of bandwidth.
+    - B. Sangoma's codec_g729 module is free to download, but lawful use requires a purchased per-channel license.
+    - C. GSM is popular because it uses about 13 Kbps and needs no license.
+    - D. G.711 u-law is common in North America, while a-law is common in Europe and Latin America.
+    - E. G.729 is light and uses very few CPU resources to encode and decode compared with G.711.
 
-**Antworten:** 1 — A, B, C, D · 2 — B · 3 — B · 4 — B · 5 — B (Anwendung — SIP ist ein Protokoll der Anwendungsschicht im TCP/IP-Modell, das die IETF verwendet) · 6 — B · 7 — C · 8 — A, C, D · 9 — B · 10 — A, B, C, D
+**Answers:** 1 — A, B, C, D · 2 — B · 3 — B · 4 — B · 5 — B (Application — SIP is an application-layer protocol in the TCP/IP model the IETF uses) · 6 — B · 7 — C · 8 — A, C, D · 9 — B · 10 — A, B, C, D

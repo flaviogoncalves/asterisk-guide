@@ -1,6 +1,6 @@
 # Call Queues
 
-Le code di chiamata, note anche come ACD (Automatic Call Distribution), stanno diventando sempre più importanti per rispondere in modo efficiente alle chiamate dei clienti. Un distributore automatico di chiamate può aiutare a ridurre i costi, migliorare il servizio e incrementare le vendite, poiché i distributori di chiamate influenzano il funzionamento della tua attività, non solo per pochi giorni, ma per molti anni. In un ambiente di call center, il fattore numero uno sono le persone; sono la risorsa più costosa. Richiede tempo, denaro e pazienza assumere, formare e motivare gli agenti. Con un ACD, puoi massimizzare la produttività degli agenti dimensionando con precisione il numero di agenti richiesti, controllando gli addetti più o meno efficienti e analizzando il flusso delle chiamate.
+Le code di chiamata, note anche come ACD (Automatic Call Distribution), stanno diventando sempre più importanti per rispondere alle chiamate dei clienti in modo efficiente. Un distributore automatico di chiamate può aiutare a ridurre i costi, aumentare il servizio e migliorare le vendite, poiché i distributori di chiamate influenzano il modo in cui la tua azienda opera—non per pochi giorni, ma per molti anni. In un ambiente di call center, il fattore numero uno sono le persone; sono la risorsa più costosa. Ci vogliono tempo, denaro e pazienza per assumere, formare e motivare gli agenti. Con un ACD, puoi massimizzare la produttività degli agenti dimensionando con precisione il numero di agenti necessario, controllando gli operatori buoni e cattivi, e analizzando il flusso delle chiamate.
 
 ## Obiettivi
 
@@ -12,62 +12,62 @@ Al termine di questo capitolo, dovresti essere in grado di:
 
 ## Come funzionano le code?
 
-Le code di chiamata non sono esattamente una novità. Quando hai un flusso elevato di chiamate in entrata, è difficile distribuire le chiamate in modo appropriato. L'utilizzo di una strategia di gruppo in cui il telefono squilla simultaneamente su tutti gli agenti non sembra funzionare, a meno che tu non abbia solo pochi agenti. Tuttavia, una coda di chiamata inoltrerà le chiamate a un singolo agente disponibile alla volta e metterà il cliente in attesa con musica quando non ci sono agenti disponibili. La coda funziona trattenendo la chiamata mentre cerca un agente libero per rispondere. Uno dei maggiori vantaggi della coda è evitare di perdere chiamate fornendo al contempo la possibilità di generare statistiche.
+Le code di chiamata non sono esattamente una novità. Quando hai un elevato flusso di chiamate in ingresso, è difficile distribuire le chiamate in modo appropriato. Utilizzare una strategia di gruppo in cui il telefono squilla simultaneamente su tutti gli agenti non sembra funzionare, a meno che tu non abbia solo pochi agenti. Tuttavia, una coda di chiamata consegnerà le chiamate a un singolo agente disponibile ogni volta e metterà il cliente in attesa con musica quando non ci sono agenti disponibili. La coda funziona trattenendo la chiamata mentre si trova un agente non occupato per rispondere. Uno dei maggiori vantaggi della coda è evitare la perdita di chiamate fornendo al contempo la possibilità di generare statistiche.
 
-![Una coda di chiamata: le chiamate 1-800 in entrata entrano nella coda e una strategia ACD (ringall, rrmemory, leastrecent, priority e altre) le distribuisce agli agenti disponibili](../images/14-queues-fig01.png)
+![A call queue: incoming 1-800 calls enter the queue and an ACD strategy (ringall, rrmemory, leastrecent, priority, and others) distributes them to the available agents](../images/14-queues-fig01.png)
 
 Di solito, una coda di chiamata funziona così:
 
-- Gli agenti effettuano il login nella coda.
-- Le chiamate in entrata vengono accodate.
+- Gli agenti effettuano il login alla coda.
+- Le chiamate in ingresso vengono messe in coda.
 - Viene utilizzata una strategia di accodamento per distribuire le chiamate agli agenti.
-- La musica di attesa (Music on hold) viene riprodotta mentre il chiamante attende.
-- È possibile effettuare annunci ai chiamanti, notificando loro il tempo di attesa.
+- Viene riprodotta la musica di attesa mentre il chiamante aspetta.
+- È possibile fare annunci ai chiamanti, informandoli del tempo di attesa
 - La chiamata viene risposta dall'agente e vengono generate le statistiche.
 
-L'applicazione principale per le code è il servizio clienti. Quando utilizzi le code, eviti di perdere chiamate quando i tuoi agenti sono occupati. Puoi aggiungere nuovi agenti alla coda se noti che il numero di chiamanti in coda sta crescendo. Un altro vantaggio delle code è che ora puoi avere statistiche come il tasso di abbandono delle chiamate, la durata media della chiamata e l'obiettivo di risposta alle chiamate. Queste statistiche ti aiuteranno a determinare quanti agenti utilizzare per fornire un servizio migliore al tuo cliente.
+L'applicazione principale delle code è il servizio clienti. Quando usi le code, eviti di perdere chiamate quando i tuoi agenti sono occupati. Puoi aggiungere nuovi agenti alla coda se noti che il numero di chiamanti in coda sta crescendo. Un altro vantaggio delle code è che ora puoi avere statistiche come tasso di abbandono delle chiamate, durata media della chiamata e obiettivo di risposta delle chiamate. Queste statistiche ti aiuteranno a determinare quanti agenti utilizzare per fornire un servizio migliore al tuo cliente.
 
 ### Architettura ACD
 
-L'architettura ACD è formata da code e agenti. Un agente può trovarsi in due code contemporaneamente. Una coda può avere agenti, canali e gruppi di agenti.
+L'architettura ACD è formata da code e agenti. Un agente può essere in due code contemporaneamente. Una coda può avere agenti, canali e gruppi di agenti.
 
-![Architettura ACD: ogni coda (Servizio Clienti, Vendite Interne) è alimentata da un numero di telefono e inoltra le chiamate agli agenti, che a loro volta sono legati a canali fisici](../images/14-queues-fig02.png)
+![ACD architecture: each queue (Customer Service, Inside Sales) is fed by a phone number and delivers calls to agents, who are in turn bound to physical channels](../images/14-queues-fig02.png)
 
-## Code
+## Queues
 
-Le code sono definite nel file di configurazione queues.conf. Gli agenti sono addetti che effettuano il login e sono membri delle code. Gli agenti sono definiti nel file agents.conf. Il sistema di code è cresciuto significativamente nel corso di molte release, rendendo il file di configurazione esteso. Spiegheremo alcuni dei parametri principali. Parametri generali
+Le code sono definite nel file di configurazione queues.conf. Gli agenti sono operatori che effettuano il login e sono membri delle code. Gli agenti sono definiti nel file agents.conf. Il sistema di code è cresciuto notevolmente nel corso di molte versioni, rendendo il file di configurazione esteso. Spiegheremo alcuni dei parametri principali. Un parametro generale degno di nota è `autofill`:
 
 ```
 autofill=yes
 ```
 
-Il vecchio comportamento per la coda era di tipo seriale. La coda attendeva che una chiamata venisse smistata prima di inviare la chiamata successiva al prossimo agente. Se un agente impiegava 15 secondi per rispondere a una chiamata, le altre chiamate in coda dovevano attendere fino a quando quella chiamata non veniva risposta. Per le code ad alto volume, questo comportamento era inefficiente. Il nuovo comportamento autofill=yes non attende che una chiamata venga risposta, ma lavora in parallelo. Puoi registrare le chiamate nella coda utilizzando l'opzione mixmonitor. In questa modalità, le chiamate vengono registrate e mixate contemporaneamente.
+Il comportamento precedente per la coda era di tipo seriale. La coda attendeva che una chiamata fosse smistata prima di inviare la chiamata successiva al prossimo agente. Se un agente impiega 15 secondi per rispondere a una chiamata, le altre chiamate in coda dovevano attendere fino a quando quella chiamata fosse stata risposta. Per code ad alto volume, questo comportamento era inefficiente. Il nuovo comportamento autofill=yes non attende che una chiamata sia risposta, ma funziona in parallelo. È possibile registrare le chiamate nella coda usando l'opzione mixmonitor. In questa modalità, le chiamate sono registrate e mescolate contemporaneamente.
 
-### File di configurazione delle code
+### Queue configuration file
 
-Le code sono configurate nel file queues.conf. Nella figura, troverai un esempio funzionante di una coda.
+Le code sono configurate nel file queues.conf. Nella figura, troverete un esempio funzionante di una coda.
 
-![Un esempio funzionante del file queues.conf, che mostra la sezione generale e una coda customerservice con strategia, livello di servizio, annunci, registrazione e membri](../images/14-queues-fig03.png)
+![A working example of the queues.conf file, showing the general section and a customerservice queue with strategy, service level, announcements, recording, and members](../images/14-queues-fig03.png)
 
-### Agenti
+### Agents
 
-Puoi configurare i tuoi agenti nel file agents.conf. Gli agenti possono effettuare il login da qualsiasi extension per ricevere chiamate. Puoi chiamare un agente utilizzando:
+È possibile configurare i propri agenti nel file agents.conf. Gli agenti possono effettuare il login da qualsiasi interno per ricevere chiamate. È possibile chiamare un agente usando:
 
 ```
 Dial(agent/<name>)
 ```
 
-#### Agenti
+#### Agent login
 
-Agente 300
+Il flusso di login per l'Agent 300 funziona così:
 
-- Puoi controllare lo stato degli agenti utilizzando il comando `agent show all`
-- il comando agentlogin viene eseguito e l'agente viene associato al canale corrente.
-- L'utente compone un'extension con l'applicazione agentlogin.
+- L'utente compone un interno che esegue l'applicazione `AgentLogin()`.
+- `AgentLogin()` viene eseguito e l'agente viene associato al canale corrente.
+- È possibile verificare lo stato degli agenti usando il comando `agent show all`.
 
-![Agenti: un utente effettua il login componendo un'extension che esegue l'applicazione agentlogin, che lega l'Agente 300 al canale corrente; puoi controllare lo stato dell'agente con `agent show all`](../images/14-queues-fig04.png)
+![Agents: a user logs in by dialing an extension that runs the agentlogin application, which binds Agent 300 to the current channel; you can check agent status with `agent show all`](../images/14-queues-fig04.png)
 
-Puoi definire gli agenti nel file agents.conf
+È possibile definire gli agenti nel file agents.conf
 
 ```
 ; Agent configuration
@@ -89,58 +89,55 @@ agent => 300,300
 agent => 301,301
 ```
 
-### Membri
+### Members
 
 I membri sono canali attivi che rispondono alla coda. I membri possono essere canali diretti (PJSIP, DAHDI) o agenti che effettuano il login prima di ricevere chiamate.
 
+### Strategies
 
-### Strategie
+Le chiamate sono distribuite tra i membri secondo una di queste strategie:
 
-Le chiamate vengono distribuite tra i membri secondo una di queste strategie:
-
-- ringall: Fa squillare tutti i canali disponibili finché qualcuno non risponde.
+- ringall: Suona tutti i canali disponibili finché qualcuno non risponde.
 - leastrecent: Distribuisce al membro meno recente.
-- fewestcalls: Distribuisce al membro con meno chiamate.
-- random: Fa squillare un'interfaccia casuale.
-- wrandom: Fa squillare un'interfaccia casuale, ma utilizza la penalità del membro come peso nel calcolo della metrica.
-- rrmemory: Utilizza il round robin con memoria; ricorda dove si era interrotto con la chiamata nel passaggio precedente.
-- rrordered: Uguale a rrmemory, eccetto che l'ordine dei membri della coda dal file di configurazione viene preservato.
-- linear: Fa squillare i membri nell'ordine in cui sono elencati in queues.conf; per i membri dinamici, nell'ordine in cui sono stati aggiunti.
+- fewestcalls: Distribuisce al membro con il minor numero di chiamate.
+- random: Suona un'interfaccia casuale.
+- wrandom: Suona un'interfaccia casuale, ma usa la penalità del membro come peso nel calcolo della metrica.
+- rrmemory: Usa round robin con memoria; ricorda dove aveva interrotto con la chiamata nell'ultimo ciclo.
+- rrordered: Come rrmemory, ma l'ordine dei membri della coda nel file di configurazione è preservato.
+- linear: Suona i membri nell'ordine in cui sono elencati in queues.conf; per i membri dinamici, nell'ordine in cui sono stati aggiunti.
 
-La vecchia strategia `roundrobin` è stata deprecata in Asterisk 1.4 e rimossa; non esiste più in Asterisk 22. Usa invece `rrmemory` (o `rrordered`). Le strategie sopra elencate sono l'insieme completo accettato dall'opzione `strategy` in Asterisk 22 `queues.conf`.
+La più vecchia strategia `roundrobin` è stata deprecata già in Asterisk 1.4. Non è più una strategia documentata e non dovrebbe essere usata: in Asterisk 22 il parser accetta ancora la parola `roundrobin`, ma solo come alias di retrocompatibilità che mappa a `rrmemory`. Usare `rrmemory` (o `rrordered`) esplicitamente al suo posto. L'elenco sopra è l'insieme delle strategie documentate per l'opzione `strategy` nell'Asterisk 22 `queues.conf`.
 
-## Agenti
+## Agents
 
-Gli agenti sono implementati come canali proxy. Possono essere utilizzati all'interno delle code. Un altro utilizzo dei canali agente è l'extension mobility. L'utente può effettuare il login utilizzando qualsiasi telefono e ricevere le sue chiamate. Ciò consente a un utente di andare in qualsiasi stanza per renderla un ufficio. Puoi chiamare un agente nel dialplan utilizzando dial(agent/<name>). Definisci gli agenti nel file agents.conf.
+Gli agenti sono implementati come canali proxy. Possono essere usati all'interno delle code. Un altro utilizzo dei canali agente è la mobilità delle estensioni. L'utente può effettuare il login usando qualsiasi telefono e ricevere le sue chiamate. Questo consente a un utente di andare in qualsiasi stanza per trasformarla in un ufficio. È possibile chiamare un agente nel dialplan usando dial(agent/<name>). Si definiscono gli agenti nel file agents.conf.
 
-![Mobilità dell'agente: l'utente solleva un telefono qualsiasi, compone un'extension di login e inserisce il numero dell'agente e la password; dopo che agentlogin() ha avuto successo, l'agente (Agente 300) è pronto a ricevere chiamate e puoi controllare lo stato con il comando CLI `agent show all`](../images/14-queues-fig05.png)
+![Agent mobility: the user picks up any phone, dials a login extension, and passes the agent number and password; after agentlogin() succeeds the agent (Agent 300) is ready to take calls, and you can check status with the CLI command `agent show all`](../images/14-queues-fig05.png)
 
-### Gruppi di agenti
+### Agent Groups
 
-Puoi scegliere di utilizzare gruppi di agenti. Questa funzione non prende in considerazione le strategie ACD. Probabilmente preferirai elencare tutti gli agenti individualmente. Se vuoi trasferire a un gruppo di agenti, tu
+Può essere opportuno utilizzare i gruppi di agenti. Questa funzione non prende in considerazione le strategie ACD. Probabilmente preferirai elencare tutti gli agenti singolarmente. Se vuoi trasferire a un gruppo di agenti, puoi usare `queues.conf`:
 
 ```
-can use queues.conf:
-member=>agent/@1 ;any agent in group 1
-member=>agent/:1,1 ;any agent in group 1, wait for first available, ;do not
-use agent groups.
+member => agent/@1    ; any agent in group 1
+member => agent/:1,1  ; any agent in group 1, wait for first available
 ```
 
-### Il file di configurazione per gli agenti
+### The configuration file for agents
 
 Gli agenti sono definiti nel file agents.conf. Di seguito è riportato un esempio funzionante del file.
 
-![Un esempio funzionante del file agents.conf: una sezione generale con persistentagents, una sezione agents con i parametri predefiniti (autologoff, ackcall, endcall, wrapuptime, musiconhold) e due definizioni di agente (300 e 301)](../images/14-queues-fig06.png)
+![A working example of the agents.conf file: a general section with persistentagents, an agents section with the default parameters (autologoff, ackcall, endcall, wrapuptime, musiconhold), and two agent definitions (300 and 301)](../images/14-queues-fig06.png)
 
 ## Applicazioni correlate all'ACD
 
-Il sistema di code di Asterisk rende disponibili diverse applicazioni per implementare le code nel dialplan. Di seguito, ne mostriamo alcune.
+Il sistema di code di Asterisk mette a disposizione diverse applicazioni per implementare le code nel dialplan. Di seguito ne mostriamo alcune.
 
 ### L'applicazione queue()
 
-Questa applicazione accoda le chiamate in entrata in una particolare coda di chiamata come definita in queues.conf. La stringa delle opzioni può contenere zero o più dei seguenti caratteri: Oltre a trasferire la chiamata, una chiamata può essere parcheggiata e poi ripresa da un altro utente. L'URL opzionale verrà inviato alla parte chiamata se il canale lo supporta. Il parametro AGI opzionale configurerà uno script AGI da eseguire sul canale della parte chiamante una volta che sono connessi a un membro della coda. Il timeout farà fallire la coda dopo un numero specificato di secondi, controllato tra ogni ciclo di timeout e riprova. Questa applicazione imposta la variabile di stato QUEUE al completamento:
+Questa applicazione accoda le chiamate in ingresso in una specifica coda definita in queues.conf. La stringa delle opzioni può contenere zero o più opzioni a singola lettera (mostrate nella figura sotto). Oltre a trasferire la chiamata, una chiamata può essere parcheggiata e poi ripresa da un altro utente. L'URL opzionale sarà inviato alla parte chiamata se il canale lo supporta. Il parametro AGI opzionale imposterà uno script AGI da eseguire sul canale della parte chiamante una volta connessa a un membro della coda. Il timeout farà fallire la coda dopo un numero specificato di secondi, controllato tra ogni ciclo di timeout e retry. Questa applicazione imposta la variabile di stato QUEUE al completamento:
 
-![L'applicazione queue(): la sua sintassi `Queue(queuename[|options[|URL][|announceoverride][|timeout][|AGI]])` e le opzioni a lettera singola disponibili (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
+![The queue() application: its syntax `Queue(queuename,options,URL,announceoverride,timeout,AGI)` — Asterisk 22 separates the arguments with commas (the older pipe `|` form is gone) — and the available single-letter options (d, h, H, n, i, r, t, T, w, W)](../images/14-queues-fig07.png)
 
 - TIMEOUT
 - FULL
@@ -151,13 +148,13 @@ Questa applicazione accoda le chiamate in entrata in una particolare coda di chi
 
 ### L'applicazione agentlogin()
 
-Questa applicazione chiede all'agente di effettuare il login nel sistema. Restituisce sempre -1. Mentre è loggato, l'agente che riceve le chiamate sentirà un segnale acustico quando arriva una nuova chiamata. L'agente può terminare la chiamata premendo il tasto *.
+Questa applicazione richiede all'agente di accedere al sistema. Restituisce sempre -1. Mentre è connesso, l'agente che riceve le chiamate sentirà un segnale acustico quando arriva una nuova chiamata. L'agente può terminare la chiamata premendo il tasto *.
 
-![L'applicazione agentlogin(): la sua sintassi `AgentLogin([AgentNo][|options])` e l'opzione `s` per un login silenzioso che non annuncia la conferma del login](../images/14-queues-fig08.png)
+![The agentlogin() application: its syntax `AgentLogin([AgentNo][|options])` and the `s` option for a silent login that does not announce the login confirmation](../images/14-queues-fig08.png)
 
 ### L'applicazione addQueueMember()
 
-Questa applicazione aggiunge dinamicamente un dispositivo (es. PJSIP/3000) a una coda. Se il dispositivo esiste già, restituirà un errore.
+Questa applicazione aggiunge dinamicamente un dispositivo (ad es., PJSIP/3000) a una coda. Se il dispositivo esiste già, restituirà un errore.
 
 ```
 AddQueueMember(queuename[|interface][|penalty]):
@@ -173,17 +170,17 @@ RemoveQueueMember(queuename[|interface])
 
 ### Applicazioni di supporto e comandi CLI
 
-Alcune applicazioni e comandi della console sono in grado di aiutare il lavoro con le code. Quanto segue delinea cosa fa ogni applicazione:
+Alcune applicazioni e comandi della console possono aiutare nella gestione delle code. Di seguito è riportato ciò che fa ciascuna applicazione:
 
-![Applicazioni di supporto (AddQueueMember, RemoveQueueMember) e comandi CLI (agent show all, queue show, queue show <name>) utilizzati per gestire le code in runtime](../images/14-queues-fig09.png)
+![Support applications (AddQueueMember, RemoveQueueMember) and CLI commands (agent show all, queue show, queue show <name>) used to manage queues at runtime](../images/14-queues-fig09.png)
 
-## Attività di configurazione
+## Configuration tasks
 
-La figura seguente riassume le attività principali per creare un sistema di code funzionante.
+The figure below summarizes the major tasks to create a working queue system.
 
-![Le attività di configurazione ACD: (1) creare la coda di chiamata (richiesto), (2) definire i parametri dell'agente (opzionale), (3) creare gli agenti (opzionale), (4) inserire la coda nel dialplan (richiesto), (5) configurare la registrazione dell'agente (opzionale) e (6) verificare con agent show all e queue show (opzionale)](../images/14-queues-fig10.png)
+![Le attività di configurazione dell'ACD: (1) creare la coda di chiamata (obbligatorio), (2) definire i parametri dell'agente (opzionale), (3) creare gli agenti (opzionale), (4) inserire la coda nel dialplan (obbligatorio), (5) configurare la registrazione dell'agente (opzionale) e (6) verificare con agent show all e queue show (opzionale)](../images/14-queues-fig10.png)
 
-Passaggio 1: Creare la coda di chiamata Nel file queues.conf:
+Step 1: Create the call queue In the file queues.conf:
 
 ```
 [telemarketing]
@@ -206,7 +203,7 @@ member => Agent/600
 member => Agent/601
 ```
 
-Passaggio 2: Definire i parametri dell'agente Nel file agents.conf:
+Step 2: Define agent parameters In the file agents.conf:
 
 ```
 debian:/etc/asterisk# cat agents.conf
@@ -256,7 +253,7 @@ autologoff=15
 ;group=
 ```
 
-Passaggio 3: Creare gli agenti Nel file agents.conf:
+Step 3: Create the agents In the file agents.conf:
 
 ```
 ;agent => agentid,agentpassword,name
@@ -267,10 +264,9 @@ agent => 600,600,Test Ver - 600
 agent => 601,601,Test Ver . 601
 ```
 
-Passaggio 4: Inserire la coda nel dialplan
+Step 4: Insert the queue in the dial plan, in the file `extensions.conf`:
 
 ```
-In the file extensions.conf:
 ; Telemarketing queue.
 exten=>_0800XXXXXXX,1,Answer
 exten=>_0800XXXXXXX,2,Set(CHANNEL(musicclass)=default)
@@ -279,7 +275,7 @@ exten=>_0800XXXXXXX,4,Set(TIMEOUT(response)=10)
 exten=>_0800XXXXXXX,5,Background(welcome)
 exten=>_0800XXXXXXX,6,Queue(telemarketing)
 ; Transfer to the queue auditing
-exten => 8000,1,Queue,(auditing)
+exten => 8000,1,Queue(auditing)
 exten => 8000,2,Playback(demo-echotest); No auditor available
 exten => 8000,3,Goto(8000,1) ; Verify auditor again
 ; Agent login for the telemarketing and auditing queues
@@ -287,15 +283,11 @@ exten => 9000,1,Wait(1)
 exten => 9000,2,AgentLogin()
 ```
 
-### Configurare la registrazione della coda
+### Configure queue recording
 
-Le chiamate possono essere registrate utilizzando l'applicazione MixMonitor di Asterisk. (L'applicazione autonoma Monitor è stata rimossa in Asterisk 22 e l'opzione `monitor-type` di queues.conf ora accetta solo MixMonitor.) La registrazione può essere abilitata dall'interno dell'applicazione queue, iniziando quando la chiamata viene effettivamente risposta. Vengono registrate solo le chiamate riuscite e non vengono eseguite registrazioni mentre le persone ascoltano la MOH. Per abilitare il monitoraggio, specifica semplicemente monitor-format. Questa funzione è altrimenti disabilitata. Puoi impostare il nome del file per la registrazione utilizzando Set(MONITOR_FILENAME=<filename>); altrimenti
+Calls may be recorded using Asterisk's MixMonitor application. (The standalone Monitor application was removed in Asterisk 22, and the queues.conf `monitor-type` option now accepts only MixMonitor.) Recording can be enabled from within the queue application, beginning when the call is actually picked up. Only successful calls are recorded, and no recordings are performed while people are listening to MOH. To enable monitoring, simply specify monitor-format. This feature is otherwise disabled. You can set the filename for the recording using `Set(MONITOR_FILENAME=<filename>)`; otherwise it will use `MONITOR_FILENAME=${UNIQUEID}`.
 
-```
-it will use MONITOR_FILENAME=${UNIQUEID}.
-```
-
-Nel file queues.conf:
+In the file queues.conf:
 
 ```
 monitor-format = wav
@@ -305,23 +297,26 @@ monitor-join = yes
 
 ## Operazione della coda
 
-Gli esempi seguenti spiegano come utilizzare la coda. Passaggio 1: Login dell'agente Esempio: Un agente nella coda di telemarketing solleva il telefono e compone #9000. L'agente sente un messaggio di login non valido e gli viene chiesto il suo nome e la sua password. La coda di auditing segue la stessa procedura. Passaggio 2: Coda Una volta nella coda, l'agente sentirà la MOH, se definita. Quando arriva una chiamata alla coda di telemarketing, l'agente sentirà un segnale acustico e verrà connesso a quella chiamata. Passaggio 3: Fine della chiamata Quando l'agente termina la chiamata, può:
+Gli esempi seguenti spiegano come utilizzare la coda.
 
-- Premere '*' per disconnettersi e rimanere nella coda.
-- Disconnettere il telefono, disconnettendosi così dalla coda.
-- Premere #8000 per trasferire la chiamata per l'auditing.
+1. Accesso agente. Esempio: Un agente nella coda telemarketing risponde al telefono e compone #9000. L'agente sente un messaggio di login non valido e gli viene chiesto il nome e la password. La coda di audit segue la stessa procedura.
+2. Coda. Una volta nella coda, l'agente sentirà la MOH, se definita. Quando arriva una chiamata nella coda telemarketing, l'agente sentirà un segnale acustico e verrà collegato a quella chiamata.
+3. Fine chiamata. Quando l'agente termina la chiamata, può:
+   - Premere ‘*’ per disconnettersi e rimanere nella coda.
+   - Scollegare il telefono, uscendo così dalla coda.
+   - Premere #8000 per trasferire la chiamata per l'audit.
 
 ## Risorse avanzate
 
-Il sistema di code di Asterisk ha alcune funzionalità avanzate per dare priorità a determinati clienti e agenti, nonché per abilitare un menu utente.
+Il sistema di code di Asterisk offre alcune funzionalità avanzate per dare priorità a determinati clienti e agenti, oltre a consentire un menu utente.
 
 ### Menu utente
 
-Puoi definire un menu per un utente mentre è in attesa nella coda utilizzando le estensioni a una cifra. Per abilitare questa opzione, definisci un context nella configurazione della coda queues.conf.
+È possibile definire un menu per un utente in attesa nella coda usando estensioni a una cifra. Per abilitare questa opzione, definire un contesto nella configurazione della coda `queues.conf`.
 
-### Penalità
+### Penalty
 
-Gli agenti possono essere configurati con una penalità. Una coda invierà le chiamate prima agli utenti con valori di penalità inferiori. Ad esempio, poiché sappiamo che i nostri clienti adorano Susan e la sua voce dolce, potremmo scegliere di assegnarle la priorità 0. In alternativa, l'agente chiamato Uber, che ha meno esperienza, è meno preferito per il servizio clienti; pertanto, assegniamo una priorità 10 a questo agente. Nel file queues.conf:
+Gli agenti possono essere configurati con una penalità. Una coda invierà le chiamate prima agli utenti con valori di penalità più bassi. Ad esempio, poiché sappiamo che i nostri clienti adorano Susan e la sua voce dolce, potremmo assegnarle priorità 0. In alternativa, l'agente chiamato Uber, che ha meno esperienza, è meno preferito per il servizio clienti; pertanto, assegniamo a questo agente priorità 10. Nel file `queues.conf`:
 
 ```
 [customerservice]
@@ -329,9 +324,9 @@ member=300,0,Susan the excellent agent
 member=300,10,Uber the new guy
 ```
 
-### Priorità
+### Priority
 
-Le code operano in modalità FIFO (first in first out). Se vuoi dare priorità a clienti speciali (platino, oro) puoi impostare priorità differenziate. Per i clienti platino o oro:
+Le code operano in modalità FIFO (first in first out). Se si desidera dare priorità a clienti speciali (platinum, gold) è possibile impostare priorità differenziate. Per clienti platinum o gold:
 
 ```
 exten=>111,1,Playback(welcome)
@@ -339,7 +334,7 @@ exten=>111,2,Set(QUEUE_PRIO=10)
 exten=>111,3,Queue(customerservice)
 ```
 
-Clienti blu:
+Clienti blue:
 
 ```
 exten=>112,1,Playback(welcome)
@@ -347,15 +342,15 @@ exten=>112,2,Set(QUEUE_PRIO=5)
 exten=>112,3,Queue(customerservice)
 ```
 
-## L'applicazione agentcallbacklogin() è stata rimossa
+## The application agentcallbacklogin() is removed
 
-L'applicazione `agentcallbacklogin()` è stata deprecata da Digium in Asterisk 1.4 (luglio 2006) e non è più disponibile in Asterisk 22. L'approccio consigliato è utilizzare `AddQueueMember()` con un'interfaccia PJSIP per aggiungere dinamicamente membri di tipo callback a una coda. Il documento `queues-with-callback-members.txt` era incluso nelle vecchie directory `/doc` di Asterisk per la guida alla migrazione.
+The application `agentcallbacklogin()` was deprecated by Digium in Asterisk 1.4 (July 2006) and is no longer available in Asterisk 22. The recommended approach is to use `AddQueueMember()` with a PJSIP interface to dynamically add callback-style members to a queue. The document `queues-with-callback-members.txt` was included in older Asterisk `/doc` directories for migration guidance.
 
-Anche il vecchio driver di canale `chan_agent` è stato rimosso; la sua funzionalità è stata riscritta come modulo `app_agent_pool`, che è ciò che fornisce `AgentLogin()`, `AgentRequest()` e la funzione di dialplan `AGENT()` in Asterisk 22 (queste sono ancora presenti — `app_agent_pool.so` viene fornito con una build standard 22). Per i call center moderni, tuttavia, il modello standard è saltare completamente i canali agente e aggiungere il dispositivo PJSIP dell'agente direttamente alla coda con `AddQueueMember()`/`RemoveQueueMember()` (staticamente in `queues.conf`, o dinamicamente dal dialplan o dall'AMI). Questo è più semplice, si integra perfettamente con lo stato del dispositivo PJSIP ed è l'approccio utilizzato in tutto questo capitolo.
+The old `chan_agent` channel driver was likewise removed; its functionality was rewritten as the `app_agent_pool` module, which is what provides `AgentLogin()`, `AgentRequest()` and the `AGENT()` dialplan function in Asterisk 22 (these are still present — `app_agent_pool.so` ships with a stock 22 build). For modern call centers, however, the standard pattern is to skip agent channels entirely and add the agent's PJSIP device directly to the queue with `AddQueueMember()`/`RemoveQueueMember()` (statically in `queues.conf`, or dynamically from the dialplan or AMI). This is simpler, integrates cleanly with PJSIP device state, and is the approach used throughout this chapter.
 
-## Statistiche della coda
+## Queue statistics
 
-Tutti gli eventi dalle code vengono registrati in /var/log/asterisk/queue_log. Il formato del log della coda è pubblicato nel documento queuelog.txt nella directory /doc della documentazione di Asterisk. Di seguito sono riportati alcuni degli eventi registrati più importanti.
+All events from queues are logged to /var/log/asterisk/queue_log. The format of the queue log is published in the document queuelog.txt in the /doc directory of the Asterisk documentation. Below are some of the most important events logged.
 
 - ABANDON(position|origposition|waittime)
 - AGENTDUMP
@@ -375,59 +370,59 @@ Tutti gli eventi dalle code vengono registrati in /var/log/asterisk/queue_log. I
 - RINGNOANSWER(ringtime)
 - SYSCOMPAT
 
-Puoi costruire la tua utility per elaborare questi eventi o utilizzare un pacchetto di statistiche pronto all'uso:
+You can build your own utility to process these events or use a ready-to-run statistics package:
 
-- **QueueMetrics** (<https://www.queuemetrics.com/>) – un pacchetto commerciale, attivamente mantenuto, che analizza `queue_log` e rimane uno degli strumenti di reporting più completi per i call center Asterisk.
-- **Fai da te** – poiché il formato `queue_log` sopra è stabile e ben documentato, è semplice analizzarlo con un piccolo script (Python, ecc.) e inserire gli eventi in un database o in una dashboard.
+- **QueueMetrics** (<https://www.queuemetrics.com/>) – a commercial, actively maintained package that parses `queue_log` and remains one of the most complete reporting tools for Asterisk call centers.
+- **Roll your own** – because the `queue_log` format above is stable and well documented, it is straightforward to parse it with a small script (Python, etc.) and feed the events into a database or dashboard.
 
-Per un approccio più orientato agli eventi rispetto al tail di `queue_log`, l'**Asterisk REST Interface (ARI)** e le azioni **AMI** `QueueSummary`/`QueueStatus` ti consentono di creare dashboard di coda in tempo reale e integrazioni personalizzate basate sullo stato della coda in tempo reale, anziché sull'analisi dei log a posteriori. ARI è l'interfaccia di integrazione moderna e supportata per questo tipo di lavoro in Asterisk 22.
+For a more event-driven approach than tailing `queue_log`, the **Asterisk REST Interface (ARI)** and the **AMI** `QueueSummary`/`QueueStatus` actions let you build live queue dashboards and custom integrations against real-time queue state rather than after-the-fact log parsing. ARI is the modern, supported integration surface for this kind of work in Asterisk 22.
 
 ## Riepilogo
 
-In questo capitolo hai imparato come utilizzare un ACD, la sua architettura e come configurarlo. Sono state presentate anche alcune funzionalità avanzate come priorità e penalità.
+In questo capitolo hai imparato come utilizzare un ACD, la sua architettura e come configurarlo. Sono state presentate anche alcune funzionalità avanzate come le priorità e le penalità.
 
 ## Quiz
 
-1. Quali delle seguenti sono strategie di distribuzione delle code valide in `queues.conf` (scegli tutte quelle applicabili)?
+1. Quali delle seguenti sono strategie di distribuzione della coda valide in `queues.conf` (scegli tutte le risposte corrette)?
    - A. ringall
    - B. roundrobin
    - C. leastrecent
    - D. fewestcalls
    - E. rrmemory
    - F. linear
-2. Puoi registrare una conversazione tra un agente e un cliente dall'interno della coda impostando l'opzione ___ nel file `queues.conf`.
-3. Quale `strategy` fa squillare i membri nell'ordine esatto in cui sono elencati in `queues.conf`?
+2. È possibile registrare una conversazione tra un agente e un cliente dalla coda impostando l'opzione ___ nel file `queues.conf`.
+3. Quale `strategy` chiama i membri nell'ordine esatto in cui sono elencati in `queues.conf`?
    - A. random
    - B. wrandom
    - C. linear
    - D. fewestcalls
-4. Quando l'agente termina una chiamata nell'esempio di telemarketing, quali azioni può intraprendere (scegli tutte quelle applicabili)?
+4. Quando l'agente termina una chiamata nell'esempio di telemarketing, quali azioni può compiere (scegli tutte le risposte corrette)?
    - A. Premere `*` per disconnettersi e rimanere nella coda
    - B. Riagganciare il telefono e disconnettersi dalla coda
-   - C. Premere `#8000` per trasferire la chiamata per l'auditing
-   - D. Premere `#` per disconnettersi immediatamente da tutte le code
-5. Quali due attività sono *richieste* per ottenere una coda funzionante (scegli tutte quelle applicabili)?
+   - C. Premere `#8000` per trasferire la chiamata per l'audit
+   - D. Premere `#` per disconnettersi da tutte le code immediatamente
+5. Quali due compiti sono *necessari* per ottenere una coda funzionante (scegli tutte le risposte corrette)?
    - A. Creare la coda
    - B. Creare gli agenti
    - C. Configurare i parametri dell'agente
    - D. Configurare la registrazione
    - E. Inserire la coda nel dialplan
-6. In una coda di chiamata puoi offrire un menu a una cifra che il chiamante può comporre mentre attende. Questo è abilitato definendo un/a ___ nella sezione `queues.conf` della coda:
+6. In una coda di chiamata è possibile offrire un menu a un solo tasto che il chiamante può digitare mentre attende. Questo è abilitato definendo un ___ nella sezione `queues.conf` della coda:
    - A. agent
    - B. menu
    - C. context
    - D. application
-7. Le applicazioni di supporto `AddQueueMember()` e `RemoveQueueMember()` vengono utilizzate nel ___ per aggiungere o rimuovere membri in runtime:
-   - A. dialplan
+7. Le applicazioni di supporto `AddQueueMember()` e `RemoveQueueMember()` sono usate nel ___ per aggiungere o rimuovere membri a runtime:
+   - A. dial plan
    - B. command-line interface
    - C. queues.conf
    - D. agents.conf
-8. Poiché chan_sip è stato rimosso in Asterisk 21, un membro statico della coda deve fare riferimento a un canale come ___ anziché `SIP/1001`.
-9. Il parametro `wrapuptime` è il tempo minimo dopo che un agente disconnette una chiamata prima che la coda invii a quell'agente una nuova chiamata.
-   - A. Vero
-   - B. Falso
-10. A un chiamante può essere assegnata una posizione più alta nella stessa coda impostando la variabile di canale `QUEUE_PRIO` prima di chiamare `Queue()`.
-    - A. Vero
-    - B. Falso
+8. Poiché chan_sip è stato rimosso in Asterisk 21, un membro statico della coda deve fare riferimento a un canale come ___ piuttosto che a `SIP/1001`.
+9. Il parametro `wrapuptime` è il tempo minimo dopo che un agente ha disconnesso una chiamata prima che la coda gli invii una nuova chiamata.
+   - A. True
+   - B. False
+10. Un chiamante può ottenere una posizione più alta nella stessa coda impostando la variabile di canale `QUEUE_PRIO` prima di chiamare `Queue()`.
+    - A. True
+    - B. False
 
-**Risposte:** 1 — A, C, D, E, F (roundrobin è stato sostituito da rrmemory e non esiste più) · 2 — `monitor-format` (la registrazione dalla coda è abilitata specificando `monitor-format`; `monitor-type` seleziona MixMonitor vs Monitor) · 3 — C (linear) · 4 — A, B, C (`*` disconnette e rimane; `#` non è un tasto di disconnessione totale) · 5 — A, E · 6 — C (l'opzione `context`) · 7 — A (il dialplan) · 8 — `PJSIP/1001` (qualsiasi interfaccia `PJSIP/`) · 9 — Vero · 10 — Vero
+**Answers:** 1 — A, C, D, E, F (roundrobin non è una strategia documentata; in Asterisk 22 è presente solo come alias deprecato per rrmemory) · 2 — `monitor-format` (la registrazione dalla coda è abilitata specificando `monitor-format`; in Asterisk 22 `monitor-type` supporta solo MixMonitor) · 3 — C (linear) · 4 — A, B, C (`*` disconnette e rimane; `#` non è un tasto di log‑off‑all) · 5 — A, E · 6 — C (l'opzione `context`) · 7 — A (il dial plan) · 8 — `PJSIP/1001` (qualsiasi interfaccia `PJSIP/`) · 9 — True · 10 — True

@@ -28,6 +28,7 @@ def mask_code(md):
 
     md = re.sub(r"```.*?```", repl, md, flags=re.S)      # fenced blocks first
     md = re.sub(r"`[^`\n]+`", repl, md)                  # then inline code
+    md = re.sub(r"(?<=\])\([^)]+\)", repl, md)           # link/image targets (…) after ] — protect URLs/paths
     return md, blocks
 
 
@@ -38,6 +39,17 @@ def unmask_code(md, blocks):
 
 DEFAULT_MODEL = os.environ.get("GEMINI_TRANSLATE_MODEL", "gemini-flash-lite-latest")
 KEY_NAMES = ("GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY")
+# Optional OpenAI-compatible backend. When LLM_BASE_URL is set, translation goes to
+# {LLM_BASE_URL}/chat/completions instead of Gemini. Two profiles, auto-handled:
+#   * SipPulse AI / gpt-oss (LLM_BASE_URL=https://api.sippulse.ai/v1, LLM_MODEL=gpt-oss-120b):
+#     Bearer-auth with SIPPULSE_API_KEY, reasoning_effort from LLM_REASONING (e.g. "low"). Fast & cheap.
+#   * Local vLLM / Qwen (LLM_BASE_URL=http://host:8001/v1): no key, thinking disabled (/no_think).
+# Code is always masked to opaque sentinels first, so no backend can ever mutate code/CLI/config.
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL")
+LLM_MODEL = os.environ.get("LLM_MODEL", "qwen-translate")
+LLM_CTX = int(os.environ.get("LLM_CTX", "32768"))         # server max_model_len
+LLM_API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("SIPPULSE_API_KEY")  # Bearer, optional
+LLM_REASONING = os.environ.get("LLM_REASONING")           # e.g. "low" for gpt-oss; unset for others
 LANG_NAMES = {"pt": "Brazilian Portuguese (pt-BR)", "es": "Latin American Spanish (es)",
               "fr": "French", "de": "German", "it": "Italian", "hi": "Hindi",
               "zh": "Simplified Chinese (Mandarin)", "ja": "Japanese",
@@ -47,6 +59,8 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 
 
 def load_api_key():
+    if LLM_BASE_URL:
+        return ""   # local OpenAI-compatible backend needs no key
     for n in KEY_NAMES:
         if os.environ.get(n):
             return os.environ[n].strip()
@@ -90,7 +104,57 @@ document in a code fence.
 --- END MARKDOWN ---"""
 
 
+def _llm_key():
+    """Bearer key for the OpenAI-compatible backend: env first, then .env (SIPPULSE_API_KEY)."""
+    if LLM_API_KEY:
+        return LLM_API_KEY
+    for envf in (os.path.join(ROOT, ".env"), os.path.join(ROOT, "..", ".env")):
+        if os.path.isfile(envf):
+            for line in open(envf):
+                line = line.strip()
+                if line.startswith(("SIPPULSE_API_KEY=", "LLM_API_KEY=")):
+                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return None
+
+
+def openai_generate(prompt):
+    """OpenAI-compatible chat completion. `prompt` is the full instruction+content. Returns the
+    translated text, or "" on a context-length 400 so the caller falls back to per-section chunks."""
+    out_budget = min(32000, max(512, LLM_CTX - (len(prompt) // 4) - 600))  # cap completion for the API
+    body = {"model": LLM_MODEL, "temperature": 0.2, "max_tokens": out_budget,
+            "messages": [{"role": "user", "content": prompt}]}
+    if LLM_REASONING:                                             # gpt-oss style: set reasoning level
+        body["reasoning_effort"] = LLM_REASONING
+    else:                                                         # Qwen-style local model: no thinking
+        body["messages"][0]["content"] = prompt + "\n\n/no_think"
+        body["chat_template_kwargs"] = {"enable_thinking": False}
+    headers = {"Content-Type": "application/json"}
+    _k = _llm_key()
+    if _k:
+        headers["Authorization"] = "Bearer " + _k
+    url = LLM_BASE_URL.rstrip("/") + "/chat/completions"
+    for attempt in range(8):
+        req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers)
+        try:
+            data = json.loads(urllib.request.urlopen(req, timeout=900).read())
+            return data["choices"][0]["message"]["content"]
+        except urllib.error.HTTPError as e:
+            if e.code == 400:
+                return ""   # too long for the context → caller chunks by section
+            if e.code == 429 and attempt < 7:               # rate limit: patient exponential backoff
+                time.sleep(min(60, 4 * (2 ** attempt))); continue
+            if e.code in (500, 502, 503, 504) and attempt < 7:
+                time.sleep(4 * (attempt + 1)); continue
+            sys.exit("ERROR: LLM HTTP %s: %s" % (e.code, e.read().decode()[:400]))
+        except (socket.timeout, urllib.error.URLError, ConnectionError, OSError) as e:
+            if attempt < 7:                              # transient network blips (reset, refused) — retry
+                time.sleep(4 * (attempt + 1)); continue
+            sys.exit("ERROR: LLM request failed after retries: %s" % e)
+
+
 def translate(model, key, text):
+    if LLM_BASE_URL:
+        return openai_generate(text)
     body = {"contents": [{"parts": [{"text": text}]}],
             "generationConfig": {"temperature": 0.2, "maxOutputTokens": 65536}}
     url = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent" % model
@@ -120,7 +184,8 @@ def translate(model, key, text):
 
 
 def translate_block(text, lang_name, glossary, model, key, attempts=3):
-    """Mask code → translate → restore, retrying drops/dupes. Returns (restored_text, ok)."""
+    """Mask code → translate → restore, retrying drops/dupes. Returns (restored_text, ok).
+    Masking hides code from the model so it can never be mutated; restoration is byte-exact."""
     masked, blocks = mask_code(text)
     prompt = prompt_for(lang_name, glossary, masked)
     restored = None
@@ -134,6 +199,48 @@ def translate_block(text, lang_name, glossary, model, key, attempts=3):
         if not missing and "【C" not in restored:
             return restored, True
     return restored, False
+
+
+def _passthrough(text, lang_name, glossary, model, key):
+    """Robust path: fenced code blocks pass through byte-for-byte (never sent to the model); the
+    prose between them is translated, paragraph-by-paragraph if a segment still drops a sentinel."""
+    parts = re.split(r"(```.*?```)", text, flags=re.S)   # ``` blocks land on the odd indices
+    out, ok = [], True
+    for i, part in enumerate(parts):
+        if i % 2 == 1 or not part.strip():
+            out.append(part); continue
+        lead = part[:len(part) - len(part.lstrip("\n"))]
+        trail = part[len(part.rstrip("\n")):]
+        core = part.strip("\n")
+        r, ok2 = translate_block(core, lang_name, glossary, model, key)
+        if not ok2:
+            paras = re.split(r"\n\n+", core)
+            rr, ok2 = [], True
+            for para in paras:
+                pr, okp = translate_block(para, lang_name, glossary, model, key)
+                rr.append(pr.strip("\n")); ok2 = ok2 and okp
+            r = "\n\n".join(rr)
+        out.append(lead + r.strip("\n") + trail); ok = ok and ok2
+    return "".join(out), ok
+
+
+def translate_document(text, lang_name, glossary, model, key):
+    """Translate a chapter section by section (split on `## `). The model translates a section in one
+    masked call reliably; whole big chapters it truncates (too many sentinels). A section that drops a
+    code sentinel falls back to fenced-passthrough (code blocks copied verbatim). Returns (text, ok)."""
+    parts = re.split(r"(?m)(?=^## )", text)              # zero-width split: "".join(parts) == text
+    out, ok_all = [], True
+    for part in parts:
+        if not part.strip():
+            out.append(part); continue
+        lead = part[:len(part) - len(part.lstrip("\n"))]
+        trail = part[len(part.rstrip("\n")):]
+        core = part.strip("\n")
+        r, ok = translate_block(core, lang_name, glossary, model, key, attempts=2)
+        if not ok or "【C" in r:
+            r, ok = _passthrough(core, lang_name, glossary, model, key)
+        out.append(lead + r.strip("\n") + trail); ok_all = ok_all and ok
+    return "".join(out), ok_all
 
 
 def main():
@@ -166,18 +273,8 @@ def main():
         if not a.force and manifest.get(f) == h and os.path.isfile(dst):
             print("  = %s (cached)" % f); skipped += 1; continue
         print("  → %s (%s)" % (f, LANG_NAMES[a.lang]))
-        restored, ok = translate_block(src, LANG_NAMES[a.lang], glossary, a.model, key)
-        if not ok:
-            # The model deterministically dropped a code block in the whole chapter. Fall back to
-            # translating it section by section (`## …`) — the smaller chunks restore reliably.
-            print("    … whole-chapter dropped a block; falling back to per-section translation")
-            parts = [p for p in re.split(r"(?m)(?=^## )", src) if p.strip()]
-            chunks, ok = [], True
-            for p in parts:
-                r, ok2 = translate_block(p, LANG_NAMES[a.lang], glossary, a.model, key)
-                chunks.append(r.strip()); ok = ok and ok2
-            restored = "\n\n".join(chunks)
-            ok = ok and "【C" not in restored
+        restored, ok = translate_document(src, LANG_NAMES[a.lang], glossary, a.model, key)
+        ok = ok and "【C" not in restored
         open(dst, "w").write(restored.rstrip() + "\n")
         done += 1
         if not ok:

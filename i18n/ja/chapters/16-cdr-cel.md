@@ -1,29 +1,59 @@
-# Asterisk Call Detail Records
+# Asterisk 通話詳細レコード
 
-Asteriskは、他のテレフォニープラットフォームと同様に、通話の課金を行うことができます。市場にはPBXが生成したレコードをインポートできるプログラムがいくつか存在します。これらのレコードは、請求額の正確性の検証や統計の作成などに使用されます。
+Asterisk は他のテレフォニー・プラットフォームと同様に、通話の課金を可能にします。市場には PBX が生成するレコードをインポートできるプログラムが多数あります。これらのレコードは、請求額の正確性の確認や統計の作成などに利用されます。
 
-## 学習目標
+## 目的
 
-本章を読み終えることで、読者は以下のことができるようになります。
-
-- レコードがどこで、どのような形式で生成されるかを説明する
-- ODBC (Open Database Connectivity) を使用してレコードを生成する
+- 記録が生成される場所と形式を説明する
+- ODBC（Open Database Connectivity）を使用して記録を生成する
 - 課金と統合された認証スキームを実装する
 
-## Asterisk CDR形式
+## Asterisk CDR フォーマット
 
-Asteriskは、通話ごとに通話詳細レコード（CDR）を生成します。これらのレコードはデフォルトで、/var/log/asterisk/cdr-csv にあるカンマ区切り値（CSV）形式のテキストファイルに保存されます。ファイルは以下のフィールドで構成されています。 CDR 説明 型 サイズ Accountcode アカウントコード 文字列 Src 発信者番号 文字列 Dst 着信先内線番号 文字列 Dcontext 着信先コンテキスト 文字列 Caller ID with Text 発信者名と番号 文字列 Channel 使用されたチャネル 文字列 Dstchannel 着信先チャネル 文字列 Lastapp 最後のアプリケーション 文字列 Lastdata 最後のアプリケーションデータ 文字列 Start 通話開始日時 日時 Answer 通話応答日時 日時 End 通話終了日時 日時 Duration ダイヤルから切断までの時間 整数（秒） Billsec 応答から切断までの時間 整数（秒） Disposition 通話の結果 文字列 (ANSWERED, NO ANSWER, BUSY, FAILED, CONGESTION) Amaflags フラグ (DEFAULT, OMIT, BILLING, DOCUMENTATION) 文字列 User field ユーザー定義フィールド 文字列 テーブルにインポートされたCSVファイルのサンプル。 AccountCode CallerID No. Extension Context CallerID text Src Dst 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-5f30 PJSIP/8584-9153 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-96f5 PJSIP/8584-3312 1234 4830258576 *72*1234*8584 admin "Joana D’Arc" <4830258576> PJSIP/8576-74ac PJSIP/8584-297b 1234 4830258576 2012348584 admin "Joana D’Arc" <4830258576> PJSIP/8576-2c5d PJSIP/8584-9870 1234 4830258584 2012348576 default "Luis Sample" <4830258584> PJSIP/8584-03fd PJSIP/8576-645c Application Appdata Start Answer End Dur Bil Disposition Amaflags Dial PJSIP/8584,30,tT 27/3/2006 16:05 27/3/2006 16:05 27/3/2006 16:05 ANSWERED DOCUMENTATION Dial PJSIP/8584,30,tT 27/3/2006 16:16 27/3/2006 16:16 27/3/2006 16:16 ANSWERED BILLING Dial PJSIP/8584,30,tT 27/3/2006 16:22 27/3/2006 16:22 27/3/2006 16:22 ANSWERED BILLING Dial PJSIP/8584,30,tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING Dial PJSIP/8576,30,tT 27/3/2006 16:37 27/3/2006 16:37 27/3/2006 16:37 ANSWERED BILLING
+Asterisk は各通話ごとにコール詳細レコード (CDR) を生成します。これらのレコードはデフォルトで /var/log/asterisk/cdr-csv にあるカンマ区切り値 (CSV) 形式のテキストファイルに保存されます。ファイルは以下のフィールドで構成されています。
 
-## アカウントコードと自動メッセージアカウンティング
+| フィールド | 説明 | 種類 |
+|-------|-------------|------|
+| Accountcode | 使用するアカウント番号 | String |
+| Src | 発信者番号 | String |
+| Dst | 宛先エクステンション | String |
+| Dcontext | 宛先コンテキスト | String |
+| Clid | テキスト付き発信者ID | String |
+| Channel | 使用されたチャンネル | String |
+| Dstchannel | 宛先チャンネル | String |
+| Lastapp | 最後に実行されたアプリケーション | String |
+| Lastdata | 最後のアプリケーションデータ | String |
+| Start | 通話開始時刻 | Date/Time |
+| Answer | 通話応答時刻 | Date/Time |
+| End | 通話終了時刻 | Date/Time |
+| Duration | ダイヤルから切断までの時間 | Integer (seconds) |
+| Billsec | 応答から切断までの時間 | Integer (seconds) |
+| Disposition | 通話の結果 (ANSWERED, NO ANSWER, BUSY, FAILED, CONGESTION) | String |
+| Amaflags | フラグ (DEFAULT, OMIT, BILLING, DOCUMENTATION) | String |
+| Userfield | ユーザー定義フィールド | String |
 
-各チャネルでアカウントコードとamaフラグを指定できます。通常、これはチャネル設定ファイル（例: chan_dahdi.conf, pjsip.conf）で行われます。パラメータ amaflags は、CDRレコードをどのように扱うかを定義します。指定可能な amaflag 値は以下の通りです。
+CSV ファイルのサンプルです。各行が 1 件のレコードになり、フィールドは上表と同じ順序で表示されます（`accountcode` が最初、`amaflags` が最後）：
+
+```text
+# accountcode,src,dst,dcontext,clid,channel,dstchannel,lastapp,lastdata,
+#   start,answer,end,duration,billsec,disposition,amaflags
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-5f30","PJSIP/8584-9153","Dial","PJSIP/8584,30,tT","2006-03-27 16:05:00","2006-03-27 16:05:00","2006-03-27 16:05:00","0","0","ANSWERED","DOCUMENTATION"
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-96f5","PJSIP/8584-3312","Dial","PJSIP/8584,30,tT","2006-03-27 16:16:00","2006-03-27 16:16:00","2006-03-27 16:16:00","0","0","ANSWERED","BILLING"
+"1234","4830258576","*72*1234*8584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-74ac","PJSIP/8584-297b","Dial","PJSIP/8584,30,tT","2006-03-27 16:22:00","2006-03-27 16:22:00","2006-03-27 16:22:00","0","0","ANSWERED","BILLING"
+"1234","4830258576","2012348584","admin","""Joana D'Arc"" <4830258576>","PJSIP/8576-2c5d","PJSIP/8584-9870","Dial","PJSIP/8584,30,tT","2006-03-27 16:37:00","2006-03-27 16:37:00","2006-03-27 16:37:00","0","0","ANSWERED","BILLING"
+"1234","4830258584","2012348576","default","""Luis Sample"" <4830258584>","PJSIP/8584-03fd","PJSIP/8576-645c","Dial","PJSIP/8576,30,tT","2006-03-27 16:37:00","2006-03-27 16:37:00","2006-03-27 16:37:00","0","0","ANSWERED","BILLING"
+```
+
+## アカウントコードと自動メッセージ課金
+
+各チャンネルにアカウントコードと ama フラグを指定できます。通常はチャンネル設定ファイル（例: `chan_dahdi.conf`、`pjsip.conf`）で行います。パラメータ `amaflags` は CDR レコードに対して何を行うかを定義します。利用可能な amaflag の値は次のとおりです：
 
 - Default
 - Omit
 - Billing
 - Documentation
 
-レコードを課金用やドキュメント用にフラグ付けするのと同様に、各レコードにアカウントコードを設定できます。アカウントコードは自由形式の文字列であり（`accountcode` endpointオプションは任意の文字列を受け取り、CDRレコードはそれを80文字のフィールドに格納します）、通常はレコードを部門や事業単位に割り当てるために使用されます。例: pjsip.confのendpointセクション
+レコードを課金または文書化のためにフラグ付けできるのと同様に、各レコードにアカウントコードを設定できます。アカウントコードは自由形式の文字列で（`accountcode` エンドポイントオプションは任意の文字列を受け取り、CDR レコードは 80 文字フィールドに保存します）、通常はレコードを部門や事業単位に割り当てるために使用されます。例: `pjsip.conf` エンドポイントセクション
 
 ```
 [8576]
@@ -31,11 +61,11 @@ type=endpoint
 accountcode=Support
 ```
 
-AMAフラグはAsterisk 22における`pjsip.conf` endpointオプションではありません。ダイヤルプランから`CHANNEL`関数（例: `Set(CHANNEL(amaflags)=billing)`）を使用して通話ごとに設定するか、または`Set(CDR(amaflags)=billing)`を使用してください。
+AMA フラグは Asterisk 22 では `pjsip.conf` エンドポイントオプションではありません。ダイヤルプランから `CHANNEL` 関数（例: `Set(CHANNEL(amaflags)=billing)`）で、または `Set(CDR(amaflags)=billing)` で通話ごとに設定します。
 
-## CSVおよびCDR形式の変更
+## CSV および/または CDR 形式の変更
 
-cdr_custom.confファイルを変更することで、CSV形式を変更できます。
+cdr_custom.conf ファイルを変更することで CSV 形式を変更できます。
 
 ```
 ;
@@ -50,27 +80,27 @@ ion)}","${CDR(amaflags)}","${CDR(accountcode)}","${CDR(uniqueid)}","${CDR(userf
 ield)}"
 ```
 
-cdr_custom.confファイル内でCDR形式を変更できます。
+cdr_custom.conf ファイルで CDR 形式を変更できます。
 
-## CDRストレージ
+## CDR ストレージ
 
-CDRの保存はいくつかの方法で実現できます。最も重要な方法は、スプレッドシートに簡単にインポートできるCSVテキストファイルです。小規模なビジネスであれば、通常これで十分です。一部の課金ソフトウェアはデフォルトでCSVファイルを受け入れます。しかし、CDRをデータベースに保存する方がはるかに優れており、安全です。Asteriskはいくつかのデータベースをサポートしています。市場には課金用のグラフィカルインターフェースもいくつか存在します。これほど多くのドライバがある中で、どれを選ぶべきでしょうか？
+CDR のストレージは複数の方法で実現できます。最も重要なのは、スプレッドシートに簡単にインポートできる CSV テキストファイルです。小規模事業者にとっては通常これで十分です。いくつかの請求ソフトウェアはデフォルトで CSV ファイルを受け付けます。しかし、データベースに CDR を保存する方がはるかに優れており安全です。Asterisk は複数のデータベース種別をサポートしています。市場には請求用のグラフィカルインターフェースもあります。ドライバが多数ある中で、どれを選べばよいでしょうか？
 
 ### 利用可能なストレージドライバ
 
-- cdr_csv – カンマ区切り値テキストファイル
-- cdr_custom – カスタマイズ可能なカンマ区切り値テキストファイル
-- cdr_adaptive_odbc – 適応型ODBCバックエンド（データベース保存に推奨）
-- cdr_odbc – unixODBCサポートデータベース（レガシー、cdr_adaptive_odbcを推奨）
-- cdr_pgsql – Postgresデータベース
-- cdr_tds (cdr_freetds) – FreeTDS経由のSybaseおよびMSSQLデータベース
-- cdr_manager – Manager InterfaceへのCDR出力
-- cdr_radius – CDR RADIUSインターフェース
-- cdr_sqlite3_custom – SQLite3カスタムCDRモジュール
+- cdr_csv – カンマ区切りテキストファイル
+- cdr_custom – カスタマイズ可能なカンマ区切りテキストファイル
+- cdr_adaptive_odbc – アダプティブ ODBC バックエンド（データベースストレージに推奨）
+- cdr_odbc – unixODBC 対応データベース（レガシー；cdr_adaptive_odbc 推奨）
+- cdr_pgsql – Postgres データベース
+- cdr_tds (cdr_freetds) – FreeTDS 経由の Sybase および MSSQL データベース
+- cdr_manager – CDR を Manager Interface に送信
+- cdr_radius – CDR radius インターフェース
+- cdr_sqlite3_custom – SQLite3 カスタム CDR モジュール
 
-古いガイドで推奨されていた`cdr_addon_mysql` (cdr_mysql) モジュールはAsterisk 19で削除されたため、Asterisk 22にはネイティブのMySQL CDRドライバは存在しません。CDRをMySQL/MariaDBに書き込むには、本章で採用しているアプローチである、MySQL ODBCドライバと組み合わせた`cdr_adaptive_odbc`を使用してください。
+古いガイドで推奨されていた `cdr_addon_mysql` (cdr_mysql) モジュールは Asterisk 19 で削除され、Asterisk 22 にはネイティブの MySQL CDR ドライバがありません。MySQL/MariaDB に CDR を書き込むには、`cdr_adaptive_odbc` と MySQL ODBC ドライバを組み合わせて使用します — 本章で使用するアプローチです。
 
-CDRの記録は、/etc/asterisk/modules.confファイルに読み込まれているすべてのアクティブなモジュールに対して行われます。パラメータ autoload=yes が設定されている場合、すべてのモジュールが読み込まれます。現在システムに読み込まれている cdr_drivers を確認するには、以下のコマンドを使用します。
+CDR の記録は、/etc/asterisk/modules.conf ファイルにロードされているすべてのアクティブモジュールで行われます。パラメータ autoload=yes が設定されている場合、すべてのモジュールがロードされます。現在システムにロードされている cdr_drivers を確認するには、以下のコマンドを使用します。
 
 ```
 asterisk*CLI> module show like cdr_
@@ -91,19 +121,19 @@ extended
 6 modules loaded
 ```
 
-上記のスクリーンショットが表示されれば、少なくとも cdr_adaptive_odbc、cdr_csv、cdr_custom、cdr_manager、cdr_odbc、cdr_sqlite3_custom が実行されています。近年のAstriconを経て、AsteriskチームがODBCを推奨していることは明らかです。これは接続プーリングをサポートする唯一のドライバです。接続プーリングは、操作のたびに新しい接続を開く必要がないため、パフォーマンスの面で大きな利点があります。本章は以前 cdr_mysql を使用して執筆されていましたが、本版では設定が少し複雑であることを承知の上で cdr_adaptive_odbc に移行しました。 cdr_adaptive_odbc を選択することで、CDRをカスタマイズすることも可能になります。ダイヤルプランで新しいCDR変数を設定し、その列をデータベースに追加するだけです。 Set(CDR(jitter)=
+もし上のスクリーンショットが見えるなら、少なくとも cdr_adaptive_odbc、cdr_csv、cdr_custom、cdr_manager、cdr_odbc、cdr_sqlite3_custom が実行中です。近年、いくつかの astricon の後で、Asterisk チームが ODBC を好んでいることが明らかになりました。ODBC は接続プーリングをサポートする唯一のドライバです。接続プーリングは、すべての操作ごとに新しい接続を開く必要がなくなるため、パフォーマンス面で大きな利点があります。この章は以前は cdr_mysql を使用して書かれていましたが、今回の版では cdr_adaptive_odbc に移行しました。設定はやや複雑になることを承知の上での選択です。cdr_adaptive_odbc を選ぶことで CDR をカスタマイズできるようになります。ダイヤルプランで新しい CDR 変数を設定し、データベースに対応するカラムを追加するだけです。例えば、オーディオジッターを記録する場合は次のようにします。
 
 ```
-${RTPAUDIOQOSJITTER}).
+Set(CDR(jitter)=${RTPAUDIOQOSJITTER})
 ```
 
-### CSVストレージ
+### CSV ストレージ
 
-前述の通り、Asteriskはデフォルトで cdr_csv.so モジュールを使用してすべてのCDRをCSVテキストファイルに送信します。/var/log/asterisk/cdr-csv にファイルが見当たらない場合は、CLIコマンド module show を使用してモジュールが読み込まれているか確認してください。読み込まれていない場合は、modules.confを確認してください。本章では、バックアップとしてCDRを cdr_csv にも送信します。
+前述したように、デフォルトでは Asterisk はすべての CDR を cdr_csv.so モジュールを使用して CSV テキストファイルに送ります。/var/log/asterisk/cdr-csv にファイルが見当たらない場合は、CLI コマンド `module show` でモジュールがロードされているか確認してください。ロードされていなければ、`modules.conf` を確認します。この章では、バックアップとして cdr を cdr_csv に送信します。
 
-### modules.confの設定
+### ファイル modules.conf の設定
 
-適切なモジュールのみを読み込むには、modules.confファイルに以下の行を使用します。
+適切なモジュールだけをロードするには、`modules.conf` ファイルに以下の行を使用します
 
 ```
 noload => cdr_custom.so
@@ -112,25 +142,25 @@ noload => cdr_manager.so
 noload => cdr_sqlite3_custom.so
 ```
 
-これで cdr_csv と cdr_adaptive_odbc のみが読み込まれるようになりました。
+Now we have only cdr_csv and cdr_adaptive_odbc loaded.
 
-## Ubuntu 22.04でのODBCのインストールと設定
+## Installing and configuring ODBC on Ubuntu 22.04
 
-詳細な手順を本書に掲載することは常に心苦しいものです。本書が出版されるよりも早く変更される可能性があるからです。バージョンやモジュールは変化するため、ここのコマンドを自身の状況に合わせて調整してください。ほとんどの場合、わずかな変更でインストールを再現できます。経験豊富なLinuxユーザーであっても、ODBCドライバのインストールは難しいと感じるステップがあるため、注意してください。
+I always regret to publish detailed instructions in the book. They will change sometimes sooner than the book is published. Versions change, modules change, so try to adapt the command here to your own situation. Most of the time minor changes are enough to reproduce the installation. Pay attention on the steps even experienced Linux users will find hard to install the ODBC drivers.
 
-ステップ 1 - 必要なパッケージのインストール:
+Step 1 - Install the required packages:
 
 ```
 apt-get install mysql-server unixodbc unixodbc-dev libltdl-dev libtool
 ```
 
-ステップ 2 - データベースとユーザーの作成:
+Step 2 - Create a database and a user:
 
 ```
 mysql -u root -p
 ```
 
-（MySQLサーバー作成時に定義したパスワードを使用してください）MySQLコマンドラインで以下のコマンドを入力します。
+(Use the password defined when you created the mysql server) Type this commands in mysql command line
 
 ```
 CREATE USER 'astdb'@'%' IDENTIFIED BY 'supersecret';
@@ -140,14 +170,14 @@ FLUSH PRIVILEGES;
 EXIT
 ```
 
-ステップ 3 - データベースの作成
+Step 3 - Create the database
 
 ```
 cd /usr/src/asterisk-22.*/contrib/scripts/realtime/mysql
 mysql -u root -p astdb <mysql_cdr.sql
 ```
 
-ステップ 4: OracleからMySQL ODBCコネクタをダウンロードします。以下のコマンドでオペレーティングシステムを確認してください: `lsb_release -a`。Ubuntu 22.04 (x86_64) の場合は、https://dev.mysql.com/downloads/connector/odbc/ にアクセスし、Ubuntu 22.04用の最新の 8.x または 9.x リリースを選択してください。正確なファイル名とバージョン番号は時間とともに変化するため、現在のLinux glibcビルド名に合わせて`VER`（下記）を設定してください。
+Step 4: Download the MySQL ODBC connector from Oracle. Check your operating system using: `lsb_release -a`. For Ubuntu 22.04 (x86_64), visit https://dev.mysql.com/downloads/connector/odbc/ and choose the current 8.x or 9.x release for Ubuntu 22.04. The exact filename and version number change over time, so set `VER` (below) to whatever the current Linux glibc build is called.
 
 ```
 cd /usr/src
@@ -158,7 +188,7 @@ wget https://dev.mysql.com/get/Downloads/Connector-ODBC/9.0/$VER.tar.gz
 tar -xzvf $VER.tar.gz
 ```
 
-ステップ 5: ODBCドライバのインストール
+Step 5: Install the ODBC driver
 
 ```
 cd /usr/src/$VER
@@ -167,7 +197,7 @@ cp lib/* /usr/local/lib
 myodbc-installer -a -d -n "MySQL" -t "Driver=/usr/local/lib/libmyodbc9w.so"
 ```
 
-ステップ 6 - ODBCコネクタの設定。/etc/odbc.iniファイルを編集してDSN（Data Source Name）を作成します。
+Step 6 - Configure the ODBC connector edit the file /etc/odbc.ini to create the DSN (Data Source Name)
 
 ```
 [astconn]
@@ -178,20 +208,20 @@ Server = localhost
 Port = 3306
 ```
 
-ステップ 7: iSQLを使用してドライバのアクセスをテストします。iSQLはunixodbc経由でデータベースに接続するためのコマンドラインユーティリティです。
+Step 7: Test the driver access using iSQL. iSQL is a command line utility to connect to the database over unixodbc.
 
 ```
 isql -v astconn astdb supersecret
 >show tables
 ```
 
-isqlコマンドの結果が確認できない場合は、Asteriskの設定に進まないでください。
+Please, do not procede with Asterisk configuration if you can’t see the result of the isql command.
 
-### AsteriskでのODBC設定
+### Configuring ODBC in the Asterisk
 
-cdr_adaptive_odbc を設定する前に、まずODBCリソースファイルを設定する必要があります。
+Before you can configure the cdr_adaptive_odbc, you should first configure the ODBC resource file.
 
-ステップ 1 - AsteriskをODBCに接続します。res_odbc.confファイルを編集します:
+Step 1 - Connect Asterisk to ODBC. Edit the file res_odbc.conf:
 
 ```
 [cdr]
@@ -202,13 +232,13 @@ password => supersecret
 pre-connect => yes
 ```
 
-ステップ 2 – Asteriskを再起動し、以下を使用してテストします。
+Step 2 – Restart Asterisk and test using
 
 ```
-CLI>odbc show
+asterisk*CLI> odbc show
 ```
 
-出力は以下の通りです。
+The output is shown below.
 
 ```
 asterisk*CLI> odbc show
@@ -219,7 +249,7 @@ DSN:    astconn
   Number of active connections: 1 (out of 20)
 ```
 
-ステップ 3 – /etc/asterisk/cdr_adaptive_odbc.conf で適応型ODBCドライバを設定します。
+Step 3 – Configure the adaptive ODBC driver in /etc/asterisk/cdr_adaptive_odbc.conf
 
 ```
 [cdr]
@@ -227,39 +257,39 @@ connection=cdr
 table=cdr
 ```
 
-ここで`connection`は`res_odbc.conf`で定義された`[cdr]`接続セクションを指し、`table`はCDRが書き込まれるデータベーステーブルです。
+Here `connection` points to the `[cdr]` connection section defined in `res_odbc.conf`, and `table` is the database table where CDRs are written.
 
-ステップ 4 – cdr_adaptive_odbc.so モジュールをリロードします:
-
-```
-asterisk*CLI>reload cdr_adaptive_odbc
-```
-
-ステップ 5 – いくつか通話を行い、データベースに新しいレコードがあるか確認します。データベースを確認するには:
+Step 4 – Reload the module cdr_adaptive_odbc.so:
 
 ```
-mysql –u root –p
+asterisk*CLI> reload cdr_adaptive_odbc
+```
+
+Step 5 – Make same calls and check the database fro new records. To check the database:
+
+```
+mysql -u root -p
 >use astdb
->select * from cdr
+>select * from cdr;
 ```
 
-## アプリケーションと関数
+## Applications and functions
 
-課金に関連するアプリケーションはいくつかあります。
+いくつかのアプリケーションは課金に関連しています。
 
 ### CDR(accountcode)
 
-別のアプリケーション dial() を呼び出す前にアカウントコードを設定します。例: 形式:
+別のアプリケーション dial() を呼び出す前にアカウントコードを設定します。例: フォーマット:
 
 ```
 Set(CDR(accountcode)=account)
 ```
 
-アカウントコードはチャネル変数 ${CDR(accountcode)} を使用して検証できます。
+アカウントコードはチャンネル変数 ${CDR(accountcode)} を使用して確認できます。
 
 ### CDR(amaflags)
 
-課金目的のフラグを設定します。オプションは default, omit, documentation, billing です。
+課金目的のフラグを設定します。オプションは default、omit、documentation、billing です。
 
 ```
 Set(CDR(amaflags)=amaflags)
@@ -267,33 +297,35 @@ Set(CDR(amaflags)=amaflags)
 
 ### Set(CDR_PROP(disable)=1)
 
-現在のチャネルのCDR記録を無効にします。これにより、ファイルやデータベースにCDRが書き込まれなくなります。`0`に戻すと記録が再有効化されます。
+現在のチャンネルの CDR 記録を無効にします。これによりファイルやデータベースに CDR が書き込まれません。`0` に戻すと記録が再び有効になります。
 
 ```
 Set(CDR_PROP(disable)=1)
 ```
 
-以前の版で使用されていた`NoCDR()`アプリケーションはAsterisk 21で削除されました。Asterisk 22では、代わりに`Set(CDR_PROP(disable)=1)`を使用してチャネルのCDRを無効にします。
+以前のエディションで使用されていた `NoCDR()` アプリケーションは Asterisk 21 で削除されました。Asterisk 22 では `Set(CDR_PROP(disable)=1)` を使用してチャンネルの CDR を無効にします。
 
 ### ResetCDR()
 
-通話データレコードをリセットします。`start`時間（応答済みの場合は`answer`時間）が現在時刻に設定され、すべてのCDR変数が消去されます。`v`オプションが設定されている場合、リセット中もCDR変数は保持されます。
+Call Data Record をリセットします。`start` 時間（応答があった場合は `answer` 時間）は現在時刻に設定され、すべての CDR 変数はクリアされます。`v` オプションが設定されている場合、リセット中に CDR 変数は保持されます。
 
 ### Set(CDR(userfield)=Value)
 
-このコマンドはCDRのユーザーフィールドを設定します。`cdr_adaptive_odbc`を使用する場合、CDRテーブルに`userfield`列が存在すればユーザーフィールドは自動的に保存されます（ソースの再コンパイルは不要です）。CSVテキストファイルの場合、ユーザーフィールドを使用するにはソースコード (cdr_csv.c) を編集し、Asteriskを再コンパイルする必要があります。
+このコマンドは CDR のユーザーフィールドを設定します。`cdr_adaptive_odbc` を使用すると、CDR テーブルに `userfield` カラムが存在する場合にユーザーフィールドが自動的に保存されます — ソースの再コンパイルは不要です。CSV テキストファイルの場合、ユーザーフィールドを使用したい場合はソースコード (cdr_csv.c) を編集し、Asterisk を再コンパイルする必要があります。
 
-以前の版では、`cdr_addon_mysql`モジュール（`cdr_mysql.conf`）を使用してMySQLにCDRを保存していました。そのモジュールはAsterisk 19で削除されたため、Asterisk 22では利用できません。現在サポートされているパスは、MySQL ODBCドライバを使用した`cdr_adaptive_odbc`であり、適応型列マッピングを通じてユーザーフィールド（およびその他のカスタム列）をネイティブに保存します。
+以前のエディションでは `cdr_addon_mysql` モジュール（`cdr_mysql.conf`）を使用して MySQL に CDR を保存していました。そのモジュールは Asterisk 19 で削除され、Asterisk 22 では利用できません。現在サポートされているパスは `cdr_adaptive_odbc` で、MySQL ODBC ドライバーを使用し、ユーザーフィールドやその他のカスタムカラムを適応的カラムマッピングを通じてネイティブに保存します。
 
-### AppendCDRUserField(Value)
+### Appending to the user field
 
-CDRのユーザーフィールドにデータを追加します。
+以前のエディションでは `AppendCDRUserField()` アプリケーションを使用して CDR ユーザーフィールドにデータを追加していました。そのアプリケーションは Asterisk から削除されました。Asterisk 22 では `CDR` 関数でユーザーフィールドを読み取り、再設定することでデータを追加します。例:
+
+`Set(CDR(userfield)=${CDR(userfield)}extra)`
 
 ![13-call-detail-records figure 1](../images/13-call-detail-records-img01.png)
 
-## ユーザー認証
+## User authentication
 
-一部の企業では、従業員の通話に対して課金を行っています。Asteriskでは、認証されたユーザーをCDR上で課金対象にできる認証スキームを設定できます。この認証は、Authenticateアプリケーションにパラメータとして渡されるパスワード（パラメータの前に / (スラッシュ) を付けることでパスワードファイルを指定）、またはAsteriskデータベースキー（`d`オプションを使用）を使用して行うことができます。形式:
+一部の企業では従業員の通話料金を請求します。Asterisk では、認証されたユーザーを CDR に請求できる認証方式を設定できます。この認証は、`Authenticate` アプリケーションにパラメータとして渡すパスワード、パラメータの前に `/`（スラッシュ）を付けて示すパスワードファイル、または Asterisk データベースキー（`d`オプション使用）を使用して行うことができます。形式:
 
 ```
 Authenticate(password[,options[,maxdigits[,prompt]]])
@@ -302,12 +334,12 @@ Authenticate(/passwdfile[,options])
 
 オプション:
 
-- a – チャネルのアカウントコードを入力されたパスワードに設定します。
-- d – 指定されたパスをリテラルファイルではなくAsterisk DBキーとして解釈します。
+- a – 入力されたパスワードをチャンネルのアカウントコードに設定します。
+- d – 指定されたパスを文字列としてのファイルではなく、Asterisk DB キーとして解釈します。
 - m – パスを`accountcode:passwordhash`行のファイルとして解釈します。
-- r – 認証成功後にデータベースキーを削除します（`d`でのみ有効）。
+- r – 認証に成功した後にデータベースキーを削除します（`d`と併用可能）。
 
-発信者が3回の試行すべてに失敗した場合、チャネルは切断されます。ダイヤルプランの実行は継続されないため、失敗時のパスは`Authenticate()`の後の行で処理してください。例（国際電話）:
+呼び出し側が 3 回すべて失敗した場合、チャンネルは切断されます。ダイヤルプランの実行は続行されないため、`Authenticate()`の次の行で失敗パスを処理してください。例（国際電話）:
 
 ```
 exten=_9011.,1,Authenticate(/password,d)
@@ -315,23 +347,23 @@ exten=_9011.,1,Authenticate(/password,d)
  same=>n,Hangup()
 ```
 
-古い`j`オプション（失敗時に優先度 n+101 へジャンプ）および`+101`優先度規則は、ずっと前にAsteriskから削除されました。失敗した`Authenticate()`は単に切断されます。
+古い`j`オプション（失敗時に優先度 n+101 へジャンプ）および`+101`優先度規則は、かなり前に Asterisk から削除されました。失敗した`Authenticate()`は単に切断されます。
 
-コンソールからDBキーにパスワードを挿入するには:
+コンソールから DB キーにパスワードを挿入するには:
 
 ```
-CLI> database put senha 123456 1
+asterisk*CLI> database put senha 123456 1
 ```
 
-## ボイスメールのパスワードの使用
+## ボイスメールからパスワードを使用する
 
-このアプリケーションはauthenticateと同じ動作をしますが、パスワードにボイスメール設定ファイルを使用します。
+このアプリケーションは authenticate と同じ動作をしますが、パスワードにボイスメール設定ファイルを使用します。
 
 ```
 VMAuthenticate([mailbox][@context][,options])
 ```
 
-メールボックスが指定されている場合、そのメールボックスのパスワードのみが有効とみなされます。メールボックスが指定されていない場合、チャネル変数`${AUTH_MAILBOX}`に認証されたメールボックスが設定されます。`s`オプションが設定されている場合、初期プロンプトはスキップされます。例（国際電話）:
+メールボックスが指定されている場合、そのメールボックスのパスワードのみが有効とみなされます。メールボックスが指定されていない場合、チャネル変数 `${AUTH_MAILBOX}` に認証されたメールボックスが設定されます。`s` オプションが設定されていると、最初のプロンプトがスキップされます。例（国際電話）：
 
 ```
 exten=_9011.,1,VMAuthenticate(${CALLERID(num)}@local,s)
@@ -341,54 +373,54 @@ exten=_9011.,1,VMAuthenticate(${CALLERID(num)}@local,s)
 
 ## Channel Event Logging (CEL)
 
-CDRレコードは通話ごとに1行の要約を提供します。個別のチャネル状態遷移、ブリッジへの参加/離脱イベント、転送の足跡など、より詳細なイベント追跡のために、Asterisk 22には**Channel Event Logging (CEL)**が含まれており、これは`/etc/asterisk/cel.conf`を介して設定され、`cel_odbc`や`cel_custom`などのバックエンドを通じて保存されます。
+CDR records provide one summary row per call. For more detailed event tracking — such as individual channel state transitions, bridge enter/leave events, and attended transfer legs — Asterisk 22 includes **Channel Event Logging (CEL)**, configured via `/etc/asterisk/cel.conf` and stored through backends such as `cel_odbc` or `cel_custom`.
 
-CELはCDRを置き換えるのではなく補完するものです。CDRは課金要約の標準であり続け、CELは不正検知、品質監視、高度なレポート作成に役立つ詳細なイベントごとのデータを提供します。
+CEL complements CDR rather than replacing it: CDR remains the standard for billing summaries, while CEL gives granular per-event data useful for fraud detection, quality monitoring, and advanced reporting.
 
-`cel.conf`の設定パターンは`cdr.conf`を反映しています。まず`cel.conf`の`[general]`セクションで必要なイベントタイプを有効にし、次に各ストレージバックエンドをそれぞれのファイル（CSV用は`cel_custom.conf`、ODBCデータベース用は`cel_odbc.conf`（CDRと同じ`res_odbc.conf`接続を使用））で設定します。CELがアクティブかどうかは、CLI上で`cel show status`を使用して確認できます。
+The `cel.conf` configuration pattern mirrors `cdr.conf`: you enable the event types you want in the `[general]` section of `cel.conf`, then configure each storage back-end in its own file — `cel_custom.conf` for CSV, `cel_odbc.conf` for an ODBC database (the same `res_odbc.conf` connection used for CDRs). You can confirm whether CEL is active with `cel show status` on the CLI.
 
-## まとめ
+## 概要
 
-本章では、テキストファイルおよびMySQLデータベースへのCDR記録の実装方法を学びました。また、amaflagsとアカウントコードの設定方法も学びました。章の最後には、CDRおよび課金と統合された認証スキームの使用方法を学びました。
+この章では、CDR をテキストファイルおよび MySQL データベースに記録する方法を学びました。また、amaflags とアカウントコードの設定方法も学習しました。章の最後では、CDR と課金と統合された認証方式の使用方法を学びました。
 
-## クイズ
+## Quiz
 
-1. デフォルトでは、Asteriskは /var/log/asterisk/cdr-csv ディレクトリにCDRを記録します。
-   - A. 偽
-   - B. 真
-2. AsteriskはCDRをどこに書き込めますか（該当するものすべてを選択してください）:
+1. デフォルトでは、Asterisk は /var/log/asterisk/cdr-csv ディレクトリに CDR を記録します。
+   - A. False
+   - B. True
+2. Asterisk は CDR を書き込むことができます（該当するものすべてを選択）：
    - A. MySQL
-   - B. ネイティブOracle
+   - B. Native Oracle
    - C. Microsoft SQL Server
-   - D. CSVテキストファイル
-   - E. unixODBCサポートデータベース
-3. Asteriskは一度に1種類のストレージに対してのみCDRを生成します。
-   - A. 偽
-   - B. 真
-4. 利用可能なAsterisk amaflagsはどれですか？
+   - D. CSV text files
+   - E. unixODBC-supported databases
+3. Asterisk は同時に 1 種類のストレージに対してのみ CDR を生成します。
+   - A. False
+   - B. True
+4. 利用可能な Asterisk amaflags はどれですか？
    - A. DEFAULT
    - B. OMIT
    - C. TAX
    - D. RATE
    - E. BILLING
    - F. DOCUMENTATION
-5. 部門をCDRに関連付けるには ___ コマンドを使用し、アカウントコードは ___ チャネル変数で読み取ることができます。
-6. `Set(CDR_PROP(disable)=1)`と`ResetCDR()`の違いは、CDRを無効にするとレコードが書き込まれなくなるのに対し、`ResetCDR()`は現在のレコードをリセット（ゼロ化）することです。（以前CDRを無効にしていた`NoCDR()`アプリケーションはAsterisk 21で削除されました。）
-   - A. 偽
-   - B. 真
-7. `cdr_csv.so`モジュールでユーザー定義フィールドを使用するには、ソースコードを編集してAsteriskを再コンパイルする必要があります。
-   - A. 偽
-   - B. 真
-8. Authenticate() アプリケーションで利用可能な3つの認証方法は次のうちどれですか？
-   - A. パスワード
-   - B. パスワードファイル
-   - C. Asterisk DB (dbput および dbget)
-   - D. ボイスメール
-9. ボイスメールのパスワードは`voicemail.conf`の別のセクションで指定され、ボイスメールユーザーと同じではありません。
-   - A. 偽
-   - B. 真
-10. Channel Event Logging (CEL) はAsterisk 22でCDRを置き換えるため、CELを有効にするとCDRの課金要約は生成されなくなります。
-    - A. 偽
-    - B. 真
+5. 部門を CDR に関連付けるには ___ コマンドを使用し、アカウントコードは ___ チャネル変数で取得できます。
+6. `Set(CDR_PROP(disable)=1)` と `ResetCDR()` の違いは、CDR を無効にするとレコードが書き込まれなくなるのに対し、`ResetCDR()` は現在のレコードをリセット（ゼロに）することです。（以前 CDR を無効にしていた `NoCDR()` アプリケーションは Asterisk 21 で削除されました。）
+   - A. False
+   - B. True
+7. `cdr_csv.so` モジュールでユーザー定義フィールドを使用するには、ソースコードを編集して Asterisk を再コンパイルしなければなりません。
+   - A. False
+   - B. True
+8. Authenticate() アプリケーションで利用できる 3 つの認証方法は次のとおりです：
+   - A. Password
+   - B. Password file
+   - C. Asterisk DB (dbput and dbget)
+   - D. Voicemail
+9. ボイスメールのパスワードは `voicemail.conf` の別セクションで指定され、ボイスメールユーザーとは別です。
+   - A. False
+   - B. True
+10. Channel Event Logging (CEL) は Asterisk 22 で CDR に取って代わります — CEL が有効になると、CDR の課金サマリーは生成されなくなります。
+    - A. False
+    - B. True
 
-**回答:** 1 — B · 2 — A, B, C, D, E · 3 — A · 4 — A, B, E, F · 5 — `Set(CDR(accountcode)=...)`; `${CDR(accountcode)}` · 6 — B · 7 — A · 8 — A, B, C · 9 — B · 10 — A
+**Answers:** 1 — B · 2 — A, B, C, D, E · 3 — A · 4 — A, B, E, F · 5 — `Set(CDR(accountcode)=...)`; `${CDR(accountcode)}` · 6 — B · 7 — A · 8 — A, B, C · 9 — B · 10 — A

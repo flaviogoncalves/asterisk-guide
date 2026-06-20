@@ -1,22 +1,22 @@
-# Aufbau Ihrer ersten PBX mit PJSIP
+# Building your first PBX with PJSIP
 
-In diesem Kapitel lernen Sie, wie Sie eine grundlegende Asterisk PBX-Konfiguration durchführen. Das Hauptziel besteht darin, die PBX zum ersten Mal in Betrieb zu nehmen, Anrufe zwischen Extensions zu tätigen, eine abgespielte Nachricht anzurufen und eine Verbindung zu einem einzelnen analogen oder SIP-Trunk herzustellen. Die Idee hinter diesem Kapitel ist es, sicherzustellen, dass Ihr Asterisk so schnell wie möglich einsatzbereit ist. Nach Abschluss der Arbeiten in diesem Kapitel verfügen Sie über ausreichend Hintergrundwissen, um sich auf die folgenden Kapitel vorzubereiten, in denen wir tiefer in die Konfigurationsdetails eintauchen werden.
+In diesem Kapitel lernen Sie, wie Sie eine grundlegende Asterisk‑PBX‑Konfiguration durchführen. Das Hauptziel ist, die PBX zum ersten Mal laufen zu sehen, zwischen Extensions wählen zu können, eine abgespielte Nachricht zu wählen und zu einem einzelnen analogen oder SIP‑Trunk zu wählen. Die Idee dieses Kapitels ist, sicherzustellen, dass Ihr Asterisk so schnell wie möglich einsatzbereit ist. Nach Abschluss der Arbeiten in diesem Kapitel verfügen Sie über das nötige Grundlagenwissen, um sich auf die folgenden Kapitel vorzubereiten, in denen wir tiefer in die Konfigurationsdetails eintauchen.
 
 ## Ziele
 
 Am Ende dieses Kapitels sollten Sie in der Lage sein:
 
 - Konfigurationsdateien zu verstehen und zu bearbeiten;
-- SIP-basierte Softphones zu installieren;
-- Einen SIP-Trunk zu installieren und zu konfigurieren;
+- Softphones auf Basis von SIP zu installieren;
+- Einen SIP‑Trunk zu installieren und zu konfigurieren;
 - Eine analoge Verbindung zu installieren und zu konfigurieren;
-- Anrufe zwischen Extensions zu tätigen;
-- Anrufe zwischen Telefonen und externen Zielen zu tätigen; und
-- Eine automatische Telefonzentrale (Auto Attendant) zu konfigurieren.
+- Zwischen Nebenstellen zu wählen;
+- Zwischen Telefonen und externen Zielen zu wählen; und
+- Einen automatischen Ansprechpartner zu konfigurieren.
 
-## Verständnis der Konfigurationsdateien
+## Understanding the configuration files
 
-Asterisk wird über Text-Konfigurationsdateien gesteuert, die sich in /etc/asterisk befinden. Das Dateiformat ähnelt den Windows-„.ini“-Dateien. Ein Semikolon wird als Kommentarzeichen verwendet, die Zeichen „=” und „=>” sind gleichwertig, und Leerzeichen werden ignoriert.
+Asterisk wird durch Text‑Konfigurationsdateien gesteuert, die sich in /etc/asterisk befinden. Das Dateiformat ähnelt den Windows‑“.ini”‑Dateien. Ein Semikolon wird als Kommentarzeichen verwendet, die Zeichen “=” und “=>” sind gleichwertig, und Leerzeichen werden ignoriert.
 
 ```
 ;
@@ -28,19 +28,19 @@ Key = value; Variable designation
 Key => value; Object declaration
 ```
 
-Asterisk interpretiert „=” und „=>” auf die gleiche Weise. Unterschiede in der Syntax werden verwendet, um zwischen Objekten und Variablen zu unterscheiden. Verwenden Sie „=“, wenn Sie eine Variable deklarieren möchten, und „=>“, um ein Objekt zu bestimmen. Die Syntax ist in allen Dateien gleich, aber es werden drei Arten von Grammatiken verwendet, wie unten erläutert.
+Asterisk interpretiert “=” und “=>” auf dieselbe Weise. Unterschiede in der Syntax werden genutzt, um zwischen Objekten und Variablen zu unterscheiden. Verwenden Sie “=”, wenn Sie eine Variable deklarieren möchten, und “=>”, um ein Objekt zu bezeichnen. Die Syntax ist in allen Dateien gleich, jedoch werden drei Arten von Grammatik verwendet, wie im Folgenden erläutert.
 
-## Grammatiken
+## Grammars
 
-| Grammatik | Wie das Objekt erstellt wird | Konf.-Datei | Beispiel |
+| Grammar | How the object is created | Conf. file | Example |
 |---------|---------------------------|------------|---------|
-| Einfache Gruppe | Alles in derselben Zeile | `extensions.conf` | `exten => 4000,1,Dial(PJSIP/4000)` |
-| Optionsvererbung | Optionen werden zuerst definiert, das Objekt erbt die Optionen | `chan_dahdi.conf` | `[channels]; context=default; signalling=fxs_ks; group=1; channel => 1` |
-| Komplexe Entität | Jede Entität erhält einen Context | `pjsip.conf`, `iax.conf` | `[cisco]; type=endpoint; auth=cisco-auth; aors=cisco; context=trusted` |
+| Simple Group | All in the same line | `extensions.conf` | `exten => 4000,1,Dial(PJSIP/4000)` |
+| Option Inheritance | Options are defined first, the object inherits the options | `chan_dahdi.conf` | `[channels]; context=default; signalling=fxs_ks; group=1; channel => 1` |
+| Complex Entity | Each entity receives a context | `pjsip.conf`, `iax.conf` | `[cisco]; type=endpoint; auth=cisco-auth; aors=cisco; context=trusted` |
 
-### Einfache Gruppe
+### Simple Group
 
-Das Format der einfachen Gruppe, das in `extensions.conf` und `voicemail.conf` verwendet wird, ist die grundlegendste Grammatik. Jedes Objekt wird mit Optionen in derselben Zeile deklariert. Beispiel:
+The simple group format used in `extensions.conf` and `voicemail.conf` is the most basic grammar. Each object is declared with options in the same line. Example:
 
 ```
 [Session]
@@ -48,11 +48,11 @@ Object 1 => op1,op2,op3
 Object 2=> op1b,op2b,op3b
 ```
 
-In diesem Beispiel wird Objekt 1 mit den Optionen op1, op2 und op3 erstellt, während Objekt 2 mit den Optionen op1, op2 und op3 erstellt wird.
+In this example, object 1 is created with options op1, op2, and op3 while object 2 is created with options op1, op2, and op3.
 
-### Grammatik der Objekt-Optionsvererbung
+### Object options inheritance grammar
 
-Dieses Format wird von den Dateien chan_dahdi.conf und agents.conf verwendet, wo zahlreiche Optionen verfügbar sind und die meisten Schnittstellen und Objekte dieselben Optionen teilen. Typischerweise enthalten ein oder mehrere Abschnitte Objekt- und Kanaldeklarationen. Optionen für das Objekt werden über dem Objekt deklariert und können für ein anderes Objekt geändert werden. Obwohl dieses Konzept schwer zu verstehen ist, ist es sehr einfach zu verwenden. Beispiel:
+This format is used by the files chan_dahdi.conf and agents.conf, where numerous options are available, and most interfaces and objects share the same options. Typically, one or more sections have objects and channels declarations. Options to the object are declared above the object and can be changed to another object. Although this concept is hard to understand, it is very easy to use. Example:
 
 ```
 [Session]
@@ -63,11 +63,11 @@ op1 = int
 object => 2
 ```
 
-Die ersten beiden Zeilen konfigurieren den Wert der Optionen op1 und op2 auf „bas“ bzw. „adv“. Wenn Objekt 1 instanziiert wird, wird es mit Option 1 als „bas“ und Option 2 als „adv“ erstellt. Nach der Definition von Objekt 1 ändern wir Option 1 auf „int“. Als Nächstes erstellen wir Objekt 2 mit Option 1 als „int“ und Option 2 als „adv“.
+The first two lines configure the value of the options op1 and op2 to “bas” and “adv”, respectively. When object 1 is instanced, it is created using option 1 as “bas” and option 2 as “adv”. After defining object 1, we change option 1 to “int”. Next, we create object 2 with option 1 as “int” and option 2 as “adv”.
 
-### Komplexe Entität
+### Complex entity object
 
-Dieses Format wird von pjsip.conf, iax.conf und anderen Konfigurationsdateien verwendet, in denen zahlreiche Entitäten mit vielen Optionen existieren. Typischerweise teilt dieses Format keine große Menge an gemeinsamen Konfigurationen. Jede Entität erhält einen Context. Manchmal existieren reservierte Contexts, wie [general] für globale Konfigurationen. Optionen werden in den Context-Deklarationen deklariert. Beispiel:
+This format is used by pjsip.conf, iax.conf, and other configuration files in which numerous entities with many options exist. Typically, this format does not share a large volume of common configurations. Each entity receives a context. Sometimes reserved contexts exist, like [general] for global configurations. Options are declared in the context declarations. Example:
 
 ```
 [entity1]
@@ -78,67 +78,78 @@ op1=value3
 op2=value4
 ```
 
-Die Entität [entity1] hat die Werte „value1“ und „value2“ für die Optionen op1 bzw. op2. Die Entität [entity2] hat die Werte „value3“ und „value4“ für die Optionen op1 bzw. op2.
+The entity [entity1] has values “value1” and “value2” for options op1 and op2, respectively. The entity [entity2] has values “value3” and “value4” for options op1 and op2.
 
-## Optionen zum Aufbau eines LAB für Asterisk
+## Optionen zum Aufbau eines LABs für Asterisk
 
-Um eine PBX zu konfigurieren, benötigen Sie einige grundlegende Hardware. Es ist weder schwierig noch teuer, aber es gibt einige Optionen, die in Betracht gezogen werden sollten. Alles, was Sie benötigen, sind zwei Telefone und eine Verbindung zum öffentlichen Netz. Es gibt einige Optionen und Kombinationen, die beim Erstellen Ihres Labors möglich sind, die wir unten besprechen werden.
+Um eine PBX zu konfigurieren, benötigen Sie einige grundlegende Hardware. Sie ist weder schwer noch teuer, aber es gibt einige Optionen, die berücksichtigt werden sollten. Alles, was Sie benötigen, sind zwei Telefone und eine Anbindung an das öffentliche Netzwerk. Beim Erstellen Ihres Labs sind verschiedene Optionen und Kombinationen möglich, die wir im Folgenden besprechen.
 
-### Option 1: Vollständiges LAB
+### Option 1: Komplettes LAB
 
-Mit dem vollständigen LAB ist es möglich, alle verfügbaren Szenarien zu testen und Lösungen wie ATA, IP-Telefone und Softphones zu vergleichen. Sie können auch etwas über analoge und SIP-Trunks lernen. Sie benötigen:
+Mit dem kompletten LAB ist es möglich, alle verfügbaren Szenarien zu testen und Lösungen wie ATA, IP‑Telefone und Softphones zu vergleichen. Sie können zudem etwas über analoge und SIP‑Trunks lernen. Sie benötigen:
 
-- Einen SIP-Analog-Telefonadapter (ATA)
-- Ein IP-Telefon
+- Einen SIP‑analog‑Telefon‑Adapter (ATA)
+- Ein IP‑Telefon
 - Einen dedizierten Server für Asterisk
-- Eine Workstation mit einem Softphone
+- Einen Arbeitsplatz mit einem Softphone
 - Eine analoge Schnittstellenkarte mit mindestens zwei Schnittstellen (1 FXO und 1 FXS)
-- Ein Konto bei einem VoIP-Anbieter
+- Ein Konto bei einem VoIP‑Provider
 
 ### Option 2: Economy LAB
 
-Mit dem Economy LAB vereinfachen wir es ein wenig. Wir verwenden den ATA, der normalerweise günstiger ist als das IP-Telefon, und eine einzelne FXO-Karte, die wirklich preiswert ist. Wir werden keine analogen Telefone direkt an den Server anschließen können, aber das kommt in der Praxis normalerweise nicht vor. Sie benötigen:
+Beim Economy LAB vereinfachen wir es ein wenig. Wir verwenden das ATA, das in der Regel günstiger ist als das IP‑Telefon, und eine einzelne FXO‑Karte, die wirklich preiswert ist. Wir können keine analogen Telefone direkt am Server anschließen, aber das kommt in der Praxis selten vor. Sie benötigen:
 
-- Einen SIP-Analog-Telefonadapter (ATA)
+- Einen SIP‑analog‑Telefon‑Adapter (ATA)
 - Einen dedizierten Server für Asterisk
-- Eine Workstation für das Softphone
+- Einen Arbeitsplatz für das Softphone
 - Eine analoge Schnittstellenkarte mit 1 FXO
-- Ein Konto bei einem VoIP-Anbieter
+- Ein Konto bei einem VoIP‑Provider
 
-### Option 3: Super Economy LAB
+### Option 3: Super‑Economy‑Lab
 
-Das dritte LAB verwendet einen virtualisierten Server auf dem eigenen Notebook des Studenten. Das Problem bei diesem Modell sind die Konflikte, die durch den UDP-Port entstehen. Manchmal versuchen sowohl der Asterisk-Server als auch das Softphone, auf denselben Port zuzugreifen, was verhindert, dass Asterisk den Adress-Port bindet. Ein weiteres Problem ist die Qualität der Anrufe; virtuelle Umgebungen sind nicht für Echtzeitanwendungen wie Asterisk geeignet. Verwenden Sie ein kostenloses Softphone für den Server und die Workstation sowie eine Trunk-Verbindung zu einem SIP-Anbieter. Sie benötigen:
+Das dritte LAB nutzt einen virtualisierten Server im eigenen Notebook des Studenten. Das Problem bei diesem Modell sind die Konflikte, die durch den UDP‑Port entstehen. Manchmal versuchen sowohl der Asterisk‑Server als auch das Softphone, denselben Port zu nutzen, wodurch Asterisk daran gehindert wird, den Adress‑Port zu binden. Ein weiteres Problem ist die Gesprächsqualität; virtuelle Umgebungen sind für Echtzeitanwendungen wie Asterisk nicht geeignet. Verwenden Sie ein kostenloses Softphone für Server und Arbeitsplatz und eine Trunk‑Verbindung zu einem SIP‑Provider. Sie benötigen:
 
 - Einen Laptop, auf dem ein Softphone läuft
-- Eine virtuelle Maschine (VirtualBox, VMware oder ähnlich), um Asterisk zu installieren
-- Ein Konto bei einem VoIP-Anbieter
+- Eine virtuelle Maschine (VirtualBox, VMware oder Ähnliches), um Asterisk zu installieren
+- Ein Konto bei einem VoIP‑Provider
 
-## Installationssequenz
+## Installationsablauf
 
-Um Ihnen zu helfen, die Installationssequenz zu verstehen, haben wir die Abfolge der Schritte skizziert, die zur Installation und Konfiguration von Asterisk erforderlich sind.
+Um Ihnen das Verständnis des Installationsablaufs zu erleichtern, haben wir die notwendigen Schritte zum Installieren und Konfigurieren von Asterisk zusammengestellt.
 
-![Referenz-Layout des Labors: SIP/IAX-Softphones, ein IP-Telefon und analoge Adapter als Extensions (1), der Asterisk-Server mit ETH0/FXO/FXS-Schnittstellen (3) und die Trunks zum PSTN über einen VoIP-Anbieter oder eine Breitbandverbindung (2).](../images/04-first-pbx-fig01.png)
+![Referenz‑Laboraufbau: SIP/IAX‑Softphones, ein IP‑Telefon und analoge Adapter als Nebenstellen (1), der Asterisk‑Server mit ETH0/FXO/FXS‑Schnittstellen (3) und die Trunks zur PSTN über einen VoIP‑Provider oder eine Breitbandverbindung (2).](../images/04-first-pbx-fig01.png)
 
-1. Konfiguration der Extensions a. SIP-Extensions (ATA, Softphone, IP-Telefon) b. IAX-Extensions c. FXS-Extensions 2. Trunk-Konfiguration a. Konfiguration eines SIP-Trunks b. Konfiguration eines FXO-Trunks 3. Aufbau eines grundlegenden Dialplan a. Wählen zwischen Extensions b. Wählen externer Ziele c. Empfangen eines Anrufs von der Operator-Extension d. Empfangen eines Anrufs in einer automatischen Telefonzentrale
+1. Konfiguration von Nebenstellen
+   - a. SIP‑Nebenstellen (ATA, Softphone, IP‑Telefon)
+   - b. IAX‑Nebenstellen
+   - c. FXS‑Nebenstellen
+2. Konfiguration von Trunks
+   - a. Konfiguration eines SIP‑Trunks
+   - b. Konfiguration eines FXO‑Trunks
+3. Aufbau eines einfachen Dialplans
+   - a. Wählen zwischen Nebenstellen
+   - b. Wählen externer Ziele
+   - c. Anrufannahme in der Operator‑Nebenstelle
+   - d. Anrufannahme in einer automatischen Telefonzentrale
 
-## Konfiguration der Extensions
+## Configuration of the extensions
 
-Die Extensions sind SIP-, IAX- oder analoge Telefone, die an einen FXS-Port angeschlossen sind. Um eine Extension zu konfigurieren, sollten Sie die Konfigurationsdatei bearbeiten, die sich auf den Kanal bezieht (pjsip.conf, iax.conf, chan_dahdi.conf).
+The extensions are SIP, IAX, or analog phones connected to an FXS port. To configure an extension, you should edit the configuration file related to the channel (pjsip.conf, iax.conf, chan_dahdi.conf)
 
-### SIP-Extensions
+### SIP extensions
 
-In Asterisk 22 ist PJSIP (der `res_pjsip`-Stack, konfiguriert in `/etc/asterisk/pjsip.conf`) der SIP-Kanal-Treiber. Er unterstützt mehrere Transporte pro Endpoint, wird aktiv gewartet und ist der einzige SIP-Treiber, der mit der Plattform ausgeliefert wird. (Der ursprüngliche `chan_sip`-Treiber wurde in Asterisk 21 entfernt – siehe das Kapitel *Legacy channels*, falls Sie eine alte Konfiguration migrieren müssen.)
+On Asterisk 22, PJSIP (the `res_pjsip` stack, configured in `/etc/asterisk/pjsip.conf`) is the SIP channel driver. It supports multiple transports per endpoint, is actively maintained, and is the only SIP driver shipped with the platform. (The original `chan_sip` driver was removed in Asterisk 21 — see the *Legacy channels* chapter if you need to migrate an old configuration.)
 
-Die Idee hier ist, eine einfache PBX zu konfigurieren. (Nachfolgende Kapitel bieten eine vollständige SIP/PJSIP-Sitzung mit allen Details.) PJSIP wird in `/etc/asterisk/pjsip.conf` konfiguriert und enthält alle Parameter, die sich auf SIP-Telefone und VoIP-Anbieter beziehen. SIP-Clients müssen konfiguriert werden, bevor Sie Anrufe tätigen und empfangen können.
+The idea here is to configure a simple PBX. (Subsequent chapters provide an entire SIP/PJSIP session with all the details.) PJSIP is configured in `/etc/asterisk/pjsip.conf` and holds all the parameters related to SIP phones and VoIP providers. SIP clients have to be configured before you can make and receive calls.
 
-#### Der Transport
+#### The transport
 
-In PJSIP befindet sich die Listener-Konfiguration (Bind-Adresse, Port, Protokoll) in einem `transport`-Objekt. Asterisk verfügt über einen eingebauten Schutz gegen das Erraten von Benutzernamen – es gibt immer eine identische Authentifizierungsaufforderung für unbekannte und bekannte Benutzer zurück, und wiederholte nicht identifizierte Anfragen von einer IP werden über die `[global]`-Optionen `unidentified_request_count`/`unidentified_request_period` ratenbegrenzt. Die Hauptoptionen eines Transports sind:
+In PJSIP, the listener configuration (bind address, port, protocol) lives in a `transport` object. Asterisk has built-in protection against username guessing — it always returns an identical authentication challenge for unknown and known users, and repeated unidentified requests from one IP are rate-limited via the `[global]` options `unidentified_request_count`/`unidentified_request_period`. The main options of a transport are:
 
-- protocol: Das Transportprotokoll — `udp`, `tcp`, `tls`, `ws` oder `wss`.
-- bind: Adresse und Port, an die der Listener bindet. Wenn Sie die Adresse auf `0.0.0.0` setzen, bindet er an alle Schnittstellen; der SIP-Port ist standardmäßig 5060 für UDP/TCP.
+- protocol: The transport protocol — `udp`, `tcp`, `tls`, `ws`, or `wss`.
+- bind: Address and port the listener binds to. If you set the address to `0.0.0.0`, it binds to all interfaces; the SIP port defaults to 5060 for UDP/TCP.
 
-Ein minimaler UDP-Transport:
+A minimal UDP transport:
 
 ```
 [global]
@@ -150,21 +161,21 @@ protocol=udp
 bind=10.1.30.45:5060
 ```
 
-Die Codec-Auswahl (`disallow`/`allow`) und der Standard `context` werden auf jedem `endpoint` (siehe unten) konfiguriert, nicht auf dem Transport. Anonyme/Gast-Anrufe werden von einem `endpoint` namens `anonymous` behandelt. Registrierungs-Timer werden pro AOR über `maximum_expiration`/`default_expiration` gesteuert.
+Codec selection (`disallow`/`allow`) and the default `context` are configured on each `endpoint` (shown below), not on the transport. Anonymous/guest calls are handled by an `endpoint` named `anonymous`. Registration timers are controlled per-AOR via `maximum_expiration`/`default_expiration`.
 
-#### SIP-Clients
+#### SIP clients
 
-Nach Abschluss des Transport-Abschnitts ist es an der Zeit, die SIP-Clients einzurichten. Ich möchte den Leser noch einmal daran erinnern, dass wir später im Buch ein ganzes SIP/PJSIP-Kapitel haben werden. Konzentrieren wir uns vorerst auf die Grundlagen und überlassen die Details für später.
+After completing the transport section, it is time to set up the SIP clients. I would once again like to remind the reader that we will have an entire SIP/PJSIP chapter later in the book. For now, let’s concentrate on the basics and leave the details for later.
 
-In PJSIP wird ein SIP-Client aus einer Reihe verwandter Objekte aufgebaut, die durch Namensreferenz miteinander verbunden sind:
+In PJSIP a SIP client is built from a set of related objects, tied together by name reference:
 
-- `endpoint`: Das Anrufverhalten — Codecs (`allow`/`disallow`), der Dialplan `context` und welche `auth` und `aors` er verwendet.
-- `auth`: Die Anmeldeinformationen. `username` ist der SIP-Authentifizierungsbenutzer und `password` ist das Geheimnis (Secret), das zur Authentifizierung des Geräts verwendet wird.
-- `aor`: Die "Address of Record" — wo der Endpoint erreicht werden kann. Entweder ein statischer `contact=` (für ein Gerät mit fester IP) oder `max_contacts=`, um dem Gerät die dynamische Registrierung zu ermöglichen.
+- `endpoint`: The call behaviour — codecs (`allow`/`disallow`), the dialplan `context`, and which `auth` and `aors` it uses.
+- `auth`: The credentials. `username` is the SIP authentication user and `password` is the secret used to authenticate the device.
+- `aor`: The "address of record" — where the endpoint can be reached. Either a static `contact=` (for a device at a fixed IP) or `max_contacts=` to allow the device to register dynamically.
 
-Warnung: Verwenden Sie starke Passwörter mit mindestens 8 Zeichen, alphanumerischen und numerischen Zeichen sowie mindestens einem Symbol. Berichte über gehackte Server sind in den Mailinglisten aufgetaucht, und Brute-Force-Passwort-Cracker für SIP sind für Skript-Kiddies leicht verfügbar. Gebührenbetrug kostet Verbraucher und Anbieter Tausende von Dollar.
+Warning: Use strong passwords, with at least 8 characters, alphanumeric and numeric characters, and at least one symbol. Reports of hacked servers have appeared in the mailing lists, and brute force password crackers for SIP are easily available for script kiddies. Toll fraud costs thousands of dollars for consumers and providers.
 
-Endpoint 6000 ist ein Gerät mit fester IP, daher trägt sein AOR einen statischen `contact`, anstatt eine Registrierung zu erlauben. Endpoint 6001 ist ein Gerät, das sich registriert, daher erlaubt sein AOR die Registrierung (`max_contacts=1`):
+Endpoint 6000 is a device at a fixed IP, so its AOR carries a static `contact` instead of allowing registration. Endpoint 6001 is a device that registers, so its AOR allows it to register (`max_contacts=1`):
 
 ```
 [6000]
@@ -177,7 +188,7 @@ aors=6000
 
 [6000-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=6000
 password=#MySecret1#7
 
@@ -195,7 +206,7 @@ aors=6001
 
 [6001-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=6001
 password=Mys3cr3t#
 
@@ -204,22 +215,22 @@ type=aor
 max_contacts=1
 ```
 
-PJSIP erlaubt es den Abschnitten `endpoint`, `auth` und `aor`, denselben Abschnittsnamen zu teilen (z. B. die beiden `[6001]`-Blöcke oben, unterschieden durch ihre `type=`); viele Administratoren hängen stattdessen Suffixe an (`[6001]`, `[6001-auth]`, `[6001]` aor), um die Lesbarkeit zu verbessern. Bei einem Gerät, das sich registriert, wird der Kontakt dynamisch gelernt, wenn sich das Telefon registriert, daher benötigt der AOR keinen statischen `contact`.
+PJSIP allows the `endpoint`, `auth`, and `aor` sections to share the same section name (e.g. the two `[6001]` blocks above, distinguished by their `type=`); many admins instead suffix them (`[6001]`, `[6001-auth]`, `[6001]` aor) for readability. For a device that registers, the contact is learned dynamically when the phone registers, so the AOR needs no static `contact`.
 
-## IAX-Extensions
+## IAX Extensions
 
-`chan_iax2` wird in Asterisk 22 noch ausgeliefert, ist aber jetzt veraltet (Legacy); SIP/PJSIP ist das bevorzugte Protokoll für neue Bereitstellungen.
+`chan_iax2` still ships in Asterisk 22 but is now legacy; SIP/PJSIP is the preferred protocol for new deployments.
 
-Sie können auch IAX-Extensions erstellen. Dieses Protokoll ist nativ für Asterisk, und wir werden später in diesem Buch einen ganzen Abschnitt diesem Thema widmen. Lassen Sie uns vorerst ein paar Extensions mit diesem Protokoll erstellen. Als erster zu konfigurierender Abschnitt hat der Abschnitt [general] bestimmte Parameter, die konfiguriert werden müssen. Die Hauptoptionen sind:
+You may also create IAX extensions. This protocol is native to the Asterisk, and we will have an entire section devoted to it later in this book. For now, let’s create a few extensions using the protocol. As the first section to be configured, the section [general] has certain parameters to be configured. The main options are:
 
-- allow/disallow: Definiert, welche Codecs verwendet werden sollen.
-- bindaddr: Adresse, an die der Asterisk SIP-Listener gebunden werden soll. Wenn Sie sie auf 0.0.0.0 (Standard) setzen, bindet er an alle Schnittstellen.
-- context: Legt den Standard-Context für alle Clients fest, sofern er nicht im Client-Abschnitt geändert wird. Wir haben aus Sicherheitsgründen dummy verwendet. Nicht authentifizierte Benutzer gelangen in diesen Context, wenn die Option allowguest auf yes gesetzt ist.
-- bindport: SIP-UDP-Port, auf dem gelauscht werden soll.
-- delayreject: Wenn auf yes gesetzt, verzögert es das Senden einer Authentifizierungsablehnung für ein REGREQ oder AUTHREQ, was die Sicherheit gegen Brute-Force-Passwortangriffe verbessert.
-- bandwidth: Wenn auf high gesetzt, erlaubt es die Auswahl von Codecs mit hoher Bandbreite, wie z. B. g711 in den Varianten ulaw und alaw.
+- allow/disallow: Defines which codecs are going to be used.
+- bindaddr: Address the IAX2 listener binds to. If you set it up as 0.0.0.0 (default), it will bind to all interfaces.
+- context: Sets the default context for all clients unless changed in the client section. We used dummy for security reasons. Unauthenticated users get into this context when the option allowguest is set to yes.
+- bindport: IAX2 UDP port to listen on (default 4569).
+- delayreject: When set to yes, delays the sending of an authentication reject for a REGREQ or AUTHREQ, which improves the security against brute-force password attacks.
+- bandwidth: When set to high, it allows the selection of high bandwidth codecs, such as the g711 in their variants ulaw and alaw.
 
-Das Folgende ist ein Beispiel für den Abschnitt [general] der Datei iax.conf.
+The following is a sample of the [general] section of the file iax.conf.
 
 ```
 [general]
@@ -232,100 +243,105 @@ disallow = all
 allow = ulaw
 ```
 
-### IAX-Clients
+### IAX Clients
 
-Nach Abschluss der allgemeinen Abschnitte ist es an der Zeit, die IAX-Clients einzurichten.
+After finishing the general sections, it is time to set up the IAX clients.
 
-- [name]: Wenn sich ein SIP-Gerät mit Asterisk verbindet, verwendet es den Benutzernamen-Teil des SIP-URI, um den Peer/Benutzer zu finden.
-- type: Konfiguriert die Verbindungsklasse. Optionen sind peer, user und friend. o peer: Asterisk sendet Anrufe an einen Peer. o user: Asterisk empfängt Anrufe von einem Benutzer. o friend: Beides geschieht gleichzeitig.
-- host: IP-Adresse oder Hostname. Die häufigste Option ist dynamic, die verwendet wird, wenn sich der Host bei Asterisk registriert.
-- secret: Passwort zur Authentifizierung von Peers und Benutzern.
+- `[name]`: The section name is the IAX peer/user name; an incoming IAX connection is matched to it by name.
+- `type`: The connection class — `peer`, `user`, or `friend`:
+  - `peer`: Asterisk sends calls to a peer.
+  - `user`: Asterisk receives calls from a user.
+  - `friend`: both directions at once.
+- `host`: IP address or host name. The most common value is `dynamic`, used when the device registers to Asterisk.
+- `secret`: Password to authenticate peers and users.
 
-Warnung: Verwenden Sie starke Passwörter mit mindestens 8 Zeichen, alphanumerischen und numerischen Zeichen sowie mindestens einem Symbol. Berichte über gehackte Server sind in den Mailinglisten aufgetaucht, und Brute-Force-Passwort-Cracker für SIP-MD5-Hashes sind für Skript-Kiddies verfügbar. Gebührenbetrug kostet Verbraucher und Anbieter Tausende von Dollar. Beispiel:
+Warning: Use strong passwords with at least 8 characters, alphanumeric and numeric characters, and at least one symbol. Reports of hacked servers have appeared in the mailing lists, and brute force password crackers for IAX md5 hashes are available for script kiddies. Toll fraud costs thousands of dollars for consumers and providers. Example:
 
 ```
 [guest]
 type=user
 context=dummy
-callerid=”Guest IAX User”
+callerid="Guest IAX User"
 [6003]
-context=from-internal
 type=friend
+context=from-internal
 secret=#sup3rs3cr3t#
 host=dynamic
-context=from-internal
 [6004]
-context=from-internal
 type=friend
+context=from-internal
 secret=#s3cr3ts3cr3t#
 host=dynamic
-context=from-internal
 ```
 
 ## Konfiguration der SIP-Geräte
 
-Nachdem die Telefone in der Asterisk-Konfigurationsdatei definiert wurden, ist es an der Zeit, das Telefon selbst zu konfigurieren. In diesem Beispiel zeigen wir, wie man ein kostenloses Softphone konfiguriert — das SipPulse Softphone (herunterzuladen unter https://www.sippulse.com/produtos/softphone). Überprüfen Sie das Handbuch Ihres Geräts, um die Parameter Ihres Telefons zu verstehen. Schritt 1: Konfigurieren Sie das Telefon für die Verwendung der Extension 6000. Führen Sie das Installationsprogramm aus. Öffnen Sie nach der Ausführung die Konto-/SIP-Einstellungen und fügen Sie ein neues SIP-Konto hinzu. Geben Sie die erforderlichen Informationen ein.
+Nachdem die Telefone in der Asterisk-Konfigurationsdatei definiert wurden, ist es Zeit, das Telefon selbst zu konfigurieren. In diesem Beispiel zeigen wir, wie man ein kostenloses Softphone – das SipPulse Softphone (Download von https://www.sippulse.com/produtos/softphone) – einrichtet. Lesen Sie das Handbuch Ihres Geräts, um die Parameter Ihres Telefons zu verstehen. Schritt 1: Konfigurieren Sie das Telefon, um die Nebenstelle 6000 zu verwenden. Führen Sie das Installationsprogramm aus. Nach der Ausführung öffnen Sie die Konto‑/SIP‑Einstellungen und fügen ein neues SIP‑Konto hinzu. Geben Sie die erforderlichen Informationen ein.
 
-![Der SipPulse Softphone-Kontobildschirm — geben Sie den Server (Ihre Asterisk-IP oder Domain), Benutzernamen, Passwort und Anzeigenamen ein und wählen Sie dann den Transport (UDP, TCP oder TLS).](../images/softphone/sipphone-account.png){width=35%}
+![Der SipPulse Softphone Kontobildschirm – geben Sie den Server (Ihre Asterisk‑IP oder Domain), Benutzernamen, Passwort und Anzeigenamen ein und wählen Sie dann den Transport (UDP, TCP oder TLS).](../images/softphone/sipphone-account.png){width=35%}
 
-Anzeigename: 6000  Benutzername: 6000  Passwort: #MySecret1#7  Autorisierungs-Benutzername: 6000  Domain: ip_of_your_server. Bestätigen Sie, dass Ihr Telefon registriert ist, indem Sie den Konsolenbefehl `pjsip show endpoints` (oder `pjsip show endpoint 6000` für Details; `pjsip show contacts` zeigt die registrierten AOR-Kontakte) verwenden. Wiederholen Sie die Konfiguration für das Telefon 6001.
+Anzeigename: 6000  Benutzername: 6000  Passwort: #MySecret1#7  Autorisierungs‑Benutzername: 6000  Domain: ip_of_your_server. Bestätigen Sie, dass Ihr Telefon registriert ist, indem Sie den Konsolenbefehl `pjsip show endpoints` (oder `pjsip show endpoint 6000` für Details; `pjsip show contacts` zeigt die registrierten AOR‑Kontakte) ausführen. Wiederholen Sie die Konfiguration für das Telefon 6001.
 
-![Ein registriertes SipPulse Softphone — der grüne Punkt und die Kontozeile (`1001@softphone.sippulse.com.br`) bestätigen die Registrierung; tätigen Sie einen Anruf über das Tastenfeld oder die Anruf-/Video-Schaltflächen.](../images/softphone/sipphone-registered.png){width=35%}
+![Ein registriertes SipPulse Softphone – der grüne Punkt und die Kontoleiste (`1001@softphone.sippulse.com.br`) bestätigen die Registrierung; tätigen Sie einen Anruf über das Tastenfeld oder die Anruf‑/Video‑Buttons.](../images/softphone/sipphone-registered.png){width=35%}
 
-## Konfiguration der IAX-Geräte
+## Configuring the IAX devices
 
-IAX2 ist ein veraltetes Protokoll (siehe das Kapitel *Legacy channels*), und das SipPulse Softphone ist nur für SIP geeignet, daher kann es kein IAX-Konto registrieren. Wenn Sie IAX2 testen müssen, verwenden Sie ein Softphone, das es noch unterstützt. Erstellen Sie ein neues IAX-Konto,
+IAX2 ist ein Legacy‑Protokoll (siehe das Kapitel *Legacy channels*), und das SipPulse Softphone unterstützt nur SIP, sodass es kein IAX‑Konto registrieren kann. Wenn Sie IAX2 testen müssen, verwenden Sie ein Softphone, das es noch unterstützt. Erstellen Sie ein neues IAX‑Konto,
 
-3. Wählen Sie ein neues IAX-Konto. 4. Geben Sie die entsprechenden Optionen für das Telefon 6003 und optional für das 6004 ein. 5. Speichern Sie die Konfiguration und prüfen Sie, ob das Telefon registriert ist, indem Sie iax2 show peers verwenden. Wichtig: Verwenden Sie ein Konto für SIP und ein anderes für IAX. Wenn Sie das System so konfigurieren möchten, dass es sowohl IAX als auch SIP gleichzeitig klingeln lässt, zeigen wir Ihnen im Abschnitt Dialplan, wie das geht.
+3. Wählen Sie neues IAX‑Konto.
+4. Fügen Sie die zugehörigen Optionen für das Telefon 6003 und optional für das Telefon 6004 ein.
+5. Speichern Sie die Konfiguration und prüfen Sie, ob das Telefon mit `iax2 show peers` registriert ist.
 
-### Konfiguration einer PSTN-Schnittstelle
+Wichtig: Verwenden Sie ein Konto für SIP und ein weiteres für IAX. Wenn Sie das System so konfigurieren möchten, dass sowohl IAX als auch SIP gleichzeitig klingeln, zeigen wir Ihnen, wie das im Dial‑Plan‑Abschnitt funktioniert.
 
-Um eine Verbindung zum PSTN herzustellen, benötigen Sie eine Foreign Exchange Office (FXO)-Schnittstelle und eine Telefonleitung. Sie können auch eine bestehende PBX-Extension verwenden. Sie können eine Telefonschnittstellenkarte mit einer FXO-Schnittstelle von verschiedenen Herstellern erhalten. In diesem Beispiel zeigen wir Ihnen, wie man eine DAHDI-Schnittstellenkarte installiert.
+### Configuring a PSTN interface
 
-![FXS- und FXO-Ports: Der FXS-Port steuert ein analoges Telefon (liefert Wählton und Klingeln), während der FXO-Port Asterisk mit der Telefonleitung verbindet.](../images/04-first-pbx-fig02.png)
+Um eine Verbindung zur PSTN herzustellen, benötigen Sie ein Foreign‑Exchange‑Office‑Interface (FXO) und eine Telefonleitung. Sie können auch eine bestehende PBX‑Durchwahl verwenden. Sie können eine Telefonie‑Interface‑Karte mit einem FXO‑Interface von verschiedenen Herstellern beziehen. In diesem Beispiel zeigen wir Ihnen, wie Sie eine DAHDI‑Interface‑Karte installieren.
 
-### Analoge Leitungen mit DAHDI
+![FXS and FXO ports: the FXS port drives an analog phone (supplies dial tone and ring), while the FXO port connects Asterisk to the Telco line.](../images/04-first-pbx-fig02.png)
 
-Sie können eine zu DAHDI kompatible Analogkarte von verschiedenen Herstellern kaufen. X100P war eine der ersten Digium-Karten und wurde bereits eingestellt. Einige Hersteller produzieren immer noch ähnliche Klone. Neben dem Preis der X100P haben wir mehrere Probleme zwischen diesen Karten und neuen Motherboards festgestellt, also verwenden Sie sie mit Vorsicht. X100P ist meiner Meinung nach keine gute Wahl für eine Produktionsumgebung. Jede zu DAHDI kompatible Karte sollte funktionieren. Dank des Teams der DAHDI-Entwickler haben wir jetzt ein Tool zum fast automatischen Erkennen und Konfigurieren der Schnittstellenkarten. Wenn Sie gerade die DAHDI-Treiber installiert haben, vergessen Sie bitte nicht, make config auszuführen und die Maschine neu zu starten, um sie automatisch zu laden. Sie können die unten stehenden Befehle verwenden, um Ihre Karte zu erkennen und zu konfigurieren. Schritt 1: Um Ihre Hardware zu erkennen, verwenden Sie:
+### Analog lines using DAHDI
 
-```
-dahdi_hardware.
-```
-
-Schritt 2: Zur Konfiguration verwenden Sie:
+Sie können eine analoge Karte, die mit DAHDI kompatibel ist, von mehreren Herstellern erwerben. Die X100P war eine der ersten Digium‑Karten und wurde bereits eingestellt. Einige Hersteller produzieren noch ähnliche Klone. Zusätzlich zum Preis der X100P haben wir mehrere Probleme zwischen diesen Karten und neuen Motherboards festgestellt, daher sollten Sie sie mit Vorsicht einsetzen. Die X100P ist meiner Meinung nach keine gute Wahl für eine Produktionsumgebung. Jede mit DAHDI kompatible Karte sollte funktionieren. Dank des Teams der DAHDI‑Entwickler haben wir jetzt ein Werkzeug, das Interface‑Karten fast automatisch erkennt und konfiguriert. Wenn Sie gerade die DAHDI‑Treiber installiert haben, vergessen Sie nicht, `make config` auszuführen und die Maschine neu zu starten, damit sie automatisch geladen wird. Sie können die folgenden Befehle verwenden, um Ihre Karte zu erkennen und zu konfigurieren. Schritt 1: Um Ihre Hardware zu erkennen, verwenden Sie:
 
 ```
-dahdi_genconf.
+dahdi_hardware
 ```
 
-Der obige Befehl generiert zwei Dateien: /etc/dahdi/system.conf und /etc/asterisk/dahdi-channels.conf. Die Standardparameter für dahdi_genconf sind normalerweise in Ordnung, aber Sie können sie in der Datei /etc/dahdi/genconf_parameters ändern. Standardmäßig fügt es die Leitungen (FXO) in den Context from-pstn und die Telefone (FXS) in den Context from-internal ein. Schritt 3: Fügen Sie nach dem Ausführen von dahdi_genconf in der letzten Zeile der Datei /etc/asterisk/chan_dahdi.conf die folgende Zeile ein:
+Step 2: Zur Konfiguration verwenden Sie:
+
+```
+dahdi_genconf
+```
+
+Der obige Befehl erzeugt zwei Dateien /etc/dahdi/system.conf und /etc/asterisk/dahdi-channels.conf. Die Standardparameter für dahdi_genconf sind normalerweise in Ordnung, können aber in der Datei /etc/dahdi/genconf_parameters geändert werden. Standardmäßig fügt er die Zeilen (FXO) im Kontext from-pstn und die Telefone (FXS) im Kontext from-internal ein. Schritt 3: Nach dem Ausführen von dahdi_genconf fügen Sie in der letzten Zeile der Datei /etc/asterisk/chan_dahdi.conf die folgende Zeile ein:
 
 ```
 #include dahdi-channels.conf
 ```
 
-Schritt 4: Bearbeiten Sie die Datei /etc/dahdi/modules und kommentieren Sie alle nicht verwendeten Treiber aus. Starten Sie neu, bevor Sie fortfahren, und prüfen Sie, ob die Kanäle erkannt werden, indem Sie Folgendes verwenden:
+Schritt 4: Bearbeiten Sie die Datei /etc/dahdi/modules und kommentieren Sie alle nicht verwendeten Treiber aus. Starten Sie neu, bevor Sie fortfahren, und prüfen Sie, ob die Kanäle erkannt werden, indem Sie verwenden:
 
 ```
-CLI>dahdi show channels
+*CLI> dahdi show channels
 ```
 
-### Verbindung zum PSTN über einen VoIP-Anbieter
+### Verbindung zum PSTN über einen VoIP‑Provider
 
-Wenn Ihr Budget sehr begrenzt ist, können Sie einen SIP-Trunk konfigurieren, um eine Verbindung zum PSTN herzustellen. Es ist sicherlich der erschwinglichste Weg, eine Verbindung zum PSTN herzustellen. Weltweit gibt es Tausende von VoIP-Anbietern. Um eine Verbindung zu einem von ihnen herzustellen, benötigen Sie einige Parameter. Parameter, die vom SIP-Anbieter bereitgestellt werden:
+Wenn Ihr Budget wirklich begrenzt ist, können Sie einen SIP‑Trunk konfigurieren, um eine Verbindung zum PSTN herzustellen. Das ist mit Abstand die günstigste Methode, um zum PSTN zu verbinden. Tausende von VoIP‑Providern gibt es weltweit. Um sich mit einem von ihnen zu verbinden, benötigen Sie einige Parameter. Parameter, die vom SIP‑Provider bereitgestellt werden.
 
-- username: Login
-- password: Secret
-- Domain des Anbieters: Domain
-- UDP-Port: 5060
-- Erlaubte Codecs: g729, ilbc, alaw
+- username: login
+- password: secret
+- Provider’s domain: domain
+- UDP port: 5060
+- Allowed codecs: g729, ilbc, alaw
 
-Zwei Parameter sollten von Ihnen bestimmt werden:
+Zwei Parameter müssen Sie selbst bestimmen.
 
-- Extension zum Empfangen von Anrufen — in diesem Fall: 9999
+- Extension to receive calls—in this case: 9999
 - context: from-sip
 
-In PJSIP wird ein registrierender SIP-Trunk aus derselben Objektfamilie aufgebaut, die für einen Endpoint verwendet wird, plus expliziten `registration`- und `identify`-Objekten. Das `registration`-Objekt weist Asterisk an, sich beim Anbieter zu registrieren, das `identify`-Objekt gleicht eingehenden Datenverkehr von der IP des Anbieters mit dem Endpoint ab (PJSIP authentifiziert eingehende INVITEs anhand der Quell-IP), und `outbound_auth` liefert die Anmeldeinformationen für ausgehende Anrufe und die Registrierung:
+In PJSIP wird ein registrierender SIP‑Trunk aus derselben Objektfamilie wie ein endpoint gebaut, plus expliziten `registration`‑ und `identify`‑Objekten. Das `registration`‑Objekt weist Asterisk an, sich beim Provider zu registrieren, das `identify`‑Objekt ordnet eingehenden Verkehr von der IP des Providers dem endpoint zu (PJSIP authentifiziert eingehende INVITEs anhand der Quell‑IP), und `outbound_auth` liefert die Zugangsdaten für ausgehende Anrufe und die Registrierung.
 
 ```
 [siptrunk]
@@ -343,7 +359,7 @@ from_domain=domain
 
 [siptrunk-auth]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=login
 password=secret
 
@@ -366,50 +382,50 @@ contact_user=9999
 retry_interval=60
 ```
 
-Um auf diesen Trunk zuzugreifen, verwenden wir den Kanalnamen `PJSIP/siptrunk`. Die Einstellung `dtmf_mode=rfc4733` überträgt DTMF außerhalb des Bandes (RFC 4733 ersetzt das ältere RFC 2833; die Nutzlast ist identisch). Die Option `identify`/`match` akzeptiert IP-Adressen, CIDRs oder Hostnamen, aber Hostnamen werden nur einmal beim Laden der Konfiguration aufgelöst. Listen Sie daher bei einem Anbieter mit wechselnden IPs die Signalisierungs-IP(s) explizit auf. Bestätigen Sie die Registrierung mit `pjsip show registrations`.
+Um auf diesen Trunk zuzugreifen, verwenden wir den Kanalnamen `PJSIP/siptrunk`. Die Einstellung `dtmf_mode=rfc4733` überträgt DTMF out‑of‑band (RFC 4733 ersetzt das ältere RFC 2833; die Nutzlast ist identisch). Die Option `identify`/`match` akzeptiert IP‑Adressen, CIDRs oder Hostnamen, aber Hostnamen werden einmalig beim Laden der Konfiguration aufgelöst, daher sollten Sie bei einem Anbieter mit wechselnden IPs die Signalisierungs‑IP(s) explizit angeben. Bestätigen Sie die Registrierung mit `pjsip show registrations`.
 
-## Einführung in den Dialplan
+## Dialplan-Einführung
 
-Der Dialplan ist wie das Herz von Asterisk. Er definiert, wie Asterisk jeden einzelnen Anruf an die PBX handhabt. Er besteht aus Extensions, die eine Anweisungsliste für Asterisk erstellen, der es folgen soll. Anweisungen werden durch Ziffern ausgelöst, die vom Kanal oder der Anwendung empfangen werden. Um Asterisk erfolgreich zu konfigurieren, ist es entscheidend, den Dialplan zu verstehen. Der Großteil des Dialplans ist in der Datei extensions.conf im Verzeichnis /etc/asterisk enthalten. Diese Datei verwendet die Grammatik der einfachen Gruppe und hat vier Hauptkonzepte:
+Der Dialplan ist wie das Herz von Asterisk. Er definiert, wie Asterisk jeden einzelnen Anruf zur PBX verarbeitet. Er besteht aus Extensions, die eine Anweisungsliste für Asterisk bilden. Anweisungen werden durch Ziffern ausgelöst, die vom Channel oder von einer Anwendung empfangen werden. Um Asterisk erfolgreich zu konfigurieren, ist es entscheidend, den Dialplan zu verstehen. Der größte Teil des Dialplans befindet sich in der Datei extensions.conf im Verzeichnis /etc/asterisk. Diese Datei verwendet die einfache Gruppen‑Grammatik und hat vier Hauptkonzepte:
 
 - Extensions
-- Prioritäten
-- Anwendungen
+- Priorities
+- Applications
 - Contexts
 
-Lassen Sie uns einen grundlegenden Dialplan erstellen. In späteren Abschnitten dieses Buches werde ich dem Dialplan ein eigenes Kapitel widmen. Wenn Sie die Beispieldateien installiert haben (make samples), existiert die extensions.conf bereits. Speichern Sie sie unter einem anderen Namen und beginnen Sie mit einer leeren Datei.
+Lassen Sie uns einen einfachen Dialplan erstellen. In den folgenden Abschnitten dieses Buches widme ich ein ganzes Kapitel ausschließlich dem Dialplan. Wenn Sie die Beispieldateien installiert haben (make samples), existiert die extensions.conf bereits. Speichern Sie sie unter einem anderen Namen und beginnen Sie mit einer leeren Datei.
 
-## Die Struktur der Datei extensions.conf
+## The structure of the file extensions.conf
 
-Die Datei extensions.conf ist in Abschnitte unterteilt. Der erste ist der Abschnitt [general], gefolgt vom Abschnitt [globals]. Der Beginn jedes Abschnitts beginnt mit seiner Namensdefinition (z. B. [default]) und endet, wenn ein anderer Abschnitt erstellt wird.
+The extensions.conf file is separated into sections. The first is the [general] section followed by the [globals] section. The beginning of each section starts with its name definition (i.e., [default]) and finishes when another section is created.
 
-### Der Abschnitt [general]
+### The section [general]
 
-Der Abschnitt [general] befindet sich ganz oben in der Datei. Bevor Sie mit der Konfiguration des Dialplans beginnen, ist es hilfreich, die allgemeinen Optionen zu kennen, die bestimmte Verhaltensweisen des Dialplans steuern. Diese Optionen sind:
+The general section sits at the top of the file. Before starting to configure the dial plan, it is helpful to know the general options that control certain dial plan behaviors. These options are:
 
-- static und write protect: Wenn static=yes und writeprotect=no, können Sie die CLI verwenden
-
-```
-command save dialplan.
-```
-
-Warnung: Wenn Sie einen Befehl save dialplan von der CLI ausführen, verlieren Sie alle Anmerkungen und Kommentare in der Datei.
-
-- autofallthrough: Wenn autofallthrough gesetzt ist und eine Extension keine Aufgaben mehr hat, beendet sie den Anruf mit BUSY, CONGESTION oder HANGUP, je nachdem, was Asterisk für am wahrscheinlichsten hält. Dies ist der Standardwert. Wenn autofallthrough nicht gesetzt ist, wartet Asterisk, falls eine Extension keine Aufgaben mehr hat, darauf, dass eine neue Extension gewählt wird.
-- clearglobalvars: Wenn clearglobalvars gesetzt ist, werden globale Variablen bei einem dialplan reload oder Asterisk reload gelöscht und neu geparst. Wenn clearglobalvars nicht gesetzt ist, bleiben globale Variablen über Reloads hinweg bestehen – selbst wenn sie aus der extensions.conf oder einer ihrer inkludierten Dateien gelöscht werden, bleiben sie auf dem vorherigen Wert gesetzt.
-- extenpatternmatchnew: Verwendet einen schnelleren Algorithmus für den Musterabgleich, was bei einer großen Anzahl von Extensions spürbar hilft. Standardmäßig auf no.
-- userscontext: Dies ist der Context, in dem die Einträge aus der users.conf registriert werden.
-
-### Der Abschnitt [globals]
-
-Im Abschnitt [globals] definieren Sie globale Variablen und deren Anfangswerte. Sie können im Dialplan über ${GLOBAL(variable)} auf die Variable zugreifen. Sie können sogar auf Variablen zugreifen, die in der Linux/Unix-Umgebung definiert sind, indem Sie ${ENV(variable)} verwenden. Globale Variablennamen unterscheiden nicht zwischen Groß- und Kleinschreibung. Ein paar Beispiele könnten sein:
+- static and write protect: If `static=yes` and `writeprotect=no`, you can save the running dial plan back to disk with the CLI command:
 
 ```
-INCOMING>DAHDI/8&DAHDI/9
+*CLI> dialplan save
+```
+
+Warning: If you issue a `dialplan save` command from the CLI, you will lose any remarks and comments in the file.
+
+- autofallthrough: If autofallthrough is set, then if an extension runs out of things to do, it will terminate the call with BUSY, CONGESTION, or HANGUP depending on Asterisk's best guess. This is the default. If autofallthrough is not set, then if an extension runs out of things to do, Asterisk will wait for a new extension to be dialed.
+- clearglobalvars: If clearglobalvars is set, global variables will be cleared and reparsed into an dialplan reload or Asterisk reload. If clearglobalvars is not set, then global variables will persist through reloads and—even if deleted from the extensions.conf or one of its included files—they will remain set to the previous value.
+- extenpatternmatchnew: Uses a faster pattern-matching algorithm, which helps noticeably when you have a large number of extensions. Defaults to no.
+- userscontext: This is the context where the entries from the users.conf are registered.
+
+### The section [globals]
+
+In the [globals] section you will define global variables and their initial values. You can access the variable in the dial plan using ${GLOBAL(variable)}. You can even access variables defined in the linux/unix environment using ${ENV(variable)}. Global variables are not case sensitive. A few examples could be:
+
+```
+INCOMING=>DAHDI/8&DAHDI/9
 RINGTIME=>3
 ```
 
-Im folgenden Beispiel können Sie eine globale Variable im Dialplan setzen und testen.
+In the following example, you can set and test a global variable in the dial plan.
 
 ```
 exten=9000,1,set(GLOBAL(RINGTIME)=4)
@@ -417,23 +433,23 @@ exten=9000,n,Noop(${GLOBAL(RINGTIME)})
 exten=9000,n,hangup()
 ```
 
-## Contexts
+## Kontexte
 
-Ein Context ist die benannte Partition des Dialplans. Nach den Abschnitten [general] und [globals] ist der Dialplan eine Menge von Contexts, in denen jeder Context mehrere Extensions hat, jede Extension mehrere Prioritäten hat und jede Priorität eine Anwendung mit mehreren Argumenten aufruft.
+Context ist die benannte Partition des Dialplans. Nach den Abschnitten [general] und [globals] ist der Dialplan ein Satz von Kontexten, in denen jeder Kontext mehrere Extensions enthält, jede Extension mehrere Prioritäten hat und jede Priorität eine Anwendung mit mehreren Argumenten aufruft.
 
-![Asterisk-Anruffluss: Jeder Anruf kommt auf einem Kanal (IAX, SIP und andere) als eingehender Anrufzweig an; der Context des Kanals – global oder pro Kanal in der Kanalkonfigurationsdatei festgelegt – entscheidet, welcher Context in der extensions.conf den Anruf verarbeitet, bevor er den ausgehenden Zweig verlässt.](../images/04-first-pbx-fig03.png)
+![Asterisk-Anrufablauf: Jeder Anruf kommt auf einem Kanal (IAX, SIP und andere) als eingehender Anrufzweig an; der Kontext des Kanals — global oder pro Kanal in der Kanal-Konfigurationsdatei festgelegt — entscheidet, welcher Kontext in extensions.conf den Anruf verarbeitet, bevor er auf dem ausgehenden Zweig weitergeleitet wird.](../images/04-first-pbx-fig03.png)
 
-![Anrufverarbeitung: Der `context=`, der für einen Kanal definiert ist (in chan_dahdi.conf oder pjsip.conf), benennt den passenden Context in der extensions.conf, in dem der Dialplan den Anruf handhabt.](../images/04-first-pbx-fig04.png)
+![Anrufverarbeitung: Das `context=`, das für einen Kanal definiert ist (in chan_dahdi.conf oder pjsip.conf), benennt den passenden Kontext in extensions.conf, in dem der Dialplan den Anruf behandelt.](../images/04-first-pbx-fig04.png)
 
-Sie können einen einfachen Dialplan erstellen, um andere Telefone und das PSTN zu erreichen. Asterisk ist jedoch viel leistungsfähiger als das. Unser Ziel ist es, Ihnen mehr Details darüber beizubringen, was im Dialplan möglich ist.
+Sie können einen einfachen Dialplan erstellen, um andere Telefone und das PSTN zu erreichen. Asterisk ist jedoch weitaus leistungsfähiger. Unser Ziel ist es, Ihnen weitere Details dessen zu vermitteln, was im Dialplan möglich ist.
 
 ## Extensions
 
-Im Gegensatz zur traditionellen PBX, bei der Extensions mit Telefonen, Schnittstellen, Menüs usw. verknüpft sind, ist eine Extension in Asterisk eine Liste von Befehlen, die verarbeitet werden, wenn eine bestimmte Extensionsnummer oder ein Name ausgelöst wird. Die Befehle werden in der Reihenfolge ihrer Priorität verarbeitet.
+Im Gegensatz zur traditionellen PBX, bei der Durchwahlen Telefonen, Schnittstellen, Menüs usw. zugeordnet sind, ist eine Durchwahl in Asterisk eine Liste von Befehlen, die verarbeitet werden, wenn eine bestimmte Durchwahlnummer oder ein Name ausgelöst wird. Die Befehle werden in Prioritätsreihenfolge verarbeitet.
 
-![Extension-Syntax: `exten => number(name),{priority|label}[(alias)],application`. Extensions können numerisch, alphanumerisch, numerisch mit Caller ID, ein Muster oder eine Standard-Extension wie `s` sein; Prioritäten können eine Zahl, `n` (nächste), `s` (dieselbe), ein Offset oder ein `hint` sein.](../images/04-first-pbx-fig05.png)
+![Extension syntax: `exten => number(name),{priority|label}[(alias)],application`. Extensions can be numeric, alphanumeric, numeric with caller ID, a pattern, or a standard extension like `s`; priorities can be a number, `n` (next), `s` (same), an offset, or a `hint`.](../images/04-first-pbx-fig05.png)
 
-Eine Extension kann literal, standard oder speziell sein. Eine Standard-Extension enthält nur Zahlen oder Namen und die Zeichen * und #; 12#89* ist eine gültige literale Extension. Namen können ebenfalls für den Extension-Abgleich verwendet werden. Extensions unterscheiden zwischen Groß- und Kleinschreibung. Sie können jedoch nicht zwei Extensions mit demselben Namen, aber unterschiedlicher Groß-/Kleinschreibung erstellen. Wenn eine Extension gewählt wird, wird der Befehl mit der ersten Priorität ausgeführt, gefolgt vom Befehl mit Priorität 2 usw. Dies geschieht, bis der Anruf getrennt wird oder ein Befehl die Zahl eins zurückgibt, was auf einen Fehler hinweist. Was Asterisk tut, wenn die letzte Priorität ausgeführt wurde, wird durch den Parameter autofallthrough geregelt. Siehe den Abschnitt [general] in diesem Kapitel. Beispiel:
+Eine Durchwahl kann wörtlich, standard oder speziell sein. Eine Standard‑Durchwahl enthält nur Zahlen oder Namen sowie die Zeichen * und #; 12#89* ist eine gültige wörtliche Durchwahl. Namen können ebenfalls zum Durchwahl‑Matching verwendet werden. Durchwahlen sind case‑sensitive. Sie können jedoch nicht zwei Durchwahlen mit demselben Namen, aber unterschiedlicher Groß‑/Kleinschreibung erstellen. Wenn eine Durchwahl gewählt wird, wird der Befehl mit der ersten Priorität ausgeführt, gefolgt vom Befehl mit Priorität 2 usw. Dies geschieht, bis der Anruf beendet wird oder ein Befehl die Nummer eins zurückgibt, was einen Fehler anzeigt. Was Asterisk tut, wenn die letzte Priorität ausgeführt wurde, wird durch den Parameter autofallthrough geregelt. Siehe den Abschnitt [general] in diesem Kapitel. Beispiel:
 
 ```
 exten=>123,1,Answer
@@ -441,7 +457,7 @@ exten=>123,n,Playback(tt-weasels)
 exten=>123,n,Hangup
 ```
 
-Oben finden Sie die Liste der Anweisungen, die verarbeitet werden sollen, wenn die Extension 123 gewählt wird. Die erste Priorität besteht darin, den Kanal zu beantworten (notwendig, wenn sich der Kanal im Klingelzustand befindet: z. B. FXO-Kanäle). Die zweite Priorität besteht darin, eine Audiodatei namens tt-weasels abzuspielen. Die dritte Priorität legt den Kanal auf. Eine weitere Option ist es, den Anruf gemäß der Caller ID zu handhaben. Sie können das Zeichen / verwenden, um die zu verarbeitende Caller ID anzugeben. Beispiele:
+Oben finden Sie die Liste der Anweisungen, die verarbeitet werden, wenn die Durchwahl 123 gewählt wird. Die erste Priorität ist, den Kanal zu beantworten (notwendig, wenn sich der Kanal im Klingelzustand befindet, d. h. FXO‑Kanäle). Die zweite Priorität spielt die Audiodatei tt‑weasels ab. Die dritte Priorität legt den Kanal auf. Eine weitere Möglichkeit besteht darin, den Anruf anhand der Caller‑ID zu behandeln. Sie können das Zeichen / verwenden, um die zu verarbeitende Caller‑ID anzugeben. Beispiele:
 
 ```
 exten=>123/100,1,Answer()
@@ -449,66 +465,72 @@ exten=>123/100,n,Playback(tt-weasels)
 exten=>123/100,n,Hangup()
 ```
 
-Dieses Beispiel löst die Extension 123 aus und führt die folgenden Optionen nur aus, wenn die Caller ID 100 ist. Dies kann auch durch die Verwendung des unten beschriebenen Musters erfolgen:
+Dieses Beispiel löst die Durchwahl 123 aus und führt die folgenden Optionen nur aus, wenn die Caller‑ID 100 ist. Das kann auch mit dem unten beschriebenen Muster erfolgen:
 
 ```
 exten=>1234/_256NXXXXXX,1,Answer()
 ```
 
-hint: ordnet eine Extension einem Kanal zu. Es wird verwendet, um den Kanalstatus zu überwachen. Es wird in Verbindung mit Präsenz (Presence) verwendet. Das Telefon muss dies unterstützen.
+hint: ordnet einer Durchwahl einen Kanal zu. Sie wird verwendet, um den Kanalzustand zu überwachen. Sie wird zusammen mit presence eingesetzt. Das Telefon muss dies unterstützen.
 
-#### Muster
+#### Patterns
 
-Sie können Muster und Literale im Dialplan verwenden. Muster sind sehr nützlich, um die Größe des Dialplans zu reduzieren. Alle Muster beginnen mit dem Zeichen „_“. Die folgenden Zeichen können verwendet werden, um ein Muster zu definieren. Die Abbildung identifiziert die Muster, die für die Verwendung mit Asterisk verfügbar sind.
+Sie können Muster und wörtliche Werte im Dialplan verwenden. Muster sind sehr nützlich, um die Größe des Dialplans zu reduzieren. Alle Muster beginnen mit dem Zeichen “_”. Die folgenden Zeichen können zur Definition eines Musters verwendet werden. Die Abbildung zeigt die für Asterisk verfügbaren Muster.
 
-![Musterabgleichszeichen: `_` startet ein Muster, `.` entspricht einem oder mehreren Zeichen, `!` entspricht null oder mehr, `[123-7]` entspricht jeder aufgelisteten Ziffer oder jedem Bereich, `X` ist 0-9, `Z` ist 1-9 und `N` ist 2-9 — mit Beispielen, die Büro-Extension-Bereiche abbilden.](../images/04-first-pbx-fig06.png)
+![Pattern matching characters: `_` starts a pattern, `.` matches one or more characters, `!` matches zero or more, `[123-7]` matches any listed digit or range, `X` is 0-9, `Z` is 1-9, and `N` is 2-9 — with examples mapping office extension ranges.](../images/04-first-pbx-fig06.png)
 
-### Spezielle Extensions
+### Special extensions
 
-Asterisk verwendet einige Extension-Namen als Standard-Extensions.
+Asterisk verwendet einige Durchwahlnamen als Standard‑Durchwahlen.
 
-![Spezielle Asterisk-Extensions: `i` (ungültig), `s` (Start), `h` (Auflegen), `t` (Timeout), `T` (absolutes Timeout), `o` (Operator), `a` (gedrückt `*` in Voicemail), `fax` (Faxerkennung) und `Talk` (verwendet mit BackgroundDetect).](../images/04-first-pbx-fig07.png)
+![Asterisk special extensions: `i` (invalid), `s` (start), `h` (hangup), `t` (timeout), `T` (absolute timeout), `o` (operator), `a` (pressed `*` in voicemail), `fax` (fax detection), and `Talk` (used with BackgroundDetect).](../images/04-first-pbx-fig07.png)
 
-Beschreibung: s: Start. Es wird verwendet, um einen Anruf zu handhaben, wenn keine Nummer gewählt wurde. Es ist nützlich für FXO-Trunks und die Menüverarbeitung. t: Timeout. Es wird verwendet, wenn Anrufe inaktiv bleiben, nachdem eine Aufforderung abgespielt wurde. Es wird auch verwendet, um eine inaktive Leitung aufzulegen. T: AbsoluteTimeout. Wenn Sie ein Anruflimit mit der Dialplan-Funktion `TIMEOUT(absolute)` festlegen, wird der Anruf, sobald er das definierte Limit überschreitet, an die T-Extension gesendet. h: Hangup. Es wird aufgerufen, nachdem der Benutzer den Anruf getrennt hat. i: Invalid. Es wird ausgelöst, wenn Sie eine nicht existierende Extension im Context anrufen. Die Verwendung dieser Extensions kann den Inhalt von CDR-Datensätzen beeinflussen – insbesondere das Feld dst, das nicht die gewählte Nummer enthält. o: Operator. Es wird verwendet, um zum Operator zu gelangen, wenn der Benutzer während der Voicemail „0“ drückt. Die Verwendung dieser Extensions kann den Inhalt der Abrechnungsdatensätze (CDR) ändern – insbesondere wird das Feld dst nicht die gewählte Nummer enthalten. Um dieses Problem zu umgehen, sollten Sie die Option g in der Anwendung dial() verwenden und die Funktionen resetcdr(w) und/oder nocdr() in Betracht ziehen.
+Beschreibung:
 
-## Variablen
+- **s**: Start. Wird verwendet, um einen Anruf zu bearbeiten, wenn keine Durchwahl gewählt wurde. Nützlich für FXO‑Trunks und die Verarbeitung in Menüs.
+- **t**: Timeout. Wird verwendet, wenn Anrufe nach einer abgespielten Aufforderung inaktiv bleiben. Außerdem wird damit eine inaktive Leitung aufgelegt.
+- **T**: AbsoluteTimeout. Wenn Sie ein Anruflimit mit der `TIMEOUT(absolute)`‑Dialplan‑Funktion festlegen, wird der Anruf nach Überschreiten des Limits an die T‑Durchwahl gesendet.
+- **h**: Hangup. Wird aufgerufen, nachdem der Benutzer den Anruf beendet hat.
+- **i**: Invalid. Wird ausgelöst, wenn Sie
 
-In der Asterisk PBX können Variablen global, kanalspezifisch und umgebungsspezifisch sein. Sie können die Anwendung NoOP() verwenden, um den Inhalt einer Variable in der Konsole zu sehen. Sie kann eine globale Variable oder eine kanalspezifische Variable als Anwendungsargumente verwenden. Eine Variable kann wie im folgenden Beispiel referenziert werden, wobei varname der Name der Variable ist.
+## Variables
+
+In the Asterisk PBX, variables can be global, channel-specific, and environment-specific. You can use the NoOP() application to see the content of a variable in the console. It can use a global variable or a channel-specific variable as applications arguments. A variable can be referenced as in the following example, where varname is the name of the variable.
 
 ```
 ${varname}
 ```
 
-Ein Variablenname kann eine alphanumerische Zeichenfolge sein, die mit einem Buchstaben beginnt. Globale Variablennamen unterscheiden nicht zwischen Groß- und Kleinschreibung. Systemvariablen (Asterisk-definiert sind kanaldefiniert) unterscheiden jedoch zwischen Groß- und Kleinschreibung. Daher ist die Variable ${EXTEN} anders als ${exten}.
+A variable name can be an alphanumeric string starting with a letter. Global variable names are not case sensitive. However, system variables (Asterisk-defined are channel-defined) are case sensitive. Thus, the variable ${EXTEN} is different from ${exten}.
 
-### Globale Variablen
+### Global variables
 
-Globale Variablen können im Abschnitt [global] in der Datei extensions.conf oder unter Verwendung der Anwendung konfiguriert werden:
+Global variables can be configured in the [global] section in the extensions.conf file or using the application:
 
 ```
 set(Global(variable)=content)
 ```
 
-### Kanalspezifische Variablen
+### Channel-specific variables
 
-Kanalspezifische Variablen werden unter Verwendung der Anwendung set() konfiguriert. Jeder Kanal erhält seinen eigenen Variablenraum. Es besteht keine Chance auf Kollisionen zwischen Variablen verschiedener Kanäle. Eine kanalspezifische Variable wird zerstört, wenn der Kanal aufgelegt wird. Einige der am häufigsten verwendeten Variablen sind:
+Channel-specific variables are configured using the application set(). Each channel receives its own variable space. There is no chance of collisions between variables from different channels. A channel- specific variable is destroyed when the channel hangs up. Some of the most commonly used variables are:
 
-- ${EXTEN} Gewählte Extension
-- ${CONTEXT} Aktueller Context
+- ${EXTEN} Extension dialed
+- ${CONTEXT} Current context
 - ${CALLERID(name)}
 - ${CALLERID(num)}
-- ${CALLERID(all)} Aktuelle Caller ID
-- ${PRIORITY} Aktuelle Priorität
+- ${CALLERID(all)} Current caller ID
+- ${PRIORITY} Current priority
 
-Andere kanalspezifische Variablen sind komplett in Großbuchstaben. Sie können den Inhalt mehrerer Variablen mit der Anwendung dumpchan() sehen. Unten ist ein einfacher Auszug von Dump-Channel-Variablen.
+Other channel-specific variables are all uppercase. You can see the content of several variables using the dumpchan() application. Below is a simple excerpt of dump-channel variables.
 
 ```
-exten=9001,1,dumnpchan()
-exten=9001,n,echo()
-exten=9001,n,hangup()
+exten=9001,1,DumpChan()
+exten=9001,n,Echo()
+exten=9001,n,Hangup()
 ```
 
-Dumpchan-Ausgabe:
+Dumpchan output:
 
 ```
 Dumping Info For Channel: PJSIP/4400-00000001:
@@ -552,85 +574,94 @@ Blocking_in=        (Not Blocking)
 Variables:
 ```
 
-Das Feld-Layout oben ist die Asterisk 22 `DumpChan`-Ausgabe (ein echter `PJSIP/...`-Kanalname, die `CallerIDNum`/`ConnectedLineID`-Felder und die `Raw*`/`Transcode`/`BridgeID`-Zeilen, die PJSIP-Kanäle füllen). Im Gegensatz zum alten Treiber setzt ein PJSIP-Kanal nicht automatisch `SIPCALLID`/`SIPUSERAGENT`-Kanalvariablen; die äquivalenten SIP-Details werden bei Bedarf mit den Dialplan-Funktionen `PJSIP_HEADER()` und `CHANNEL()` gelesen – zum Beispiel `${CHANNEL(pjsip,call-id)}`, `${PJSIP_HEADER(read,User-Agent)}` und `${CHANNEL(rtp,dest)}` für die entfernte RTP-Adresse.
+The field layout above is the Asterisk 22 `DumpChan` output (a real `PJSIP/...` channel name, the `CallerIDNum`/`ConnectedLineID` fields, and the `Raw*`/`Transcode`/`BridgeID` rows that PJSIP channels populate). Unlike the old driver, a PJSIP channel does not auto-set `SIPCALLID`/`SIPUSERAGENT` channel variables; the equivalent SIP details are read on demand with the `PJSIP_HEADER()` and `CHANNEL()` dialplan functions — for example `${CHANNEL(pjsip,call-id)}`, `${PJSIP_HEADER(read,User-Agent)}`, and `${CHANNEL(rtp,dest)}` for the remote RTP address.
 
-### Umgebungsspezifische Variablen
+### Environment-specific variables
 
-Umgebungsspezifische Variablen können verwendet werden, um auf Variablen zuzugreifen, die im Betriebssystem definiert sind. Sie können umgebungsspezifische Variablen mit der Funktion ENV() setzen. Zum Beispiel:
+Environment-specific variables can be used to access variables defined in the operating system. You can set environment-specific variables using the function ENV(). For example:
 
 ```
 ${ENV(LANG)}
-Set(ENV(LANG))=en_US
+Set(ENV(LANG)=en_US)
 ```
 
-### Anwendungsspezifische Variablen
+### Application-specific variables
 
-Einige Anwendungen verwenden Variablen für die Dateneingabe und -ausgabe. Sie können Variablen setzen, bevor Sie die Anwendung aufrufen, oder die Variable nach der Ausführung der Anwendung abrufen. Zum Beispiel: Die Dial-Anwendung gibt die folgenden Variablen zurück:
+Some applications use variables for data input and output. You can set variables before calling the application or retrieve the variable after the application execution. For example: The Dial application returns the following variables:
 
-- ${DIALEDTIME} -> Dies ist die Zeit vom Wählen eines Kanals bis zur Trennung.
-- ${ANSWEREDTIME} -> Dies ist die Zeitdauer für den tatsächlichen Anruf.
-- ${DIALSTATUS} Dies ist der Status des Anrufs: o CHANUNAVAIL o CONGESTION o NOANSWER o BUSY o ANSWER o CANCEL o DONTCALL o TORTURE
-- ${CAUSECODE} -> Fehlermeldung für den Anruf.
+- ${DIALEDTIME} ->This is the time from dialing a channel until it is disconnected.
+- ${ANSWEREDTIME} -> This is the amount of time for the actual call.
+- ${DIALSTATUS} This is the status of the call: o CHANUNAVAIL o CONGESTION o NOANSWER o BUSY o ANSWER o CANCEL o DONTCALL o TORTURE
+- ${CAUSECODE} -> Error message for the call.
 
-## Ausdrücke
+## Expressions
 
-Ausdrücke können im Dialplan sehr nützlich sein. Sie werden verwendet, um Zeichenfolgen zu manipulieren und mathematische sowie logische Operationen durchzuführen.
+Expressions can be very useful in the dial plan. They are used to manipulate strings and perform math and logical operations.
 
-![Übersicht der Asterisk-Ausdrücke — `$[expression1 operator expression2]` — Gruppierung der mathematischen, logischen, Vergleichs-, regulären Ausdrucks- und bedingten Operatoren, die im Dialplan verfügbar sind.](../images/04-first-pbx-fig08.png)
+![Asterisk expressions overview — `$[expression1 operator expression2]` — grouping the math, logical, comparison, regular-expression, and conditional operators available in the dial plan.](../images/04-first-pbx-fig08.png)
 
-Die Ausdruckssyntax ist wie folgt definiert:
+The expression syntax is defined as follows:
 
 ```
 $[expression1 operator expression2]
 ```
 
-Nehmen wir an, wir haben eine Variable namens „I“ und wir möchten 100 zur Variable addieren:
+Let’s suppose that we have a variable called “I” and we want to add 100 to the variable:
 
 ```
 $[${I}+100]
 ```
 
-Wenn Asterisk einen Ausdruck im Dialplan findet, ändert es den gesamten Ausdruck durch den resultierenden Wert.
+When Asterisk finds an expression in the dial plan, it changes the entire expression by the resulting value.
 
-### Operatoren
+### Operators
 
-Die folgenden Operatoren können verwendet werden, um Ausdrücke zu erstellen. Es ist wichtig, die Operatorrangfolge zu beachten. 1. Klammern „()“ 2. Unäre Operatoren „! -“ 3. Regulärer Ausdruck „: =~ 4. Multiplikative Operatoren „* / %“ 5. Additive Operatoren „+ -“ 6. Vergleichsoperatoren 7. Logische Operatoren 8. Bedingte Operatoren
+The following operators can be used to build expressions. It is important to observe operator precedence.
 
-#### Mathematische Operatoren
+1. Parentheses “()”
+2. Unary operators “! -“
+3. Regular expression “: =~
+4. Multiplicative operators “* / %”
+5. Additive operators “+ -“
+6. Comparison operators
+7. Logical operators
+8. Conditional operators
+
+#### Math Operators
 
 - Addition (+)
-- Subtraktion (-)
-- Multiplikation (*)
+- Subtraction (-)
+- Multiplication(*)
 - Division (/)
-- Modulo (%)
+- Modulus (%)
 
-#### Logische Operatoren
+#### Logical Operators
 
-- Logisches „UND“ (&)
-- Logisches „ODER“ (|)
-- Logisches unäres Komplement (!)
+- Logical “AND” (&)
+- Logical “OR” (|)
+- Logical Unary Complement (!)
 
-#### Operatoren für reguläre Ausdrücke
+#### Regular expression operators
 
-- Abgleich mit regulärem Ausdruck (:)
-- Exakter Abgleich mit regulärem Ausdruck (=~)
+- Regular expression matching (:)
+- Regular expression exact matching (=~)
 
-Ein regulärer Ausdruck ist eine spezielle Textzeichenfolge, die verwendet wird, um ein Suchmuster zu beschreiben. Sie können sich reguläre Ausdrücke als Platzhalter vorstellen. Reguläre Ausdrücke werden verwendet, um eine Zeichenfolge mit einem Muster abzugleichen, um den Abgleich zu überprüfen. Wenn der Abgleich erfolgreich ist und der reguläre Ausdruck mindestens einen Treffer enthält, wird der erste Treffer zurückgegeben; andernfalls ist das Ergebnis die Anzahl der abgeglichenen Zeichen.
+A regular expression is a special text string used to describe a search pattern. You can think of regular expressions as wildcards. Regular expressions are used to match a string to a pattern to check the matching. If the match succeeds and the regular expression contains at least one match, the first match is returned; otherwise, the result is the number of characters matched.
 
-#### Vergleichsoperatoren
+#### Comparison operators
 
-Das Ergebnis eines Vergleichs ist 1, wenn die Beziehung wahr ist, oder 0, wenn sie falsch ist.
+The result of a comparison is 1 if the relation is true or 0 if it is false.
 
-- = gleich
-- != ungleich
-- < kleiner als
-- > größer als
-- <= kleiner oder gleich
-- >= größer oder gleich
+- = equal
+- != not equal
+- < less than
+- > greater than
+- <= less than or equal to
+- >= greater than or equal to
 
-### LAB. Bewerten Sie die folgenden Ausdrücke:
+### LAB. Evaluate the following expressions:
 
-Setzen Sie diese Ausdrücke in Ihren Dialplan und verwenden Sie die Anwendung NoOP(), um die Ausdrücke zu bewerten. Wählen Sie 9002 und untersuchen Sie die Ergebnisse in der Asterisk-Konsole. Verwenden Sie verbose 15, um die Ergebnisse anzuzeigen.
+Put these expressions in your dial plan and use the NoOP() application to evaluate the expressions. Dial 9002 and examine the results in the Asterisk console. Use verbose 15 to show the results.
 
 ```
 exten=9002,1,set(NAME="FLAVIO")                 ;Set NAME=FLAVIO
@@ -646,15 +677,15 @@ exten=9002,n,NoOP($[${I}=4?"MATCH"::"DO NOT MATCH"])
 exten=9002,n,hangup
 ```
 
-## Funktionen
+## Functions
 
-Einige Anwendungen wurden durch Funktionen ersetzt, die die Verarbeitung von Variablen auf eine fortgeschrittenere Weise ermöglichen als Ausdrücke allein. Sie können die vollständige Liste der Funktionen sehen, indem Sie den folgenden Konsolenbefehl ausgeben:
+Einige Anwendungen wurden durch Funktionen ersetzt, die die Verarbeitung von Variablen auf fortgeschrittenere Weise als reine Ausdrücke ermöglichen. Die vollständige Funktionsliste erhalten Sie, indem Sie den folgenden Konsolenbefehl ausführen:
 
 ```
-CLI>core show functions
+*CLI> core show functions
 ```
 
-Zeichenfolgenlänge: ${LEN(string)} gibt die Länge der Zeichenfolge zurück
+String‑Länge: ${LEN(string)} gibt die Länge des Strings zurück
 
 ```
 Example:
@@ -663,13 +694,13 @@ exten=>100,2,NoOp(${LEN(Fruit)})
 exten=>100,3,NoOp(${LEN(${Fruit})})
 ```
 
-Bei der ersten Operation zeigt das System 5 als Ergebnis (die Anzahl der Buchstaben im Wort „fruit“). Die zweite gibt die Zahl 4 zurück (die Anzahl der Buchstaben im Wort „pear“). Teilzeichenfolgen: Gibt die Teilzeichenfolge zurück, beginnend bei der durch den Parameter „offset“ definierten Position, mit der durch den Parameter „length“ definierten Länge. Wenn der Offset negativ ist, beginnt er von rechts nach links, beginnend am Ende der Zeichenfolge. Wenn die Länge weggelassen oder negativ ist, wird die gesamte Zeichenfolge ab dem Offset genommen.
+Im ersten Vorgang zeigt das System 5 als Ergebnis (die Anzahl der Buchstaben im Wort „fruit“). Der zweite gibt die Zahl 4 zurück (die Anzahl der Buchstaben im Wort „pear“). Teilstrings: Gibt den Teilstring zurück, beginnend an der Position, die durch den Parameter „offset“ definiert ist, mit der String‑Länge, die im Parameter „length“ angegeben ist. Ist der Offset negativ, wird von rechts nach links begonnen, ausgehend vom Ende des Strings. Wird die Länge weggelassen oder ist sie negativ, wird der gesamte String ab dem Offset genommen.
 
 ```
 ${string:offset:length }
 ```
 
-Beispiel #1: Mehrere Teilzeichenfolgen
+Beispiel #1: Mehrere Teilstrings
 
 ```
 ${123456789:1}-returns 23456789
@@ -679,7 +710,7 @@ ${123456789:2:3}-returns 345
 ${123456789:-4:3}-returns 678
 ```
 
-Beispiel #2: Nehmen Sie die Vorwahl aus den ersten drei Ziffern.
+Beispiel #2: Die Vorwahl aus den ersten drei Ziffern extrahieren.
 
 ```
 exten=>_NXX.,1,Set(areacode=${EXTEN:0:3})
@@ -691,9 +722,9 @@ Beispiel #3: Nimmt alle Ziffern aus der Variable ${EXTEN}, außer der Vorwahl.
 exten=>_516XXXXXXX,1,Dial(${EXTEN:3})
 ```
 
-### Zeichenfolgenverkettung
+### String‑Verkettung
 
-Um zwei Zeichenfolgen zu verketten, schreiben Sie sie einfach zusammen.
+Um zwei Strings zu verketten, schreiben Sie sie einfach hintereinander.
 
 ```
 ${foo}${bar}
@@ -703,115 +734,115 @@ ${longdistanceprefix}555${number}
 
 ## Anwendungen
 
-Um einen Dialplan zu erstellen, müssen wir das Konzept der Anwendungen verstehen. Sie verwenden Anwendungen, um den Kanal im Dialplan zu handhaben. Anwendungen sind in verschiedenen Modulen implementiert. Verfügbare Anwendungen hängen von den Modulen ab. Sie können alle Asterisk-Anwendungen mit dem Konsolenbefehl anzeigen:
+Um einen Dialplan zu erstellen, müssen wir das Konzept der Anwendungen verstehen. Sie werden Anwendungen verwenden, um den Kanal im Dialplan zu steuern. Anwendungen werden in mehreren Modulen implementiert. Verfügbare Anwendungen hängen von den Modulen ab. Sie können alle Asterisk‑Anwendungen mit dem Konsolenbefehl anzeigen:
 
 ```
-CLI>core show applications
+*CLI> core show applications
 ```
 
 Alternativ können Sie Details einer bestimmten Anwendung mit dem folgenden Beispiel anzeigen:
 
 ```
-CLI>core show application dial
+*CLI> core show application Dial
 ```
 
 Um einen einfachen Dialplan zu erstellen, müssen Sie einige Anwendungen kennen. Wir werden später im Buch fortgeschrittenere Beispiele besprechen.
 
-![Die Handvoll Anwendungen, die zum Erstellen eines einfachen Dialplans benötigt werden: Answer (einen Kanal beantworten), Dial (einen anderen Kanal anrufen), Hangup (einen Kanal auflegen), Playback (eine Audiodatei abspielen) und Goto (zu einer Priorität, Extension oder einem Context springen).](../images/04-first-pbx-fig09.png)
+![The handful of applications needed to build a simple dial plan: Answer (answer a channel), Dial (call another channel), Hangup (hang up a channel), Playback (play an audio file), and Goto (jump to a priority, extension, or context).](../images/04-first-pbx-fig09.png)
 
 Wir werden diese Anwendungen (oben) verwenden, um einen einfachen Dialplan für zwei grundlegende PBXs zu erstellen.
 
 ### Answer()
 
-[Synopsis] Beantwortet einen Kanal, wenn er klingelt [Beschreibung] Answer([delay]): Wenn der Anruf nicht beantwortet wurde, wird die Anwendung ihn beantworten. Andernfalls hat es keine Auswirkungen auf den Anruf. Wenn eine Verzögerung angegeben ist, wartet Asterisk die in „delay“ angegebene Anzahl von Millisekunden, bevor der Anruf beantwortet wird.
+[Synopsis] Answers a channel if ringing [Description] Answer([delay]): If the call has not been answered, the application will answer it. Otherwise, it has no effect on the call. If a delay is specified, Asterisk will wait the number of milliseconds specified in ‘delay’ before answering the call.
 
 ### Dial()
 
-Die folgende Beschreibung kann durch Ausgeben von show application dial im Dialplan erhalten werden. Zur einfachen Suche ist sie unten reproduziert. Die Syntax für die Dial-Anwendung ist ebenfalls unten dargestellt:
+The following description can be obtained by issuing the show application dial in the dial plan. For easy searching, it is reproduced below. The syntax for the Dial application is also shown below:
 
 ```
 ;dial to a single channel
-Dial(type/identifier,timeout,options, URL)
-;Dialing to multiple channels
-Dial(Technology/resource[&Tech2/resource2...][|timeout][|options][|URL]):
+Dial(Technology/resource,timeout,options,URL)
+;dialing to multiple channels
+Dial(Technology/resource[&Tech2/resource2...],timeout,options,URL)
 ```
 
-Diese Anwendung tätigt Anrufe an einen oder mehrere angegebene Kanäle. Sobald einer der angeforderten Kanäle antwortet, wird der ursprüngliche Kanal beantwortet – falls er noch nicht beantwortet wurde. Diese beiden Kanäle sind dann in einem gebrückten Anruf aktiv. Alle anderen angeforderten Kanäle werden dann aufgelegt. Sofern kein Timeout angegeben ist, wartet die Dial-Anwendung unbegrenzt, bis einer der angerufenen Kanäle antwortet, der Benutzer auflegt oder alle angerufenen Kanäle besetzt oder nicht verfügbar sind. Die Ausführung des Dialplans wird fortgesetzt, wenn keine angeforderten Kanäle angerufen werden können oder wenn das Timeout abläuft. Diese Anwendung setzt nach Abschluss die folgenden Kanalvariablen:
+Dieses Anwendungsprogramm wird Anrufe zu einem oder mehreren angegebenen Kanälen tätigen. Sobald einer der angeforderten Kanäle annimmt, wird der ausgehende Kanal beantwortet – falls er noch nicht beantwortet wurde. Diese beiden Kanäle sind dann in einem gebrückten Anruf aktiv. Alle anderen angeforderten Kanäle werden anschließend aufgelegt. Sofern kein Timeout angegeben ist, wartet die Dial‑Anwendung unbegrenzt, bis einer der angerufenen Kanäle annimmt, der Benutzer auflegt oder alle angerufenen Kanäle besetzt oder nicht erreichbar sind. Die Ausführung des Dialplans wird fortgesetzt, wenn keine angeforderten Kanäle angerufen werden können oder wenn das Timeout abläuft. Diese Anwendung setzt nach Abschluss die folgenden Kanalvariablen:
 
-- DIALEDTIME - Dies ist die Zeit vom Wählen eines Kanals bis zur Trennung.
-- ANSWEREDTIME - Dies ist die Zeitdauer für einen tatsächlichen Anruf.
-- DIALSTATUS - Dies ist der Status des Anrufs: o CHANUNAVAIL o CONGESTION o NOANSWER o BUSY o ANSWER o CANCEL o DONTCALL o TORTURE
+- DIALEDTIME – Dies ist die Zeit vom Wählen eines Kanals bis zu dem Zeitpunkt, an dem er getrennt wird.  
+- ANSWEREDTIME – Dies ist die Dauer eines tatsächlichen Gesprächs.  
+- DIALSTATUS – Dies ist der Status des Anrufs: o CHANUNAVAIL o CONGESTION o NOANSWER o BUSY o ANSWER o CANCEL o DONTCALL o TORTURE  
 
-Für die Datenschutz- und Screening-Modi wird die Variable DIALSTATUS auf DONTCALL gesetzt, wenn der angerufene Teilnehmer den anrufenden Teilnehmer an das 'Go Away'-Skript sendet. Die Variable DIALSTATUS wird auf TORTURE gesetzt, wenn der angerufene Teilnehmer den Anrufer an das 'Torture'-Skript senden möchte. Diese Anwendung meldet einen normalen Abschluss, wenn der ursprüngliche Kanal auflegt oder wenn der Anruf gebrückt wird und eine der Parteien in der Brücke den Anruf beendet. Die optionale URL wird an den angerufenen Teilnehmer gesendet, wenn der Kanal dies unterstützt. Wenn die Variable OUTBOUND_GROUP gesetzt ist, werden alle von dieser Anwendung erstellten Peer-Kanäle in diese Gruppe aufgenommen (wie in
+Für die Privacy‑ und Screening‑Modi wird die Variable DIALSTATUS auf DONTCALL gesetzt, wenn die angerufene Partei die anrufende Partei zum „Go Away“-Skript weiterleitet. Die Variable DIALSTATUS wird auf TORTURE gesetzt, wenn die angerufene Partei den Anrufer zum „torture“-Skript weiterleiten möchte. Diese Anwendung meldet eine normale Beendigung, wenn der ausgehende Kanal auflegt oder wenn der Anruf gebrückt ist und einer der beiden Parteien im Bridge den Anruf beendet. Die optionale URL wird an die angerufene Partei gesendet, wenn der Kanal dies unterstützt. Wenn die Variable OUTBOUND_GROUP gesetzt ist, werden alle von dieser Anwendung erstellten Peer‑Kanäle in diese Gruppe aufgenommen (wie in
 
 ```
 Set(GROUP()=...).
 ```
 
-Die folgende Tabelle fasst einige der am häufigsten verwendeten Optionen für die Anwendung Dial zusammen. Für die vollständige Liste verwenden Sie den Konsolenbefehl `core show application Dial`. In Asterisk 22 sind diese Optionen durch Kommas vom Kanal und Timeout getrennt – zum Beispiel `Dial(PJSIP/2000,20,tTm)`.
+The following table summarizes some of the most frequently used options for the application Dial. For the complete list, use the console command `core show application Dial`. In Asterisk 22 these options are separated from the channel and timeout by commas — for example `Dial(PJSIP/2000,20,tTm)`.
 
-| Option | Beschreibung |
+| Option | Description |
 |--------|-------------|
-| `A(x)` | Spielt eine Ankündigung für den angerufenen Teilnehmer ab, wobei `x` als Datei verwendet wird. |
-| `C` | Setzt den CDR für diesen Anruf zurück. |
-| `d` | Erlaubt dem anrufenden Benutzer, eine 1-stellige Extension zu wählen, während er darauf wartet, dass der Anruf beantwortet wird. Beendet zu dieser Extension, falls sie im aktuellen Context existiert, oder zu dem im Context definierten Context `EXITCONTEXT`, falls er existiert. |
-| `D([called][:calling])` | Sendet die angegebenen DTMF-Zeichenfolgen, nachdem der angerufene Teilnehmer geantwortet hat, aber bevor der Anruf gebrückt wird. Die Zeichenfolge `called` wird an den angerufenen Teilnehmer und die Zeichenfolge `calling` an den anrufenden Teilnehmer gesendet. Jeder Parameter kann allein verwendet werden. |
-| `f` | Erzwingt, dass die Caller ID des anrufenden Kanals auf die Extension gesetzt wird, die dem Kanal über einen Dialplan `hint` zugeordnet ist. Nützlich, wenn das PSTN keine beliebige Caller ID zulässt. |
-| `g` | Fährt mit der Dialplan-Ausführung an der aktuellen Extension fort, wenn der Zielkanal auflegt. |
-| `G(context^exten^pri)` | Wenn der Anruf beantwortet wird, überträgt er den anrufenden Teilnehmer an die angegebene Priorität und den angerufenen Teilnehmer an Priorität+1. Optional kann eine Extension (oder Extension und Context) angegeben werden; andernfalls wird die aktuelle Extension verwendet. |
-| `h` | Erlaubt dem angerufenen Teilnehmer aufzulegen, indem er die DTMF-Ziffer `*` sendet. |
-| `H` | Erlaubt dem anrufenden Teilnehmer aufzulegen, indem er die DTMF-Ziffer `*` sendet. |
-| `L(x[:y][:z])` | Begrenzt den Anruf auf `x` ms, spielt eine Warnung ab, wenn noch `y` ms übrig sind, und wiederholt die Warnung alle `z` ms. Siehe die Variablen `LIMIT_*` unten. |
-| `m([class])` | Bietet dem anrufenden Teilnehmer Wartemusik (Music on Hold), bis der angeforderte Kanal antwortet. Eine spezifische MusicOnHold-Klasse kann angegeben werden. |
-| `r` | Zeigt dem anrufenden Teilnehmer das Klingeln an und leitet kein Audio weiter, bis der angerufene Kanal antwortet. |
-| `S(x)` | Legt den Anruf `x` Sekunden nach der Antwort des angerufenen Teilnehmers auf. |
-| `t` | Erlaubt dem angerufenen Teilnehmer, den anrufenden Teilnehmer zu übertragen, indem er die in `features.conf` definierte DTMF-Sequenz sendet. |
-| `T` | Erlaubt dem anrufenden Teilnehmer, den angerufenen Teilnehmer zu übertragen, indem er die in `features.conf` definierte DTMF-Sequenz sendet. |
-| `w` | Erlaubt dem angerufenen Teilnehmer, die One-Touch-Aufzeichnung zu aktivieren, indem er die in `features.conf` definierte DTMF-Sequenz sendet. |
-| `W` | Erlaubt dem anrufenden Teilnehmer, die One-Touch-Aufzeichnung zu aktivieren, indem er die in `features.conf` definierte DTMF-Sequenz sendet. |
-| `k` | Erlaubt dem angerufenen Teilnehmer, den Anruf zu parken, indem er die für das Anrufparken in `features.conf` definierte DTMF-Sequenz sendet. |
-| `K` | Erlaubt dem anrufenden Teilnehmer, den Anruf zu parken, indem er die für das Anrufparken in `features.conf` definierte DTMF-Sequenz sendet. |
+| `A(x)` | Plays an announcement to the called party, using `x` as the file. |
+| `C` | Resets the CDR for this call. |
+| `d` | Allows the calling user to dial a 1-digit extension while waiting for the call to be answered. Exits to that extension if it exists in the current context, or to the context defined in the `EXITCONTEXT` variable, if it exists. |
+| `D([called][:calling])` | Sends the specified DTMF strings after the called party answers, but before the call is bridged. The `called` string is sent to the called party and the `calling` string to the calling party. Either parameter can be used alone. |
+| `f` | Forces the caller ID of the calling channel to be set to the extension associated with the channel via a dial plan `hint`. Useful where the PSTN does not allow an arbitrary caller ID. |
+| `g` | Proceeds with dial plan execution at the current extension if the destination channel hangs up. |
+| `G(context^exten^pri)` | If the call is answered, transfers the calling party to the specified priority and the called party to priority+1. Optionally an extension (or extension and context) can be specified; otherwise the current extension is used. |
+| `h` | Allows the called party to hang up by sending the `*` DTMF digit. |
+| `H` | Allows the calling party to hang up by sending the `*` DTMF digit. |
+| `L(x[:y][:z])` | Limits the call to `x` ms, plays a warning when `y` ms are left, and repeats the warning every `z` ms. See the `LIMIT_*` variables below. |
+| `m([class])` | Provides music on hold to the calling party until the requested channel answers. A specific MusicOnHold class can be specified. |
+| `r` | Indicates ringing to the calling party and passes no audio until the called channel answers. |
+| `S(x)` | Hangs up the call `x` seconds after the called party answers. |
+| `t` | Allows the called party to transfer the calling party by sending the DTMF sequence defined in `features.conf`. |
+| `T` | Allows the calling party to transfer the called party by sending the DTMF sequence defined in `features.conf`. |
+| `w` | Allows the called party to enable one-touch recording by sending the DTMF sequence defined in `features.conf`. |
+| `W` | Allows the calling party to enable one-touch recording by sending the DTMF sequence defined in `features.conf`. |
+| `k` | Allows the called party to park the call by sending the DTMF sequence defined for call parking in `features.conf`. |
+| `K` | Allows the calling party to park the call by sending the DTMF sequence defined for call parking in `features.conf`. |
 
-Die Option `L(x[:y][:z])` kann mit den folgenden speziellen Variablen abgestimmt werden:
+The `L(x[:y][:z])` option can be tuned with the following special variables:
 
-- `LIMIT_PLAYAUDIO_CALLER` — `yes|no` (Standard `yes`): spielt Sounds für den Anrufer ab.
-- `LIMIT_PLAYAUDIO_CALLEE` — `yes|no`: spielt Sounds für den angerufenen Teilnehmer ab.
-- `LIMIT_TIMEOUT_FILE` — Datei, die abgespielt werden soll, wenn die Zeit abgelaufen ist.
-- `LIMIT_CONNECT_FILE` — Datei, die abgespielt werden soll, wenn der Anruf beginnt.
-- `LIMIT_WARNING_FILE` — Datei, die als Warnung abgespielt werden soll, wenn `y` definiert ist. Standardmäßig wird die verbleibende Zeit angesagt.
+- `LIMIT_PLAYAUDIO_CALLER` — `yes|no` (default `yes`): plays sounds for the caller.
+- `LIMIT_PLAYAUDIO_CALLEE` — `yes|no`: plays sounds for the called party.
+- `LIMIT_TIMEOUT_FILE` — file to be played when time is up.
+- `LIMIT_CONNECT_FILE` — file to be played when the call begins.
+- `LIMIT_WARNING_FILE` — file to be played as a warning when `y` is defined. The default is to say the time remaining.
 
-Beispiel:
+Example:
 
 ```
 exten=_4XXX,1,Dial(PJSIP/${EXTEN},20,tTm)
 ```
 
-Im obigen Beispiel wählt die Anwendung den entsprechenden PJSIP-Kanal. Sowohl Anrufer als auch Angerufener könnten den Anruf übertragen (Tt). Statt des Freizeichens wird Wartemusik zu hören sein. Wenn innerhalb von 20 Sekunden niemand antwortet, geht die Extension zur nächsten Priorität über.
+Im obigen Beispiel wählt die Anwendung den entsprechenden PJSIP‑Kanal. Sowohl Anrufer als auch Angerufener können den Anruf übertragen (Tt). Statt eines Rückklingelns wird Musik on Hold gehört. Wenn innerhalb von 20 Sekunden niemand antwortet, springt die Nebenstelle zur nächsten Priorität.
 
 ### Hangup()
 
-Legt den anrufenden Kanal auf [Beschreibung] Hangup([causecode]): Diese Anwendung legt den anrufenden Kanal auf. Wenn ein Ursachencode angegeben ist, wird die Auflegeursache des Kanals auf den angegebenen Wert gesetzt.
+Hängt den anrufenden Kanal auf [Description] Hangup([causecode]): Diese Anwendung legt den anrufenden Kanal auf. Wird ein Cause‑Code angegeben, wird der Aufleggrund des Kanals auf den angegebenen Wert gesetzt.
 
 ### Goto()
 
-Springt zu einer bestimmten Priorität, Extension oder einem Context [Beschreibung] Goto([[context|]extension|]priority): Diese Anwendung bewirkt, dass der anrufende Kanal die Dialplan-Ausführung bei der angegebenen Priorität fortsetzt. Wenn keine spezifische Extension (oder Extension und Context) angegeben ist, springt diese Anwendung zur angegebenen Priorität der aktuellen Extension. Wenn der Versuch, an eine andere Stelle im Dialplan zu springen, nicht erfolgreich ist, fährt der Kanal bei der nächsten Priorität der aktuellen Extension fort.
+Springt zu einer bestimmten Priorität, Nebenstelle oder Kontext [Description] Goto([[context|]extension|]priority): Diese Anwendung veranlasst den anrufenden Kanal, die Dial‑Plan‑Ausführung an der angegebenen Priorität fortzusetzen. Wird keine spezifische Nebenstelle (oder Nebenstelle und Kontext) angegeben, springt diese Anwendung zur angegebenen Priorität der aktuellen Nebenstelle. Wenn der Versuch, zu einem anderen Ort im Dial‑Plan zu springen, nicht erfolgreich ist, setzt der Kanal die Ausführung an der nächsten Priorität der aktuellen Nebenstelle fort.
 
-## Aufbau eines Dialplans
+## Erstellen eines Dialplans
 
-Um einen einfachen Dialplan zu erstellen, müssen Sie alle eingehenden und ausgehenden Anrufe behandeln, indem Sie Contexts und Extensions erstellen. In diesem Abschnitt zeigen wir Ihnen, wie Sie die gebräuchlichsten Extensions erstellen.
+Um einen einfachen Dialplan zu erstellen, müssen Sie alle eingehenden und ausgehenden Anrufe behandeln, indem Sie Kontexte und Nebenstellen anlegen. In diesem Abschnitt zeigen wir Ihnen, wie Sie die gebräuchlichsten Nebenstellen erstellen.
 
-### Wählen zwischen Extensions
+### Wählen zwischen Nebenstellen
 
-Um das Wählen zwischen Extensions zu ermöglichen, könnten wir die Kanalvariable ${EXTEN} verwenden, die sich auf die gewählte Extension bezieht. Wenn der Extension-Bereich beispielsweise zwischen 4000 und 4999 liegt und alle Extensions SIP verwenden, könnten wir den folgenden Befehl übernehmen:
+Um das Wählen zwischen Nebenstellen zu ermöglichen, können wir die Kanalvariable ${EXTEN} verwenden, die sich auf die gewählte Nebenstelle bezieht. Beispielsweise, wenn der Nebenstellenbereich zwischen 4000 und 4999 liegt und alle Nebenstellen SIP verwenden, könnten wir den folgenden Befehl übernehmen:
 
 ```
 [from-internal]
 exten=_4XXX,1,Dial(PJSIP/${EXTEN})
 ```
 
-### Wählen eines externen Ziels
+### Wählen einer externen Zielnummer
 
-Um ein externes Ziel zu wählen, könnten Sie der gewählten Nummer eine Route voranstellen. In Nordamerika ist es üblich, 9 gefolgt von der extern zu wählenden Nummer zu verwenden. Wenn Sie einen analogen oder digitalen Kanal zum PSTN verwenden, sollte der Befehl wie folgt aussehen: Wenn Sie den SIP-Trunk anstelle von DAHDI verwenden möchten, verwenden Sie den Kanal `PJSIP/...@siptrunk`.
+Um eine externe Zielnummer zu wählen, können Sie die gewählte Nummer mit einer Vorwahl versehen. In Nordamerika ist es üblich, eine 9 gefolgt von der extern zu wählenden Nummer zu verwenden. Wenn Sie einen analogen oder digitalen Kanal zum PSTN nutzen, sollte der Befehl wie folgt aussehen: Wenn Sie stattdessen den SIP‑Trunk anstelle des DAHDI verwenden möchten, benutzen Sie den `PJSIP/...@siptrunk`‑Kanal.
 
 ```
 [from-internal]
@@ -820,32 +851,32 @@ or
 exten=_9NXXXXXX,1,Dial(PJSIP/${EXTEN:1}@siptrunk,20,tT)
 ```
 
-Die obige Zeile erlaubt es Ihnen, 9 und die gewünschte Nummer zu wählen. Im gegebenen Beispiel verwenden Sie den ersten DAHDI-Kanal (DAHDI/1). Wenn Sie mehrere Leitungen haben und diese besetzt ist, wird der Anruf nicht abgeschlossen. Sie könnten jedoch die folgende Zeile verwenden, um automatisch den ersten verfügbaren DAHDI-Kanal auszuwählen. Optional können Sie den SIP-Trunk anstelle von DAHDI verwenden. In der PJSIP-Form `Dial(PJSIP/number@siptrunk,...)` ist die gewählte Nummer der Benutzerteil und `siptrunk` ist der oben konfigurierte Endpoint.
+Die obige Zeile erlaubt es Ihnen, die 9 und die gewünschte Nummer zu wählen. Im gegebenen Beispiel verwenden Sie den ersten DAHDI‑Kanal (DAHDI/1). Wenn Sie mehrere Leitungen haben und diese belegt ist, wird der Anruf nicht abgeschlossen. Sie könnten jedoch die folgende Zeile verwenden, um automatisch den ersten verfügbaren DAHDI‑Kanal auszuwählen. Optional können Sie den SIP‑Trunk anstelle von DAHDI verwenden. Im PJSIP‑Formular `Dial(PJSIP/number@siptrunk,...)` ist die gewählte Nummer der Benutzerteil und `siptrunk` ist der oben konfigurierte Endpoint.
 
 ```
 [from-internal]
 exten=_9NXXXXXX,1,Dial(DAHDI/g1/${EXTEN:1},20,tT)
 ```
 
-Der Parameter „g1“ sucht nach dem ersten verfügbaren Kanal in der Gruppe, was die Nutzung aller Kanäle ermöglicht. Mit der folgenden Zeile könnten Sie eine Ferngesprächsnummer wählen.
+Der Parameter „g1“ sucht den ersten verfügbaren Kanal in der Gruppe und ermöglicht die Nutzung aller Kanäle. Mit der unten stehenden Zeile könnten Sie eine Ferngesprächsnummer wählen.
 
 ```
 [from-internal]
 exten=_91NXXNXXXXXX,1,Dial(DAHDI/g1/${EXTEN:1},20,tT)
 ```
 
-### 9 wählen, um eine PSTN-Leitung zu erhalten
+### Wählen von 9, um eine PSTN-Leitung zu erhalten
 
-Wenn Sie keine Einschränkungen für externe Anrufe haben, können Sie vereinfachen und Folgendes verwenden:
+Wenn Sie keine Einschränkungen für das externe Wählen haben, können Sie es vereinfachen und das Folgende verwenden:
 
 ```
 [from-internal]
 exten=9,1,Dial(DAHDI/g1,20,tT)
 ```
 
-### Empfangen eines Anrufs in der Operator-Extension
+### Entgegennahme eines Anrufs in der Operator-Erweiterung
 
-Im folgenden Beispiel ist die Operator-Extension 4000. Die PSTN-Leitung ist mit einer FXO-Schnittstelle verbunden. In der Datei chan_dahdi.conf ist der angegebene Context from-pstn. Jeder Anruf, der vom PSTN kommt, wird an den Context from-pstn im Dialplan weitergeleitet. Diese Leitung hat kein Direct Inward Dialing (DID); daher müssen wir den Anruf über die „s“-Extension empfangen. Wenn Sie vom SIP-Trunk empfangen, verwenden Sie den Context [from-sip].
+Im folgenden Beispiel ist die Operator-Erweiterung 4000. Die PSTN-Leitung ist an ein FXO-Interface angeschlossen. In der Datei chan_dahdi.conf ist der angegebene Kontext from-pstn. Jeder Anruf, der von der PSTN kommt, wird zum Kontext from-pstn im Dialplan geroutet. Diese Leitung hat kein Direct Inward Dialing (DID); daher müssen wir den Anruf über die „s“-Erweiterung entgegennehmen. Beim Empfang vom SIP-Trunk verwenden Sie den Kontext [from-sip].
 
 ```
 [globals]
@@ -858,9 +889,9 @@ exten = s,1,Dial(${OPERATOR},40,tT)
 exten = s,n,Hangup()
 ```
 
-### Empfangen eines Anrufs mit Direct Inward Dialing (DID)
+### Empfang eines Anrufs mittels Direct Inward Dialing (DID)
 
-Wenn Sie eine digitale Leitung haben, empfangen Sie die gewählte Extension. In diesem Fall müssen Sie den Anruf nicht an den Operator weiterleiten; stattdessen können Sie den Anruf direkt an das Ziel weiterleiten. Angenommen, Ihr DID-Bereich reicht von 3028550 bis 3028599 und die letzten vier Nummern werden in der DID übergeben. Die Konfiguration würde wie im folgenden Beispiel aussehen:
+Wenn Sie eine digitale Leitung haben, erhalten Sie die gewählte Nebenstelle. In diesem Fall müssen Sie den Anruf nicht an den Operator weiterleiten; stattdessen können Sie den Anruf direkt an das Ziel weiterleiten. Angenommen, Ihr DID‑Bereich reicht von 3028550 bis 3028599 und die letzten vier Ziffern werden im DID übergeben. Die Konfiguration würde wie im folgenden Beispiel aussehen:
 
 ```
 [from-pstn]
@@ -869,9 +900,9 @@ exten => _85[5-9]X,n,Dial(PJSIP/${EXTEN},15,tT)
 exten => _85[5-9]X,n,Hangup()
 ```
 
-### Mehrere Extensions gleichzeitig abspielen
+### Mehrere Nebenstellen gleichzeitig anrufen
 
-Sie können Asterisk so einstellen, dass es eine Extension wählt und, falls diese nicht beantwortet wird, gleichzeitig mehrere andere Extensions wählt, wie im folgenden Beispiel angegeben:
+Sie können Asterisk so konfigurieren, dass es eine Nebenstelle wählt und, falls diese nicht beantwortet wird, mehrere andere Nebenstellen gleichzeitig anruft, wie im folgenden Beispiel gezeigt:
 
 ```
 exten => 0,1,Dial(DAHDI/1,15,tT)
@@ -879,22 +910,22 @@ exten => 0,n,Dial(DAHDI/1&DAHDI/2&DAHDI/3,15)
 exten => 0,n,Hangup()
 ```
 
-In diesem Beispiel wird, wenn jemand den Operator wählt, zunächst der Kanal DAHDI/1 versucht. Wenn nach 15 Sekunden (Timeout) niemand antwortet, klingeln die Kanäle DAHDI/1, DAHDI/2 und DAHDI/3 gleichzeitig für weitere 15 Sekunden.
+In diesem Beispiel, wenn jemand die Operator‑Taste wählt, wird zunächst der Kanal DAHDI/1 versucht. Wenn nach 15 Sekunden niemand antwortet (Timeout), klingeln die Kanäle DAHDI/1, DAHDI/2 und DAHDI/3 gleichzeitig für weitere 15 Sekunden.
 
-### Routing nach Caller ID
+### Routing by Caller ID
 
-In diesem Beispiel könnten Sie je nach Caller ID unterschiedliche Behandlungen vornehmen, was für Anruf-Spammer nützlich sein könnte. Zum Beispiel:
+In diesem Beispiel könnten Sie je nach Anrufer‑ID unterschiedliche Behandlungen vornehmen, was bei Call‑Spammern nützlich sein könnte. Zum Beispiel:
 
 ```
 exten => 8590/4832518888,1,Playback(I-have-moved-to-china)
 exten => 8590,1,Dial(DAHDI/1,20)
 ```
 
-In diesem Beispiel haben wir eine spezielle Regel hinzugefügt, dass, wenn die Caller ID 4832518888 ist, Sie eine Nachricht aus der zuvor aufgenommenen Datei „I-have-moved-to-china“ abspielen. Andere Anrufe werden wie gewohnt akzeptiert.
+In diesem Beispiel haben wir eine spezielle Regel hinzugefügt, die bei der Anrufer-ID 4832518888 eine Nachricht aus der zuvor aufgenommenen Datei „I-have-moved-to-china“ abspielt. Andere Anrufe werden wie üblich angenommen.
 
 ### Verwendung von Variablen im Dialplan
 
-Asterisk kann globale und Kanalvariablen im Dialplan als Argumente für bestimmte Anwendungen verwenden. Betrachten Sie die folgenden Beispiele:
+Asterisk kann globale und Kanal‑Variablen im Dialplan als Argumente für bestimmte Anwendungen verwenden. Betrachten Sie die folgenden Beispiele:
 
 ```
 [globals]
@@ -908,11 +939,11 @@ exten => 2,1,Dial(${Anna}&${Christian})
 exten => 3,1,Dial(${Anna}&${Flavio})
 ```
 
-Die Verwendung von Variablen erleichtert zukünftige Änderungen. Wenn Sie die Variable ändern, werden alle Referenzen sofort geändert.
+Using variables makes future changes easier. If you change the variable, all references are changed immediately.
 
-### Aufnehmen einer Ankündigung
+### Aufzeichnen einer Durchsage
 
-In einigen der Optionen, die später in diesem Abschnitt besprochen werden, verwenden wir aufgezeichnete Ansagen. Hier zeigen wir Ihnen einen einfachen Weg, sie aufzunehmen. Wir verwenden die Anwendung Record(), um die Ankündigung mit dem eigenen Telefon zu speichern.
+In einigen der später in diesem Abschnitt besprochenen Optionen werden wir aufgezeichnete Ansagen verwenden. Hier zeigen wir Ihnen eine einfache Methode, sie aufzunehmen. Wir werden die Anwendung Record() benutzen, um die Durchsage mit dem eigenen Telefon zu speichern.
 
 ```
 [from-internal]
@@ -922,23 +953,23 @@ exten => _record.,n,Playback(${EXTEN:6})
 exten => _record.,n,Hangup()
 ```
 
-Diese Anweisungen ermöglichen es Ihnen, jede Nachricht von einem Softphone aufzunehmen. Beispiel: Wählen von recordmenu vom Softphone. Die Anweisungen rufen die Aufnahme mit der Variable ${EXTEN:6} ohne die ersten sechs Buchstaben auf. Mit anderen Worten, die Anweisung entspricht record(menu:gsm). Alles, was Sie tun müssen, ist record + name_der_aufzunehmenden_datei zu wählen, # zu drücken, um die Aufnahme zu beenden, und darauf zu warten, die Aufnahme zu hören.
+Diese Anweisungen ermöglichen es Ihnen, jede Nachricht von einem Softphone aufzunehmen. Beispiel: Wählen Sie recordmenu vom Softphone Die Anweisungen rufen die Aufnahme mit der Variable ${EXTEN:6} ohne die ersten sechs Buchstaben auf. Mit anderen Worten, die Anweisung ist äquivalent zu record(menu:gsm). Alles, was Sie tun müssen, ist `record` + `name_of_the_file_to_be_recorded` zu wählen, # zu drücken, um die Aufnahme zu beenden, und zu warten, bis die Aufnahme zu hören ist.
 
-### Empfangen der Anrufe in einer digitalen Telefonzentrale
+### Empfang der Anrufe in einer digitalen Rezeption
 
-Nachdem wir nun einige einfache Beispiele haben, erweitern wir unser Wissen über die Anwendungen background() und goto(). Der Schlüssel für interaktive Systeme in Asterisk ist die Anwendung background(), die es Ihnen ermöglicht, eine Audiodatei auszuführen, die, wenn der Anrufer eine Taste drückt, unterbrochen wird, um den Anruf an die gewählte Extension zu senden. Syntax der Anwendung background():
+Jetzt, wo wir einige einfache Beispiele haben, erweitern wir unser Wissen über die Anwendungen **background()** und **goto()**. Der Schlüssel für interaktive Systeme in Asterisk ist die Anwendung **background()**, die es Ihnen ermöglicht, eine Audiodatei abzuspielen, die bei Tastendruck des Anrufers unterbrochen wird, um den Anruf an die gewählte Nebenstelle zu senden. Syntax der Anwendung **background()**:
 
 ```
 exten=>extension, priority, background(filename)
 ```
 
-Eine weitere sehr nützliche Anwendung ist goto(). Wie der Name schon sagt, springt sie zum angegebenen Context, zur Extension und zur Priorität. Syntax der Anwendung goto():
+Eine weitere sehr nützliche Anwendung ist goto(). Wie der Name impliziert, springt sie zum angegebenen Kontext, zur Erweiterung und zur Priorität. Syntax der Anwendung goto():
 
 ```
 exten=>extension, priority,goto(context, extension, priority)
 ```
 
-Gültige Formate für den Befehl goto():
+Gültige Formate für den goto()-Befehl:
 
 ```
 goto(context,extension,priority)
@@ -946,7 +977,7 @@ goto(extension,priority)
 goto(priority)
 ```
 
-Im folgenden Beispiel erstellen wir eine digitale Telefonzentrale. Es ist sehr einfach, die Datei extensions.conf zu bearbeiten und die folgenden Extensions zu konfigurieren:
+Im folgenden Beispiel erstellen wir eine digitale Telefonistin. Es ist sehr einfach, die Datei extensions.conf zu bearbeiten und die folgenden Nebenstellen zu konfigurieren:
 
 ```
 [globals]
@@ -977,13 +1008,13 @@ exten=>6003,1,Dial(IAX2/6003)
 exten=>6004,1,Dial(IAX2/6004)
 ```
 
-Die SIP-Extensions verwenden `PJSIP/` und die IAX-Extensions verwenden `IAX2/` — beide Treiber werden in Asterisk 22 mitgeliefert, obwohl `chan_iax2` jetzt als veraltet gilt und SIP/PJSIP bevorzugt wird.
+Die SIP‑Erweiterungen verwenden `PJSIP/` und die IAX‑Erweiterungen verwenden `IAX2/` — beide Treiber werden in Asterisk 22 ausgeliefert, obwohl `chan_iax2` inzwischen als veraltet gilt und SIP/PJSIP bevorzugt wird.
 
-Nehmen Sie in der Datei menu1.gsm die Nachricht „drücken Sie die Extension oder warten Sie auf den Operator“ auf. Wenn der Benutzer die Nummer 6000 wählt, wird er an die Extension 6000 gesendet. An diesem Punkt sollten Sie ein klares Verständnis für die Verwendung mehrerer Anwendungen haben, einschließlich answer(), background(), goto(), hangup() und playback(). Wenn Sie kein klares Verständnis haben, lesen Sie dieses Kapitel bitte erneut, bis Sie sich mit dem Inhalt wohl fühlen. Sie werden die Anwendung background sehr oft verwenden. Sobald Sie die Grundlagen von Extensions, Prioritäten und Anwendungen verstehen, wird es einfach sein, einen einfachen Dialplan zu erstellen. Diese Konzepte werden später im Buch eingehender untersucht, und Sie werden sehen, dass der Dialplan immer leistungsfähiger wird.
+In der Datei **menu1.gsm** nehmen Sie die Meldung „press the extension or wait for the operator“ auf. Wenn der Benutzer die Nummer 6000 wählt, wird er zur Erweiterung 6000 weitergeleitet. An diesem Punkt sollten Sie ein klares Verständnis für die Verwendung mehrerer Anwendungen haben, darunter `answer()`, `background()`, `goto()`, `hangup()` und `playback()`. Wenn Ihnen das noch nicht klar ist, lesen Sie dieses Kapitel erneut, bis Sie sich mit dem Inhalt wohlfühlen. Die Anwendung `background` werden Sie sehr häufig einsetzen. Sobald Sie die Grundlagen von Erweiterungen, Prioritäten und Anwendungen verstanden haben, wird es einfach sein, einen einfachen Dialplan zu erstellen. Diese Konzepte werden später im Buch ausführlicher behandelt, und Sie werden sehen, dass der Dialplan immer leistungsfähiger wird.
 
 ## Zusammenfassung
 
-In diesem Kapitel haben Sie gelernt, dass Konfigurationsdateien im Verzeichnis /etc/asterisk gespeichert sind. Um Asterisk zu verwenden, ist es zunächst erforderlich, die Kanäle (z. B. pjsip, dahdi, iax) zu konfigurieren. Es gibt drei verschiedene Grammatiken für Konfigurationsdateien: einfache Gruppe, Objektvererbung und komplexe Entität. Der Dialplan wird in der Datei extensions.conf erstellt und ist eine Menge von Contexts und Extensions. Im Dialplan löst jede Extension eine Anwendung aus. Sie haben gelernt, die Anwendungen playback, background, dial, goto, hangup und answer zu verwenden.
+In diesem Kapitel haben Sie gelernt, dass Konfigurationsdateien im Verzeichnis /etc/asterisk gespeichert werden. Um Asterisk zu verwenden, ist es zunächst notwendig, die Kanäle (z. B. pjsip, dahdi, iax) zu konfigurieren. Für Konfigurationsdateien existieren drei verschiedene Grammatikformen: einfache Gruppe, Objektvererbung und komplexe Entität. Der Dialplan wird in der Datei extensions.conf erstellt und besteht aus einer Menge von Kontexten und Extensions. Im Dialplan löst jede Extension eine Anwendung aus. Sie haben gelernt, die Anwendungen playback, background, dial, goto, hangup und answer zu verwenden.
 
 ## Quiz
 
@@ -992,20 +1023,20 @@ In diesem Kapitel haben Sie gelernt, dass Konfigurationsdateien im Verzeichnis /
    - B. `/etc/asterisk/pjsip.conf`
    - C. `/etc/asterisk/iax.conf`
    - D. `/etc/asterisk/extensions.conf`
-2. In Asterisk 22 wird der einzelne `chan_sip` Peer `[6001]` (`type=friend`/`host=dynamic`) in `pjsip.conf` durch welche Menge verwandter Objekte ersetzt?
+2. Auf Asterisk 22 wird der einzelne `chan_sip`‑Peer `[6001]` (`type=friend`/`host=dynamic`) in `pjsip.conf` durch welchen Satz verwandter Objekte ersetzt?
    - A. Ein `type=peer` und ein `type=user`
    - B. Ein `type=endpoint`, ein `type=auth` und ein `type=aor`
    - C. Ein einzelnes `type=friend`
    - D. Ein `type=transport` und ein `type=global`
-3. Das Definieren eines Contexts in der Kanalkonfigurationsdatei ist wichtig, da es den eingehenden Context für Anrufe von diesem Kanal festlegt – ein Anruf vom Kanal wird im passenden Context in `extensions.conf` verarbeitet.
-   - A. Wahr
-   - B. Falsch
+3. Das Definieren eines Kontextes in der Kanalkonfigurationsdatei ist wichtig, weil er den eingehenden Kontext für Anrufe von diesem Kanal festlegt – ein Anruf von dem Kanal wird im passenden Kontext in `extensions.conf` verarbeitet.
+   - A. True
+   - B. False
 4. Die Hauptunterschiede zwischen den Anwendungen `Playback()` und `Background()` sind (wählen Sie zwei):
-   - A. Playback spielt eine Aufforderung ab, wartet aber nicht auf Ziffern.
-   - B. Background spielt eine Aufforderung ab, wartet aber nicht auf Ziffern.
-   - C. Background spielt eine Nachricht ab und wartet darauf, dass Ziffern gedrückt werden.
-   - D. Playback spielt eine Nachricht ab und wartet darauf, dass Ziffern gedrückt werden.
-5. Wenn ein Anruf über eine Telefonschnittstellenkarte (FXO) ohne DID in Asterisk eingeht, wird er in der speziellen Extension behandelt:
+   - A. Playback spielt eine Ansage, wartet aber nicht auf Ziffern.
+   - B. Background spielt eine Ansage, wartet aber nicht auf Ziffern.
+   - C. Background spielt eine Nachricht und wartet darauf, dass Ziffern gedrückt werden.
+   - D. Playback spielt eine Nachricht und wartet darauf, dass Ziffern gedrückt werden.
+5. Wenn ein Anruf über eine Telephoniekarten‑Schnittstelle (FXO) ohne DID in Asterisk gelangt, wird er in der speziellen Nebenstelle verarbeitet:
    - A. `0`
    - B. `9`
    - C. `s`
@@ -1015,22 +1046,22 @@ In diesem Kapitel haben Sie gelernt, dass Konfigurationsdateien im Verzeichnis /
    - B. `Goto(priority,context,extension)`
    - C. `Goto(extension,priority)`
    - D. `Goto(priority)`
-7. Das Muster `_7[1-5]XX` entspricht (wählen Sie alle zutreffenden aus):
+7. Das Muster `_7[1-5]XX` trifft zu (wählen Sie alle zutreffenden aus):
    - A. 7100
    - B. 7600
    - C. 7630
    - D. 7230
-8. Was bewirkt die Option `m` in `Dial(PJSIP/${EXTEN},20,tTm)`?
-   - A. Begrenzt den Anruf auf eine maximale Dauer.
-   - B. Bietet dem Anrufer Wartemusik anstelle des Freizeichens, bis der Kanal antwortet.
-   - C. Sendet DTMF-Ziffern, nachdem der angerufene Teilnehmer geantwortet hat.
-   - D. Erzwingt die Caller ID mithilfe eines Dialplan-Hinweises.
-9. In der Grammatik der Optionsvererbung, die von `chan_dahdi.conf` verwendet wird, tun Sie:
-   - A. Definieren Sie das Objekt in einer einzigen Zeile.
-   - B. Definieren Sie zuerst Optionen und deklarieren Sie die Objekte unter den definierten Optionen.
-   - C. Definieren Sie einen separaten Context für jedes Objekt.
-10. Prioritäten in einer Extension müssen fortlaufend nummeriert sein (1, 2, 3, …) und können `n` nicht verwenden.
-    - A. Wahr
-    - B. Falsch
+8. In `Dial(PJSIP/${EXTEN},20,tTm)`, was bewirkt die Option `m`?
+   - A. Begrenzt die Anrufdauer auf ein Maximum.
+   - B. Liefert Musik on Hold an den Anrufer anstelle von Klingelton, bis der Kanal annimmt.
+   - C. Sendet DTMF‑Ziffern, nachdem die angerufene Partei geantwortet hat.
+   - D. Erzwingt die Caller‑ID mittels eines Dial‑Plan‑Hints.
+9. In der Options‑Vererbungs‑Grammatik, die von `chan_dahdi.conf` verwendet wird, Sie:
+   - A. Definieren das Objekt in einer einzigen Zeile.
+   - B. Definieren zuerst Optionen und deklarieren die Objekte unter den definierten Optionen.
+   - C. Definieren einen separaten Kontext für jedes Objekt.
+10. Prioritäten in einer Nebenstelle müssen fortlaufend nummeriert sein (1, 2, 3, …) und dürfen `n` nicht verwenden.
+    - A. True
+    - B. False
 
-**Antworten:** 1 — A, B, C · 2 — B · 3 — A · 4 — A, C · 5 — C · 6 — A, C, D · 7 — A, D · 8 — B · 9 — B · 10 — B
+**Answers:** 1 — A, B, C · 2 — B · 3 — A · 4 — A, C · 5 — C · 6 — A, C, D · 7 — A, D · 8 — B · 9 — B · 10 — B

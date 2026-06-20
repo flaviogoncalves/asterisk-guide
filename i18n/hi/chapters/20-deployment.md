@@ -1,28 +1,43 @@
-# परिनियोजन (Deployment), निगरानी और स्केलिंग
+# Deployment, monitoring & scaling
 
-Asterisk को लैब में कॉल का उत्तर देने के लिए तैयार करना एक बात है; इसे एक ऐसी सेवा के रूप में चलाना जो क्रैश, रीबूट, अपग्रेड और हमलावरों से सुरक्षित रहे — और जिसे आप देख सकें, बैकअप ले सकें और बढ़ा सकें — यह दूसरी बात है। यह अध्याय उन सभी चीजों के बारे में है जो dialplan के काम करने के *बाद* होती हैं। हम उस सुपरवाइजर (systemd) से शुरुआत करते हैं जो Asterisk को जीवित रखता है, फिर इसे एक कंटेनर में पैक करने की ओर बढ़ते हैं (पुस्तक की अपनी Docker लैब का उपयोग करके), फिर कॉन्फ़िगरेशन प्रबंधन और बैकअप, निगरानी और अवलोकनीयता (observability) को कवर करते हैं, और अंत में उन पैटर्न्स पर चर्चा करते हैं जिनकी आवश्यकता तब पड़ती है जब एक सर्वर पर्याप्त नहीं होता: उच्च उपलब्धता (high availability) और स्केलिंग, तथा क्लाउड में होस्टिंग की वास्तविकताएं।
+Getting Asterisk to answer a call in a lab is one thing; running it as a service
+that survives crashes, reboots, upgrades and attackers — and that you can observe,
+back up and grow — is another. This chapter is about everything that happens *after*
+the dialplan works. We start with the supervisor that keeps Asterisk alive
+(systemd), move to packaging it in a container (using the book's own Docker lab as
+the worked example), then cover configuration management and backups, monitoring and
+observability, and finally the patterns you reach for when one server is not enough:
+high availability and scaling, and the realities of hosting in the cloud.
 
-दिखाई गई हर चीज़ को `lab/` में पुस्तक की Asterisk 22 लैब के विरुद्ध सत्यापित किया गया है — वही कंटेनर जिस पर आप पूरी पुस्तक के दौरान काम कर रहे हैं।
+Everything shown is verified against the book's Asterisk 22 lab in `lab/` — the same
+container you have been building on throughout the book.
 
-## उद्देश्य
+## Objectives
 
-इस अध्याय के अंत तक, आप निम्नलिखित में सक्षम होंगे:
+By the end of this chapter, you should be able to:
 
-- systemd के अंतर्गत, गैर-रूट उपयोगकर्ता के रूप में, स्वचालित रीस्टार्ट के साथ Asterisk 22 को मज़बूती से चलाना
-- Docker के साथ Asterisk को कंटेनराइज़ करना और नेटवर्किंग के ट्रेड-ऑफ़ को समझना
-- `/etc/asterisk` को वर्ज़न कंट्रोल में रखना और सही स्थिति (state) का बैकअप लेना
-- CLI, CDR/CEL, AMI/ARI और मेट्रिक्स के माध्यम से चल रहे सिस्टम की निगरानी करना
-- एक्टिव/स्टैंडबाय उच्च उपलब्धता और हॉरिजॉन्टल स्केलिंग पैटर्न्स को लागू करना
-- NAT और फ़ायरवॉल के पीछे सुरक्षित रूप से क्लाउड में Asterisk को होस्ट करना
+- Run Asterisk 22 reliably under systemd, as a non-root user, with automatic restart
+- Containerize Asterisk with Docker and understand the networking trade-offs
+- Keep `/etc/asterisk` in version control and back up the right state
+- Monitor a running system through the CLI, CDR/CEL, AMI/ARI and metrics
+- Apply active/standby high availability and horizontal scaling patterns
+- Host Asterisk in the cloud safely behind NAT and a firewall
 
-## systemd के अंतर्गत Asterisk चलाना
+## Running Asterisk under systemd
 
-प्रत्येक वर्तमान Linux वितरण पर — Debian 12, Ubuntu 22.04/24.04, Rocky/AlmaLinux 9 — सेवा प्रबंधक **systemd** है। इंस्टाल अध्याय ने दिखाया कि `make config` चरण (`make install` के दौरान चलाया गया) एक वितरण इनिट स्क्रिप्ट (Debian पर `/etc/init.d/asterisk`, RedHat पर एक `rc.d` स्क्रिप्ट) स्थापित करता है, जिसे systemd फिर स्वचालित रूप से एक सेवा के रूप में लपेटता है; Asterisk `contrib/systemd/asterisk.service` के अंतर्गत एक नेटिव systemd यूनिट भी प्रदान करता है जिसे आप बेहतर नियंत्रण के लिए उसकी जगह स्थापित कर सकते हैं।
-किसी भी तरह, systemd ही Asterisk को चलाने का समर्थित, प्रोडक्शन तरीका है। बिल्ड के लिए *Installing Asterisk 22* देखें; यहाँ हम इस पर ध्यान केंद्रित करते हैं कि सेवा आपको क्या प्रदान करती है और इसे कैसे संचालित किया जाए।
+On every current Linux distribution — Debian 12, Ubuntu 22.04/24.04, Rocky/AlmaLinux
+9 — the service manager is **systemd**. The install chapter showed that the
+`make config` step (run during `make install`) installs a distribution init script
+(`/etc/init.d/asterisk` on Debian, an `rc.d` script on RedHat), which systemd then
+wraps automatically as a service; Asterisk also ships a native systemd unit under
+`contrib/systemd/asterisk.service` that you can install in its place for finer control.
+Either way, systemd is the supported, production way to run Asterisk. Cross-reference
+*Installing Asterisk 22* for the build itself; here we focus on what the service gives
+you and how to operate it.
 
-### सेवा यूनिट और उसका जीवनचक्र
+### The service unit and its lifecycle
 
-एक बार जब `make config` ने सेवा स्थापित कर ली, तो जीवनचक्र सामान्य systemd जैसा होता है:
+Once `make config` has installed the service, the lifecycle is ordinary systemd:
 
 ```
 systemctl enable asterisk     # start automatically at boot
@@ -33,14 +48,27 @@ systemctl stop asterisk       # stop
 journalctl -u asterisk        # service logs via the journal
 ```
 
-कुछ परिचालन संबंधी नोट्स:
+A few operational notes:
 
-- **`restart` बनाम एक ग्रेसफुल रीलोड।** `systemctl restart` प्रक्रिया को समाप्त कर देता है और हर कॉल को ड्रॉप कर देता है। कॉन्फ़िगरेशन परिवर्तनों के लिए आप लगभग कभी ऐसा नहीं चाहेंगे — इसके बजाय Asterisk CLI का उपयोग करें: `asterisk -rx 'core reload'` (या मॉड्यूल-विशिष्ट रीलोड जैसे `pjsip reload`)। `systemctl restart` को अपग्रेड या अटकी हुई प्रक्रिया के लिए सुरक्षित रखें।
-- **चल रहे डेमन से जुड़ें।** Asterisk के सेवा के रूप में चलने पर, इसके कंसोल को `asterisk -r` (या वर्बोज़ आउटपुट के लिए `asterisk -rvvv`) के साथ खोलें। यह अपने कंट्रोल सॉकेट पर पहले से चल रहे डेमन से जुड़ता है; यह दूसरी कॉपी शुरू नहीं करता है।
+- **`restart` vs. a graceful reload.** `systemctl restart` tears down the process and
+  drops every call. For configuration changes you almost never want that — use the
+  Asterisk CLI instead: `asterisk -rx 'core reload'` (or a module-specific reload such
+  as `pjsip reload`). Reserve `systemctl restart` for upgrades or a wedged process.
+- **Attach to the running daemon.** With Asterisk running as a service, open its
+  console with `asterisk -r` (or `asterisk -rvvv` for verbose output). This connects
+  to the already-running daemon over its control socket; it does not start a second
+  copy.
 
-### `Restart=` ने safe_asterisk की जगह ली
+### `Restart=` replaces safe_asterisk
 
-ऐतिहासिक रूप से Asterisk को **safe_asterisk** रैपर के माध्यम से लॉन्च किया जाता था, जो एक शेल स्क्रिप्ट थी और क्रैश होने पर Asterisk को फिर से शुरू कर देती थी। systemd के अंतर्गत वह कार्य यूनिट के `Restart=` निर्देश का है — systemd प्रक्रिया के बाहर निकलने पर ध्यान देता है और उसे वापस लाता है, जिसमें बैक-ऑफ़ को `RestartSec=` द्वारा और क्रैश-लूप सुरक्षा को `StartLimitIntervalSec=`/`StartLimitBurst=` द्वारा नियंत्रित किया जाता है। इसलिए systemd होस्ट पर **safe_asterisk अप्रचलित है** और आमतौर पर अनावश्यक है। यदि आपकी शिप की गई यूनिट में यह पहले से सेट नहीं है, तो एक ड्रॉप-इन ओवरराइड पैक्ड फ़ाइल को संपादित किए बिना विफलता-पर-रीस्टार्ट जोड़ने का साफ तरीका है:
+Historically Asterisk was launched through the **safe_asterisk** wrapper, a shell
+script that re-spawned Asterisk if it crashed. Under systemd that job belongs to the
+unit's `Restart=` directive — systemd notices the process exit and brings it back,
+with back-off controlled by `RestartSec=` and crash-loop protection by
+`StartLimitIntervalSec=`/`StartLimitBurst=`. So on a systemd host **safe_asterisk is
+superseded** and generally unnecessary. If your shipped unit does not already set it,
+a drop-in override is the clean way to add restart-on-failure without editing the
+packaged file:
 
 ```
 # /etc/systemd/system/asterisk.service.d/override.conf
@@ -49,13 +77,20 @@ Restart=always
 RestartSec=2
 ```
 
-इसे `systemctl daemon-reload && systemctl restart asterisk` के साथ लागू करें। ड्रॉप-इन का उपयोग करने का मतलब है (स्थापित यूनिट को संपादित करने के बजाय) कि भविष्य का `make config` आपके परिवर्तन को नहीं मिटाएगा।
+Apply it with `systemctl daemon-reload && systemctl restart asterisk`. Using a drop-in
+(rather than editing the installed unit) means a future `make config` will not clobber
+your change.
 
-### गैर-रूट उपयोगकर्ता के रूप में चलाना
+### Running as a non-root user
 
-Asterisk को प्रोडक्शन में रूट के रूप में नहीं चलना चाहिए — रूट के रूप में चल रही प्रक्रिया में रिमोट-कोड बग एक पूर्ण होस्ट समझौता है, जबकि एक अनप्रिविलेज्ड प्रक्रिया में वही बग सीमित रहता है। इसे लागू करने के दो पूरक स्थान हैं:
+Asterisk should not run as root in production — a remote-code bug in a process running
+as root is a full host compromise, whereas the same bug in an unprivileged process is
+contained. There are two complementary places this is enforced:
 
-- **यूनिट / asterisk.conf।** पैक्ड यूनिट आमतौर पर Asterisk को `asterisk` उपयोगकर्ता और समूह के रूप में चलाती है। आप `asterisk.conf` के `[options]` अनुभाग में `runuser` और `rungroup` भी सेट कर सकते हैं (या इसके बजाय), जिसका डेमन बाइंडिंग के बाद विशेषाधिकार छोड़ने पर पालन करता है:
+- **The unit / asterisk.conf.** The packaged unit normally runs Asterisk as the
+  `asterisk` user and group. You can also (or instead) set `runuser` and `rungroup` in
+  the `[options]` section of `asterisk.conf`, which the daemon honours when it drops
+  privileges after binding:
 
   ```
   [options]
@@ -63,22 +98,26 @@ Asterisk को प्रोडक्शन में रूट के रूप
   rungroup = asterisk
   ```
 
-- **फ़ाइल स्वामित्व।** रनटाइम निर्देशिकाएं उस उपयोगकर्ता द्वारा लिखने योग्य होनी चाहिए। खाता बनाने के बाद, स्वामित्व सुनिश्चित करें:
+- **File ownership.** The runtime directories must be writable by that user. After
+  creating the account, ensure ownership:
 
   ```
   chown -R asterisk:asterisk /var/lib/asterisk /var/log/asterisk \
         /var/spool/asterisk /var/run/asterisk /etc/asterisk
   ```
 
-चूंकि SIP (5060) और RTP (10000+) सभी उच्च पोर्ट हैं, Asterisk को उन्हें बाइंड करने के लिए रूट की आवश्यकता **नहीं** है — केवल पोर्ट-25-शैली के विशेषाधिकार प्राप्त पोर्ट को आवश्यकता होती है, जिसका Asterisk उपयोग नहीं करता है। इसलिए अनप्रिविलेज्ड चलना मुफ़्त है। (सुरक्षा अध्याय विस्तार से बताता है कि यह क्यों मायने रखता है; *Asterisk Security* देखें।)
+Because SIP (5060) and RTP (10000+) are all high ports, Asterisk does **not** need
+root to bind them — only port-25-style privileged ports would, which Asterisk does not
+use. Running unprivileged is therefore free. (The Security chapter expands on why this
+matters; see *Asterisk Security*.)
 
-## Asterisk को कंटेनराइज़ करना
+## Containerizing Asterisk
 
-एक कंटेनर Asterisk और उसकी सटीक निर्भरताओं को एक अपरिवर्तनीय इमेज में पैक करता है, इसलिए जो आप टेस्ट करते हैं वही आप शिप करते हैं। ट्रेड-ऑफ़ रीयल-टाइम मीडिया है: एक SIP सर्वर लेटेंसी के प्रति संवेदनशील होता है और उसे बाहर से पहुँच योग्य UDP पोर्ट की एक विस्तृत, पूर्वानुमानित रेंज की आवश्यकता होती है, और कंटेनर नेटवर्किंग इसमें बाधा डाल सकती है। इस अनुभाग का शेष भाग पुस्तक की अपनी लैब — `lab/Dockerfile` और `lab/docker-compose.yml` — के माध्यम से एक ठोस, कार्यशील उदाहरण के रूप में चलता है, और फिर उस एक जाल को समझाता है जिसमें हर कोई फंसता है: RTP और ब्रिज्ड नेटवर्किंग।
+एक कंटेनर Asterisk और उसकी सटीक निर्भरताओं को एक अपरिवर्तनीय इमेज में पैकेज करता है, इसलिए आप जो परीक्षण करते हैं वह बाइट‑फ़ॉर‑बाइट वही है जो आप शिप करते हैं। इसका समझौता रीयल‑टाइम मीडिया है: एक SIP सर्वर लेटेंसी के प्रति संवेदनशील होता है और बाहरी नेटवर्क से पहुँच योग्य UDP पोर्ट्स की एक विस्तृत, पूर्वानुमेय रेंज की आवश्यकता होती है, और कंटेनर नेटवर्किंग इसमें बाधा बन सकती है। इस अनुभाग का शेष भाग पुस्तक के अपने लैब — `lab/Dockerfile` और `lab/docker-compose.yml` — को एक ठोस, कार्यशील उदाहरण के रूप में दर्शाता है, और फिर वह एक आम जाल समझाता है जिसे हर कोई फंस जाता है: RTP और ब्रिज्ड नेटवर्किंग।
 
-### इमेज: सोर्स से Asterisk बनाना
+### The image: building Asterisk from source
 
-लैब का `Dockerfile` Debian 12 पर सोर्स से Asterisk 22 बनाता है। इसका आकार पढ़ने लायक है, भले ही आप खुद कभी न लिखें:
+लैब का `Dockerfile` Debian 12 पर स्रोत से Asterisk 22 बनाता है। इसका स्वरूप पढ़ने लायक है चाहे आप कभी खुद न बनाएं:
 
 ```dockerfile
 FROM debian:12-slim
@@ -106,15 +145,23 @@ EXPOSE 5060/udp 10000-10100/udp
 CMD ["asterisk", "-f", "-vvv"]
 ```
 
-तीन बातें ध्यान देने योग्य हैं:
+Three things to call out:
 
-- **वर्ज़न पिन किया गया है** (`ARG ASTERISK_VERSION=22.10.0`)। पुनरुत्पादकता (reproducibility) कंटेनराइज़ करने का पूरा उद्देश्य है — इसे सोच-समझकर बढ़ाएं, फिर से बनाएं, फिर से टेस्ट करें।
-- **`--with-pjproject-bundled` और `--with-jansson-bundled`** SIP स्टैक को Asterisk के साथ वर्ज़न-मैच करके बनाते हैं, इसलिए आप कम apt पैकेज पर निर्भर रहते हैं और कभी भी ऐसे distro PJSIP से नहीं लड़ते जो आउट ऑफ स्टेप हो।
-- **`CMD ["asterisk", "-f", "-vvv"]`** Asterisk को *फोरग्राउंड* में चलाता है (`-f`, "do not fork")। यह systemd होस्ट से मुख्य अंतर है: कंटेनर की मुख्य प्रक्रिया को डेमनाइज़ नहीं करना चाहिए, अन्यथा कंटेनर तुरंत बाहर निकल जाएगा। इसलिए कंटेनर में आप systemd यूनिट का उपयोग **बिल्कुल नहीं** करते हैं — कंटेनर रनटाइम (Docker, प्लस `restart:` नीति) वह सुपरवाइजर बन जाता है जो VM पर यूनिट का `Restart=` था।
+- **The version is pinned** (`ARG ASTERISK_VERSION=22.10.0`). Reproducibility is the
+  whole point of containerizing — bump it deliberately, rebuild, retest.
+- **`--with-pjproject-bundled` and `--with-jansson-bundled`** build the SIP stack
+  version-matched to Asterisk, so you depend on fewer apt packages and never fight a
+  distro PJSIP that is out of step.
+- **`CMD ["asterisk", "-f", "-vvv"]`** runs Asterisk in the *foreground* (`-f`, "do not
+  fork"). This is the key difference from a systemd host: a container's main process
+  must not daemonize, or the container would exit immediately. So in a container you do
+  **not** use the systemd unit at all — the container runtime (Docker, plus `restart:`
+  policy) becomes the supervisor that the unit's `Restart=` was on a VM.
 
-### `/etc/asterisk` को बाइंड-माउंट करना
+### Bind-mounting `/etc/asterisk`
 
-इमेज में जानबूझकर **कोई** कॉन्फ़िगरेशन नहीं है। इसके बजाय `docker-compose.yml` होस्ट की कॉन्फ़िग निर्देशिका को अंदर बाइंड-माउंट करता है:
+The image deliberately contains **no** configuration. Instead `docker-compose.yml`
+bind-mounts the host's config directory in:
 
 ```yaml
 services:
@@ -130,13 +177,20 @@ services:
       - "10000-10100:10000-10100/udp"
 ```
 
-`./asterisk/etc:/etc/asterisk:ro` वर्ज़न-नियंत्रित `lab/asterisk/etc` निर्देशिका को कंटेनर के `/etc/asterisk` पर मैप करता है, केवल-पढ़ने के लिए (`:ro`)। इसका लाभ बड़ा है: इमेज अपरिवर्तनीय और पुन: प्रयोज्य रहती है, जबकि कॉन्फ़िगरेशन होस्ट पर रहता है जहाँ इसे संपादित किया जा सकता है और, महत्वपूर्ण रूप से, git में रखा जा सकता है (अगला अनुभाग)। कॉन्फ़िग परिवर्तन लागू करने के लिए आप फ़ाइल को संपादित करते हैं और रीलोड करते हैं — `docker compose exec asterisk asterisk -rx 'core reload'` — बिना किसी रीबिल्ड के। `restart: unless-stopped` systemd के `Restart=` का compose-स्तरीय समकक्ष है: यदि Asterisk बाहर निकलता है तो Docker कंटेनर को रीस्टार्ट करता है, लेकिन यदि आपने इसे जानबूझकर रोका है तो नहीं।
+`./asterisk/etc:/etc/asterisk:ro` maps the version-controlled `lab/asterisk/etc`  
+directory onto the container's `/etc/asterisk`, read-only (`:ro`). The payoff is large:  
+the image stays immutable and reusable, while configuration lives on the host where it  
+can be edited and, crucially, kept in git (next section). To apply a config change you  
+edit the file and reload — `docker compose exec asterisk asterisk -rx 'core reload'` —  
+with no rebuild. `restart: unless-stopped` is the compose-level equivalent of  
+systemd's `Restart=`: Docker restarts the container if Asterisk exits, but not if you  
+deliberately stopped it.
 
 ### होस्ट बनाम ब्रिज्ड नेटवर्किंग — RTP समस्या
 
-यह कंटेनराइज़्ड-Asterisk की सबसे आम विफलता है, इसलिए इसे सटीक रूप से समझना उचित है। डिफ़ॉल्ट रूप से Docker एक कंटेनर को **ब्रिज्ड** नेटवर्क पर रखता है और आप `ports:` के साथ व्यक्तिगत पोर्ट प्रकाशित करते हैं। सिग्नलिंग ठीक है — 5060 एक पोर्ट है। समस्या मीडिया की है: RTP UDP पोर्ट की एक *रेंज* का उपयोग करता है (लैब का `rtp.conf` `rtpstart=10000` / `rtpend=10100` सेट करता है), और **हर** पोर्ट जो ऑडियो ले सकता है उसे प्रकाशित किया जाना चाहिए।
+यह सबसे आम कंटेनराइज़्ड‑Asterisk विफलता है, इसलिए इसे ठीक‑ठीक समझना आवश्यक है। डिफ़ॉल्ट रूप से Docker एक कंटेनर को **ब्रिज्ड** नेटवर्क पर रखता है और आप व्यक्तिगत पोर्ट्स को `ports:` के साथ प्रकाशित करते हैं। सिग्नलिंग ठीक है — 5060 एक पोर्ट है। समस्या मीडिया की है: RTP UDP पोर्ट्स की *रेंज* का उपयोग करता है (लैब का `rtp.conf` सेट करता है `rtpstart=10000` / `rtpend=10100`), और **हर** पोर्ट जो ऑडियो ले जा सकता है उसे प्रकाशित करना पड़ता है।
 
-लैब बिल्कुल वैसा ही करती है:
+लैब बिल्कुल यही करता है:
 
 ```yaml
     ports:
@@ -144,16 +198,36 @@ services:
       - "10000-10100:10000-10100/udp"
 ```
 
-ध्यान दें कि RTP पब्लिश रेंज (`10000-10100`) `rtp.conf` से बिल्कुल मेल खाती है। यदि आप इसे गलत करते हैं — बहुत कम पोर्ट प्रकाशित करते हैं, या `rtp.conf` से अलग रेंज — तो कॉल कनेक्ट तो हो जाएंगी लेकिन **एकतरफा या कोई ऑडियो नहीं** होगा, क्योंकि RTP पैकेट उस पोर्ट पर पहुंचेंगे जिसे Docker फॉरवर्ड नहीं कर रहा है। ब्रिज्ड मोड के साथ दो और सावधानियां:
+Note the RTP publish range (`10000-10100`) matches `rtp.conf` exactly. Get this wrong —
+publish too few ports, or a different range than `rtp.conf` — and calls connect but
+have **one-way or no audio**, because the RTP packets land on a port Docker is not
+forwarding. Two further cautions with bridged mode:
 
-- **हजारों पोर्ट प्रकाशित करना धीमा और भारी है।** एक प्रोडक्शन RTP रेंज आमतौर पर 10000–20000 होती है। Docker का ~10000 यूजरलैंड प्रॉक्सी फॉरवर्ड बनाना स्टार्टअप पर महंगा है और मीडिया पथ में एक हॉप जोड़ता है। लैब जानबूझकर 100-पोर्ट की छोटी रेंज रखती है क्योंकि यह केवल एक या दो टेस्ट कॉल चलाती है।
-- **SDP में NAT।** ब्रिज के पीछे, Asterisk अपना निजी कंटेनर IP देखता है और इसे SDP में विज्ञापित कर सकता है। सार्वजनिक होस्ट पर आपको PJSIP को उसके बाहरी पते के बारे में `external_media_address` / `external_signaling_address` के साथ ट्रांसपोर्ट पर बताना होगा (और `local_net` सेट करना होगा), बिल्कुल वैसे ही जैसे आप किसी NAT के पीछे करते हैं — नीचे *Cloud hosting* देखें।
+- **Publishing thousands of ports is slow and heavy.** A production RTP range is
+  typically 10000–20000. Docker creating ~10000 userland proxy forwards is expensive at
+  start-up and adds a hop in the media path. The lab keeps a deliberately small
+  100-port range because it only ever runs one or two test calls.
+- **NAT in the SDP.** Behind the bridge, Asterisk sees its private container IP and may
+  advertise it in SDP. On a public host you must tell PJSIP its external address with
+  `external_media_address` / `external_signaling_address` on the transport (and set
+  `local_net`), exactly as you would behind any NAT — see *Cloud hosting* below.
 
-विकल्प **होस्ट नेटवर्किंग** (`network_mode: host`) है, जो ब्रिज को पूरी तरह से हटा देता है: कंटेनर होस्ट के नेटवर्क स्टैक को साझा करता है, इसलिए 5060 और पूरी RTP रेंज बिना किसी पोर्ट पब्लिशिंग और बिना किसी अतिरिक्त मीडिया हॉप के पहुँच योग्य है। यह एक वास्तविक Asterisk कंटेनर के लिए अनुशंसित मोड है — यह RTP-रेंज समस्या को पूरी तरह से दरकिनार कर देता है। इसकी लागत अलगाव (isolation) है: कंटेनर किसी भी होस्ट पोर्ट को बाइंड कर सकता है और आप compose की प्रति-सेवा नेटवर्क सुविधा खो देते हैं। (होस्ट नेटवर्किंग एक Linux सुविधा है; macOS/Windows के लिए Docker Desktop पर यह अलग तरह से व्यवहार करती है, जो आंशिक रूप से कारण है कि यह शिक्षण लैब स्पष्ट प्रकाशित पोर्ट का उपयोग करती है।)
+The alternative is **host networking** (`network_mode: host`), which removes the bridge
+entirely: the container shares the host's network stack, so 5060 and the whole RTP
+range are reachable with no port publishing and no extra media hop. This is the
+recommended mode for a real Asterisk container — it sidesteps the RTP-range problem
+completely. Its cost is isolation: the container can bind any host port and you lose
+compose's per-service network. (Host networking is a Linux feature; on Docker Desktop
+for macOS/Windows it behaves differently, which is partly why this teaching lab uses
+explicit published ports instead.)
 
-### स्पूल और वॉइसमेल के लिए पर्सिस्टेंट वॉल्यूम
+### Persistent volumes for spool and voicemail
 
-कंटेनर की लिखने योग्य परत **अस्थायी (ephemeral)** होती है — कंटेनर को नष्ट करें और जो कुछ भी उसने लिखा है वह चला गया। Asterisk के लिए इसका मतलब है कि वॉइसमेल, रिकॉर्डिंग, आउटगोइंग कॉल स्पूल और स्थानीय डेटाबेस हर `docker compose up --build` पर गायब हो जाएंगे। कॉन्फ़िगरेशन जीवित रहता है क्योंकि यह होस्ट से बाइंड-माउंट किया गया है; *स्थिति (state)* को भी उसी उपचार की आवश्यकता है। कंटेनर के अंदर प्रासंगिक ट्री हैं:
+A container's writable layer is **ephemeral** — destroy the container and anything it
+wrote is gone. For Asterisk that means voicemail, recordings, the outgoing call spool
+and the local database would vanish on every `docker compose up --build`. Configuration
+survives because it is bind-mounted from the host; *state* needs the same treatment.
+Inside the container the relevant trees are:
 
 ```
 /var/spool/asterisk        # voicemail, monitor recordings, outgoing/, etc.
@@ -161,7 +235,10 @@ services:
 /var/log/asterisk          # full, messages, security, cdr-csv/, cel-custom/
 ```
 
-(लैब का चल रहा कंटेनर बिल्कुल इन्हें दिखाता है — `/var/spool/asterisk` में `voicemail`, `monitor`, `outgoing`, `recording` शामिल हैं; `/var/lib/asterisk` में `astdb.sqlite3` है।) उन्हें संरक्षित करने के लिए, उन निर्देशिकाओं के लिए नामित वॉल्यूम माउंट करें जो आपके द्वारा परवाह की जाने वाली स्थिति को रखती हैं:
+(The lab's running container shows exactly these — `/var/spool/asterisk` contains
+`voicemail`, `monitor`, `outgoing`, `recording`; `/var/lib/asterisk` holds
+`astdb.sqlite3`.) To preserve them, mount named volumes for the directories that hold
+state you care about:
 
 ```yaml
     volumes:
@@ -176,52 +253,70 @@ volumes:
   ast-log:
 ```
 
-शिक्षण लैब जानबूझकर इन्हें छोड़ देती है — यह डिज़ाइन द्वारा स्टेटलेस और पुनरुत्पादनीय है, इसलिए हर `up` एक साफ स्लेट है — लेकिन एक प्रोडक्शन कंटेनर में ये **होना ही चाहिए**, अन्यथा आप पहले रीडिप्लॉय पर वॉइसमेल खो देंगे।
+शिक्षण लैब ने इन्हें जानबूझकर छोड़ दिया है — यह डिज़ाइन के अनुसार स्टेटलेस और पुनरुत्पादनीय है, इसलिए हर `up` एक साफ़ स्लेट है — लेकिन एक प्रोडक्शन कंटेनर **must** इनका होना आवश्यक है, अन्यथा आप पहली रीडिप्लॉय पर वॉइसमेल खो देंगे।
 
-## कॉन्फ़िगरेशन प्रबंधन और बैकअप
+## Configuration management and backups
 
-उपरोक्त बाइंड-माउंट सही मॉडल की ओर इशारा करता है: `/etc/asterisk` को **कोड** के रूप में और बाकी को **डेटा** के रूप में मानें।
+The bind-mount above hints at the right model: treat `/etc/asterisk` as **code** and
+the rest as **data**.
 
-### `/etc/asterisk` को वर्ज़न कंट्रोल में रखें
+### Keep `/etc/asterisk` in version control
 
-कॉन्फ़िगरेशन निर्देशिका बिना किसी रहस्य (secrets) वाली टेक्स्ट फ़ाइलों का एक सपाट सेट है जिसे टेम्पलेट नहीं किया जा सकता — यह git के लिए आदर्श है। `/etc/asterisk` में एक रेपो इनिशियलाइज़ करें (या, जैसा कि लैब करती है, कॉन्फ़िग को प्रोजेक्ट के साथ रखें और उसे बाइंड-माउंट करें)। लाभ:
+The config directory is a flat set of text files with no secrets that cannot be
+templated — it is ideal for git. Initialise a repo in `/etc/asterisk` (or, as the lab
+does, keep the config alongside the project and bind-mount it). Benefits:
 
-- हर परिवर्तन समीक्षा योग्य और प्रतिवर्ती (revertible) है (`git diff`, `git revert`)।
-- आपके पास एक ऑडिट ट्रेल है कि किसने क्या और कब बदला।
-- कंटेनर इमेज के साथ संयुक्त, एक ज्ञात-अच्छी कॉन्फ़िग कमिट और एक पिन की गई इमेज टैग पूरी तरह से परिनियोजन का वर्णन करती है।
+- Every change is reviewable and revertible (`git diff`, `git revert`).
+- You have an audit trail of who changed what and when.
+- Combined with a container image, a known-good config commit plus a pinned image tag
+  fully describes a deployment.
 
-Asterisk कॉन्फ़िग के लिए कुछ विशिष्ट सावधानियां:
+A couple of cautions specific to Asterisk config:
 
-- **रहस्य (Secrets)।** `pjsip.conf` (और `manager.conf`, `ari.conf`) में पासवर्ड होते हैं। वास्तविक रहस्यों को सादे टेक्स्ट में साझा रेपो में कमिट न करें — उन्हें टेम्पलेट करें (प्रति वातावरण एक फ़ाइल, या परिनियोजन के समय एक रहस्य प्रबंधक / पर्यावरण प्रतिस्थापन) और git में केवल प्लेसहोल्डर रखें। लैब की तुच्छ `Lab-6001-secret` शैली के पासवर्ड *केवल* इसलिए ठीक हैं क्योंकि वे एक निजी Docker सबनेट पर रहते हैं।
-- **प्रति-वातावरण टेम्पलेटिंग।** रीयल-टाइम मान जो dev, staging और production के बीच भिन्न होते हैं (बाइंड पते, बाहरी IP, ट्रंक क्रेडेंशियल, डेटाबेस URL) बिल्कुल वही लाइनें हैं जिन्हें आप टेम्पलेट करते हैं, जिससे कॉन्फ़िग का अधिकांश हिस्सा वातावरणों में समान रहता है।
+- **Secrets.** `pjsip.conf` (and `manager.conf`, `ari.conf`) contain passwords. Do not
+  commit real secrets to a shared repo in clear text — template them (one file per
+  environment, or a secrets manager / environment substitution at deploy time) and keep
+  only placeholders in git. The lab's trivial `Lab-6001-secret` style passwords are fine
+  *only* because they live on a private Docker subnet.
+- **Per-environment templating.** The realtime values that differ between dev, staging
+  and production (bind addresses, external IPs, trunk credentials, database URLs) are
+  exactly the lines you templatize, keeping the bulk of the config identical across
+  environments.
 
-### बैकअप क्या लें
+### What to back up
 
-git में कॉन्फ़िगरेशन dialplan और endpoints को कवर करता है, लेकिन एक लाइव PBX ऐसी *स्थिति (state)* जमा करता है जो किसी कॉन्फ़िग फ़ाइल में नहीं है। एक पूर्ण बैकअप है:
+Configuration in git covers the dialplan and endpoints, but a live PBX accumulates
+*state* that is not in any config file. A complete backup is:
 
-| क्या | कहाँ | क्यों |
+| What | Where | Why |
 |------|-------|-----|
-| कॉन्फ़िगरेशन | `/etc/asterisk/` | dialplan, endpoints (git में भी) |
-| वॉइसमेल और रिकॉर्डिंग | `/var/spool/asterisk/` | उपयोगकर्ता डेटा — अपूरणीय |
-| आंतरिक डेटाबेस | `/var/lib/asterisk/astdb.sqlite3` | `DB()` कुंजियाँ, डिवाइस स्थिति |
-| CDR / CEL | `/var/log/asterisk/cdr-csv/` या SQL स्टोर | बिलिंग और इतिहास |
-| बाहरी डेटाबेस | आपका MySQL/PostgreSQL | रीयल-टाइम, CDR, वॉइसमेल |
+| Configuration | `/etc/asterisk/` | dialplan, endpoints (also in git) |
+| Voicemail & recordings | `/var/spool/asterisk/` | user data — irreplaceable |
+| Internal database | `/var/lib/asterisk/astdb.sqlite3` | `DB()` keys, device state |
+| CDR / CEL | `/var/log/asterisk/cdr-csv/` or SQL store | billing & history |
+| External databases | your MySQL/PostgreSQL | realtime, CDR, voicemail |
 
-**astdb** एक नोट के योग्य है: यह Asterisk का छोटा इन-बिल्ट की/वैल्यू स्टोर है (`/var/lib/asterisk/astdb.sqlite3` पर एक SQLite फ़ाइल) जिसका उपयोग `DB()` dialplan फ़ंक्शंस, डिवाइस स्टेट्स, फॉलो-मी सेटिंग्स और इसी तरह के कार्यों के लिए किया जाता है। आप इसे निरीक्षण या बैकअप के लिए CLI से डंप कर सकते हैं:
+The **astdb** deserves a note: it is Asterisk's small built-in key/value store (a
+SQLite file at `/var/lib/asterisk/astdb.sqlite3`) used by `DB()` dialplan functions,
+device states, follow-me settings and similar. You can dump it for inspection or backup
+from the CLI:
 
 ```
 asterisk -rx 'database show'
 ```
 
-यदि आपका CDR/CEL या वॉइसमेल या PJSIP कॉन्फ़िग किसी बाहरी डेटाबेस में रहता है (देखें *Asterisk Real-Time* और *Asterisk Call Detail Records*), तो वह डेटाबेस अब उस डेटा के लिए सत्य का स्रोत है और उसे आपके सामान्य डेटाबेस बैकअप रोटेशन में होना चाहिए — केवल `/etc/asterisk` का बैकअप लेना पर्याप्त नहीं है।
+If your CDR/CEL or voicemail or PJSIP config lives in an external database (see
+*Asterisk Real-Time* and *Asterisk Call Detail Records*), that database is now the
+source of truth for that data and must be in your normal database backup rotation —
+backing up `/etc/asterisk` alone is not enough.
 
-## निगरानी और अवलोकनीयता (Observability)
+## Monitoring and observability
 
-आप उसे संचालित नहीं कर सकते जिसे आप देख नहीं सकते। Asterisk अपनी स्थिति को चार स्तरों पर उजागर करता है, एक त्वरित मानवीय नज़र से लेकर मेट्रिक्स पाइपलाइन तक: **CLI**, **CDR/CEL** रिकॉर्ड, **AMI/ARI** ईवेंट, और **मेट्रिक्स एक्सपोर्टर**।
+आप वह नहीं चला सकते जो आप नहीं देख पाते। Asterisk अपनी स्थिति को चार स्तरों पर उजागर करता है, एक त्वरित मानव नज़र से लेकर मीट्रिक पाइपलाइन तक: **CLI**, **CDR/CEL** रिकॉर्ड्स, **AMI/ARI** इवेंट्स, और **metrics exporters**।
 
-### CLI स्वास्थ्य जांच
+### CLI health checks
 
-सबसे तेज़ "क्या यह स्वस्थ है?" जांच CLI है। नीचे दिए गए कमांड लैब के विरुद्ध लाइव चलाए जाते हैं। पहले चैनल:
+सबसे तेज़ "क्या यह स्वस्थ है?" जाँच CLI है। नीचे दिए गए कमांड्स को लैब के खिलाफ लाइव चलाया जाता है। पहले चैनल्स:
 
 ```
 *CLI> core show channels
@@ -231,7 +326,7 @@ Channel              Location             State   Application(Data)
 0 calls processed
 ```
 
-शांत सिस्टम पर `0 active calls` सामान्य है; व्यस्त सिस्टम पर यह आपकी रीयल-टाइम समवर्तीता (concurrency) है। `core show uptime` पुष्टि करता है कि प्रक्रिया आपके अधीन रीस्टार्ट नहीं हो रही है:
+`0 active calls` एक शांत सिस्टम पर सामान्य है; एक व्यस्त सिस्टम पर यह आपका वास्तविक‑समय concurrency है। `core show uptime` पुष्टि करता है कि प्रक्रिया आपके तहत पुनः आरंभ नहीं हो रही है:
 
 ```
 *CLI> core show uptime
@@ -239,7 +334,8 @@ System uptime: 1 hour, 40 minutes, 19 seconds
 Last reload: 12 minutes, 32 seconds
 ```
 
-SIP स्वास्थ्य के लिए, `pjsip show endpoints` हर endpoint को दिखाता है और यह कि क्या उसके पंजीकृत संपर्क पहुँच योग्य हैं। लैब से:
+For SIP health, `pjsip show endpoints` shows every endpoint and whether its registered
+contacts are reachable. From the lab:
 
 ```
 *CLI> pjsip show endpoints
@@ -249,17 +345,21 @@ SIP स्वास्थ्य के लिए, `pjsip show endpoints` हर 
  Endpoint:  6002                                                 Unavailable   0 of inf
      InAuth:  6002/6002
         Aor:  6002                                               1
+ Endpoint:  sipp                                                 Unavailable   0 of inf
+        Aor:  sipp                                               1
+   Identify:  sipp-identify/sipp
+        Match: 172.30.0.0/24
  Endpoint:  webrtc-1000                                          Unavailable   0 of inf
      InAuth:  webrtc-1000/webrtc-1000
         Aor:  webrtc-1000                                        1
 Objects found: 4
 ```
 
-यहाँ `Unavailable` का सीधा सा मतलब है कि उन endpoints पर वर्तमान में कोई फ़ोन पंजीकृत नहीं है (लैब में कोई लाइव क्लाइंट नहीं है) — एक बार जब कोई सॉफ्टफ़ोन पंजीकृत हो जाता है और `qualify` इसकी पुष्टि करता है, तो स्थिति संपर्क को पहुँच योग्य के रूप में दिखाती है। साथी कमांड: `pjsip show contacts` (वर्तमान पंजीकरण और राउंड-ट्रिप समय), `pjsip show transports`, और एक AOR के लिए `pjsip show aor <name>`। ये दिन-प्रतिदिन के "एक्सटेंशन X तक क्यों नहीं पहुँचा जा सकता?" उपकरण हैं।
+`Unavailable` यहाँ केवल यह दर्शाता है कि उन एंडपॉइंट्स पर वर्तमान में कोई फ़ोन पंजीकृत नहीं है (प्रयोगशाला में कोई लाइव क्लाइंट नहीं है) — एक सॉफ़्टफ़ोन पंजीकृत होने पर और `qualify` इसकी पुष्टि करने पर, स्थिति संपर्क को पहुँच योग्य दिखाती है। सहायक कमांड: `pjsip show contacts` (वर्तमान पंजीकरण और राउंड‑ट्रिप टाइम), `pjsip show transports`, और `pjsip show aor <name>` एक AOR के लिए। ये दैनिक उपयोग के “एक्सटेंशन X क्यों नहीं पहुँच रहा?” उपकरण हैं।
 
 ### CDR और CEL
 
-हर कॉल एक **Call Detail Record** (CDR) छोड़ती है; **Channel Event Logging** (CEL) प्रति-चैनल बारीक ईवेंट जोड़ता है। पुष्टि करें कि CDR सक्रिय है और कौन सा बैकएंड इसे स्टोर करता है:
+हर कॉल एक **Call Detail Record** (CDR) छोड़ती है; **Channel Event Logging** (CEL) अधिक सूक्ष्म प्रति‑चैनल घटनाएँ जोड़ता है। पुष्टि करें कि CDR सक्रिय है और कौन‑सा बैकएंड इसे संग्रहीत करता है:
 
 ```
 *CLI> cdr show status
@@ -276,20 +376,38 @@ Call Detail Record (CDR) settings
     (none)
 ```
 
-लैब पंजीकृत बैकएंड के अंतर्गत `(none)` दिखाती है क्योंकि न्यूनतम लैब कॉन्फ़िग कोई CDR स्टोरेज मॉड्यूल लोड नहीं करती है — इसलिए रिकॉर्ड की गणना की जाती है लेकिन कहीं भी लिखी नहीं जाती है। प्रोडक्शन में आप एक बैकएंड लोड करते हैं (CSV, या MySQL/PostgreSQL में `cdr_odbc`/`cdr_adaptive_odbc`) और वह आपका बिलिंग और इतिहास स्रोत बन जाता है। CEL **डिफ़ॉल्ट रूप से अक्षम** है (`cel show status` ` reports `CEL Logging: Disabled ` in the lab) and you enable it in `cel.conf) केवल तभी जब आपको ईवेंट-स्तरीय विवरण की आवश्यकता हो। दोनों को *Asterisk Call Detail Records* में गहराई से कवर किया गया है; निगरानी के लिए, बिंदु यह है कि CDR/CEL आपका *ऐतिहासिक* रिकॉर्ड है, जहाँ CLI आपका *लाइव* दृश्य है।
+The lab shows `(none)` under registered backends because the minimal lab config loads
+no CDR storage module — so records are computed but written nowhere. In production you
+load a backend (CSV, or `cdr_odbc`/`cdr_adaptive_odbc` into MySQL/PostgreSQL) and that
+becomes your billing and history source. CEL is **disabled by default** (`cel show
+status` reports `CEL Logging: Disabled` in the lab) and you enable it in `cel.conf` only
+when you need event-level detail. Both are covered in depth in *Asterisk Call Detail
+Records*; for monitoring, the point is that CDR/CEL are your *historical* record, where
+the CLI is your *live* view.
 
-### AMI और ARI ईवेंट
+### AMI और ARI इवेंट्स
 
-प्रोग्रामेटिक, रीयल-टाइम निगरानी के लिए आप CLI को पोल करने के बजाय ईवेंट का एक पुश फ़ीड चाहते हैं:
+प्रोग्रामेटिक, रीयल‑टाइम मॉनिटरिंग के लिए आप इवेंट्स का पुश फ़ीड चाहते हैं न कि
+CLI को पोल करना:
 
-- **AMI (Asterisk Manager Interface)** लंबे समय से चला आ रहा TCP ईवेंट/कमांड प्रोटोकॉल है (`manager.conf`)। सब्सक्राइब करें और आपको कॉल होने पर `Newchannel`, `Hangup`, `DialBegin`, `BridgeEnter`, `PeerStatus` और इसी तरह के ईवेंट प्राप्त होते हैं — वॉलबोर्ड और कॉल-अकाउंटिंग टूल की रीढ़। लैब में AMI डिफ़ॉल्ट रूप से अक्षम है (`manager show settings` `Manager (AMI): No` रिपोर्ट करता है); आप इसे `manager.conf` में सक्षम और लॉक करते हैं।
-- **ARI (Asterisk REST Interface)** आधुनिक HTTP + WebSocket इंटरफ़ेस है (`ari.conf`, इन-बिल्ट HTTP सर्वर द्वारा परोसा जाता है)। यह एक JSON ईवेंट स्ट्रीम और बारीक कॉल नियंत्रण देता है — नए एकीकरण के लिए सही विकल्प।
+- **AMI (Asterisk Manager Interface)** एक पुराना TCP इवेंट/कमांड प्रोटोकॉल है
+  (`manager.conf`). सब्सक्राइब करें और आपको `Newchannel`, `Hangup`, `DialBegin`,
+  `BridgeEnter`, `PeerStatus` और इसी तरह के इवेंट्स कॉल होने पर मिलते हैं — वॉलबोर्ड
+  और कॉल‑अकाउंटिंग टूल्स की रीढ़। लैब में AMI डिफ़ॉल्ट रूप से डिसेबल है (`manager show settings`
+  reports `Manager (AMI): No`); आप इसे `manager.conf` में एनेबल और लॉक कर सकते हैं।
+- **ARI (Asterisk REST Interface)** एक आधुनिक HTTP + WebSocket इंटरफ़ेस है
+  (`ari.conf`, बिल्ट‑इन HTTP सर्वर द्वारा सर्व किया जाता है). यह JSON इवेंट स्ट्रीम और
+  फाइन‑ग्रेन कॉल कंट्रोल प्रदान करता है — नई इंटीग्रेशन्स के लिए सही विकल्प।
 
-दोनों का विवरण *Extending Asterisk with AMI and AGI* और *The Asterisk REST Interface (ARI)* में दिया गया है। परिनियोजन-प्रासंगिक चेतावनी: **AMI और ARI शक्तिशाली हैं और इन्हें कभी भी इंटरनेट पर उजागर नहीं किया जाना चाहिए।** HTTP सर्वर को लोकलहोस्ट या प्रबंधन नेटवर्क पर बाइंड करें, मजबूत अद्वितीय रहस्यों का उपयोग करें, और पोर्ट को फ़ायरवॉल करें — *Asterisk Security* देखें।
+दोनों को *Extending Asterisk with AMI and AGI* और *The Asterisk REST
+Interface (ARI)* में विस्तृत रूप से बताया गया है। डिप्लॉयमेंट‑संबंधी
+चेतावनी: **AMI और ARI बहुत शक्तिशाली हैं और इन्हें कभी भी इंटरनेट पर एक्सपोज़ नहीं करना चाहिए।** HTTP सर्वर को localhost या मैनेजमेंट नेटवर्क पर बाइंड करें, मजबूत और यूनिक सीक्रेट्स का उपयोग करें, और पोर्ट्स को फ़ायरवॉल करें — देखें *Asterisk Security*।
 
 ### मेट्रिक्स: Prometheus और Grafana
 
-डैशबोर्ड और अलर्टिंग के लिए, Asterisk 22 एक Prometheus एक्सपोर्टर, **`res_prometheus.so`** (एक मॉड्यूल जिसे *विस्तारित* समर्थन स्तर प्राप्त है), शिप करता है, जो एक HTTP एंडपॉइंट पर मेट्रिक्स उजागर करता है जिसे एक Prometheus सर्वर स्क्रैप करता है। कोर प्रक्रिया मेट्रिक्स के साथ यह चैनल, कॉल, endpoints, ब्रिज और PJSIP आउटबाउंड पंजीकरण को कवर करने वाले प्लगेबल प्रदाता शिप करता है:
+डैशबोर्ड और अलर्टिंग के लिए, Asterisk 22 एक Prometheus एक्सपोर्टर के साथ आता है,
+**`res_prometheus.so`** (एक मॉड्यूल जिसमें *विस्तारित* सपोर्ट लेवल है), जो एक HTTP एंडपॉइंट पर मेट्रिक्स एक्सपोज़ करता है जिसे एक Prometheus सर्वर स्क्रैप करता है। कोर प्रोसेस मेट्रिक्स के साथ यह चैनल्स, कॉल्स, एंडपॉइंट्स, ब्रिजेज और PJSIP
+आउटबाउंड रजिस्ट्रेशन्स को कवर करने वाले प्लगेबल प्रोवाइडर्स भी शिप करता है:
 
 ```
 # core process
@@ -315,7 +433,7 @@ asterisk_bridges_channels_count
 asterisk_pjsip_outbound_registration_status
 ```
 
-आप पुष्टि कर सकते हैं कि मॉड्यूल लैब बिल्ड में मौजूद है:
+आप लैब बिल्ड में मॉड्यूल की उपस्थिति की पुष्टि कर सकते हैं:
 
 ```
 *CLI> module show like prometheus
@@ -323,49 +441,96 @@ Module                         Description                     Use Count  Status
 res_prometheus.so              Asterisk Prometheus Module      0          Not Running  extended
 ```
 
-यह `Not Running` दिखाता है क्योंकि लैब इसे कॉन्फ़िगर या लोड नहीं करती है; इसे सक्षम करना (`prometheus.conf` प्लस HTTP सर्वर) Asterisk को एक Prometheus लक्ष्य में बदल देता है। Prometheus को स्क्रैप एंडपॉइंट पर और Grafana को Prometheus पर पॉइंट करें, और आपको टाइम-सीरीज़ डैशबोर्ड (समवर्ती कॉल, पंजीकरण, ASR/ACD रुझान) और अलर्टिंग (जैसे "सक्रिय कॉल शून्य पर गिर गई" या "पंजीकरण विफलताएं बढ़ रही हैं") मिलते हैं। उन टीमों के लिए जो पहले से ही Prometheus/Grafana चला रही हैं, यह CLI आउटपुट को पार्स करने के बजाय Asterisk को मौजूदा अवलोकनीयता में शामिल करने का स्वाभाविक तरीका है।
+It shows `Not Running` because the lab does not configure or load it; enabling it (`prometheus.conf` plus the HTTP server) turns Asterisk into a Prometheus target. Point Prometheus at the scrape endpoint and Grafana at Prometheus, and you get time-series dashboards (concurrent calls, registrations, ASR/ACD trends) and alerting (e.g. "active calls dropped to zero" or "registration failures spiking"). For teams already running Prometheus/Grafana this is the natural way to fold Asterisk into existing observability, rather than parsing CLI output.
 
-### SIP रिस्पॉन्स कोड जिन पर नज़र रखना उचित है
+### SIP प्रतिक्रिया कोड जो देखना चाहिए
 
-पाइपलाइन चाहे जो भी हो, कुछ SIP परिणाम परेशानी का संकेत देते हैं और उन पर अलर्ट करना उचित है: निरंतर `401`/`407` चुनौती विफलताएं या `403 Forbidden` एक ब्रूट-फोर्स या गलत कॉन्फ़िगर किए गए क्रेडेंशियल स्टॉर्म का सुझाव देते हैं (*Asterisk Security* में Fail2Ban को क्रॉस-रेफरेंस करें); `503 Service Unavailable` एक ओवरलोडेड या कंजस्टेड सर्वर या ट्रंक की ओर इशारा करता है; और `408 Request Timeout`/`480 Temporarily Unavailable` में स्पाइक का मतलब आमतौर पर है कि endpoints पहुँच योग्य नहीं रह गए हैं (NAT टाइमआउट, योग्यता विफलताएं)।
+Whatever the pipeline, a few SIP results signal trouble and are worth alerting on: sustained `401`/`407` challenge failures or `403 Forbidden` suggest a brute-force or misconfigured-credential storm (cross-reference Fail2Ban in *Asterisk Security*); `503 Service Unavailable` points at an overloaded or congested server or trunk; and a spike in `408 Request Timeout`/`480 Temporarily Unavailable` usually means endpoints have gone unreachable (NAT timeout, qualify failures).
 
-## उच्च उपलब्धता और स्केलिंग
+## High availability and scaling
 
-एक Asterisk सर्वर विफलता का एक एकल बिंदु है और इसकी एक सीमित कॉल क्षमता है। दो समस्याएं — *जीवित रहना* और *बड़ा होना* — के अलग-अलग उत्तर हैं।
+One Asterisk server is a single point of failure and has a finite call ceiling. The two
+problems — *staying up* and *getting bigger* — have different answers.
 
-### फ्लोटिंग IP के साथ एक्टिव/स्टैंडबाय
+### Active/standby with a floating IP
 
-Asterisk के लिए क्लासिक, अच्छी तरह से चला हुआ HA पैटर्न **एक्टिव/स्टैंडबाय** है (एक्टिव/एक्टिव नहीं — Asterisk में कॉल स्थिति को लाइव साझा करना कठिन है)। दो समान सर्वर, एक एक्टिव, एक स्टैंडबाय, **keepalived** (VRRP) या **Pacemaker/Corosync** जैसे क्लस्टर प्रबंधक द्वारा प्रबंधित एक **फ्लोटिंग (वर्चुअल) IP** साझा करते हैं। फ़ोन और ट्रंक फ्लोटिंग IP पर पंजीकृत होते हैं, न कि किसी वास्तविक होस्ट पर। यदि एक्टिव नोड अपनी स्वास्थ्य जांच में विफल रहता है, तो फ्लोटिंग IP स्टैंडबाय पर चला जाता है, जो कार्यभार संभाल लेता है।
+The classic, well-trodden HA pattern for Asterisk is **active/standby** (not
+active/active — call state in Asterisk is hard to share live). Two identical servers,
+one active, one standby, share a **floating (virtual) IP** managed by a cluster manager
+such as **keepalived** (VRRP) or **Pacemaker/Corosync**. Phones and trunks register to
+the floating IP, not to either real host. If the active node fails its health check, the
+floating IP moves to the standby, which takes over.
 
-ईमानदार चेतावनी: एक IP फ़ेलओवर **प्रगति में चल रही कॉल को ड्रॉप कर देता है** — Asterisk नोड्स के बीच लाइव चैनल स्थिति को रेप्लिकेट नहीं करता है, इसलिए कॉल के बीच में किसी को भी फिर से डायल करना होगा। पंजीकरण एक योग्यता/पंजीकरण चक्र के भीतर फिर से स्थापित हो जाते हैं। फ़ेलओवर आपको यह देता है कि *सेवा* बिना मानवीय हस्तक्षेप के सेकंडों में ठीक हो जाती है, जो अधिकांश PBX के लिए बिल्कुल लक्ष्य है। स्टैंडबाय को वास्तव में कार्यभार संभालने में सक्षम बनाने के लिए, दोनों नोड्स को समान कॉन्फ़िगरेशन (आपका git'd `/etc/asterisk`, समान रूप से तैनात) और समान *स्थिति* की आवश्यकता होती है — जो अगला बिंदु है।
+The honest caveat: an IP failover **drops calls in progress** — Asterisk does not
+replicate live channel state between nodes, so anyone mid-call must redial. Registrations
+re‑establish within a qualify/registration cycle. What failover buys you is that the
+*service* recovers in seconds without manual intervention, which for most PBXs is exactly
+the goal. To make the standby genuinely able to take over, both nodes need the same
+configuration (your git'd `/etc/asterisk`, deployed identically) and the same *state* —
+which is the next point.
 
-### PJSIP Realtime के साथ स्थिति को बाहरी बनाना
+### Externalize state with PJSIP Realtime
 
-एक्टिव/स्टैंडबाय केवल तभी काम करता है जब स्टैंडबाय को एक्टिव नोड के समान endpoints और पंजीकरण के बारे में पता हो। इसे प्राप्त करने का तरीका यह है कि **एक बॉक्स पर सपाट फ़ाइलों में स्थिति रखना बंद करें** और इसे एक साझा डेटाबेस में ले जाएं जिसे दोनों नोड्स पढ़ते हैं। **PJSIP Realtime** (डेटाबेस द्वारा समर्थित Sorcery) बिल्कुल यही करता है: endpoints, AORs, auths — और, महत्वपूर्ण रूप से, **पंजीकरण** (`ps_contacts` तालिका) — `pjsip.conf` और स्थानीय मेमोरी के बजाय MySQL/PostgreSQL में रहते हैं। दोनों Asterisk नोड्स एक ही डेटाबेस पर पॉइंट करते हैं, इसलिए एक नोड के माध्यम से पंजीकृत फ़ोन दूसरे के लिए दृश्यमान होता है। इसे *Asterisk Real-Time* (PJSIP Realtime / Sorcery अनुभाग) में कवर किया गया है; यहाँ परिनियोजन बिंदु यह है कि **स्थिति को बाहरी बनाना HA और हॉरिजॉन्टल स्केलिंग दोनों के लिए पूर्वापेक्षा है** — इसके बिना, प्रत्येक नोड एक द्वीप है।
+Active/standby only works if the standby knows about the same endpoints and
+registrations as the active node. The way to achieve that is to **stop keeping state in
+flat files on one box** and move it to a shared database both nodes read. **PJSIP
+Realtime** (Sorcery backed by a database) does exactly this: endpoints, AORs, auths —
+and, importantly, **registrations** (the `ps_contacts` table) — live in MySQL/PostgreSQL
+instead of `pjsip.conf` and local memory. Both Asterisk nodes point at the same database,
+so a phone registered through one node is visible to the other. This is covered in
+*Asterisk Real-Time* (the PJSIP Realtime / Sorcery section); here the deployment point is
+that **externalizing state is the prerequisite for both HA and horizontal scaling** —
+without it, each node is an island.
 
-यही तर्क अपनी स्थिति के बाकी हिस्सों पर लागू करें: CDR/CEL को एक साझा SQL स्टोर में, वॉइसमेल को साझा/रेप्लिकेटेड स्टोरेज (या `ODBC_STORAGE`) पर, और उन astdb कुंजियों को जिन पर आप निर्भर हैं, एक डेटाबेस में। एक बार स्थिति बाहरी हो जाने के बाद, Asterisk नोड्स विनिमेय फ्रंट-एंड के करीब हो जाते हैं।
+Apply the same logic to the rest of your state: CDR/CEL into a shared SQL store, voicemail
+on shared/replicated storage (or `ODBC_STORAGE`), and the astdb keys you depend on into a
+database. Once state is external, the Asterisk nodes become closer to interchangeable
+front‑ends.
 
-### सामने SIP प्रॉक्सी (OpenSIPS)
+### SIP proxies in front (OpenSIPS)
 
-एक सर्वर की क्षमता से *परे* स्केल करने के लिए आप Asterisk मीडिया सर्वर के पूल के सामने एक **SIP प्रॉक्सी/लोड बैलेंसर** रखते हैं। **OpenSIPS** एक उद्देश्य-निर्मित, बहुत उच्च-थ्रूपुट SIP प्रॉक्सी है (वे सैकड़ों हजारों पंजीकरण संभालते हैं और मीडिया को छुए बिना सिग्नलिंग को रूट करते हैं)। प्रॉक्सी दुनिया के सामने एक एकल SIP पता प्रस्तुत करता है, पंजीकरण/स्थान सेवा बनाए रखता है, और Asterisk बैक-एंड्स में कॉल वितरित करता है। यह पृथक्करण — पंजीकरण और रूटिंग करने वाला एक हल्का प्रॉक्सी टियर, वास्तविक कॉल प्रोसेसिंग (IVR, कतारें, सम्मेलन, ट्रांसकोडिंग) करने वाला एक हॉरिजॉन्टली-स्केलेबल Asterisk टियर — यही है कि कैसे बड़े परिनियोजन एक बॉक्स से आगे बढ़ते हैं। (SipPulse प्लेटफ़ॉर्म स्वयं इसी कारण से अपने मीडिया/एप्लिकेशन सर्वर के सामने OpenSIPS का उपयोग करता है।)
+To scale *beyond* one server's capacity you put a **SIP proxy/load balancer** in front of
+a pool of Asterisk media servers. **OpenSIPS** is a purpose‑built, very
+high‑throughput SIP proxy (they handle hundreds of thousands of registrations and route
+signaling without touching media). The proxy presents a single SIP address to the world,
+maintains the registration/location service, and distributes calls across the Asterisk
+back‑ends. This separation — a lightweight proxy tier doing registration and routing, a
+horizontally‑scalable Asterisk tier doing the actual call processing (IVR, queues,
+conferences, transcoding) — is how large deployments grow past a single box. (The SipPulse
+platform itself uses OpenSIPS in front of its media/application servers for exactly this
+reason.)
 
-### मीडिया स्केलिंग
+### Media scaling
 
-प्रॉक्सी *सिग्नलिंग* को सस्ते में वितरित करता है; **मीडिया महंगा संसाधन है**। RTP रिलेइंग, और विशेष रूप से कोडेक्स के बीच ट्रांसकोडिंग (जैसे Opus ↔ G.711) या बड़े सम्मेलन चलाना, CPU-बाउंड है और यही वास्तव में सर्वर को कैप करता है। रणनीतियाँ:
+The proxy distributes *signaling* cheaply; **media is the expensive resource**. RTP
+relaying, and especially transcoding between codecs (e.g. Opus ↔ G.711) or running large
+conferences, is CPU‑bound and is what actually caps a server. Strategies:
 
-- जहाँ भी संभव हो **ट्रांसकोडिंग से बचें** — एक सामान्य कोडेक को एंड-टू-एंड नेगोशिएट करें ताकि Asterisk ट्रांसकोडिंग के बजाय मूल रूप से (पास-थ्रू) ब्रिज करे। यह मीडिया-क्षमता की सबसे बड़ी जीत है।
-- प्रॉक्सी के पीछे Asterisk नोड्स जोड़कर **मीडिया को हॉरिजॉन्टली स्केल करें**; प्रत्येक समवर्ती कॉल का एक हिस्सा ले जाता है।
-- **ब्राउज़र मीडिया को एक समर्पित WebRTC गेटवे (जैसे Janus) पर ऑफलोड करें** ताकि PBX हर ब्राउज़र के DTLS-SRTP स्ट्रीम को समाप्त और रिले न कर रहा हो — *WebRTC with Asterisk* देखें, जो बिल्कुल इस Asterisk-प्लस-गेटवे विभाजन पर चर्चा करता है।
+- **Avoid transcoding** wherever possible — negotiate a common codec end‑to‑end so
+  Asterisk bridges natively (pass‑through) instead of transcoding. This is the single
+  biggest media‑capacity win.
+- **Scale media horizontally** by adding Asterisk nodes behind the proxy; each carries a
+  share of the concurrent calls.
+- **Offload browser media** to a dedicated WebRTC gateway (e.g. Janus) so the PBX is not
+  also terminating and relaying every browser's DTLS‑SRTP stream — see *WebRTC with
+  Asterisk*, which discusses exactly this Asterisk‑plus‑gateway split.
 
-क्षमता का आकार **समवर्ती कॉल और ट्रांसकोडिंग लोड** द्वारा निर्धारित करें, पंजीकृत उपयोगकर्ताओं द्वारा नहीं — 10,000 पंजीकृत फ़ोन जो ज्यादातर निष्क्रिय हैं, 200 समवर्ती ट्रांसकोडेड सम्मेलनों की तुलना में बहुत सस्ते हैं।
+Size capacity by **concurrent calls and transcoding load**, not by registered users —
+10,000 registered phones that are mostly idle are far cheaper than 200 simultaneous
+transcoded conferences.
 
-## क्लाउड होस्टिंग
+## Cloud hosting
 
-क्लाउड VM (AWS, GCP, Azure, एक VPS) पर Asterisk चलाना सामान्य है और अच्छी तरह से काम करता है, लेकिन क्लाउड नेटवर्क **डिफ़ॉल्ट रूप से NAT'd और फ़ायरवॉल है**, जो SIP के साथ संघर्ष करता है। निम्नलिखित परिनियोजन-विशिष्ट चिंताएं हैं।
+Running Asterisk on a cloud VM (AWS, GCP, Azure, a VPS) is common and works well, but the
+cloud network is **NAT'd and firewalled by default**, which fights with SIP. The
+following are the deployment-specific concerns.
 
-### NAT और SDP
+### NAT and the SDP
 
-क्लाउड VM में लगभग हमेशा अपने NIC पर एक **निजी** IP और एक अलग **सार्वजनिक** IP होता है जिसे प्रदाता उस पर NAT करता है। यदि Asterisk SDP में निजी IP का विज्ञापन करता है, तो रिमोट फ़ोन RTP को एक ब्लैक होल में भेजते हैं — क्लासिक एकतरफा/कोई-ऑडियो लक्षण। PJSIP को ट्रांसपोर्ट पर उसकी सार्वजनिक पहचान बताएं:
+A cloud VM almost always has a **private** IP on its NIC and a separate **public** IP that
+the provider NATs to it. If Asterisk advertises the private IP in SDP, remote phones send
+RTP into a black hole — the classic one-way/no-audio symptom. Tell PJSIP its public
+identity on the transport:
 
 ```
 [transport-udp]
@@ -377,11 +542,18 @@ external_signaling_address=203.0.113.10
 local_net=10.0.0.0/8                     ; your private/VPC range(s)
 ```
 
-`external_*` Asterisk को उस पते को फिर से लिखने के लिए मजबूर करते हैं जिसका वह सार्वजनिक साथियों को विज्ञापन करता है, जबकि `local_net` उसे बताता है कि कौन से साथी स्थानीय हैं (और उन्हें फिर से नहीं लिखा जाना चाहिए)। यह वही NAT हैंडलिंग है जिस पर ऊपर ब्रिज्ड Docker नेटवर्किंग के लिए चर्चा की गई थी — एक क्लाउड VM, वास्तव में, NAT के पीछे है।
+`external_*` make Asterisk rewrite the address it advertises to public peers, while
+`local_net` tells it which peers are local (and should *not* be rewritten). This is the
+same NAT handling discussed for bridged Docker networking above — a cloud VM is, in
+effect, behind NAT.
 
-### फ़ायरवॉल और RTP रेंज
+### Firewall and the RTP range
 
-क्लाउड VM पर आमतौर पर दो फ़ायरवॉल लागू होते हैं: **प्रदाता का** सुरक्षा समूह / नेटवर्क ACL, और **होस्ट का** iptables। दोनों को समान पोर्ट खोलने चाहिए, और नीति सुरक्षा अध्याय वाली है। सहेजा गया 1st-edition रूल्सेट (`docs/legacy-labs/configs/Lab7/rules.v4`) आकार को कैप्चर करता है — SIP और RTP रेंज को स्वीकार करें, स्थापित/संबंधित को स्वीकार करें, बाकी को ड्रॉप करें:
+Two firewalls usually apply on a cloud VM: the **provider's** security group / network
+ACL, and the **host's** iptables. Both must open the same ports, and the policy is the
+one from the Security chapter. The salvaged 1st-edition ruleset
+(`docs/legacy-labs/configs/Lab7/rules.v4`) captures the shape — accept SIP and the RTP
+range, accept established/related, drop the rest:
 
 ```
 -A INPUT -p udp -m udp --dport 5060 -j ACCEPT
@@ -391,68 +563,83 @@ local_net=10.0.0.0/8                     ; your private/VPC range(s)
 -A INPUT -j DROP
 ```
 
-दो सुधार जो सुरक्षा अध्याय यहाँ मायने रखता है: यदि आप SIP/TLS चलाते हैं तो **TCP पर 5061** खोलें (UDP पर नहीं), और याद रखें कि आपके फ़ायरवॉल में RTP UDP रेंज `rtp.conf` में `rtpstart`/`rtpend` से बिल्कुल मेल खानी चाहिए — वही रेंज जिसे आप कंटेनर पर प्रकाशित करते हैं। यहाँ iptables/Fail2Ban बिल्ड को डुप्लिकेट न करें; ***Asterisk Security* के फ़ायरवॉल, Fail2Ban और TLS/SRTP अनुभागों का पालन करें** (Fail2Ban उस `security` लॉगर चैनल को देखता है जिसे लैब पहले से ही `logger.conf` में सक्षम करती है) और उस नीति को होस्ट फ़ायरवॉल और क्लाउड सुरक्षा समूह *दोनों* में लागू करें।
+Two corrections the Security chapter makes that matter here: open **5061 on TCP** (not
+UDP) if you run SIP/TLS, and remember that the RTP UDP range in your firewall must match
+`rtpstart`/`rtpend` in `rtp.conf` exactly — the same range you publish on a container.
+Do not duplicate the iptables/Fail2Ban build here; **follow the firewall, Fail2Ban and
+TLS/SRTP sections of *Asterisk Security*** (Fail2Ban watches the `security` logger channel
+that the lab already enables in `logger.conf`) and apply that policy in *both* the host
+firewall and the cloud security group.
 
-### लेटेंसी, क्षेत्र और SBC
+### Latency, region and the SBC
 
-- **अपने उपयोगकर्ताओं के करीब एक क्षेत्र चुनें।** आवाज़ लेटेंसी-संवेदनशील है — ~150 ms से ऊपर की एकतरफा माउथ-टू-ईयर लेटेंसी ध्यान देने योग्य है। VM को अपने अधिकांश फ़ोन और ट्रंक के निकटतम क्षेत्र में होस्ट करें; महाद्वीप-पार मीडिया स्पष्ट रूप से खराब है।
-- **किसी भी इंटरनेट-फेसिंग परिनियोजन के लिए सामने एक SBC रखें।** एक **Session Border Controller** किनारे पर SIP/RTP को समाप्त करता है, आपके टोपोलॉजी को छुपाता है, NAT को सामान्य करता है, और Asterisk तक पहुंचने से पहले DoS और स्कैनिंग ट्रैफ़िक को अवशोषित करता है। सुरक्षा अध्याय की मुख्य सिफारिश — *कच्चे Asterisk को इंटरनेट पर उजागर न करें* — क्लाउड में दोगुनी लागू होती है, जहाँ आपके VM का सार्वजनिक IP ऊपर आने के कुछ ही मिनटों के भीतर स्कैन किया जा रहा है। एक SBC (या कम से कम OpenSIPS जैसा एक हार्डन SIP प्रॉक्सी प्लस Fail2Ban) मानक किनारा है।
+- **Choose a region close to your users.** Voice is latency-sensitive — one-way mouth-to-ear
+  latency above ~150 ms is noticeable. Host the VM in the region nearest the bulk of your
+  phones and trunks; cross-continent media is audibly worse.
+- **Put an SBC in front for any internet-facing deployment.** A **Session Border
+  Controller** terminates SIP/RTP at the edge, hides your topology, normalizes NAT, and
+  absorbs DoS and scanning traffic before it reaches Asterisk. The Security chapter's core
+  recommendation — *do not expose raw Asterisk to the internet* — applies doubly in the
+  cloud, where your VM's public IP is being scanned within minutes of coming up. An SBC (or
+  at minimum a hardened SIP proxy like OpenSIPS plus Fail2Ban) is the standard
+  edge.
 
-## सारांश
+## Summary
 
-परिनियोजन वह जगह है जहाँ एक कार्यशील dialplan एक भरोसेमंद सेवा बन जाता है। VM पर, Asterisk को **non-root** उपयोगकर्ता के रूप में **systemd** के अंतर्गत चलाएं, यूनिट के `Restart=` को इसे जीवित रखने दें (safe_asterisk अप्रचलित है) और कॉन्फ़िग परिवर्तनों के लिए `systemctl restart` के बजाय `core reload` का उपयोग करें। Docker के साथ **कंटेनराइज़ करना** — जैसा कि पुस्तक की लैब करती है — आपको एक git'd `/etc/asterisk` से **bind-mounted** कॉन्फ़िग के साथ एक अपरिवर्तनीय, पिन की गई इमेज देता है; समस्या मीडिया की है, इसलिए या तो **होस्ट नेटवर्किंग** का उपयोग करें या एक RTP पोर्ट रेंज प्रकाशित करें जो **`rtp.conf` से बिल्कुल मेल खाती हो**, और स्पूल/वॉइसमेल/astdb के लिए **पर्सिस्टेंट वॉल्यूम** माउंट करें ताकि स्थिति रीडिप्लॉय के बाद जीवित रहे। कॉन्फ़िग को कोड के रूप में मानें और उस **स्थिति का बैकअप लें** जिसे कॉन्फ़िग कैप्चर नहीं करता: वॉइसमेल, रिकॉर्डिंग, `astdb.sqlite3`, और CDR/CEL। सिस्टम को चार स्तरों पर **अवलोकन** करें — लाइव दृश्य के लिए CLI (`core show channels`, `pjsip show endpoints`), इतिहास के लिए **CDR/CEL**, प्रोग्रामेटिक ईवेंट के लिए **AMI/ARI**, और डैशबोर्ड और अलर्ट के लिए Grafana में **`res_prometheus`** एक्सपोर्टर — जबकि AMI/ARI को सार्वजनिक इंटरनेट से दूर रखें। **जीवित रहने के लिए**, **फ्लोटिंग IP** के साथ एक्टिव/स्टैंडबाय चलाएं (यह स्वीकार करते हुए कि फ़ेलओवर लाइव कॉल को ड्रॉप कर देता है); **बढ़ने के लिए**, **PJSIP Realtime** के साथ स्थिति को बाहरी बनाएं, **OpenSIPS** के साथ मीडिया सर्वर के पूल को सामने रखें, और ट्रांसकोडिंग को कम करें क्योंकि **मीडिया — पंजीकरण नहीं — वह है जो सर्वर को कैप करता है**। अंत में, **क्लाउड** में, VM को NAT के पीछे मानें (`external_media_address`, `local_net`), होस्ट और प्रदाता सुरक्षा समूह दोनों में सुरक्षा अध्याय के अनुसार फ़ायरवॉल खोलें, कम-लेटेंसी वाला क्षेत्र चुनें, और कभी भी कच्चे Asterisk को उजागर न करें — किनारे पर एक **SBC** रखें।
+Deployment वह जगह है जहाँ एक कार्यशील dialplan एक भरोसेमंद सेवा बन जाता है। एक VM पर, **systemd** के तहत Asterisk को **non-root** उपयोगकर्ता के रूप में चलाएँ, जिससे unit का `Restart=` इसे जीवित रखे (safe_asterisk अब पुराना है) और कॉन्फ़िगरेशन बदलावों के लिए `systemctl restart` की बजाय `core reload` का उपयोग करें। **Containerizing** Docker के साथ — जैसा कि पुस्तक के लैब में किया गया है — आपको एक अपरिवर्तनीय, पिन किया हुआ इमेज देता है जिसमें कॉन्फ़िग **bind-mounted** git‑ड किए हुए `/etc/asterisk` से आता है; यहाँ मुख्य बात मीडिया है, इसलिए या तो **host networking** उपयोग करें या एक RTP पोर्ट रेंज प्रकाशित करें जो **सटीक रूप से `rtp.conf`** से मेल खाती हो, और **persistent volumes** को spool/voicemail/astdb के लिए माउंट करें ताकि स्थिति पुनः‑डिप्लॉय पर बनी रहे। कॉन्फ़िग को कोड की तरह मानें और **state** का बैक‑अप लें क्योंकि कॉन्फ़िग में नहीं पकड़ा जाता: voicemail, recordings, `astdb.sqlite3`, और CDR/CEL। **Observe** सिस्टम को चार स्तरों पर देखें — CLI (`core show channels`, `pjsip show endpoints`) के लिए लाइव व्यू, इतिहास के लिए **CDR/CEL**, प्रोग्रामेटिक इवेंट्स के लिए **AMI/ARI**, और Grafana के लिए **`res_prometheus`** एक्सपोर्टर डैशबोर्ड और अलर्ट के साथ — जबकि AMI/ARI को सार्वजनिक इंटरनेट से दूर रखें। **stay up** रहने के लिए, **floating IP** के साथ active/standby चलाएँ (यह स्वीकार करते हुए कि फेलओवर लाइव कॉल्स को ड्रॉप कर देगा); **grow** करने के लिए, state को **PJSIP Realtime** के साथ बाहरी बनाएँ, मीडिया सर्वरों के पूल को **OpenSIPS** के साथ फ्रंट करें, और ट्रांसकोडिंग को न्यूनतम रखें क्योंकि **media — not registrations — is what caps a server**। अंत में, **cloud** में, VM को NAT के पीछे मानें (`external_media_address`, `local_net`), दोनों होस्ट और प्रोवाइडर सुरक्षा समूह में Security अध्याय के अनुसार फ़ायरवॉल खोलें, कम‑लेटेंसी वाला रीजन चुनें, और कभी भी कच्चा Asterisk उजागर न करें — एज पर एक **SBC** रखें।
 
-## प्रश्नोत्तरी
+## Quiz
 
-1. systemd होस्ट पर, क्रैश हुए Asterisk को रीस्टार्ट करने के पुराने `safe_asterisk` रैपर के काम की जगह क्या लेता है?
-   - A. एक cron जॉब
-   - B. यूनिट फ़ाइल का `Restart=` निर्देश
+1. On a systemd host, what replaces the old `safe_asterisk` wrapper's job of restarting a
+   crashed Asterisk?
+   - A. A cron job
+   - B. The unit file's `Restart=` directive
    - C. `systemctl enable`
-   - D. astdb
-2. कॉल ड्रॉप किए बिना चल रहे Asterisk में कॉन्फ़िगरेशन परिवर्तन लागू करने के लिए, आपको चाहिए:
+   - D. The astdb
+2. To apply a configuration change to a running Asterisk **without dropping calls**, you should:
    - A. `systemctl restart asterisk`
-   - B. सर्वर को रीबूट करें
+   - B. Reboot the server
    - C. `asterisk -rx 'core reload'`
-   - D. कंटेनर इमेज को फिर से बनाएं
-3. एक कंटेनराइज़्ड (ब्रिज्ड-नेटवर्क) Asterisk कॉल कनेक्ट करता है लेकिन **कोई ऑडियो नहीं** है। सबसे संभावित कारण है:
-   - A. dialplan गलत है
-   - B. प्रकाशित RTP UDP पोर्ट रेंज `rtp.conf` में `rtpstart`/`rtpend` से मेल नहीं खाती है
-   - C. CDR अक्षम है
-   - D. CLI पहुँच योग्य नहीं है
-4. कौन सी निर्देशिकाएं **पर्सिस्टेंट वॉल्यूम** के रूप में माउंट की जानी चाहिए ताकि कंटेनर रीडिप्लॉय स्थिति न खोए? (सभी लागू चेक करें)
-   - A. `/var/spool/asterisk` (वॉइसमेल, रिकॉर्डिंग)
+   - D. Rebuild the container image
+3. A containerized (bridged-network) Asterisk connects calls but has **no audio**. The most likely cause is:
+   - A. The dialplan is wrong
+   - B. The published RTP UDP port range does not match `rtpstart`/`rtpend` in `rtp.conf`
+   - C. CDR is disabled
+   - D. The CLI is unreachable
+4. Which directories must be mounted as **persistent volumes** so a container redeploy does not lose state? (check all that apply)
+   - A. `/var/spool/asterisk` (voicemail, recordings)
    - B. `/var/lib/asterisk` (astdb)
-   - C. `/etc/asterisk` (पहले से होस्ट से बाइंड-माउंटेड)
+   - C. `/etc/asterisk` (already bind-mounted from the host)
    - D. `/usr/sbin`
-5. कौन सा CLI कमांड सक्रिय कॉल की लाइव संख्या देता है?
+5. Which CLI command gives the live count of active calls?
    - A. `cdr show status`
    - B. `core show channels`
    - C. `pjsip show transports`
    - D. `module show like prometheus`
-6. Asterisk 22 में, Prometheus/Grafana स्टैक के लिए कॉल/चैनल मेट्रिक्स को उजागर करने का समर्थित तरीका है:
-   - A. `full` लॉग फ़ाइल को पार्स करना
-   - B. `res_prometheus.so` मॉड्यूल
-   - C. AGI स्क्रिप्ट्स
-   - D. कोई नहीं है
-7. कई Asterisk नोड्स में HA फ़ेलओवर और हॉरिजॉन्टल स्केलिंग दोनों के लिए पूर्वापेक्षा क्या है?
-   - A. रूट के रूप में चलना
-   - B. स्थिति को बाहरी बनाना (जैसे साझा डेटाबेस में PJSIP Realtime पंजीकरण)
-   - C. CDR को अक्षम करना
-   - D. ब्रिज्ड नेटवर्किंग का उपयोग करना
-8. कौन सा संसाधन सबसे सीधे तौर पर कैप करता है कि एक Asterisk सर्वर कितनी समवर्ती कॉल संभाल सकता है?
-   - A. पंजीकृत उपयोगकर्ताओं की संख्या
-   - B. मीडिया प्रोसेसिंग, विशेष रूप से ट्रांसकोडिंग
-   - C. `/etc/asterisk` का आकार
-   - D. CDR बैकएंड
-9. क्लाउड VM पर, कौन सी `pjsip.conf` ट्रांसपोर्ट सेटिंग्स Asterisk को अपने सार्वजनिक पते का विज्ञापन करने के लिए बनाती हैं ताकि रिमोट ऑडियो काम करे? (सभी लागू चेक करें)
+6. In Asterisk 22, the supported way to expose call/channel metrics to a Prometheus/Grafana stack is:
+   - A. Parsing the `full` log file
+   - B. The `res_prometheus.so` module
+   - C. AGI scripts
+   - D. There is none
+7. What is the prerequisite for both HA failover and horizontal scaling across multiple Asterisk nodes?
+   - A. Running as root
+   - B. Externalizing state (e.g. PJSIP Realtime registrations in a shared database)
+   - C. Disabling CDR
+   - D. Using bridged networking
+8. Which resource most directly caps how many simultaneous calls one Asterisk server can handle?
+   - A. The number of registered users
+   - B. Media processing, especially transcoding
+   - C. The size of `/etc/asterisk`
+   - D. The CDR backend
+9. On a cloud VM, which `pjsip.conf` transport settings make Asterisk advertise its public address so remote audio works? (check all that apply)
    - A. `external_media_address`
    - B. `external_signaling_address`
    - C. `local_net`
    - D. `qualify_frequency`
-10. इंटरनेट-फेसिंग क्लाउड परिनियोजन के लिए, सुरक्षा अध्याय का मुख्य नियम है:
-    - A. हमेशा दो NIC चलाएं
-    - B. कच्चे Asterisk को कभी भी इंटरनेट पर उजागर न करें; किनारे पर एक SBC (या हार्डन प्रॉक्सी + Fail2Ban) रखें
-    - C. केवल UDP का उपयोग करें
-    - D. TLS को अक्षम करें
+10. For an internet-facing cloud deployment, the Security chapter's core rule is:
+    - A. Always run two NICs
+    - B. Never expose raw Asterisk to the internet; put an SBC (or hardened proxy + Fail2Ban) at the edge
+    - C. Use UDP only
+    - D. Disable TLS
 
-**उत्तर:** 1 — B · 2 — C · 3 — B · 4 — A, B · 5 — B · 6 — B · 7 — B · 8 — B · 9 — A, B, C · 10 — B
+**Answers:** 1 — B · 2 — C · 3 — B · 4 — A, B · 5 — B · 6 — B · 7 — B · 8 — B · 9 — A, B, C · 10 — B
