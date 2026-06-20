@@ -632,7 +632,6 @@ noload => res_pjsip_pubsub.so
 noload => res_pjsip_session.so
 noload => chan_pjsip.so
 noload => res_pjsip_exten_state.so
-noload => res_pjsip_log_forwarder.so
 ```
 
 ### Console commands
