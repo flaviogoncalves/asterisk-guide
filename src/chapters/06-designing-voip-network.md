@@ -219,7 +219,16 @@ With one trunk for every five extensions:
 
 ### Erlang B method
 
-1.a Number of VoIP simultaneous calls Sometimes, simplification is not the best approach. When you have previous data, you can adopt a more scientific approach. We will use the work of Agner Karup Erlang (Copenhagen Telephone Company, 1909), who developed a formula to calculate lines in a trunk group between two cities. Erlang is a traffic measurement unit usually found in telecom. It is used to describe the volume of traffic for one hour. For example: 20 calls occur in an hour, averaging 5 minutes of conversation each. You can calculate the number of Erlangs as shown below: Traffic minutes in the hour: 20 x 5 = 100 minutes Hour of traffic inside one hour: 100/60 = 1.66 Erlangs You can determine these measures from a call logger and use it to design your network to calculate the number of lines required. Once the number of lines is known, it is possible to calculate the bandwidth requirements. Erlang B is the most commonly used method for calculating the number of lines in a trunk group. It assumes that calls arrive randomly (Poisson distribution) while blocked calls are immediately cleared. This method requires that you know the Busy Hour Traffic (BHT), which you can obtain from a call logger or by the following simplification: BHT=17% of the call minutes of one day.
+When you have historical data, you can size the trunk more scientifically instead of simplifying. We will use the work of Agner Karup Erlang (Copenhagen Telephone Company, 1909), who developed a formula to calculate the number of lines in a trunk group between two cities.
+
+An **Erlang** is a traffic-measurement unit common in telecom; it describes the volume of traffic during one hour. For example, suppose 20 calls occur in an hour, averaging 5 minutes of conversation each:
+
+- Traffic minutes in the hour: 20 × 5 = 100 minutes
+- Hours of traffic within one hour: 100 / 60 = **1.66 Erlangs**
+
+You can read these measures from a call logger and use them to design your network and calculate the number of lines required. Once the number of lines is known, you can calculate the bandwidth requirements.
+
+**Erlang B** is the most commonly used method for calculating the number of lines in a trunk group. It assumes that calls arrive randomly (a Poisson distribution) and that blocked calls are immediately cleared. It requires that you know the **Busy Hour Traffic (BHT)**, which you can obtain from a call logger or estimate as a simplification: BHT = 17% of the call minutes of one day.
 
 ![Erlang B calculator results: 5 Erlangs at 1% blocking requires 11 lines (headquarters to branch #1), and 2.83 Erlangs at 1% blocking requires 8 lines (headquarters to branch #2).](../images/06-voip-network-fig07.png)
 
