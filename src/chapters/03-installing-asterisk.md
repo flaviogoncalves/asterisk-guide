@@ -1,6 +1,6 @@
 # Installing Asterisk 22
 
-In the first chapter, we learned a bit about how Asterisk is useful in the telephony environment. In this chapter, we will cover how to download and install Asterisk. Before starting, it is essential to learn how to compile and install it. The compilation process may seem weird for traditional Microsoft™ Windows™ users, but it is fairly common in the Linux™ environment. One can get an optimized code for your hardware when compiling Asterisk, which is what we will do here. Asterisk runs in several operating systems, but we chose to keep things easy and start with only one of them: Linux. We chose Debian as the Linux™ distribution because the dependencies are easy to install and the distribution is stable, with a low footprint. If you want to use another distribution, please change the name of the dependencies accordingly.
+In the first chapter, we learned a bit about how Asterisk is useful in the telephony environment. In this chapter, we will cover how to download and install Asterisk. Before starting, it is essential to learn how to compile and install it. The compilation process may seem weird for traditional Microsoft™ Windows™ users, but it is fairly common in the Linux™ environment. One can get an optimized code for your hardware when compiling Asterisk, which is what we will do here. Asterisk runs on several operating systems, but we will keep things easy and use only one: Linux. We use **Ubuntu 24.04 LTS** because its dependencies are easy to install and it is a stable, well-supported server distribution with a low footprint. If you prefer another distribution, adjust the package names accordingly.
 
 This edition targets **Asterisk 22 LTS** (released 2024-10-16; full support through 2028-10-16, security fixes through 2029-10-16). Asterisk 22 is the current long-term support release. Note that Digium was acquired by **Sangoma** in 2018, and Asterisk is now sponsored by Sangoma — references to "Digium" throughout this chapter refer to the legacy brand for historical hardware.
 
@@ -24,7 +24,7 @@ Asterisk does not need a lot of hardware to run, however there are some tips to 
 - Echo cancellation. Echo cancellation may take a lot of CPU/FPU, in some cases you should choose hardware echo cancellation using DSPs in the telephony interface card
 - Availability. Use RAID1 or 5 to increase availability. Remember, Asterisk is 24x7 application.
 
-The main component for an Asterisk Server is the network adapter. A good server network adapter is recommended. CPU is important when you need to support high complexity codecs such as g.729 and iLBC and echo cancellation. You may choose to use dedicated DSPs, Sangoma (formerly Digium) provides a DSP card named TC400B capable to support 120 g729 simultaneous calls.
+The main component for an Asterisk Server is the network adapter. A good server network adapter is recommended. CPU is important when you need to support high complexity codecs such as g.729 and iLBC and echo cancellation. You may choose to offload this to dedicated DSPs: Sangoma (formerly Digium) provides a DSP card named TC400B capable of supporting 120 G.729 simultaneous calls.
 
 The best practice is to choose a new, server class, computer from a known manufacturer. To know exactly how many simultaneous calls or how many registered users a specific machine can support, you should test this hardware with a stress test tool such as SIPP (http://sipp.sourceforge.net). Some hardware manufacturers such as Xorcom (http://www.xorcom.com) publish its results in the website.
 
@@ -32,36 +32,16 @@ Note: Some Asterisk applications, such as ConfBridge and music on hold, need an 
 
 ### Hardware configuration
 
-The Asterisk hardware does not need to be sophisticated. You don't need an expensive video card or numerous peripherals. Some tips about hardware configuration;
+The Asterisk hardware does not need to be sophisticated. You don't need an expensive video card or numerous peripherals. Some tips about hardware configuration:
 
 - Disable unused USB, serial and parallel ports to avoid the consumption of unnecessary interrupts.
 - A robust network interface card is essential.
 - Take particular care if you are using telephony interface cards. Some cards use a 3.3 volts PCI bus, and it is not easy to find motherboards for them. In these days, PCI express is more easily found.
 - Pay a close attention to the hard disk, PBX used to work in a 24x7 regime while desktops work 8x5. Do not use desktop hardware for a PBX, usually the hard disk fails before the first year. My recommendation is to use a server machine or an appliance designed to run 24x7 applications.
 
-### IRQ sharing
+### IRQ sharing (legacy PCI cards only)
 
-Telephony interface cards (e.g., X100P) generate large quantities of interruptions. Serving these interruptions requires processor time. The drivers can't do this processing if you have another device using the same interruption. In a single CPU system, you should avoid IRQ sharing between devices. We recommend the use of dedicated hardware to run Asterisk. Don't forget to disable any foreign or unnecessary hardware. Some hardware can be disabled in the motherboard bios setup. Once you have started your computer, see your assigned interrupts in /proc/interrupts.
-
-```
-#cat /proc/interrupts
-CPU0
-0: 41353058 XT-PIC timer
-1: 1988 XT-PIC keyboard
-2: 0 XT-PIC cascade
-3: 413437739 XT-PIC wctdm <-- TDM400
-4: 5721494 XT-PIC eth0
-7: 413453581 XT-PIC wcfxo <-- X100P
-8: 1 XT-PIC rtc
-9: 413445182 XT-PIC wcfxo <-- X100P
-12: 0 XT-PIC PS/2 Mouse
-14: 179578 XT-PIC ide0
-15: 3 XT-PIC ide1
-NMI: 0
-ERR: 0
-```
-
-Here you can see three Digium cards, each in their own IRQ. If this is the case in your system, go ahead and install the hardware drivers. If this is not the case, go back and try something else to avoid IRQ sharing.
+This concern applies **only** if you install physical PCI/PCI-Express telephony cards (DAHDI hardware). Such cards generate large numbers of interrupts, and on older single-CPU systems, sharing an IRQ line with another device could starve the driver and degrade voice quality. If you use telephony cards, dedicate the machine to Asterisk, disable any unused on-board devices in the BIOS, and check the assigned interrupts with `cat /proc/interrupts`. Modern multi-core servers using MSI/MSI-X interrupts make IRQ sharing a non-issue in practice, and a pure-VoIP deployment (no cards) need not worry about it at all.
 
 ## Choosing a Linux distribution
 
@@ -73,11 +53,11 @@ https://releases.ubuntu.com/24.04/
 
 ### Preparing Linux for Asterisk
 
-Immediately after installing Asterisk, we will install the packages required for the subsequent compilation of Asterisk and DAHDI drivers. First, we will indicate to Debian where the packages will be downloaded from. This is done by using the apt-setup utility. Step 1: Install Ubuntu 24.04 LTS Server in a virtual machine (use the 64-bit image; the distributions used in this book are 64-bit, though Asterisk itself still supports 32-bit x86). We have used VirtualBox for this training. You may download the image from https://releases.ubuntu.com/24.04 The Linux installation is out of the scope of this training. Linux basic knowledge is prerequisite for this training.
+Before compiling Asterisk you need a working Linux system with the build packages installed. Install **Ubuntu 24.04 LTS Server** in a virtual machine or on a dedicated box (use the 64-bit image; everything in this book is 64-bit, though Asterisk itself still supports 32-bit x86). We used VirtualBox for this training; you can download the image from <https://releases.ubuntu.com/24.04>. Installing Linux itself is out of the scope of this book — basic Linux knowledge is a prerequisite. With Linux installed, you will add the Asterisk build dependencies (see *Installing dependencies* below) and then compile Asterisk.
 
 ## Installing Linux for Asterisk
 
-Install your Linux as usual, without a graphical user interface. Install and configure the email server as well. We will need the email server (exim4) to send voicemail notifications later in this book. Caution: This installation will format your PC. All your disk data will be erased. Please make sure to back up all data before starting. Step 1: Put the CD in the CD-ROM drive and boot your PC. Most questions are very simple to answer.
+Install Linux as usual, without a graphical desktop. During installation, also enable a mail transfer agent (we use **exim4**) — Asterisk will need it to send voicemail-to-email notifications later in this book. **Caution:** installing an operating system erases the target disk. If you install on physical hardware, back up your data first; installing into a virtual machine leaves your host untouched. Boot the installer from the Ubuntu Server ISO (or the VM's virtual optical drive) and answer the prompts — most are straightforward.
 
 ## Installing dependencies
 
@@ -230,13 +210,13 @@ After making your selections, choose **Save & Exit** and continue with `make`.
 With this minimal configuration, it’s possible to start Asterisk successfully. For learning and debugging, you can start Asterisk in the foreground attached to the console:
 
 ```
-/usr/sbin/asterisk –vvvgc
+/usr/sbin/asterisk -vvvgc
 ```
 
-Use the CLI command stop now to shutdown Asterisk.
+Use the CLI command `core stop now` to shut down Asterisk:
 
 ```
-CLI>core stop now
+*CLI> core stop now
 ```
 
 ### Starting Asterisk with systemd
@@ -271,7 +251,7 @@ You can access the Asterisk console by executing the following command. Please n
 
 ### Available runtime options for Asterisk
 
-You can show the available runtime options using asterisk –h
+You can show the available runtime options using `asterisk -h`
 
 ```text
 sipast:/usr/src/asterisk-22.x.y# asterisk -h
