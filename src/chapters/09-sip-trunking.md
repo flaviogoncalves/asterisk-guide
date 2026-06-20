@@ -246,9 +246,12 @@ permit=203.0.113.10
 permit=203.0.113.11
 ```
 
-Reference it from the global section (`acl=itsp-acl` in `[global]`/`type=global`)
-or apply per-transport. The principle is the same one from the SIP chapter: deny
-everything, then permit only what you trust. And whatever your trunk context does,
+A `type=acl` section needs no reference: `res_pjsip_acl` applies every such
+object to *all* inbound SIP traffic before it reaches any endpoint. (The `acl`
+and `contact_acl` options on the object pull named rule lists from `acl.conf`
+instead of listing `permit`/`deny` inline as above.) The principle is the same
+one from the SIP chapter: deny everything, then permit only what you trust. And
+whatever your trunk context does,
 **never let it reach a context that can dial back out to the PSTN** without a
 deliberate, authenticated rule — that is the classic toll-fraud hole.
 
