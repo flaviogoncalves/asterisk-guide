@@ -220,7 +220,7 @@ PJSIP was a ground-up redesign of how Asterisk speaks SIP, and it is worth under
 
 The channel supports many features, some deserve mention here
 
-- Multiple registrations:. You may use more than one phone connected to the same Address of Record. In other words, you can connect two phones to the same endpoint.
+- Multiple registrations: You may use more than one phone connected to the same Address of Record. In other words, you can connect two phones to the same endpoint.
 - Friendly Application Program Interface (API). The API is modular and easy to extend, built from many small cooperating modules rather than one large block of code.
 - Multiple transports: You can listen to multiple addresses, ports and transports when using PJSIP. You are not limited to a single bind address for all your devices. PJSIP is very flexible.
 
@@ -296,7 +296,7 @@ This section is responsible for inbound and outbound authentication. The documen
 ```
 [softphone]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=softphone
 password=#supersecret#
 ```
@@ -358,14 +358,17 @@ The graphic above means:
 
 #### Relationships:
 
-- ENDPOINT/AOR many to many
-- ENDPOINT/AUTH Zero to Many to Zero to One
-- ENDPOINT/IDENTIFY Zero to Many to One
-- ENDPOINT/AUTH Zero to Many to One
-- ENDPOINT/TRANSPORT Zero to Many to at least one
-- REGISTRATION/AUTH Zero to many to zero to one
-- REGISTRATION/TRANSPOPRT Zero to many to at least one
-- AOR/CONTACT many to many ACL, DOMAIN_ALIAS don’t have relationship configurations
+| Objects | Cardinality |
+| --- | --- |
+| ENDPOINT / AOR | many to many |
+| ENDPOINT / AUTH | zero to many, to zero to one |
+| ENDPOINT / IDENTIFY | zero to one |
+| ENDPOINT / TRANSPORT | zero to many, to at least one |
+| REGISTRATION / AUTH | zero to many, to zero to one |
+| REGISTRATION / TRANSPORT | zero to many, to at least one |
+| AOR / CONTACT | many to many |
+
+ACL and DOMAIN_ALIAS don’t have a direct configuration relationship to the other objects.
 
 ### Configuring a Softphone
 
@@ -386,7 +389,7 @@ aors=softphone
 auth=softphone
 [softphone]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=softphone
 password=#supersecret#
 [softphone]
@@ -415,7 +418,7 @@ type=aor
 contact=sip:sip.flagonc.com:5600
 [siptrunk]
 type=auth
-auth_type=userpass
+auth_type=digest
 username=1020
 password=supersecret
 [siptrunk]
@@ -576,7 +579,7 @@ exten=>6000,1,Dial(PJSIP/6000,20,tT)
 A useful feature is the possibility to dial all contacts registered to an AOR at once. The function PJSIP_DIAL_CONTACTS will be translated to the list of contacts to dial.
 
 ```
-exten=>6000,dial(${PJSIP_DIAL_CONTACTS(6000)},20,tT)
+exten=>6000,1,Dial(${PJSIP_DIAL_CONTACTS(6000)},20,tT)
 ```
 
 To dial a trunk is slightly different. Assume the trunk won’t be registered to your platform or don’t have and IP address associated with your AOR address of record. You can specify the address of the trunk directly in the line. Using an international dial as the example.
@@ -588,7 +591,7 @@ exten=>9011.,1,Dial(PJSIP/siptrunk/sip:${EXTEN:1}@sip.flagonc.com)
 If you prefer to specify the address of the trunk in the AOR section, you may also use.
 
 ```
-exten=>9011.,Dial(PJSIP/${EXTEN:1}@siptrunk
+exten=>9011.,1,Dial(PJSIP/${EXTEN:1}@siptrunk)
 ```
 
 ### PJSIP configuration wizard
