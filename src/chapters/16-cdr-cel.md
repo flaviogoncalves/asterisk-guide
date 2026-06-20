@@ -124,10 +124,10 @@ extended
 6 modules loaded
 ```
 
-If you see the screenshot above, at least cdr_adaptive_odbc, cdr_csv, cdr_custom, cdr_manager, cdr_odbc and cdr_sqlite3_custom are running. In the latest years after some astricons it become clear for me the Asterisk team was favoring ODBC. It is the only driver supporting connection pooling. Connection pooling is a great advantage in terms of performance because you don’t have to open a new connection for every operation. This chapter was previously written using cdr_mysql. I have moved to cdr_adaptive_odbc for this edition even knowing that it is a little more complex to setup. The choice for cdr_adaptive_odbc also allows us to customize the CDR. You may simply set a new CDR variable in the dialplan and add the column to the database. Set(CDR(jitter)=
+If you see the screenshot above, at least cdr_adaptive_odbc, cdr_csv, cdr_custom, cdr_manager, cdr_odbc and cdr_sqlite3_custom are running. In the latest years after some astricons it become clear for me the Asterisk team was favoring ODBC. It is the only driver supporting connection pooling. Connection pooling is a great advantage in terms of performance because you don’t have to open a new connection for every operation. This chapter was previously written using cdr_mysql. I have moved to cdr_adaptive_odbc for this edition even knowing that it is a little more complex to setup. The choice for cdr_adaptive_odbc also allows us to customize the CDR. You may simply set a new CDR variable in the dialplan and add the matching column to the database. For example, to record the audio jitter:
 
 ```
-${RTPAUDIOQOSJITTER}).
+Set(CDR(jitter)=${RTPAUDIOQOSJITTER})
 ```
 
 ### CSV Storage
@@ -238,7 +238,7 @@ pre-connect => yes
 Step 2 – Restart Asterisk and test using
 
 ```
-CLI>odbc show
+asterisk*CLI> odbc show
 ```
 
 The output is shown below.
@@ -265,15 +265,15 @@ Here `connection` points to the `[cdr]` connection section defined in `res_odbc.
 Step 4 – Reload the module cdr_adaptive_odbc.so:
 
 ```
-asterisk*CLI>reload cdr_adaptive_odbc
+asterisk*CLI> reload cdr_adaptive_odbc
 ```
 
 Step 5 – Make same calls and check the database fro new records. To check the database:
 
 ```
-mysql –u root –p
+mysql -u root -p
 >use astdb
->select * from cdr
+>select * from cdr;
 ```
 
 ## Applications and functions
@@ -353,7 +353,7 @@ The old `j` option (jump to priority n+101 on failure) and the `+101` priority c
 To insert the password in a DB key from the console:
 
 ```
-CLI> database put senha 123456 1
+asterisk*CLI> database put senha 123456 1
 ```
 
 ## Using passwords from voicemail
