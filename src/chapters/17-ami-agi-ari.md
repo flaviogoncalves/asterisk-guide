@@ -365,26 +365,36 @@ AGI is a gateway interface to Asterisk similar to CGI used by web servers. It al
 - Normal AGI, which calls a program inside Asterisk’s box.
 - Fast AGI, which calls an AGI in another server using TCP sockets.
 - EAGI, which enables sound channel access and control from the AGI.
-- DEADAGI, which gives access to the channel even after hangup(). Usually called in the ‘h’ extension.
+- DeadAGI, which gives access to the channel even after hangup(). Usually called in the ‘h’ extension. Note that in Asterisk 22 the `DeadAGI` application is deprecated — the regular `AGI` application detects a hung-up channel and runs the script in "dead" mode automatically, so new dialplans should just call `AGI()` instead.
 
 Application format:
 
 ```
 asterisk*CLI> core show application AGI
-  -= Info about application 'AGI' =-
+  -= Info about Application 'AGI' =-
 [Synopsis]
-Executes an AGI compliant application
+Executes an AGI compliant application.
 [Description]
-  [E|Dead]AGI(command|args): Executes an Asterisk Gateway Interface compliant
-program on a channel. AGI allows Asterisk to launch external programs
-written in any language to control a telephony channel, play audio,
-read DTMF digits, etc. by communicating with the AGI protocol on stdin
-and stdout.
-Returns -1 on hangup (except for DeadAGI) or if application requested
- hangup, or 0 on non-hangup exit.
-Using 'EAGI' provides enhanced AGI, with incoming audio available out of band
-on file descriptor 3
-Use the CLI command 'agi show' to list available agi commands
+Executes an Asterisk Gateway Interface compliant program on a channel. AGI
+allows Asterisk to launch external programs written in any language to control
+a telephony channel, play audio, read DTMF digits, etc. by communicating with
+the AGI protocol.
+The following variants of AGI exist, and are chosen based on the value passed
+to <command>:
+    AGI - The classic variant of AGI, this will launch the script specified by
+    <command> as a new process. Communication with the script occurs on 'stdin'
+    and 'stdout'.
+    FastAGI - Connect Asterisk to a FastAGI server using a TCP connection. The
+    URI to the FastAGI server should be given in the form
+    '[scheme]://host.domain[:port][/script/name]', where <scheme> is either
+    'agi' or 'hagi'.
+    AsyncAGI - Use AMI to control the channel in AGI. AsyncAGI should be invoked
+    by passing 'agi:async' to the <command> parameter.
+This application sets the channel variable ${AGISTATUS} on completion, one of:
+SUCCESS, FAILURE, NOTFOUND, HANGUP.
+[Syntax]
+AGI(command[,arg1[,arg2[,...]]])
+Use the CLI command 'agi show commands' to list available agi commands
 ```
 
 You can show the available AGI commands using the command `agi show commands` (output below is representative; Asterisk 22 adds a few additional commands):
@@ -600,7 +610,7 @@ exit is possible
 
 ### DeadAGI
 
-DeadAGI is used when you do not have a live channel. Usually you execute the DeadAGI in the ´h´ extension.
+DeadAGI is used when you do not have a live channel. Usually you execute the DeadAGI in the ´h´ extension. In Asterisk 22 the `DeadAGI` application is deprecated and may be removed in a future release; the standard `AGI` application now handles hung-up ("dead") channels automatically, so prefer `AGI()` in new dialplans.
 
 ### FASTAGI
 
