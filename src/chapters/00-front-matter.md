@@ -14,7 +14,9 @@ for brief excerpts used in published reviews.
 
 **Edition:** Second Edition.
 
-> **[author TODO]** Assign a new 2nd-edition ISBN (do not reuse 1st-ed 9781796396973) and set the publication date before print.
+A free ISBN is assigned by Amazon KDP at publication and will be printed here and on
+the copyright page. (The first-edition ISBN 9781796396973 is not reused for this
+second edition.)
 
 Many of the designations used by manufacturers and sellers to distinguish their
 products are claimed as trademarks. Where those designations appear in this book, and

@@ -654,9 +654,7 @@ Step 1: TE205P installation. Before installing TE205P, it is important to unders
 
 ![A Sangoma/Digium TE205P dual-span E1/T1 card: the two RJ45 ports accept the digital trunks, and an on-board jumper (the E1/T1/J1 selector) sets the line standard.](../images/10-legacy-fig10.png)
 
-```
-Step 2: /etc/dahdi/system.conf configuration file
-```
+Step 2: `/etc/dahdi/system.conf` configuration file.
 
 The configuration of TDM digital cards is a bit different from the configuration of their analog counterparts. First, we will need to configure the board spans and then the channels. Spans are numbered sequentially depending on the recognizing order of the cards. In other words, if you have more than one interface card, it is hard to know what span belongs to each one. Use dahdi_hardware to check which hardware is installed on each span. Example #1 (2xT1 PRI)
 
@@ -1396,8 +1394,9 @@ cd /usr/src/asterisk
 
 Note: Do not execute “make samples” to avoid overwriting your configuration files.
 
+Step 4: Changing the file `/etc/dahdi/system.conf`:
+
 ```
-Step 4: Changing the file /etc/dahdi/system.conf:
 vim /etc/dahdi/system.conf
 ```
 
@@ -1904,7 +1903,7 @@ inkeys=freeworlddialup
 [2003]
 type=friend
 context=default
-secret=senha
+secret=mysecret
 host=dynamic
 ```
 
@@ -1927,7 +1926,7 @@ In the commands described above, we disabled all codecs and enabled just ulaw. I
 [2003]
 type=friend
 context=default
-secret=senha
+secret=mysecret
 host=dynamic
 ```
 
@@ -2281,7 +2280,7 @@ host=dynamic
 callerid='2201'
 ```
 
-Step 8: Configure the extensions.conf file in the Branch server
+Step 5: Configure the extensions.conf file in the Branch server
 
 ```
  [default]
@@ -2812,7 +2811,7 @@ SIP presence is partially implemented in Asterisk. Asterisk supports requests su
 - callcounter=yes: Enable call counters in the device.
 - busylevel=1: Threshold for the number of calls for considering the device as busy.
 
-For example: Step 1: Testing SIP presence with Asterisk is not that hard. First, let’s configure the files sip.conf and extensions.conf.
+Step 1: Testing SIP presence with Asterisk is not that hard. First, let’s configure the files sip.conf and extensions.conf.
 
 In the file sip.conf
 
@@ -2833,7 +2832,7 @@ type=friend
 host=dynamic
 context=default
 dtmfmode=rfc2833
-secret=senha
+secret=mysecret
 callcounter=yes
 busylevel=1
 [2001]
@@ -2841,10 +2840,14 @@ type=friend
 host=dynamic
 context=default
 dtmfmode=rfc2833
-secret=senha
+secret=mysecret
 callcounter=yes
 busylevel=1
+```
+
 In the file extensions.conf
+
+```
 [default]
 exten=2000,hint,SIP/2000
 exten=2001,hint,SIP/2001
@@ -3107,7 +3110,7 @@ context=default
 dtmfmode=rfc2833
 disallow=all
 allow=ulaw
-secret=senha
+secret=mysecret
 ```
 
 becomes the following in `pjsip.conf` on Asterisk 22:
@@ -3127,7 +3130,7 @@ aors=2000
 type=auth
 auth_type=userpass
 username=2000
-password=senha
+password=mysecret
 
 [2000]
 type=aor

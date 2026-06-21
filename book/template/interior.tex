@@ -13,6 +13,14 @@
 \setlength{\emergencystretch}{3em}
 \sloppy
 
+% Widen the table-of-contents page-number column so multi-digit page numbers
+% do not overflow the right margin (fixes KDP "text outside the margins" on
+% the Sum\'ario / Contents pages, which span several pages).
+\makeatletter
+\renewcommand{\@pnumwidth}{3em}
+\renewcommand{\@tocrmarg}{3.8em}
+\makeatother
+
 \usepackage{xcolor}
 \definecolor{brand}{HTML}{1C5D99}     % restrained brand blue
 \definecolor{brandink}{HTML}{14304A}  % near-black ink for headings
