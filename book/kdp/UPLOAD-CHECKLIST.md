@@ -137,3 +137,27 @@ in Part 1. The machine-readable copy of this metadata lives in
   professional polish item for a later revision.
 - **Cover spine.** Must be regenerated once the final page count is known (steps 1–2) —
   the count could not be locked in this pass without the TeX toolchain.
+
+---
+
+## ✅ FINAL STATE (auto-finalized by the workforce)
+
+- **Page count locked: 415pp** (from the June-20 interior build `asterisk-guide.pdf`, 7.5×9.25 trim).
+- **Cover regenerated to match** — spine 0.9346″. Files: `book/kdp/asterisk-guide-cover.png` + `.pdf`.
+- **Ready-to-upload package assembled at:** `~/Downloads/asterisk-guide-KDP-upload/`
+  - `asterisk-guide-interior-415pp.pdf` (interior)
+  - `asterisk-guide-cover.pdf` / `.png` (wraparound, 415pp spine)
+  - `listing-metadata.yaml` (description, 7 keywords, 2 BISAC, prices, bio)
+
+**Your remaining steps (KDP has no API — this part is yours):**
+1. KDP → Create → Paperback. Title/subtitle/edition/author/English. Choose the **free KDP ISBN**.
+2. Paste description / keywords / categories / bio from `listing-metadata.yaml`. Price **$49.99**.
+3. Upload `asterisk-guide-interior-415pp.pdf` + `asterisk-guide-cover.pdf`. Confirm 7.5×9.25, white, B&W, no-bleed.
+4. Preview in KDP Print Previewer, order a proof, publish.
+5. Kindle eBook: upload the EPUB, price **$9.99**, publish.
+
+**NOTE:** the interior in the package is the June-20 415pp build. If it predates the ch10 QA
+fixes on this branch (PR #1), the printed book won't include them. They're minor (legacy-chapter
+formatting + a few Portuguese words). To include them you must rebuild the interior (needs
+`xelatex`, not installed on this mini) and re-check the page count. Otherwise the package is
+upload-ready as-is.

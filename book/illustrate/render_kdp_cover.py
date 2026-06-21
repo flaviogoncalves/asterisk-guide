@@ -11,7 +11,7 @@ import os, math
 DPI = 300
 TRIM_W, TRIM_H = 7.5, 9.25
 BLEED = 0.125
-PAGES = 389
+PAGES = 415
 SPINE_FACTOR = 0.002252          # white paper, black ink
 SPINE = PAGES * SPINE_FACTOR     # inches
 
