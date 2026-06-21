@@ -1,0 +1,71 @@
+# Amazon KDP listing metadata — Asterisk Guide, 2nd Edition (Asterisk 22 LTS)
+# This is the STORE-LISTING metadata you paste into the KDP dashboard. It is NOT a build
+# input (the pandoc build reads book/metadata.yaml). KDP has no publishing API, so these
+# fields are entered by hand at upload — see book/kdp/UPLOAD-CHECKLIST.md for the exact steps.
+---
+title: "Asterisk Guide"
+subtitle: "Building an IP PBX with Asterisk 22 LTS"
+edition: "Second Edition"
+author: "Flavio E. Gonçalves"
+language: "English"
+
+# ISBN — choose the FREE KDP-assigned ISBN at upload (no purchase required). KDP assigns it
+# to the paperback; the Kindle eBook uses its ASIN. Do not reuse the 1st-ed ISBN 9781796396973.
+isbn: "KDP-assigned (free) — selected at upload"
+
+# Prices (decided)
+price_print_usd: 49.99      # paperback list price
+price_kindle_usd: 9.99      # Kindle eBook list price
+
+# Paperback trim (matches the interior build in book/metadata.yaml)
+trim: "7.5 x 9.25 in"
+paper: "white"
+interior: "black & white"
+
+# BISAC subject categories (max 3 on KDP; these two are primary).
+# COM043000 — Computers > Networking > General (VoIP/SIP telephony networking)
+# COM046000 — Computers > Operating Systems > Linux (Asterisk runs on Linux; CLI/config focus)
+bisac:
+  - code: "COM043000"
+    label: "COMPUTERS / Networking / General"
+  - code: "COM046000"
+    label: "COMPUTERS / Operating Systems / Linux"
+
+# 7 keywords / keyword phrases (KDP allows up to 7 boxes).
+keywords:
+  - "Asterisk 22"
+  - "PJSIP"
+  - "VoIP PBX"
+  - "SIP trunking"
+  - "IP telephony"
+  - "WebRTC Asterisk"
+  - "open source telephony"
+
+description: |
+  The only Asterisk book written for the Asterisk you actually run today. Every other
+  guide on the shelf teaches chan_sip — a module that no longer exists. This second
+  edition is rebuilt from the ground up for Asterisk 22 LTS, where PJSIP is the one and
+  only SIP channel, and every configuration and command in the book was verified against
+  a reproducible Asterisk 22 Docker lab. If an example is in here, it ran.
+
+  Starting from a clean Linux box, you will install Asterisk, build a working PJSIP PBX,
+  and grow it into a real system: SIP and PJSIP internals, WebRTC browser phones over
+  WSS/DTLS-SRTP, SIP trunking with DIDs and the PSTN, a complete dialplan, queues and
+  call-center features, voicemail, conferencing with ConfBridge, CDR/CEL accounting,
+  AMI/AGI/ARI integration, PJSIP Realtime, hardening against toll fraud, and deployment,
+  monitoring and scaling for production.
+
+  Written by Flavio E. Gonçalves — Asterisk dCAP, CEO of SipPulse, and author of several
+  telephony titles — with end-of-chapter quizzes and a companion hands-on course and labs
+  at VoIP School Blackbelt. Whether you are new to Asterisk or migrating an aging
+  chan_sip system to PJSIP, this is the current, lab-proven reference for Asterisk 22.
+
+author_bio: |
+  Flavio E. Gonçalves is the CEO of SipPulse in Brazil, a company dedicated to
+  softswitches, session border controllers, and multitenant PBXs. He holds the Asterisk
+  dCAP certification (passed on the first attempt) along with a long list of others over
+  his career — Novell MCNE/MCNI, Microsoft MCSE/MCT, and Cisco CCSP/CCNP/CCDP — and has
+  drawn on more than 25 years of teaching experience to write for how people actually
+  learn. He is the author of several telephony books, including titles on OpenSER and
+  OpenSIPS. Flavio lives in Florianópolis, Brazil, where he spends his free time surfing
+  and sailing.
