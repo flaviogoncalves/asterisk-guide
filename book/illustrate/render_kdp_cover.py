@@ -20,6 +20,7 @@ bl, tw, th, sp = px(BLEED), px(TRIM_W), px(TRIM_H), px(SPINE)
 W = 2*bl + tw + sp + tw
 H = 2*bl + th
 BRAND = (28, 93, 153); INK = (20, 48, 74); MUTED = (90, 100, 112); LIGHT = (210, 222, 235)
+ACCENT = (232, 119, 34)   # Asterisk orange
 
 def font(paths, s):
     for p in paths:
@@ -40,19 +41,23 @@ d.rectangle([spine_x0, 0, spine_x0 + sp, H], fill=BRAND)
 
 # ---------------- FRONT panel ----------------
 fcx = front_x0 + tw//2
-# eyebrow + asterisk on the band
+# eyebrow + hero node-graph on the band
 fe = font(SANSB, px(0.16)); d.text((front_x0 + px(0.6), bl + px(0.5)), "A S T E R I S K   2 2   L T S", font=fe, fill=(180,205,230))
-cx, cy, r, tk = fcx, band_h - px(1.0), px(0.85), px(0.17)
+# hero motif: node-graph (central node + radiating SIP/PBX links), clean & solid white,
+# with an Asterisk-orange core. Single hero mark on the front band (compass-star removed).
+cx, cy = fcx, band_h - px(0.95)
+spoke, sat, hub = px(0.95), px(0.11), px(0.21)
 for k in range(6):
-    a = math.radians(k*60 - 90); dx, dy = math.cos(a), math.sin(a); nx, ny = -dy, dx
-    d.polygon([(cx+nx*tk, cy+ny*tk),(cx+dx*r+nx*tk*0.25, cy+dy*r+ny*tk*0.25),
-               (cx+dx*r-nx*tk*0.25, cy+dy*r-ny*tk*0.25),(cx-nx*tk, cy-ny*tk)], fill="white")
-d.ellipse([cx-tk, cy-tk, cx+tk, cy+tk], fill="white")
+    a = math.radians(k*60 - 90); ex, ey = cx + spoke*math.cos(a), cy + spoke*math.sin(a)
+    d.line([(cx, cy), (ex, ey)], fill="white", width=px(0.035))
+    d.ellipse([ex-sat, ey-sat, ex+sat, ey+sat], fill="white")
+d.ellipse([cx-hub, cy-hub, cx+hub, cy+hub], fill="white")
+d.ellipse([cx-hub+px(0.05), cy-hub+px(0.05), cx+hub-px(0.05), cy+hub-px(0.05)], fill=ACCENT)
 # title
 ft = font(SANSB, px(0.62)); ty = band_h + px(0.55)
 d.text((front_x0 + px(0.65), ty), "Asterisk", font=ft, fill=INK)
 d.text((front_x0 + px(0.65), ty + px(0.66)), "Guide", font=ft, fill=INK)
-d.rectangle([front_x0 + px(0.68), ty + px(1.5), front_x0 + px(0.68) + px(2.0), ty + px(1.54)], fill=BRAND)
+d.rectangle([front_x0 + px(0.68), ty + px(1.5), front_x0 + px(0.68) + px(2.0), ty + px(1.54)], fill=ACCENT)
 fs = font(SANS, px(0.22))
 d.text((front_x0 + px(0.65), ty + px(1.7)), "Building an IP PBX with", font=fs, fill=MUTED)
 d.text((front_x0 + px(0.65), ty + px(1.7) + px(0.28)), "Asterisk 22 LTS", font=fs, fill=MUTED)
@@ -72,7 +77,10 @@ img.paste(sp_img.rotate(90, expand=True), (spine_x0, 0))
 # ---------------- BACK panel ----------------
 bx = back_x0 + px(0.6); fy = band_h + px(0.6)
 fh = font(SANSB, px(0.30)); d.text((bx, fy), "About this book", font=fh, fill=INK)
-fb = font(SANS, px(0.155)); fy += px(0.55)
+fb = font(SANS, px(0.155)); fbb = font(SANSB, px(0.155)); fy += px(0.55)
+# Lead hook (bold, from the market analysis): the only current PJSIP-first Asterisk 22 guide.
+hook = ("The only current, PJSIP-first guide to Asterisk 22 — while the long-reigning "
+        "reference is six years stale and predates PJSIP entirely.")
 blurb = ("Asterisk Guide is a hands-on, lab-verified path to building a production IP PBX "
          "with Asterisk 22 LTS — the modern, PJSIP-first way. Every example is tested against "
          "a reproducible Asterisk 22 lab, and the source and lab are free and open.")
@@ -85,6 +93,9 @@ def wrap(txt, ff, maxw):
     if cur: lines.append(cur)
     return lines
 maxw = tw - px(1.2)
+for ln in wrap(hook, fbb, maxw):
+    d.text((bx, fy), ln, font=fbb, fill=INK); fy += px(0.24)
+fy += px(0.08)
 for ln in wrap(blurb, fb, maxw):
     d.text((bx, fy), ln, font=fb, fill=(60,68,78)); fy += px(0.24)
 fy += px(0.2)
