@@ -15,7 +15,7 @@ numbersections: true
 # Gutter (inner) 0.75in is safe for any count <=700 pages (KDP min for 301-500pp is 0.625");
 # outer/top/bottom are well above the 0.25in no-bleed minimum. The interior PDF must NOT
 # contain the cover — the KDP paperback cover is a separate wraparound file (see kdp-formatter).
-geometry: "paperwidth=7.5in,paperheight=9.25in,inner=0.75in,outer=0.5in,top=0.6in,bottom=0.6in"
+geometry: "paperwidth=7.5in,paperheight=9.25in,inner=0.875in,outer=0.625in,top=0.7in,bottom=0.7in"
 fontsize: 11pt
 colorlinks: true
 linkcolor: black
