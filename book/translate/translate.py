@@ -51,7 +51,7 @@ LLM_CTX = int(os.environ.get("LLM_CTX", "32768"))         # server max_model_len
 LLM_API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("SIPPULSE_API_KEY")  # Bearer, optional
 LLM_REASONING = os.environ.get("LLM_REASONING")           # e.g. "low" for gpt-oss; unset for others
 LANG_NAMES = {"pt": "Brazilian Portuguese (pt-BR)", "es": "Latin American Spanish (es)",
-              "fr": "French", "de": "German", "it": "Italian", "hi": "Hindi",
+              "fr": "French", "de": "German", "it": "Italian", "hi": "Hindi", "ru": "Russian",
               "zh": "Simplified Chinese (Mandarin)", "ja": "Japanese",
               "ar": "Modern Standard Arabic"}
 HERE = os.path.dirname(os.path.abspath(__file__))

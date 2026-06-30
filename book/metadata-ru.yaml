@@ -1,0 +1,23 @@
+---
+title: "Руководство по Asterisk"
+subtitle: "Создаем IP-АТС на Asterisk 22 LTS"
+author: "Флавио Е. Гонсалвес"
+date: "Второе издание"
+lang: ru
+documentclass: book
+classoption:
+  - oneside
+toc: true
+toc-title: "Содержание"
+toc-depth: 1
+numbersections: true
+geometry: "paperwidth=7.5in,paperheight=9.25in,inner=0.75in,outer=0.5in,top=0.6in,bottom=0.6in"
+fontsize: 11pt
+colorlinks: true
+linkcolor: black
+urlcolor: blue
+# Front cover (EPUB uses this directly; the PDF embeds it as a full first page via interior.tex)
+cover-image: "src/images/cover.png"
+# Monospace-friendly code blocks
+listings: false
+...
